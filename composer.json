@@ -1,0 +1,26 @@
+{
+  "name": "energy/php",
+  "description": "",
+  "license": "proprietary",
+  "require": {
+    "ext-curl": "*",
+    "ext-dom": "*",
+    "ext-gd": "*",
+    "ext-iconv": "*",
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "ext-mysqli": "*",
+    "ext-openssl": "*",
+    "ext-pcntl": "*",
+    "ext-posix": "*",
+    "ext-xdebug": "*",
+    "ext-xml": "*",
+    "ext-zend-opcache": "*",
+    "ext-zip": "*",
+    "ext-zlib": "*",
+    "guzzlehttp/guzzle": "*",
+    "monolog/monolog": "^1.17",
+    "php": "^8.3",
+    "phpmailer/phpmailer": "^5.2"
+  }
+}

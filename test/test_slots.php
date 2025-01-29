@@ -1,4 +1,4 @@
-<?php // comme
+<?php
 	namespace Energy;
 	use Slots;
     error_reporting(E_ALL);

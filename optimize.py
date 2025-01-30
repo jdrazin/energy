@@ -43,7 +43,7 @@ def day_cost(grid_kws):
         # battery
         battery_charge_kwh           = energy_grid_kwh - load_kwh
         battery_charge_kw            = grid_power_slot_kw - load_kw
-        battery_level_kwh           += battery_charge_kwh * batteryCycleEnergyEfficiency
+        battery_level_kwh           += battery_charge_kwh * batteryOneWayStorageEfficiency
 
         # wear
         battery_level_wear_fraction  = abs(battery_level_kwh - battery_level_mid_kwh) / (battery_level_max_kwh - battery_level_mid_kwh)

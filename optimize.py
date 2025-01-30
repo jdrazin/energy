@@ -37,7 +37,7 @@ def day_cost(grid_kws):
         # battery
         battery_charge_kwh           = energy_grid_kwh - load_kwh
         battery_charge_kw            = grid_power_slot_kw - load_kw
-        battery_level_kwh           += battery_charge_kwh * batteryCycleEnergyEfficiency
+        battery_level_kwh           += battery_charge_kwh * batteryOneWayStorageEfficiency
         battery_level_wear_fraction  = abs(battery_level_kwh - battery_level_mid_kwh) / (battery_level_max_kwh - battery_level_mid_kwh)
 
         # level wear or out of spec costs
@@ -63,16 +63,13 @@ def day_cost(grid_kws):
     cost = cost_grid + cost_wear + cost_out_of_spec + cost_level_change
     return cost
 
-# initial guess for the variables
-initial_guess = [5.0, 5.0]
-
 # constants
 index = 1
 batteryCapacityKwh              = float(sys.argv[index])
 index += 1
 batteryDepthOfDischargePercent  = float(sys.argv[index])
 index += 1
-batteryCycleEnergyEfficiency    = float(sys.argv[index])
+batteryOneWayStorageEfficiency    = float(sys.argv[index])
 index += 1
 batteryWearCostGbpPerKwh        = float(sys.argv[index])
 index += 1
@@ -113,7 +110,7 @@ while i < number_slots:
 gridSlotKwhs = []
 i = 0
 while i < number_slots:
-    gridSlotKwhs   .append(float(sys.argv[index]))
+    gridSlotKwhs.append(float(sys.argv[index]))
     index += 1
     i+= 1
 

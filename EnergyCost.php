@@ -16,7 +16,7 @@ class EnergyCost extends Root
 
     // setup parameters
     protected   float   $batteryCapacityKwh,
-                        $oneWayStorageEfficiency,
+                        $batteryOneWayStorageEfficiency,
                         $batteryDepthOfDischargePercent,
                         $batteryWearCostGbpPerKwh,
                         $batteryWearRatio,
@@ -50,7 +50,7 @@ class EnergyCost extends Root
         $this->tariff_combination               = $this->db_slots->tariff_combination;
         $this->slotDurationHour                 = (float) (DbSlots::SLOT_DURATION_MIN/ 60);
         $this->number_slots                     = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
-        $this->oneWayStorageEfficiency          = $this->config['battery']['inverter']['one_way_storage_efficiency'];
+        $this->batteryOneWayStorageEfficiency   = $this->config['battery']['inverter']['one_way_storage_efficiency'];
         $this->batteryWearCostGbpPerKwh         = $this->config['battery']['wear_cost_gbp_per_kwh'];
         $this->batteryWearRatio                 = $this->config['battery']['wear_ratio'];
         $this->batteryOutOfSpecCostMultiplier   = $this->config['battery']['out_of_spec_cost_multiplier'];
@@ -118,7 +118,7 @@ class EnergyCost extends Root
         $command  = self::PYTHON_SCRIPT_COMMAND . ' ';
         $command .= $this->argSubstring($this->batteryCapacityKwh);
         $command .= $this->argSubstring($this->batteryDepthOfDischargePercent);
-        $command .= $this->argSubstring($this->oneWayStorageEfficiency);
+        $command .= $this->argSubstring($this->batteryOneWayStorageEfficiency);
         $command .= $this->argSubstring($this->batteryWearCostGbpPerKwh);
         $command .= $this->argSubstring($this->batteryWearRatio);
         $command .= $this->argSubstring($this->batteryOutOfSpecCostMultiplier);
@@ -160,7 +160,7 @@ class EnergyCost extends Root
         $this->strip(); $this->strip(); // removes PYTHON_SCRIPT_COMMAND
         $this->batteryCapacityKwh              = (float) $this->strip();
         $this->batteryDepthOfDischargePercent  = (float) $this->strip();
-        $this->oneWayStorageEfficiency         = (float) $this->strip();
+        $this->batteryOneWayStorageEfficiency  = (float) $this->strip();
         $this->batteryWearCostGbpPerKwh        = (float) $this->strip();
         $this->batteryWearRatio                = (float) $this->strip();
         $this->batteryOutOfSpecCostMultiplier  = (float) $this->strip();
@@ -217,7 +217,7 @@ class EnergyCost extends Root
             // battery
             $battery_charge_kwh          = $energy_grid_kwh - $load_kwh;
             $battery_charge_kw           = $grid_power_slot_kw - $load_kw;
-            $battery_level_kwh          += $battery_charge_kwh * $this->oneWayStorageEfficiency;
+            $battery_level_kwh          += $battery_charge_kwh * $this->batteryOneWayStorageEfficiency;
 
             // inverter loss
             $battery_level_wear_fraction = abs($battery_level_kwh - $battery_level_mid_kwh) / ($battery_level_max_kwh - $battery_level_mid_kwh);
@@ -248,7 +248,8 @@ class EnergyCost extends Root
             $cost_energy_average_per_kwh_acc += 0.5 * ($tariff_import_per_kwh + $tariff_export_per_kwh);    // accumulate average energy cost
         }
         $cost_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots);
-        return ['cost'        => $cost_grid_import + $cost_grid_export + $cost_wear + $cost_out_of_spec + $cost_level_change,
+        $cost = $cost_grid_import + $cost_grid_export + $cost_wear + $cost_out_of_spec + $cost_level_change;
+        return ['cost'        => $cost,
                 'cost_import' => $cost_grid_import,
                 'cost_export' => $cost_grid_export,
                 'cost_wear'   => $cost_wear,

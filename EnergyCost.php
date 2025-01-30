@@ -219,10 +219,8 @@ class EnergyCost extends Root
             $battery_charge_kw           = $grid_power_slot_kw - $load_kw;
             $battery_level_kwh          += $battery_charge_kwh * $this->batteryOneWayStorageEfficiency;
 
-            // inverter loss
+            // wear
             $battery_level_wear_fraction = abs($battery_level_kwh - $battery_level_mid_kwh) / ($battery_level_max_kwh - $battery_level_mid_kwh);
-
-            // level wear or out of spec costs
             if ($battery_level_wear_fraction <= 1.0) {    // wear
                 $cost_wear        += $cost_min_per_kwh * abs($battery_charge_kwh) * (1.0 + $this->batteryWearRatio * $battery_level_wear_fraction);
             }

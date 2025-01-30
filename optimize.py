@@ -7,21 +7,25 @@ from scipy.optimize import minimize
 
 # define energy cost
 def day_cost(grid_kws):
-    cost_energy_average_per_kwh_acc = 0.0                   # accumulator for calculating average energy cost
-    battery_level_kwh       = batteryEnergyInitialKwh       # initial battery level
-    battery_level_mid_kwh   = batteryCapacityKwh / 2.0      # midpoint battery level
-    battery_level_max_kwh   = (100.0 + batteryDepthOfDischargePercent) * batteryCapacityKwh / 200.0    # max battery operating level
-    cost_min_per_kwh        = 2.0 * batteryWearCostGbpPerKwh / (1.0 + batteryWearRatio)                # minimum wear cost at midpoint level
-    cost_grid               = 0.0
-    cost_wear               = 0.0
-    cost_out_of_spec        = 0.0
-    slot_count = 0
+    cost_energy_average_per_kwh_acc = 0.0                           # accumulator for calculating average energy cost
+    battery_level_kwh               = batteryEnergyInitialKwh       # initial battery level
+    battery_level_mid_kwh           = batteryCapacityKwh / 2.0      # midpoint battery level
+    battery_level_max_kwh           = (100.0 + batteryDepthOfDischargePercent) * batteryCapacityKwh / 200.0    # max battery operating level
+    cost_min_per_kwh                = 2.0 * batteryWearCostGbpPerKwh / (1.0 + batteryWearRatio)                # minimum wear cost at midpoint level
+    cost_grid_import                = 0.0
+    cost_grid_export                = 0.0
+    cost_wear                       = 0.0
+    cost_out_of_spec                = 0.0
+    import_kwh                      = 0.0
+    export_kwh                      = 0.0
+    slot_count                      = 0
     while slot_count < number_slots:
         grid_power_slot_kw    = grid_kws[slot_count]
-        if grid_power_slot_kw < exportLimitKw:              # clip grid power to import/export limit
+        if grid_power_slot_kw  < -exportLimitKw:              # clip grid power to import/export limit
             grid_power_slot_kw = -exportLimitKw
         else:
-            grid_power_slot_kw =  importLimitKw
+            if grid_power_slot_kw  > importLimitKw:
+                grid_power_slot_kw = importLimitKw
         load_kw               = load_kws[slot_count]
         tariff_import_per_kwh = tariffImportPerKwhs[slot_count]
         tariff_export_per_kwh = tariffExportPerKwhs[slot_count]
@@ -30,17 +34,19 @@ def day_cost(grid_kws):
         #
         # grid
         if energy_grid_kwh < 0.0:
-            cost_grid += tariff_export_per_kwh * energy_grid_kwh
+            export_kwh       += energy_grid_kwh
+            cost_grid_export += tariff_export_per_kwh * energy_grid_kwh
         else:
-            cost_grid += tariff_import_per_kwh * energy_grid_kwh
+            import_kwh       += energy_grid_kwh
+            cost_grid_import += tariff_import_per_kwh * energy_grid_kwh
 
         # battery
         battery_charge_kwh           = energy_grid_kwh - load_kwh
         battery_charge_kw            = grid_power_slot_kw - load_kw
-        battery_level_kwh           += battery_charge_kwh * batteryOneWayStorageEfficiency
-        battery_level_wear_fraction  = abs(battery_level_kwh - battery_level_mid_kwh) / (battery_level_max_kwh - battery_level_mid_kwh)
+        battery_level_kwh           += battery_charge_kwh * batteryCycleEnergyEfficiency
 
-        # level wear or out of spec costs
+        # wear
+        battery_level_wear_fraction  = abs(battery_level_kwh - battery_level_mid_kwh) / (battery_level_max_kwh - battery_level_mid_kwh)
         if battery_level_wear_fraction <= 1.0:      # wear
             cost_wear        += cost_min_per_kwh * abs(battery_charge_kwh) * (1.0 + batteryWearRatio * battery_level_wear_fraction)
         else:                                       # out of spec
@@ -60,7 +66,7 @@ def day_cost(grid_kws):
         cost_energy_average_per_kwh_acc += 0.5 * (tariff_import_per_kwh + tariff_export_per_kwh) # accumulate average energy cost
         slot_count += 1
     cost_level_change = (batteryEnergyInitialKwh - battery_level_kwh) * cost_energy_average_per_kwh_acc / number_slots
-    cost = cost_grid + cost_wear + cost_out_of_spec + cost_level_change
+    cost = cost_grid_import + cost_grid_export + cost_wear + cost_out_of_spec + cost_level_change
     return cost
 
 # constants

@@ -21,6 +21,7 @@
     "guzzlehttp/guzzle": "*",
     "monolog/monolog": "^1.17",
     "php": "^8.3",
-    "phpmailer/phpmailer": "^6.9.3"
+    "phpmailer/phpmailer": "^6.9.3",
+    "slim/slim" : "3.*"
   }
 }

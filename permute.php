@@ -35,10 +35,7 @@ require_once __DIR__ . '/Time.php';
 
 require 'vendor/autoload.php';
 
-const PID_FILENAME = '/var/www/html/energy/permute.pid',
-      ARGS       = ['CRON' => 1],
-      BLOCK_CRON = false,
-      DEBUG      = true;
+const DEBUG      = true;
 
 try {
     if (!DEBUG) {

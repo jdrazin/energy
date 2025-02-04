@@ -6,13 +6,7 @@ use Slim\Factory\AppFactory;
 
 require __DIR__ . '/vendor/autoload.php';
 
-/**
- * Instantiate App
- *
- * In order for the factory to work you need to ensure you have installed
- * a supported PSR-7 implementation of your choice e.g.: Slim PSR-7 and a supported
- * ServerRequest creator (included with Slim PSR-7)
- */
+// see slim 4 documentation: https://www.slimframework.com/docs/v4/
 $app = AppFactory::create();
 
 /**
@@ -35,8 +29,10 @@ $app->addRoutingMiddleware();
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
 $app->post('/permute', function (Request $request, Response $response, $args) {
-    $name = $args['name'];
-    $response->getBody()->write("Hello, $name!");
+    $json = $request->getBody();
+    $energy = new Energy();
+    $energy->permute();
+    $response->getBody()->write("Hello!");
     return $response;
 });
 

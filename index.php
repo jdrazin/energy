@@ -34,8 +34,7 @@ $app->addRoutingMiddleware();
  */
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
-// Define app routes
-$app->get('/permute/{name}', function (Request $request, Response $response, $args) {
+$app->post('/permute', function (Request $request, Response $response, $args) {
     $name = $args['name'];
     $response->getBody()->write("Hello, $name!");
     return $response;

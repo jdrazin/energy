@@ -20,7 +20,14 @@ class Root
     /**
      * @throws Exception
      */
-    public function __construct()
+    public function __construct() {
+
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function apiKeys(): void
     {
         if (!(($api_text = file_get_contents($path = self::APIS_PATH)) &&
             ($this->apis = json_decode($api_text, true, self::JSON_MAX_DEPTH)))) {
@@ -33,9 +40,9 @@ class Root
         else {
             $mysql = $this->apis['MySQL'];
             if (!(($this->mysqli = new mysqli(  $mysql['host'],
-                                                $mysql['user'],
-                                                $mysql['password'],
-                                                $mysql['database'])) &&
+                    $mysql['user'],
+                    $mysql['password'],
+                    $mysql['database'])) &&
                 $this->mysqli->autocommit(false))) {
                 throw new Exception('bad mysql database');
             }

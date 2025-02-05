@@ -133,7 +133,7 @@ class EmonCms extends Root
     /**
      * @throws GuzzleException
      */
-    private function powerW($slot, $entity_id): float
+    private function powerW($slot, $entity_id): ?float
     {
         $query = [
             'apikey'    => $this->api['apikey'],
@@ -145,6 +145,12 @@ class EmonCms extends Root
         $client = new Client();
         $get_response = $client->get($this->api['base_url'], ['query' => $query]);
         $response = json_decode($get_response->getBody(), true);
-        return 1000.0 * ((float) ($response[1][1] - $response[0][1])) * ((float) self::MINUTES_PER_HOUR)/((float) DbSlots::SLOT_DURATION_MIN);
+        if (!is_null($energy_start_j = $response[1][1] ?? null) &&
+            !is_null($energy_stop_j  = $response[0][1] ?? null)) {
+            return round(1000.0 * ((float) ($energy_start_j-$energy_stop_j) * ((float) self::MINUTES_PER_HOUR)/((float) DbSlots::SLOT_DURATION_MIN)), 1);
+        }
+        else {
+            return null;
+        }
     }
 }

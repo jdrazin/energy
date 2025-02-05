@@ -63,7 +63,8 @@ class Powers extends Root
                                                                                               `heating_thermal_w`.`day_slot` = `temp_c`.`day_slot`) `th`
                               GROUP BY `th`.`temp_c`, `th`.`day_slot`
                               ORDER BY `th`.`temp_c`, `th`.`day_slot`) `day_slot_temp_c_heating_thermal_w`
-                  WHERE `day_slot_temp_c_heating_thermal_w`.`count` > 0';
+                  WHERE `day_slot_temp_c_heating_thermal_w`.`count` > 0
+                  ORDER BY `day_slot`, `temp_c`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($day_slot, $temp_c, $power_w) ||
             !$stmt->execute()) {

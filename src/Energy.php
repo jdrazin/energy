@@ -1,4 +1,17 @@
 <?php
+
+use Energy\Battery;
+use Energy\Boiler;
+use Energy\Climate;
+use Energy\Demand;
+use Energy\HeatPump;
+use Energy\ParameterPermutations;
+use Energy\Root;
+use Energy\SolarCollectors;
+use Energy\Supply;
+use Energy\ThermalTank;
+use Energy\Time;
+
 require_once __DIR__ . '/Root.php';
 enum Types: string {
     case ACTUAL = 'ACTUAL';
@@ -25,7 +38,9 @@ class Energy extends Root
      * @throws Exception
      */
     public function __construct($config) {
-        $this->config = $config;
+        if (!is_null($config)) {
+            $this->config = $config;
+        }
         parent::__construct();
     }
 

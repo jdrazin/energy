@@ -1,6 +1,5 @@
 <?php //
 	namespace Energy;
-	use Battery;
 
     error_reporting(E_ALL);
 	require_once __DIR__ . "/Battery.php";

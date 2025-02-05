@@ -1,6 +1,5 @@
 <?php
 	namespace Energy;
-	use Climate;
 
     require_once __DIR__ . '/Climate.php';
 	
@@ -27,7 +26,7 @@
 		for ($interval_count = 0; $interval_count < $number_intervals; $interval_count++) {
 			$hour = $interval_count*$interval_hours;
 			$fraction_day = (float) $hour / 24.0;
-			echo $hour . '00hrs : ' . round((new \Climate)->temperature_fraction($fraction_year, $fraction_day), 1) . PHP_EOL;
+			echo $hour . '00hrs : ' . round((new \Energy\Climate)->temperature_fraction($fraction_year, $fraction_day), 1) . PHP_EOL;
 		}
 		echo PHP_EOL;
 	}

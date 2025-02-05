@@ -1,7 +1,5 @@
 <?php
 	namespace Energy;
-	use Heatpump;
-    use Time;
 
     error_reporting(E_ALL);
 	require_once __DIR__ . '/Time.php';

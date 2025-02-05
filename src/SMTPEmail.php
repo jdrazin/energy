@@ -1,5 +1,9 @@
 <?php
 
+namespace Energy;
+use Credentials;
+use PHPMailer;
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 /*
@@ -15,9 +19,9 @@ class SMTPEmail
         $mail->SMTPDebug = 3;                                 // Enable verbose debug output
         $mail->Debugoutput = 'html';
         $mail->isSMTP();                                      // Set mailer to use SMTP
-        $mail->SMTPOptions = ['ssl' => ['verify_peer'       => false,
-							            'verify_peer_name'  => false,
-							            'allow_self_signed' => true]];
+        $mail->SMTPOptions = ['ssl' => ['verify_peer' => false,
+            'verify_peer_name' => false,
+            'allow_self_signed' => true]];
         $mail->Host = Credentials::E_HOST;       // Specify main and backup SMTP servers
         $mail->Username = Credentials::E_USERNAME;   // SMTP username
         $mail->Password = Credentials::E_PASSWORD;   // SMTP password

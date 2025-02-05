@@ -1,6 +1,8 @@
 <?php
 
 
+use Energy\Component;
+
 require_once __DIR__ . '/Component.php';
 
 class Inverter extends Component

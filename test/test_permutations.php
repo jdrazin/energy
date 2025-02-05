@@ -1,6 +1,5 @@
 <?php
 	namespace Energy;
-	use ParameterPermutations;
 
     error_reporting(E_ALL);
 	require_once __DIR__ . '/HeatPump.php';

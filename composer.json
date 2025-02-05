@@ -27,30 +27,7 @@
     },
   "autoload": {
       "psr-4": {
-        "Energy\\":                 "energy",
-        "Battery\\":                "energy",
-        "Boiler\\":                 "energy",
-        "Climate\\":                "energy",
-        "Demand\\":                 "energy",
-        "EmonCms\\":                "energy",
-        "Powers\\":                 "energy",
-        "GivEnergy\\":              "energy",
-        "HeatPump\\":               "energy",
-        "Inverter\\":               "energy",
-        "MetOffice\\":              "energy",
-        "Npv\\":                    "energy",
-        "Octopus\\":                "energy",
-        "EnergyCost\\":             "energy",
-        "ParameterPermutations\\":  "energy",
-        "DbSlots\\":                "energy",
-        "Solar\\":                  "energy",
-        "SolarCollectors\\":        "energy",
-        "Slots\\":                  "energy",
-        "Solcast\\":                "energy",
-        "Supply\\":                 "energy",
-        "ThermalInertia\\":         "energy",
-        "ThermalTank\\":            "energy",
-        "Time\\":                   "energy"
+        "Energy\\": "src/"
       }
     }
 }

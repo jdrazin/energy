@@ -1,25 +1,28 @@
 <?php
+
+namespace Energy;
+
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
 class Octopus extends Root
 {
-    const string    URL_BASE_PRODUCTS   = 'https://api.octopus.energy/v1/products/',
-                    ELECTRICITY_TARIFFS = 'electricity-tariffs/';
-    const array     DIRECTIONS          =  [
-                                                'import' => [
-                                                                'tariffs' => 'tariff_imports',
-                                                                'rates'   => 'tariff_rates_import'
-                                                            ],
-                                                'export' => [
-                                                                'tariffs' => 'tariff_exports',
-                                                                'rates'   => 'tariff_rates_export'
-                                                            ]
-                                            ],
-                    RATE_PERS           =   [
-                                            'KWH' => 'standard-unit-rates/',
-                                            'DAY' => 'standing-charges/',
-                                            ];
+    const string    URL_BASE_PRODUCTS = 'https://api.octopus.energy/v1/products/',
+        ELECTRICITY_TARIFFS = 'electricity-tariffs/';
+    const array     DIRECTIONS = [
+        'import' => [
+            'tariffs' => 'tariff_imports',
+            'rates' => 'tariff_rates_import'
+        ],
+        'export' => [
+            'tariffs' => 'tariff_exports',
+            'rates' => 'tariff_rates_export'
+        ]
+    ],
+        RATE_PERS = [
+        'KWH' => 'standard-unit-rates/',
+        'DAY' => 'standing-charges/',
+    ];
 
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api, $tariff_combinations;
@@ -42,11 +45,11 @@ class Octopus extends Root
      */
     public function traverseTariffCombinations(): void
     {
-        $db_slots   = new DbSlots();                                         // make day slots
+        $db_slots = new DbSlots();                                         // make day slots
         $giv_energy = new GivEnergy();
-        $powers     = new Powers();
-        $emoncms    = new EmonCms();
-        $metoffice  = new MetOffice();
+        $powers = new Powers();
+        $emoncms = new EmonCms();
+        $metoffice = new MetOffice();
         // $giv_energy->initialise();
         $giv_energy->getData();                                              // grid, total_load, solar (yesterday, today) > `values`
         $emoncms->getData();                                                 // home heating and temperature > `values`
@@ -60,7 +63,7 @@ class Octopus extends Root
                 $powers->estimatePowers($db_slots);                           // forecast slot solar, heating, non-heating and load powers
                 $next_slot = (new EnergyCost($db_slots))->optimise();
                 if ($tariff_combination['active']) {                          // make battery command
-          //          $giv_energy->slotCommands($next_slot);
+                    //          $giv_energy->slotCommands($next_slot);
                 }
             }
         }
@@ -86,12 +89,12 @@ class Octopus extends Root
      */
     private function getTariff($tariffs_rates): void
     {
-        $region_code         = $this->api['region_code'];
-        $energy_type_prefix  = $this->api['energy_type_prefix'];
+        $region_code = $this->api['region_code'];
+        $energy_type_prefix = $this->api['energy_type_prefix'];
         $energy_type_postfix = $this->api['energy_type_postfix'];
         $tariff_codes = $this->tariffCodes($tariffs_rates['tariffs']);
         foreach ($tariff_codes as $tariff_id => $tariff_code) {
-            $url_tariff_prefix   = self::URL_BASE_PRODUCTS .
+            $url_tariff_prefix = self::URL_BASE_PRODUCTS .
                 $tariff_code . '/' .
                 self::ELECTRICITY_TARIFFS .
                 $energy_type_prefix . '-' . $energy_type_postfix . '-' . $tariff_code . '-' . $region_code . '/';
@@ -121,17 +124,17 @@ class Octopus extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($id, $name, $import, $export, $active) ||
             !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
         $this->tariff_combinations = [];
         while ($stmt->fetch()) {
-            $this->tariff_combinations[] = ['id'     => $id,
-                                     'name'   => $name,
-                                     'active' => $active,
-                                     'import' => $import,
-                                     'export' => $export];
+            $this->tariff_combinations[] = ['id' => $id,
+                'name' => $name,
+                'active' => $active,
+                'import' => $import,
+                'export' => $export];
         }
     }
 
@@ -150,15 +153,15 @@ class Octopus extends Root
                                             VALUES (?,         ?,       ?,      ?,      ?)
                     ON DUPLICATE KEY UPDATE `rate` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param(  'issdsd', $tariff_id, $start, $stop, $rate, $per, $rate)) {
-                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
-                throw new Exception($message);
+            !$stmt->bind_param('issdsd', $tariff_id, $start, $stop, $rate, $per, $rate)) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
         }
         foreach ($tariffs as $tariff) {
-            $rate  = $tariff['value_inc_vat']/100.0;   // convert from pence to GBP
+            $rate = $tariff['value_inc_vat'] / 100.0;   // convert from pence to GBP
             $start = $this->timeToDatetime($tariff['valid_from']);
-            $stop  = $this->timeToDatetime($tariff['valid_to']);
+            $stop = $this->timeToDatetime($tariff['valid_to']);
             $stmt->execute();
         }
         $this->mysqli->commit();
@@ -167,14 +170,16 @@ class Octopus extends Root
     /**
      * @throws DateMalformedStringException
      */
-    private function timeToDatetime($time): ?string {
+    private function timeToDatetime($time): ?string
+    {
         return $time ? $this->datetime($time) : '1970-01-01 00:00:00';
     }
 
     /**
      * @throws DateMalformedStringException
      */
-    private function datetime($datetime_string): string|null {
+    private function datetime($datetime_string): string|null
+    {
         return $datetime_string ? (new DateTime($datetime_string))->format(Root::MYSQL_FORMAT_DATETIME) : null;
     }
 
@@ -184,15 +189,15 @@ class Octopus extends Root
     private function request($url): string
     {
         $client = new Client(['auth' => [$this->api['basic_auth_user'], $this->api['basic_auth_pw']]]);
-        $response = $client->get(   $url,
-                                    [
-                                        'headers' => [
-                                            'Content-Type' => 'application/json',
-                                            'Accept' => 'application/json',
-                                        ],
-                                        'query' => [],
-                                    ]
-                                );
+        $response = $client->get($url,
+            [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'query' => [],
+            ]
+        );
         return $response->getBody();
     }
 
@@ -212,15 +217,15 @@ class Octopus extends Root
                             `tariff_combination` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ddddii', $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day, $slot, $tariff_combination_id)) {
-            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
         foreach ($db_slots->slots as $slot => $v) {
-            $start    = $v['start'];
-            $stop     = $v['stop'];
+            $start = $v['start'];
+            $stop = $v['stop'];
             $ratesPer = ['start' => $start,
-                         'stop'  => $stop];
+                'stop' => $stop];
             foreach (self::DIRECTIONS as $direction => $x) {
                 $tariff_table = self::DIRECTIONS[$direction]['rates'];
                 foreach (self::RATE_PERS as $unit => $y) {
@@ -244,9 +249,11 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function ratePerUnit($unit, $start, $stop, $tariff, $rates_table, $day_offset): float|null {
+    private function ratePerUnit($unit, $start, $stop, $tariff, $rates_table, $day_offset): float|null
+    {
         switch ($unit) {
-            case 'KWH': {
+            case 'KWH':
+            {
                 $sql = 'SELECT   `rate`
                           FROM   `' . $rates_table . '`
                           WHERE  `tariff` = ? AND 
@@ -254,33 +261,34 @@ class Octopus extends Root
                                  `stop`  >= (? + INTERVAL ? DAY) AND
                                  `per`    = ?';
                 if (!($stmt = $this->mysqli->prepare($sql)) ||
-                    !$stmt->bind_param(  'isisis', $tariff, $start, $day_offset, $stop, $day_offset, $unit) ||
+                    !$stmt->bind_param('isisis', $tariff, $start, $day_offset, $stop, $day_offset, $unit) ||
                     !$stmt->bind_result($rate) ||
                     !$stmt->execute()) {
-                    $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                     $this->logDb('MESSAGE', $message, 'ERROR');
                     throw new Exception($message);
                 }
                 break;
             }
-            case 'DAY': {
+            case 'DAY':
+            {
                 $sql = 'SELECT   `rate`
                           FROM   `' . $rates_table . '`
                           WHERE  `tariff` = ? AND 
                                  `per`    = ?
                           LIMIT 1';
                 if (!($stmt = $this->mysqli->prepare($sql)) ||
-                    !$stmt->bind_param(  'is', $tariff, $unit) ||
+                    !$stmt->bind_param('is', $tariff, $unit) ||
                     !$stmt->bind_result($rate) ||
                     !$stmt->execute()) {
-                    $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                     $this->logDb('MESSAGE', $message, 'ERROR');
                     throw new Exception($message);
                 }
                 break;
             }
             default:
-                $message = $this->errMsg(__CLASS__,__FUNCTION__, __LINE__, 'Bad unit: ' . $unit);
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad unit: ' . $unit);
                 throw new Exception($message);
         }
         $stmt->fetch();
@@ -290,14 +298,15 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function tariffCodes($tariff_code_table): array {
+    private function tariffCodes($tariff_code_table): array
+    {
         $sql = 'SELECT `id`, `code`
                   FROM `' . $tariff_code_table . '`
                   WHERE `status` = \'CURRENT\'';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($id, $tariff_code) ||
             !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }

@@ -68,7 +68,7 @@ class EmonCms extends Root
                     break;
                 }
                 if (!is_null($power_w = $this->powerW($slot, $entity_id))) {
-                    $mid     = $slot['mid'];
+                    $mid = $slot['mid'];
                     if (!$stmt->execute()) {
                         $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
                         $this->logDb('MESSAGE', $message, 'ERROR');

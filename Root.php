@@ -36,19 +36,18 @@ class Root
             ($this->apis = json_decode($api_text, true, self::JSON_MAX_DEPTH)))) {
             throw new Exception('bad or missing config json: ' . $path);
         }
-        elseif (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&
-            ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH)))) {
-            throw new Exception('bad or missing config json: ' . $path);
+        $mysql = $this->apis['MySQL'];
+        if (!(($this->mysqli = new mysqli(  $mysql['host'],
+                $mysql['user'],
+                $mysql['password'],
+                $mysql['database'])) &&
+            $this->mysqli->autocommit(false))) {
+            throw new Exception('bad mysql database');
         }
-        else {
-            $mysql = $this->apis['MySQL'];
-            if (!(($this->mysqli = new mysqli(  $mysql['host'],
-                    $mysql['user'],
-                    $mysql['password'],
-                    $mysql['database'])) &&
-                $this->mysqli->autocommit(false))) {
-                throw new Exception('bad mysql database');
-            }
+        // load config if not override
+        if (!$this->config && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&
+            ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH))))) {
+            throw new Exception('bad or missing config json: ' . $path);
         }
     }
 

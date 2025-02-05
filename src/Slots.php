@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Energy;
+namespace Src;
 
 class Slots
 {

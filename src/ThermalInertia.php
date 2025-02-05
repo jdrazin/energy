@@ -1,6 +1,6 @@
 <?php
 
-namespace Energy;
+namespace Src;
 class ThermalInertia
 {
     public float $temperature_c, $step_s, $thermal_inertial_seconds_per_c;

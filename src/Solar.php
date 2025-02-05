@@ -10,7 +10,7 @@
 //
 // see https://agile.octopushome.net/dashboard
 //
-namespace Energy;
+namespace Src;
 class Solar
 {
     const   SOLAR_EQUINOX_FRACTION_YEAR = 81.0 / 365.25,

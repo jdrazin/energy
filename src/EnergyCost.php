@@ -1,6 +1,6 @@
 <?php
 
-namespace Energy;
+namespace Src;
 
 use GuzzleHttp\Exception\GuzzleException;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Energy;
+namespace Src;
 class Climate
 {
     const   TEMPERATURE_AVERAGE_DAILY_MINIMUM_CELSIUS = -3,

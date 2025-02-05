@@ -1,6 +1,10 @@
 <?php
 
-namespace Energy;
+namespace Src;
+use DateTime;
+use Exception;
+use mysqli;
+
 class Root
 {
     public const string     EARLIEST_DATE = '2024-08-01 00:00:00';
@@ -47,8 +51,8 @@ class Root
             throw new Exception('bad mysql database');
         }
         // load config if not override
-        if (!$this->config && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&
-                ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH))))) {
+        if (($this->config ?? false) && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&
+            ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH))))) {
             throw new Exception('bad or missing config json: ' . $path);
         }
     }
@@ -307,7 +311,7 @@ class Root
             throw new Exception($message);
         }
         if (is_null($value)) {
-            throw new Exception(errMsg(__CLASS__, __FUNCTION__, __LINE__, 'no forecast found'));
+            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'no forecast found'));
         } else {
             return $value;
         }

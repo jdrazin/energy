@@ -1,6 +1,6 @@
 <?php
 
-namespace Energy;
+namespace Src;
 require_once __DIR__ . "/Energy.php";
 
 class Npv

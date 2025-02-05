@@ -6,7 +6,12 @@ error_reporting(E_ALL);
 ini_set('mysql.connect_timeout','36000');
 ini_set('max_execution_time', '36000');
 
-use Energy;
+use Exception;
+use Src\Energy;
+use Src\GivEnergy;
+use Src\Octopus;
+use Src\Root;
+use Src\Solcast;
 use GuzzleHttp\Exception\GuzzleException;
 
 require 'vendor/autoload.php';
@@ -46,7 +51,6 @@ const PID_FILENAME = '/var/www/html/energy/manage.pid',
       DEBUG      = true;
 
 try {
-    $energy = new Energy(null);
    // (new GivEnergy())->initialise();
     if (!DEBUG) {
         if (file_exists(PID_FILENAME)) {

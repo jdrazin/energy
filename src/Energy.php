@@ -1,18 +1,6 @@
 <?php
+namespace Src;
 
-use Energy\Battery;
-use Energy\Boiler;
-use Energy\Climate;
-use Energy\Demand;
-use Energy\HeatPump;
-use Energy\ParameterPermutations;
-use Energy\Root;
-use Energy\SolarCollectors;
-use Energy\Supply;
-use Energy\ThermalTank;
-use Energy\Time;
-
-require_once __DIR__ . '/Root.php';
 enum Types: string {
     case ACTUAL = 'ACTUAL';
     case FORECAST = 'FORECAST';

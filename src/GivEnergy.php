@@ -1,7 +1,5 @@
 <?php
-
-namespace Energy;
-
+namespace Src;
 use Energy;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;

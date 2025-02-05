@@ -1,6 +1,6 @@
 <?php
 
-namespace Energy;
+namespace Src;
 class ParameterPermutations
 {
     const PERMUTATION_ELEMENTS = ['battery', 'heat_pump', 'boiler', 'solar_pv', 'solar_thermal'];

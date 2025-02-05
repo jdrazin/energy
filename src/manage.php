@@ -14,7 +14,7 @@ use Src\Solcast;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 
-require 'vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 /*
  * woken by crontab every 5 mins

@@ -80,7 +80,7 @@ try {
             file_put_contents(PID_FILENAME, getmypid());
         }
     }
-    if ((($cron = (strtolower(trim($argv[ARGS['CRON']])) == 'cron')) && !BLOCK_CRON) || !$cron) {
+    if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
         if (!Root::DEBUG) {
             (new Solcast())->getSolarActualForecast();       // solar actuals & forecasts > 'powers'

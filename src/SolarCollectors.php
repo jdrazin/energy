@@ -4,7 +4,6 @@
 namespace Energy;
 
 use Energy;
-use Inverter;
 
 class SolarCollectors extends Component
 {

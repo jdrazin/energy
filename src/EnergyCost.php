@@ -15,7 +15,7 @@ class EnergyCost extends Root
         //             0 => 2.0, 8 => 5.8, 9 => 5.9, 10 => 6.0
     ];
 
-    const string PYTHON_SCRIPT_COMMAND = 'python3 /var/www/html/energy/optimize.py';
+    const string PYTHON_SCRIPT_COMMAND = 'python3 /var/www/html/energy/src/optimize.py';
 
     // setup parameters
     protected float $batteryCapacityKwh,

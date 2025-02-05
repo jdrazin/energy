@@ -8,7 +8,7 @@ class Root
                             CONFIG_PATH             = '/var/www/html/energy/config.json',
                             MYSQL_FORMAT_DATETIME   = 'Y-m-d H:i:s',
                             MYSQL_FORMAT_DATE       = 'Y-m-d';
-    protected const int     MINUTES_PER_HOUR        = 60,
+    protected const int     SECONDS_PER_HOUR        = 3600,
                             SECONDS_PER_MINUTE      = 60,
                             JSON_MAX_DEPTH          = 10,
                             LOG_MAX_CHARS           = 255;

@@ -112,9 +112,10 @@ class Powers extends Root
         $slots_offset = (2 * $interval->h)  + ($interval->i / 30);
         $powers_kw = [];
         foreach ($this->db_slots->slots as $slot => $v) {
-            $day_slot = ($slot+$slots_offset) % DbSlots::SLOTS_PER_DAY; // convert forecast slot number to absolute day slot
+            $day_slot               = ($slot+$slots_offset) % DbSlots::SLOTS_PER_DAY; // convert forecast slot number to absolute day slot
             $temperature_forecast_c = $this->forecast_latest('TEMPERATURE_EXTERNAL_C', $v['mid']);
-            $powers_kw[$slot] = $this->electricLoadHeatingW($day_slot, $temperature_forecast_c)/1000.0; // get average powers for this day slot at the forecast temperature
+            $power_kw               = $this->electricLoadHeatingW($day_slot, $temperature_forecast_c)/1000.0; // get average powers for this day slot at the forecast temperature
+            $powers_kw[$slot]       = $power_kw;
         }
         $this->updateSlotPowerskW($powers_kw, 'load_heating_kw');
     }

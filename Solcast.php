@@ -12,6 +12,7 @@ class Solcast extends Root
     public function __construct()
     {
         parent::__construct();
+        $this->apiKeys();
         $this->api = $this->apis[__CLASS__];
     }
 

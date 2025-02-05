@@ -24,7 +24,8 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function __construct() {
+    public function __construct($config) {
+        $this->config = $config;
         parent::__construct();
     }
 

@@ -25,7 +25,7 @@ $app->addRoutingMiddleware();
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
 $app->post('/permute', function (Request $request, Response $response, $args) {
-    $config = json_decode($request->getBody(), true);
+    $config = json_decode((string) $request->getBody(), true);
     $energy = new Energy($config);
     $energy->permute();
     $response->getBody()->write("Hello!");

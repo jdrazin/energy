@@ -48,7 +48,7 @@ class Powers extends Root
                                     ROUND(AVG(`value`)) AS `value`
                                     FROM `values`
                                     WHERE `entity` = \'TEMPERATURE_EXTERNAL_C\' AND
-                                          `type` = \'MEASURED\' AND 
+                                          `type`   = \'MEASURED\' AND 
                                           `not_setback`(`datetime`)
                                     GROUP BY `date`, `day_slot`
                                     ORDER BY `date`, `day_slot`) `temp_c`
@@ -57,7 +57,7 @@ class Powers extends Root
                                                 AVG(`value`) AS `value`
                                           FROM `values`
                                           WHERE `entity` = \'LOAD_HEATING_ELECTRIC_W\' AND
-                                                `type` = \'MEASURED\'
+                                                `type`   = \'MEASURED\'
                                           GROUP BY `date`, `day_slot`
                                           ORDER BY `date`, `day_slot`) `heating_thermal_w` ON `heating_thermal_w`.`date`     = `temp_c`.`date`     AND 
                                                                                               `heating_thermal_w`.`day_slot` = `temp_c`.`day_slot`) `th`

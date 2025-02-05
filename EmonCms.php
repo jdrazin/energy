@@ -57,8 +57,8 @@ class EmonCms extends Root
             throw new Exception($message);
         }
         $entities = [
-            'LOAD_HEATING_THERMAL_W'  => 'thermal_energy_kwh',
-            'LOAD_HEATING_ELECTRIC_W' => 'electric_energy_kwh'
+            'LOAD_HEATING_ELECTRIC_W' => 'electric_energy_kwh',
+            'LOAD_HEATING_THERMAL_W'  => 'thermal_energy_kwh'
         ];
         $now = (new DateTime())->format(Root::MYSQL_FORMAT_DATETIME);
         foreach ($entities as $entity => $entity_id) {

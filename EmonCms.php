@@ -67,12 +67,13 @@ class EmonCms extends Root
                 if (is_null($slot = $slots->next_slot())) {
                     break;
                 }
-                $power_w = $this->powerW($slot, $entity_id);
-                $mid     = $slot['mid'];
-                if (!$stmt->execute()) {
-                    $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, 'ERROR');
-                    throw new Exception($message);
+                if (!is_null($power_w = $this->powerW($slot, $entity_id))) {
+                    $mid     = $slot['mid'];
+                    if (!$stmt->execute()) {
+                        $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                        $this->logDb('MESSAGE', $message, 'ERROR');
+                        throw new Exception($message);
+                    }
                 }
             }
         }

@@ -1,19 +1,8 @@
 <?php
 declare(strict_types=1);
-namespace Energy;
-set_time_limit(36000);
-error_reporting(E_ALL);
-ini_set('mysql.connect_timeout','36000');
-ini_set('max_execution_time', '36000');
-
-use Src\GivEnergy;
-use Src\Octopus;
-use Src\Root;
-use Src\Solcast;
-
+namespace Src;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-
 require __DIR__ . '/../vendor/autoload.php';
 
 /*
@@ -44,6 +33,10 @@ require __DIR__ . '/../vendor/autoload.php';
  * + calibrate solar generation model
  *
  */
+
+set_time_limit(36000);
+error_reporting(E_ALL);
+ini_set('mysql.connect_timeout','36000');
 
 const PID_FILENAME = '/var/www/html/energy/manage.pid',
       ARGS       = ['CRON' => 1],

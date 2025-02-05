@@ -139,8 +139,8 @@ class EmonCms extends Root
         $query = [
             'apikey'    => $this->api['apikey'],
             'id'        => self::FEED_IDS[$entity_id],
-            'start'     => $slot['start_unix_timestamp'],
-            'end'       => $slot['stop_unix_timestamp'],
+            'start'     => ($start = $slot['start_unix_timestamp']),
+            'end'       => ($stop  = $slot['stop_unix_timestamp']),
             'interval'  => DbSlots::SLOT_DURATION_MIN*self::SECONDS_PER_MINUTE
         ];
         $client = new Client();
@@ -148,7 +148,7 @@ class EmonCms extends Root
         $response = json_decode($get_response->getBody(), true);
         if (!is_null($energy_start_j = $response[1][1] ?? null) &&
             !is_null($energy_stop_j  = $response[0][1] ?? null)) {
-            return round(1000.0 * ((float) ($energy_start_j-$energy_stop_j) * ((float) self::MINUTES_PER_HOUR)/((float) DbSlots::SLOT_DURATION_MIN)), 1);
+            return round(1000.0 * ((float) ($energy_start_j-$energy_stop_j) * ((float) self::SECONDS_PER_HOUR)/((float) ($stop-$start))), 1);
         }
         else {
             return null;

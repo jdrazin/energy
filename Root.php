@@ -21,14 +21,17 @@ class Root
      * @throws Exception
      */
     public function __construct() {
-
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function apiKeys(): void
-    {
+        /*
+         *  change file’s group to group user belongs to:
+         *      sudo chown :www-data <pathname>
+         *      sudo chmod g+r <pathname>
+         *
+         *  use group that includes www-data
+         *      usermod -a -G jdrazin www-data
+         *
+         *  add group x permission to all parent folders leading to <pathname>
+         *      chmod +x /<parent folder>
+         */
         if (!(($api_text = file_get_contents($path = self::APIS_PATH)) &&
             ($this->apis = json_decode($api_text, true, self::JSON_MAX_DEPTH)))) {
             throw new Exception('bad or missing config json: ' . $path);
@@ -47,6 +50,14 @@ class Root
                 throw new Exception('bad mysql database');
             }
         }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function apiKeys(): void
+    {
+
     }
 
     protected function sqlErrMsg($class, $function, $line, $mysqli, $sql): string {

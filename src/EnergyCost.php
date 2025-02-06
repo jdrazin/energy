@@ -112,9 +112,8 @@ class EnergyCost extends Root
             echo 'CLI: ' . $command . PHP_EOL;
         }
         $this->insertOptimumGridInverterKw($optimumGridKws); // insert for each slot: grid and battery discharge energies (kWh)
-        $nextSlotParameters = $this->nextSlotParameters();
-        $this->insertSlotNextDayCostEstimates($costs, $nextSlotParameters);
-        return $nextSlotParameters;
+        $this->insertSlotNextDayCostEstimates($costs, $slot_command = $this->slotCommand());
+        return $slot_command;
     }
 
     private function command($optimumGridKws): string
@@ -351,7 +350,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function nextSlotParameters(): array
+    private function slotCommand(): array
     {
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'SELECT    `id`,

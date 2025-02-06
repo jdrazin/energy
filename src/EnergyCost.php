@@ -411,11 +411,11 @@ class EnergyCost extends Root
         }
         // update slots with command parameteres
         $sql = 'UPDATE      `slots`
-                   SET      `mode`                  = ?,
-                            `abs_charge_power_w`    = ?,
-                            `target_level_percent`  = ?
-                   WHERE    `tariff_combination`    = ? AND
-                            `slot`                  = ?';
+                   SET      `mode`                 = ?,
+                            `abs_charge_power_w`   = ?,
+                            `target_level_percent` = ?
+                   WHERE    `tariff_combination`   = ? AND
+                            `slot`                 = ?';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sdi', $mode, $abs_charge_power_w, $target_level_percent, $tariff_combination_id, $slot)) {

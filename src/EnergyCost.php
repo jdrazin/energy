@@ -397,14 +397,14 @@ class EnergyCost extends Root
             $target_level_percent = $target_level_percent_min;
             $message = '';
         }
-        return ['id'                    => $id,
-                'start_datetime'        => $start_datetime,
-                'start'                 => $start,
-                'stop'                  => $stop,
-                'direction'             => $direction,
-                'abs_charge_power_w'    => $abs_charge_power_w,
-                'target_level_percent'  => $target_level_percent,
-                'message'               => $direction . $message];
+        return ['id'                   => $id,
+                'start_datetime'       => $start_datetime,
+                'start'                => $start,
+                'stop'                 => $stop,
+                'direction'            => $direction,
+                'abs_charge_power_w'   => $abs_charge_power_w,
+                'target_level_percent' => $target_level_percent,
+                'message'              => $direction . $message];
     }
 
     /**

@@ -424,9 +424,9 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         foreach ($slot_commands as $slot => $slot_command) {
-            $mode                   = $slot_command['mode'];
-            $abs_charge_power_w     = $slot_command['abs_charge_power_w'];
-            $target_level_percent   = $slot_command['target_level_percent'];
+            $mode                 = $slot_command['mode'];
+            $abs_charge_power_w   = $slot_command['abs_charge_power_w'];
+            $target_level_percent = $slot_command['target_level_percent'];
             $stmt->execute();
         }
         return $slot_commands;

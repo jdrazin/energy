@@ -92,26 +92,26 @@ class EnergyCost extends Root
         //
         $command = $this->command(null);
         $costs = [];
-        $costs['raw'] = $this->costCLI($command, $this->grid_kws); // calculate pre-optimised cost using load with CLI command
+        $costs['raw'] = $this->costCLI($command, $this->grid_kws);          // calculate pre-optimised cost using load with CLI command
         if (self::DEBUG) {
             echo 'Php    raw cost: ' . $costs['raw']['cost'] . ' GBP' . PHP_EOL;
         }
-        $output = shell_exec($command);                           // execute Python command and capture output
-        $result = json_decode($output, true);           // decode JSON output from Python
+        $output = shell_exec($command);                                     // execute Python command and capture output
+        $result = json_decode($output, true);                     // decode JSON output from Python
         if (!($result['success'] ?? false)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
             $this->logDb('MESSAGE', $message, 'FATAL');
             throw new Exception($message);
         }
         $optimumGridKws = $result['optimumGridKws'];
-        $command = $this->command($optimumGridKws);   // made CLI with grid solution
-        $costs['optimised'] = $this->costCLI($command, $optimumGridKws); // calculate optimised cost elements using CLI command
+        $command = $this->command($optimumGridKws);                         // made CLI with grid solution
+        $costs['optimised'] = $this->costCLI($command, $optimumGridKws);    // calculate optimised cost elements using CLI command
         if (self::DEBUG) {
             echo 'Python optimised cost: ' . $result['energyCost'] . ' GBP' . PHP_EOL;
             echo 'Php    optimised cost: ' . $costs['optimised']['cost'] . ' GBP' . PHP_EOL;
             echo 'CLI: ' . $command . PHP_EOL;
         }
-        $this->insertOptimumGridInverterKw($optimumGridKws); // insert for each slot: grid and battery discharge energies (kWh)
+        $this->insertOptimumGridInverterKw($optimumGridKws);                // insert for each slot: grid and battery discharge energies (kWh)
         $this->insertSlotNextDayCostEstimates($costs, $slot_command = $this->slotCommand());
         return $slot_command;
     }
@@ -253,11 +253,11 @@ class EnergyCost extends Root
         $cost_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float)$this->number_slots);
         $cost = $cost_grid_import + $cost_grid_export + $cost_wear + $cost_out_of_spec + $cost_level_change;
         return ['cost' => $cost,
-            'cost_import' => $cost_grid_import,
-            'cost_export' => $cost_grid_export,
-            'cost_wear' => $cost_wear,
-            'import_kwh' => $import_kwh,
-            'export_kwh' => $export_kwh];
+                'cost_import' => $cost_grid_import,
+                'cost_export' => $cost_grid_export,
+                'cost_wear' => $cost_wear,
+                'import_kwh' => $import_kwh,
+                'export_kwh' => $export_kwh];
     }
 
     /**
@@ -397,14 +397,14 @@ class EnergyCost extends Root
             $target_level_percent = $target_level_percent_min;
             $message = '';
         }
-        return ['id' => $id,
-            'start_datetime' => $start_datetime,
-            'start' => $start,
-            'stop' => $stop,
-            'direction' => $direction,
-            'abs_charge_power_w' => $abs_charge_power_w,
-            'target_level_percent' => $target_level_percent,
-            'message' => $direction . $message];
+        return ['id'                    => $id,
+                'start_datetime'        => $start_datetime,
+                'start'                 => $start,
+                'stop'                  => $stop,
+                'direction'             => $direction,
+                'abs_charge_power_w'    => $abs_charge_power_w,
+                'target_level_percent'  => $target_level_percent,
+                'message'               => $direction . $message];
     }
 
     /**

@@ -408,6 +408,7 @@ class EnergyCost extends Root
                                     'message'               => $mode . $message
                                 ];
         }
+        unset($stmt);
         // update slots with command parameteres
         $sql = 'UPDATE      `slots`
                    SET      `mode`                 = ?,
@@ -415,9 +416,8 @@ class EnergyCost extends Root
                             `target_level_percent` = ?
                    WHERE    `tariff_combination`   = ? AND
                             `slot`                 = ?';
-        unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('sdi', $mode, $abs_charge_power_w, $target_level_percent, $tariff_combination_id, $slot)) {
+            !$stmt->bind_param('sdiii', $mode, $abs_charge_power_w, $target_level_percent, $tariff_combination_id, $slot)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);

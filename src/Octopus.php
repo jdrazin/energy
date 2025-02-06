@@ -2,6 +2,7 @@
 
 namespace Src;
 
+use DateMalformedStringException;
 use DateTime;
 use Exception;
 use GuzzleHttp\Client;
@@ -174,14 +175,14 @@ class Octopus extends Root
      */
     private function timeToDatetime($time): ?string
     {
-        return $time ? $this->datetime($time) : '1970-01-01 00:00:00';
+        return $time ? $this->dateTime($time) : '1970-01-01 00:00:00';
     }
 
     /**
      * @throws DateMalformedStringException
      * @throws \DateMalformedStringException
      */
-    private function datetime($datetime_string): string|null
+    private function dateTime($datetime_string): string|null
     {
         return $datetime_string ? (new DateTime($datetime_string))->format(Root::MYSQL_FORMAT_DATETIME) : null;
     }

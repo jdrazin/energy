@@ -69,9 +69,9 @@ class Solcast extends Root
                 $datetime = new DateTime($period_end);
                 $datetime->modify('-' . $period_duration_mins / 2 . ' minute');
                 $data[] = [
-                    'datetime' => $datetime->format(Root::MYSQL_FORMAT_DATETIME),
-                    'type' => Types::FORECAST->value,
-                    'power_w' => 1000.0 * (float)$response['pv_estimate']  // convert to mks
+                    'datetime'  => $datetime->format(Root::MYSQL_FORMAT_DATETIME),
+                    'type'      => Types::FORECAST->value,
+                    'power_w'   => 1000.0 * (float)$response['pv_estimate']  // convert to mks
                 ];
                 if ($time_earliest) {
                     if ($datetime < $time_earliest) {
@@ -91,9 +91,9 @@ class Solcast extends Root
                 throw new Exception('bad Solcast value(s)');
             }
         }
-        $this->insertPowers(['data' => $data,
-            'time_earliest' => $time_earliest->format(Root::MYSQL_FORMAT_DATETIME),
-            'time_latest' => $time_latest->format(Root::MYSQL_FORMAT_DATETIME)]);
+        $this->insertPowers(['data'             => $data,
+                             'time_earliest'    => $time_earliest->format(Root::MYSQL_FORMAT_DATETIME),
+                             'time_latest'      => $time_latest->format(Root::MYSQL_FORMAT_DATETIME)]);
     }
 
     /*

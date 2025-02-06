@@ -352,8 +352,7 @@ class EnergyCost extends Root
      */
     private function slotCommands(): array {
         $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'SELECT          `slot`,
-                                `id`,
+        $sql = 'SELECT          `id`,
                                 `start` AS `start_datetime`,  
                                 DATE_FORMAT(`start`, \'%H:%i\') AS `start`,
                                 DATE_FORMAT(`stop`, \'%H:%i\') AS `stop`,
@@ -362,10 +361,10 @@ class EnergyCost extends Root
                                 `battery_level_kwh`
                     FROM        `slots`
                     WHERE       `tariff_combination` = ?
-                    ORDER BY    `slot` ASC';
+                    ORDER BY    `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($slot, $id, $start_datetime, $start, $stop, $grid_kw, $battery_charge_kw, $target_level_kwh) ||
+            !$stmt->bind_result($id, $start_datetime, $start, $stop, $grid_kw, $battery_charge_kw, $target_level_kwh) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -429,6 +428,7 @@ class EnergyCost extends Root
             $target_level_percent = $slot_command['target_level_percent'];
             $stmt->execute();
         }
+        $this->mysqli->commit();
         return $slot_commands;
     }
 

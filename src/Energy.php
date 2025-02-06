@@ -1,6 +1,5 @@
 <?php
 namespace Src;
-
 use Exception;
 
 class Energy extends Root
@@ -10,12 +9,10 @@ class Energy extends Root
     const   float DAYS_PER_YEAR                     = 365.25;
     const   int HOURS_PER_DAY                       = 24;
     const   int SECONDS_PER_HOUR                    = 3600;
-
     public float $step_s;
-    public array $time_units = ['HOUR_OF_DAY'   => 24,
-        'MONTH_OF_YEAR' => 12,
-        'DAY_OF_YEAR'   => 366];
-
+    public array $time_units                        = [ 'HOUR_OF_DAY'   => 24,
+                                                        'MONTH_OF_YEAR' => 12,
+                                                        'DAY_OF_YEAR'   => 366];
     private $jobId;
 
     /**

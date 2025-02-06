@@ -1,12 +1,11 @@
 <?php
 namespace Src;
-use Energy;
 
 class Component extends Root
 {
     public float $step_s, $value_install_gbp, $value_maintenance_per_timestep_gbp;
     public string $name;
-    public bool $active, $display_result;
+    public bool $activ;
     public array $time_units;
     public Npv $npv;
 

@@ -392,35 +392,18 @@ class GivEnergy extends Root
         /*
          * all slots except 1 must be manually disabled in app or web portal
          */
-        $start_datetime = $next_slot['start_datetime'] ?? null;
-        $start = $next_slot['start'] ?? null;
-        $stop = $next_slot['stop'] ?? null;
-        $mode = $next_slot['mode'] ?? null;
-        $abs_charge_power_w = $next_slot['abs_charge_power_w'] ?? null;
-        $target_level_percent = $next_slot['target_level_percent'] ?? null;
-        $context = $next_slot['message'] ?? 'no context';
-        $countdown_seconds = $this->countdown_to_start_seconds($start_datetime);
+    $start_datetime             = $next_slot['start_datetime'] ?? null;
+        $start                  = $next_slot['start'] ?? null;
+        $stop                   = $next_slot['stop'] ?? null;
+        $mode                   = $next_slot['mode'] ?? null;
+        $abs_charge_power_w     = $next_slot['abs_charge_power_w'] ?? null;
+        $target_level_percent   = $next_slot['target_level_percent'] ?? null;
+        $context                = $next_slot['message'] ?? 'no context';
+        $countdown_seconds      = $this->countdown_to_start_seconds($start_datetime);
         (new Root())->logDb('BATTERY', $context . ": counting down $countdown_seconds seconds ...", 'NOTICE');
         (new Root())->logDb('BATTERY', 'sending commands ...', 'NOTICE');
         sleep($countdown_seconds);
         switch ($mode) {
-            case 'CHARGE':
-            case 'DISCHARGE': {
-                                if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
-                                    throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
-                                }
-                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                                    [
-                                        'mode'                  => $mode,
-                                        'start'                 => $start,
-                                        'stop'                  => $stop,
-                                        'abs_charge_power_w'    => $abs_charge_power_w,
-                                        'target_level_percent'  => $target_level_percent,
-                                        'message'               => $context
-                                    ]);
-                                $this->clear_slot($mode == 'CHARGE' ? 'DC Discharge' : 'AC Charge');  // clear other slot direction
-                                break;
-                            }
             case 'ECO':     { // matches battery discharge power to net load: load - solar (i.e. zero export)
                                 $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
                                     [
@@ -441,6 +424,23 @@ class GivEnergy extends Root
                                         'message'               => __FUNCTION__
                                     ]);
                                 $this->command('write', 'Battery Discharge Power', (int)(1000 * $this->battery['max_discharge_kw']), null, __FUNCTION__);
+                                break;
+                            }
+            case 'CHARGE':
+            case 'DISCHARGE': {
+                                if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
+                                    throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
+                                }
+                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
+                                    [
+                                        'mode'                  => $mode,
+                                        'start'                 => $start,
+                                        'stop'                  => $stop,
+                                        'abs_charge_power_w'    => $abs_charge_power_w,
+                                        'target_level_percent'  => $target_level_percent,
+                                        'message'               => $context
+                                    ]);
+                                $this->clear_slot($mode == 'CHARGE' ? 'DC Discharge' : 'AC Charge');  // clear other slot direction
                                 break;
                             }
             case 'IDLE':    {

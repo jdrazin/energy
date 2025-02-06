@@ -403,7 +403,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function slotCommands($next_slot): void
+    public function control($next_slot): void
     {
         /*
          * all slots except 1 must be manually disabled in app or web portal

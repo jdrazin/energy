@@ -224,10 +224,9 @@ class Octopus extends Root
             throw new Exception($message);
         }
         foreach ($db_slots->slots as $slot => $v) {
-            $start = $v['start'];
-            $stop = $v['stop'];
-            $ratesPer = ['start' => $start,
-                'stop' => $stop];
+            $start    = $v['start'];
+            $stop     = $v['stop'];
+            $ratesPer = ['start' => $start, 'stop' => $stop];
             foreach (self::DIRECTIONS as $direction => $x) {
                 $tariff_table = self::DIRECTIONS[$direction]['rates'];
                 foreach (self::RATE_PERS as $unit => $y) {

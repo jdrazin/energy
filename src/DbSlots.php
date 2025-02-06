@@ -93,7 +93,7 @@ class DbSlots extends Root
         if ($now < $slot_time) {                                               // if now in 2nd half-hour then slot ends on half hour
             $slot_time->modify(-self::SLOT_DURATION_MIN . ' minute');   // otherwise wind back
         }
-        $slot_time->modify(self::SLOT_DURATION_MIN . ' minute'); // first slot begins with beginning of next half hour slot
+        $slot_time->modify(self::SLOT_DURATION_MIN . ' minute');        // first slot begins with beginning of next half hour slot
         return $slot_time;
     }
 

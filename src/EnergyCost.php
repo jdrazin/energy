@@ -418,14 +418,16 @@ class EnergyCost extends Root
                             `slot`                  = ?';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('sdi', $mode, $abs_charge_power_w, $target_level_percent, $tariff_combination_id, $slot) ||
-            !$stmt->execute()) {
+            !$stmt->bind_param('sdi', $mode, $abs_charge_power_w, $target_level_percent, $tariff_combination_id, $slot)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
         foreach ($slot_commands as $slot => $slot_command) {
-
+            $mode                   = $slot_command['mode'];
+            $abs_charge_power_w     = $slot_command['abs_charge_power_w'];
+            $target_level_percent   = $slot_command['target_level_percent'];
+            $stmt->execute();
         }
         return $slot_commands;
     }

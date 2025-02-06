@@ -46,11 +46,11 @@ class Octopus extends Root
      */
     public function traverseTariffCombinations(): void
     {
-        $db_slots = new DbSlots();                                         // make day slots
+        $db_slots   = new DbSlots();                                         // make day slots
         $giv_energy = new GivEnergy();
-        $powers = new Powers();
-        $emoncms = new EmonCms();
-        $metoffice = new MetOffice();
+        $powers     = new Powers();
+        $emoncms    = new EmonCms();
+        $metoffice  = new MetOffice();
         // $giv_energy->initialise();
         $giv_energy->getData();                                              // grid, total_load, solar (yesterday, today) > `values`
         $emoncms->getData();                                                 // home heating and temperature > `values`

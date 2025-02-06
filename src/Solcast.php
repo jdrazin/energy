@@ -7,7 +7,6 @@ use DateTime;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Src\Types;
 
 class Solcast extends Root
 {

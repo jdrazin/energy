@@ -1,7 +1,8 @@
 <?php
-
-
 namespace Src;
+use DateTime;
+use Exception;
+use DateMalformedStringException;
 
 class Slots
 {

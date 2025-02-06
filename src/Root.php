@@ -1,5 +1,4 @@
 <?php
-
 namespace Src;
 use DateTime;
 use Exception;
@@ -51,7 +50,7 @@ class Root
             throw new Exception('bad mysql database');
         }
         // load config if not override
-        if (($this->config ?? false) && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&
+        if (!($this->config ?? false) && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&
             ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH))))) {
             throw new Exception('bad or missing config json: ' . $path);
         }

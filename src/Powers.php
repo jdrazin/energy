@@ -2,6 +2,7 @@
 
 namespace Src;
 
+use DateMalformedStringException;
 use DateTime;
 use Exception;
 

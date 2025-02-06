@@ -5,7 +5,7 @@ class Component extends Root
 {
     public float $step_s, $value_install_gbp, $value_maintenance_per_timestep_gbp;
     public string $name;
-    public bool $activ;
+    public bool $active;
     public array $time_units;
     public Npv $npv;
 

@@ -291,6 +291,9 @@ class Root
         $this->mysqli->commit();
     }
 
+    /**
+     * @throws Exception
+     */
     public function forecast_latest($entity, $datetime): float
     { // returns latest fresh forecast for datetime
         $sql = 'SELECT    `w1`.`value`
@@ -300,7 +303,7 @@ class Root
                               WHERE   `entity` = ? AND
                                       `type`   = \'FORECAST\' AND
                                       `timestamp` > NOW() - INTERVAL ' . self::FORECAST_STALE_HOURS . ' HOUR
-                              ORDER BY `diff` ASC, `timestamp` DESC
+                              ORDER BY `diff`, `timestamp` DESC
                               LIMIT   0, 1) `w2` ON `w2`.`id` = `w1`.`id`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ss', $datetime, $entity) ||

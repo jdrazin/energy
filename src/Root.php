@@ -10,13 +10,13 @@ class Root
     public const string     EARLIEST_DATE = '2024-08-01 00:00:00';
     const bool              DEBUG = false;
     const string            APIS_PATH = '/home/jdrazin/.energy/apis.json',
-        CONFIG_PATH = '/var/www/html/energy/config.json',
-        MYSQL_FORMAT_DATETIME = 'Y-m-d H:i:s',
-        MYSQL_FORMAT_DATE = 'Y-m-d';
+                            CONFIG_PATH = '/var/www/html/energy/config.json',
+                            MYSQL_FORMAT_DATETIME = 'Y-m-d H:i:s',
+                            MYSQL_FORMAT_DATE = 'Y-m-d';
     protected const int     SECONDS_PER_HOUR = 3600,
-        SECONDS_PER_MINUTE = 60,
-        JSON_MAX_DEPTH = 10,
-        LOG_MAX_CHARS = 255;
+                            SECONDS_PER_MINUTE = 60,
+                            JSON_MAX_DEPTH = 10,
+                            LOG_MAX_CHARS = 255;
     private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
     protected array $apis, $config;
     protected mysqli $mysqli;
@@ -57,12 +57,14 @@ class Root
         }
     }
 
-    /**
-     * @throws Exception
-     */
-    public function apiKeys(): void
-    {
-
+    protected function strip_namespace($namespace, $class): string {
+        $prefix = $namespace . '\\';
+        if (str_starts_with($class, $prefix)) {
+            return substr($class, strlen($prefix));
+        }
+        else {
+            return $class;
+        }
     }
 
     protected function sqlErrMsg($class, $function, $line, $mysqli, $sql): string

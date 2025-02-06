@@ -1,6 +1,9 @@
 <?php
 namespace Src;
+use DateMalformedStringException;
+use DateTime;
 use Energy;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -113,12 +116,13 @@ class GivEnergy extends Root
     /**
      * @throws Exception
      * @throws GuzzleException
+     * @throws \Exception
      */
     public function __construct()
     {
         parent::__construct();
         $this->battery = $this->config['battery'];
-        $this->api = $this->apis[__CLASS__];
+        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
         $this->getInverterControlSettings();  // get settings
     }
 
@@ -129,7 +133,7 @@ class GivEnergy extends Root
     public function getData(): void
     {
         /*
-        if ($this->skip_request(__CLASS__)) { // skip request if called recently
+        if ($this->skip_request($this->strip_namespace(__NAMESPACE__,__CLASS__))) { // skip request if called recently
             return;
         }*/
         $this->getBattery();

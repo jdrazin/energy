@@ -2,6 +2,8 @@
 
 namespace Src;
 
+use DateTime;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -27,12 +29,13 @@ class EmonCms extends Root
     public function __construct()
     {
         parent::__construct();
-        $this->api = $this->apis[__CLASS__];
+        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
     }
 
     /**
      * @throws Exception
      * @throws GuzzleException
+     * @throws \Exception
      */
     public function getData(): void
     {

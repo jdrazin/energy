@@ -2,9 +2,12 @@
 
 namespace Src;
 
+use DateMalformedStringException;
+use DateTime;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Types;
+use Src\Types;
 
 class Solcast extends Root
 {
@@ -16,14 +19,14 @@ class Solcast extends Root
     public function __construct()
     {
         parent::__construct();
-        $this->apiKeys();
-        $this->api = $this->apis[__CLASS__];
+        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
     }
 
     /**
      * @throws DateMalformedStringException
      * @throws Exception
      * @throws GuzzleException
+     * @throws \Exception
      */
     public function getSolarActualForecast(): void
     {

@@ -2,6 +2,8 @@
 
 namespace Src;
 
+use DateTime;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -34,7 +36,7 @@ class Octopus extends Root
     public function __construct()
     {
         parent::__construct();
-        $this->api = $this->apis[__CLASS__];
+        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
         $this->combinations();
         $this->requestTariffs();
     }
@@ -177,6 +179,7 @@ class Octopus extends Root
 
     /**
      * @throws DateMalformedStringException
+     * @throws \DateMalformedStringException
      */
     private function datetime($datetime_string): string|null
     {

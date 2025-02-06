@@ -1,12 +1,9 @@
 <?php
-
-
 namespace Src;
 use Energy;
 
-class Component
+class Component extends Root
 {
-
     public float $step_s, $value_install_gbp, $value_maintenance_per_timestep_gbp;
     public string $name;
     public bool $active, $display_result;
@@ -15,7 +12,7 @@ class Component
 
     public function __construct($config, $time, $npv)
     {
-        $this->name = $config['name'] ?? __CLASS__;
+        $this->name = $config['name'] ?? $this->strip_namespace(__NAMESPACE__,__CLASS__);
         if ($this->active = $config['active'] ?? true) {
             $this->time_units = $time->units;
             $this->npv = new Npv($npv);

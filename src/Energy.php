@@ -1,12 +1,6 @@
 <?php
 namespace Src;
 
-enum Types: string {
-    case ACTUAL = 'ACTUAL';
-    case FORECAST = 'FORECAST';
-
-}
-
 class Energy extends Root
 {
     const   int TEMPERATURE_INTERNAL_LIVING_CELSIUS = 20;

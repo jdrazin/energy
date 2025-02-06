@@ -11,6 +11,7 @@ class Component extends Root
     public Npv $npv;
 
     public function __construct($config, $time, $npv) {
+        parent::__construct();
         $this->name = $config['name'] ?? $this->strip_namespace(__NAMESPACE__,__CLASS__);
         if ($this->active = $config['active'] ?? true) {
             $this->time_units = $time->units;

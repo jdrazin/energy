@@ -53,7 +53,8 @@ class EmonCms extends Root
     public function getHeating(): void
     {
         $type = 'MEASURED';
-        $sql = 'INSERT INTO `values` (`entity`, `type`, `datetime`, `value`) VALUES (?, ?, ?, ?)
+        $sql = 'INSERT INTO `values` (`entity`, `type`, `datetime`, `value`) 
+                              VALUES (?,        ?,      ?,          ?      )
                         ON DUPLICATE KEY UPDATE `value` = ?, `timestamp` = NOW()';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssdd', $entity, $type, $mid, $power_w, $power_w)) {
@@ -63,7 +64,7 @@ class EmonCms extends Root
         }
         $entities = [
             'LOAD_HEATING_ELECTRIC_W' => 'electric_energy_kwh',
-            'LOAD_HEATING_THERMAL_W' => 'thermal_energy_kwh'
+            'LOAD_HEATING_THERMAL_W'  => 'thermal_energy_kwh'
         ];
         $now = (new DateTime())->format(Root::MYSQL_FORMAT_DATETIME);
         foreach ($entities as $entity => $entity_id) {

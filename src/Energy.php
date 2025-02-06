@@ -1,6 +1,8 @@
 <?php
 namespace Src;
 
+use Exception;
+
 class Energy extends Root
 {
     const   int TEMPERATURE_INTERNAL_LIVING_CELSIUS = 20;

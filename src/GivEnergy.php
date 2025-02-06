@@ -34,81 +34,63 @@ class GivEnergy extends Root
         CHARGE_DISCHARGE_SLOT_STOP = 10,
         CONTROL_CHARGE_DISCHARGE_SLOT = 1;  // slot number used for control
     private const array ENTITIES_BATTERY_AIO = ['SOLAR_W' => 'solar',
-        'GRID_W' => 'grid',
-        'TOTAL_LOAD_W' => 'consumption'];
+                                                'GRID_W' => 'grid',
+                                                'TOTAL_LOAD_W' => 'consumption'];
 
     private const       EV_POWER_ACTIVE_IMPORT = 13,  // Instantaneous active power imported by EV. (W or kW)
         EV_POWER_ACTIVE_IMPORT_UNIT = 5,   // kW
         EV_METER_ID = 0;   // meter id
-    private const array CONTROL_VALUES = ['Pause Battery' => ['Not Paused' => 0,
-        'Pause Charge' => 1,
-        'Pause Discharge' => 2,
-        'Pause Charge & Discharge' => 3],
-    ];
+    private const array CONTROL_VALUES = [  'Pause Battery'             => ['Not Paused' => 0,
+                                            'Pause Charge'              => 1,
+                                            'Pause Discharge'           => 2,
+                                            'Pause Charge & Discharge'  => 3],
+                                        ];
 
     private const array CHARGE_DIRECTIONS = [
-        'CHARGE',
-        'DISCHARGE'
-    ],
-        PRE_DEFAULTS = [
-        'Pause Battery' => 'Pause Charge & Discharge',
-    ],
+                                            'CHARGE',
+                                            'DISCHARGE'
+                                            ],
+        PRE_DEFAULTS =                      [
+                                            'Pause Battery' => 'Pause Charge & Discharge',
+                                            ],
         DEFAULT_CHARGE_DISCHARGE_BLOCKS = [
-        'CHARGE' => [2 => ['start' => '04:00',
-            'stop' => '07:00',
-            'target_level_percent' => 95],
-            3 => ['start' => '13:00',
-                'stop' => '16:00',
-                'target_level_percent' => 95],
-            4 => ['start' => '22:00',
-                'stop' => '00:00',
-                'target_level_percent' => 95]],
-        'DISCHARGE' => []
-    ],
-        POST_DEFAULTS = [
-        'Enable AC Charge Upper % Limit' => 1,
-        'Enable Eco Mode' => 1,
-        'AC Charge Enable' => 1,
-        'Enable DC Discharge' => 1,
-        'AC Charge Upper % Limit' => 95,
-        'Battery Reserve % Limit' => 5,
-        'Battery Cutoff % Limit' => 5,
-        'Inverter Max Output Active Power Percent' => 100,
-        'Export Power Priority' => 'Load First', // 'Battery First', 'Grid First'
-        'Enable EPS' => 1,
-        'Inverter Charge Power Percentage' => 100,
-        'Inverter Discharge Power Percentage' => 100,
-        'Pause Battery Start Time' => '00:00',
-        'Pause Battery End Time' => '00:00',
-        'Force Off Grid' => 0,            // Isolate from grid
-        'Battery Charge Power' => 6000,
-        'Battery Discharge Power' => 6000,
-        'Pause Battery' => 'Not Paused',
-    ],
-        EV_METER_IDS = [
-        0                  // single meter id=0
-    ],
-        EV_MEASURANDS = [
-        13,                // instantaneous active power imported by EV. (W or kW)
-    ],
-        EV_UNITS = [
-        0 => 'Wh',
-        1 => 'kWh',
-        2 => 'varh',
-        3 => 'kvarh',
-        4 => 'W',
-        5 => 'kW',
-        6 => 'VA',
-        7 => 'kVA',
-        8 => 'var',
-        9 => 'kvar',
-        10 => 'A',
-        11 => 'V',
-        12 => 'Celsius',
-        13 => 'Fahrenheit',
-        14 => 'K',
-        15 => 'Percent'
-    ];
+                                            'CHARGE' => [2 => ['start' => '04:00',
+                                                'stop' => '07:00',
+                                                'target_level_percent' => 95],
+                                                3 => ['start' => '13:00',
+                                                    'stop' => '16:00',
+                                                    'target_level_percent' => 95],
+                                                4 => ['start' => '22:00',
+                                                    'stop' => '00:00',
+                                                    'target_level_percent' => 95]],
+                                            'DISCHARGE' => []
+                                        ],
+        POST_DEFAULTS                   = [
+                                            'Enable AC Charge Upper % Limit' => 1,
+                                            'Enable Eco Mode' => 1,
+                                            'AC Charge Enable' => 1,
+                                            'Enable DC Discharge' => 1,
+                                            'AC Charge Upper % Limit' => 95,
+                                            'Battery Reserve % Limit' => 5,
+                                            'Battery Cutoff % Limit' => 5,
+                                            'Inverter Max Output Active Power Percent' => 100,
+                                            'Export Power Priority' => 'Load First', // 'Battery First', 'Grid First'
+                                            'Enable EPS' => 1,
+                                            'Inverter Charge Power Percentage' => 100,
+                                            'Inverter Discharge Power Percentage' => 100,
+                                            'Pause Battery Start Time' => '00:00',
+                                            'Pause Battery End Time' => '00:00',
+                                            'Force Off Grid' => 0,            // Isolate from grid
+                                            'Battery Charge Power' => 6000,
+                                            'Battery Discharge Power' => 6000,
+                                            'Pause Battery' => 'Not Paused',
+                                        ],
+        EV_METER_IDS                        = [
+                                                0                  // single meter id=0
+                                            ],
+        EV_MEASURANDS                       = [
+                                                13,                // instantaneous active power imported by EV. (W or kW)
+                                            ];
 
     private array $api, $battery, $inverterControlSettings;
 
@@ -183,10 +165,10 @@ class GivEnergy extends Root
     {
         $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/data-points/' . $date;
         $headers = [
-            'Authorization' => 'Bearer ' . $this->api['api_token'],
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ];
+                        'Authorization' => 'Bearer ' . $this->api['api_token'],
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                    ];
         $data_points = [];
         $client = new Client();
         do {                                                    // keep loading until last page
@@ -203,9 +185,11 @@ class GivEnergy extends Root
     private function getEVChargerData($start, $stop): array
     {
         $url = $this->api['base_url'] . '/ev-charger/' . $this->api['ev_charger_uuid'] . '/meter-data/';
-        $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'];
+        $headers = [
+                        'Authorization' => 'Bearer ' . $this->api['api_token'],
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json'
+                    ];
         $data_points = [];
         $client = new Client();
         $query = ['start_time' => $start,
@@ -411,7 +395,7 @@ class GivEnergy extends Root
         $start_datetime = $next_slot['start_datetime'] ?? null;
         $start = $next_slot['start'] ?? null;
         $stop = $next_slot['stop'] ?? null;
-        $direction = $next_slot['direction'] ?? null;
+        $mode = $next_slot['mode'] ?? null;
         $abs_charge_power_w = $next_slot['abs_charge_power_w'] ?? null;
         $target_level_percent = $next_slot['target_level_percent'] ?? null;
         $context = $next_slot['message'] ?? 'no context';
@@ -419,52 +403,54 @@ class GivEnergy extends Root
         (new Root())->logDb('BATTERY', $context . ": counting down $countdown_seconds seconds ...", 'NOTICE');
         (new Root())->logDb('BATTERY', 'sending commands ...', 'NOTICE');
         sleep($countdown_seconds);
-        switch ($direction) {
+        switch ($mode) {
             case 'CHARGE':
-            case 'DISCHARGE':
-            {
-                if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
-                    throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $direction . ': time/power arguments must not be empty'));
-                }
-                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                    ['direction' => $direction,
-                        'start' => $start,
-                        'stop' => $stop,
-                        'abs_charge_power_w' => $abs_charge_power_w,
-                        'target_level_percent' => $target_level_percent,
-                        'message' => $context]);
-                $this->clear_slot($direction == 'CHARGE' ? 'DC Discharge' : 'AC Charge');  // clear other slot direction
-                break;
-            }
-            case 'ECO':
-            { // matches battery discharge power to net load: load - solar (i.e. zero export)
-                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                    ['direction' => 'CHARGE',
-                        'start' => '00:00',
-                        'stop' => '00:00',
-                        'abs_charge_power_w' => self::POST_DEFAULTS['Battery Charge Power'],
-                        'target_level_percent' => self::POST_DEFAULTS['AC Charge Upper % Limit'],
-                        'message' => __FUNCTION__]);
-                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                    ['direction' => 'DISCHARGE',
-                        'start' => '00:00',
-                        'stop' => '00:00',
-                        'abs_charge_power_w' => self::POST_DEFAULTS['Battery Discharge Power'],
-                        'target_level_percent' => self::POST_DEFAULTS['Battery Cutoff % Limit'],
-                        'message' => __FUNCTION__]);
-                $this->command('write', 'Battery Discharge Power', (int)(1000 * $this->battery['max_discharge_kw']), null, __FUNCTION__);
-                break;
-            }
-            case 'IDLE':
-            {
-                $this->clear_slot('AC Charge');     // clear time slots
-                $this->clear_slot('DC Discharge');
-                //            $this->command( 'write', 'Pause Battery',           self::CONTROL_VALUES['Pause Battery']['Pause Charge & Discharge'], null, $context);
-                break;
-            }
-            default:
-            {
-                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Unknown direction: ' . $direction));
+            case 'DISCHARGE': {
+                                if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
+                                    throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
+                                }
+                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
+                                    [
+                                        'mode'                  => $mode,
+                                        'start'                 => $start,
+                                        'stop'                  => $stop,
+                                        'abs_charge_power_w'    => $abs_charge_power_w,
+                                        'target_level_percent'  => $target_level_percent,
+                                        'message'               => $context
+                                    ]);
+                                $this->clear_slot($mode == 'CHARGE' ? 'DC Discharge' : 'AC Charge');  // clear other slot direction
+                                break;
+                            }
+            case 'ECO':     { // matches battery discharge power to net load: load - solar (i.e. zero export)
+                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
+                                    [
+                                        'mode'                  => 'CHARGE',
+                                        'start'                 => '00:00',
+                                        'stop'                  => '00:00',
+                                        'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Charge Power'],
+                                        'target_level_percent'  => self::POST_DEFAULTS['AC Charge Upper % Limit'],
+                                        'message'               => __FUNCTION__
+                                    ]);
+                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
+                                    [
+                                        'mode'                  => 'DISCHARGE',
+                                        'start'                 => '00:00',
+                                        'stop'                  => '00:00',
+                                        'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Discharge Power'],
+                                        'target_level_percent'  => self::POST_DEFAULTS['Battery Cutoff % Limit'],
+                                        'message'               => __FUNCTION__
+                                    ]);
+                                $this->command('write', 'Battery Discharge Power', (int)(1000 * $this->battery['max_discharge_kw']), null, __FUNCTION__);
+                                break;
+                            }
+            case 'IDLE':    {
+                                $this->clear_slot('AC Charge');     // clear time slots
+                                $this->clear_slot('DC Discharge');
+                                //            $this->command( 'write', 'Pause Battery',           self::CONTROL_VALUES['Pause Battery']['Pause Charge & Discharge'], null, $context);
+                                break;
+                            }
+            default: {
+                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Unknown direction: ' . $mode));
             }
         }
     }
@@ -500,13 +486,13 @@ class GivEnergy extends Root
      */
     public function set_charge_discharge_block($slot_number, $settings): void
     {
-        $direction = $settings['direction'];
+        $mode = $settings['mode'];
         $start = $settings['start'];
         $stop = $settings['stop'];
         $abs_charge_power_w = $settings['abs_charge_power_w'] ?? 0;
         $target_level_percent = $settings['target_level_percent'];
         $message = $settings['message'];
-        switch ($direction) {
+        switch ($mode) {
             case 'CHARGE':
             {
                 $type = 'AC Charge';
@@ -525,7 +511,7 @@ class GivEnergy extends Root
             }
             default:
             {
-                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $direction . ': bad direction: ' . $direction));
+                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': bad direction: ' . $mode));
             }
         }
         // set target battery level

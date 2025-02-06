@@ -9,21 +9,21 @@ use GuzzleHttp\Exception\GuzzleException;
 class Octopus extends Root
 {
     const string    URL_BASE_PRODUCTS = 'https://api.octopus.energy/v1/products/',
-        ELECTRICITY_TARIFFS = 'electricity-tariffs/';
+                    ELECTRICITY_TARIFFS = 'electricity-tariffs/';
     const array     DIRECTIONS = [
-        'import' => [
-            'tariffs' => 'tariff_imports',
-            'rates' => 'tariff_rates_import'
-        ],
-        'export' => [
-            'tariffs' => 'tariff_exports',
-            'rates' => 'tariff_rates_export'
-        ]
-    ],
-        RATE_PERS = [
-        'KWH' => 'standard-unit-rates/',
-        'DAY' => 'standing-charges/',
-    ];
+                                    'import' => [
+                                        'tariffs' => 'tariff_imports',
+                                        'rates' => 'tariff_rates_import'
+                                    ],
+                                    'export' => [
+                                        'tariffs' => 'tariff_exports',
+                                        'rates' => 'tariff_rates_export'
+                                    ]
+                                ],
+                    RATE_PERS = [
+                                    'KWH' => 'standard-unit-rates/',
+                                    'DAY' => 'standing-charges/',
+                                ];
 
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api, $tariff_combinations;

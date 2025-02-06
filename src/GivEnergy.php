@@ -158,7 +158,7 @@ class GivEnergy extends Root
         $date = $datetime->format(Root::MYSQL_FORMAT_DATE);
         while ($date <= $today) {
             $this->insertPointsBattery($this->getBatteryData($date));
-            $date = $datetime->add(new DateInterval('P1D'))->format(Root::MYSQL_FORMAT_DATE);
+            $date = $datetime->modify('+1 day')->format(Root::MYSQL_FORMAT_DATE);
         }
     }
 

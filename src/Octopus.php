@@ -8,7 +8,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class Octopus extends Root
 {
-    const string    URL_BASE_PRODUCTS = 'https://api.octopus.energy/v1/products/',
+    const string    URL_BASE_PRODUCTS   = 'https://api.octopus.energy/v1/products/',
                     ELECTRICITY_TARIFFS = 'electricity-tariffs/';
     const array     DIRECTIONS = [
                                     'import' => [

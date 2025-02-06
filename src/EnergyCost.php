@@ -2,6 +2,7 @@
 
 namespace Src;
 
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root

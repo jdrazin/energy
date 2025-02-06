@@ -387,18 +387,18 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function control($next_slot): void
+    public function control($slot_command): void
     {
         /*
          * all slots except 1 must be manually disabled in app or web portal
          */
-    $start_datetime             = $next_slot['start_datetime'] ?? null;
-        $start                  = $next_slot['start'] ?? null;
-        $stop                   = $next_slot['stop'] ?? null;
-        $mode                   = $next_slot['mode'] ?? null;
-        $abs_charge_power_w     = $next_slot['abs_charge_power_w'] ?? null;
-        $target_level_percent   = $next_slot['target_level_percent'] ?? null;
-        $context                = $next_slot['message'] ?? 'no context';
+        $start_datetime         = $slot_command['start_datetime']          ?? null;
+        $start                  = $slot_command['start']                   ?? null;
+        $stop                   = $slot_command['stop']                    ?? null;
+        $mode                   = $slot_command['mode']                    ?? null;
+        $abs_charge_power_w     = $slot_command['abs_charge_power_w']      ?? null;
+        $target_level_percent   = $slot_command['target_level_percent']    ?? null;
+        $context                = $slot_command['message']                 ?? 'no context';
         $countdown_seconds      = $this->countdown_to_start_seconds($start_datetime);
         (new Root())->logDb('BATTERY', $context . ": counting down $countdown_seconds seconds ...", 'NOTICE');
         (new Root())->logDb('BATTERY', 'sending commands ...', 'NOTICE');

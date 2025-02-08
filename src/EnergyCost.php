@@ -34,8 +34,7 @@ class EnergyCost extends Root
                     $grid_kws,
                     $import_gbp_per_kws,
                     $export_gbp_per_kws,
-                    $tariff_combination,
-                    $problem_parameters;
+                    $tariff_combination;
 
     public string $string;
     private int $number_slots;
@@ -53,7 +52,7 @@ class EnergyCost extends Root
         $this->slotDurationHour     = (float)(DbSlots::SLOT_DURATION_MIN / 60);
         $this->number_slots         = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
         $loadImportExports          = $this->loadImportExport();
-        $this->problem_parameters = [
+        $problem_parameters = [
                                         'batteryCapacityKwh'             => $this->config['battery']['initial_raw_capacity_kwh'],
                                         'batteryDepthOfDischargePercent' => $this->config['battery']['permitted_depth_of_discharge_percent'],
                                         'batteryOneWayStorageEfficiency' => $this->config['battery']['inverter']['one_way_storage_efficiency'],
@@ -64,15 +63,15 @@ class EnergyCost extends Root
                                         'batteryMaxDischargeKw'          => $this->config['battery']['max_discharge_kw'],
                                         'importLimitKw'                  => $this->config['energy']['electric']['import']['limit_kw'],
                                         'exportLimitKw'                  => $this->config['energy']['electric']['export']['limit_kw'],
+                                        'batteryEnergyInitialKwh'        => (new GivEnergy())->battery($this->db_slots)['effective_stored_kwh'], // get battery state of charge and extrapolate to beginning of slots
                                         'slotDurationHour'               => $this->slotDurationHour,
                                         'load_kws'                       => $loadImportExports['load_kws'],
-                                        'import_gbp_per_kws'             => $loadImportExports['import_gbp_per_kwhs'],
-                                        'export_gbp_per_kws'             => $loadImportExports['export_gbp_per_kwhs'],
                                         'import_gbp_per_day'             => $loadImportExports['import_gbp_per_day'],
                                         'export_gbp_per_day'             => $loadImportExports['export_gbp_per_day'],
-                                        'batteryEnergyInitialKwh'        => (new GivEnergy())->battery($this->db_slots)['effective_stored_kwh'] // get battery state of charge and extrapolate to beginning of slots
+                                        'import_gbp_per_kws'             => $loadImportExports['import_gbp_per_kwhs'],
+                                        'export_gbp_per_kws'             => $loadImportExports['export_gbp_per_kwhs']
                                     ];
-        if (($json_problem_parameters = json_encode($this->problem_parameters)) ||
+        if (!($json_problem_parameters = json_encode($problem_parameters, JSON_PRETTY_PRINT)) ||
             !file_put_contents(self::JSON_PROBLEM_PARAMETERS, $json_problem_parameters)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
             $this->logDb('MESSAGE', $message, 'FATAL');

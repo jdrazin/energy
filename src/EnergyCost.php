@@ -95,7 +95,7 @@ class EnergyCost extends Root
         $problem = json_decode(file_get_contents( self::DEBUG ? self::JSON_PROBLEM_PARAMETERS_DEBUG : self::JSON_PROBLEM_PARAMETERS), true);
         $command = $this->command($problem);
         $costs = [];
-        $costs['raw'] = $this->costCLI($command, $this->grid_kws);          // calculate pre-optimised cost using load with CLI command
+        $costs['raw'] = $this->costCLI($command, $problem['load_kws']);     // calculate pre-optimised cost using load with CLI command
         $output = shell_exec($command);                                     // execute Python command and capture output
         $result = json_decode($output, true);                     // decode JSON output from Python
         if (!($result['success'] ?? false)) {
@@ -161,30 +161,30 @@ class EnergyCost extends Root
         $this->string = $command;
         $this->strip();
         $this->strip(); // removes PYTHON_SCRIPT_COMMAND
-        $this->batteryCapacityKwh = (float)$this->strip();
-        $this->batteryDepthOfDischargePercent = (float)$this->strip();
-        $this->batteryOneWayStorageEfficiency = (float)$this->strip();
-        $this->batteryWearCostGbpPerKwh = (float)$this->strip();
-        $this->batteryWearRatio = (float)$this->strip();
-        $this->batteryOutOfSpecCostMultiplier = (float)$this->strip();
-        $this->batteryMaxChargeKw = (float)$this->strip();
-        $this->batteryMaxDischargeKw = (float)$this->strip();
-        $this->importLimitKw = (float)$this->strip();
-        $this->exportLimitKw = (float)$this->strip();
-        $this->batteryEnergyInitialKwh = (float)$this->strip();
-        $this->slotDurationHour = (float)$this->strip();
-        $this->number_slots = (int)$this->strip();
+        $this->batteryCapacityKwh               = (float) $this->strip();
+        $this->batteryDepthOfDischargePercent   = (float) $this->strip();
+        $this->batteryOneWayStorageEfficiency   = (float) $this->strip();
+        $this->batteryWearCostGbpPerKwh         = (float) $this->strip();
+        $this->batteryWearRatio                 = (float) $this->strip();
+        $this->batteryOutOfSpecCostMultiplier   = (float) $this->strip();
+        $this->batteryMaxChargeKw               = (float) $this->strip();
+        $this->batteryMaxDischargeKw            = (float) $this->strip();
+        $this->importLimitKw                    = (float) $this->strip();
+        $this->exportLimitKw                    = (float) $this->strip();
+        $this->batteryEnergyInitialKwh          = (float) $this->strip();
+        $this->slotDurationHour                 = (float) $this->strip();
+        $this->number_slots                     = (int) $this->strip();
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $this->import_gbp_per_kws[] = (float)$this->strip();
-            $this->export_gbp_per_kws[] = (float)$this->strip();
-            $this->load_kws[] = (float)$this->strip();
+            $this->import_gbp_per_kws[]         = (float) $this->strip();
+            $this->export_gbp_per_kws[]         = (float) $this->strip();
+            $this->load_kws[]                   = (float) $this->strip();
         }
         return $this->dayCosts($grid_kws);
     }
 
     private function dayCosts($grid_kws): array {                     // calculate cost components
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
-        $battery_level_kwh = $this->batteryEnergyInitialKwh;      // initial battery level
+        $battery_level_kwh = $this->batteryEnergyInitialKwh;          // initial battery level
         $battery_level_mid_kwh = $this->batteryCapacityKwh / 2.0;     // midpoint battery level
         $battery_level_max_kwh = (100.0 + $this->batteryDepthOfDischargePercent) * $this->batteryCapacityKwh / 200.0; // max battery operating level
         $cost_min_per_kwh = 2.0 * $this->batteryWearCostGbpPerKwh / (1.0 + $this->batteryWearRatio);             // minimum wear cost at midpoint level

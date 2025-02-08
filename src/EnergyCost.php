@@ -98,9 +98,8 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, 'FATAL');
             throw new Exception($message);
         }
-        $optimumGridKws = $result['optimumGridKws'];
-        $command = $this->command($optimumGridKws);                         // made CLI with grid solution
-        $costs['optimised'] = $this->costCLI($command, $optimumGridKws);    // calculate optimised cost elements using CLI command
+        // calculate optimised cost elements using CLI command
+        $costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
         if (self::DEBUG) {
             echo 'Php    raw cost: '        . $costs['raw']['cost']         . ' GBP' . PHP_EOL;
             echo 'Python optimised cost: '  . $result['energyCost']         . ' GBP' . PHP_EOL;

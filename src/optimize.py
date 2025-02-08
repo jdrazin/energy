@@ -75,7 +75,7 @@ batteryCapacityKwh              = float(sys.argv[index])
 index += 1
 batteryDepthOfDischargePercent  = float(sys.argv[index])
 index += 1
-batteryOneWayStorageEfficiency    = float(sys.argv[index])
+batteryOneWayStorageEfficiency  = float(sys.argv[index])
 index += 1
 batteryWearCostGbpPerKwh        = float(sys.argv[index])
 index += 1
@@ -91,9 +91,9 @@ importLimitKw                   = float(sys.argv[index])
 index += 1
 exportLimitKw                   = float(sys.argv[index])
 index += 1
-slotDurationHour                = float(sys.argv[index])
-index += 1
 batteryEnergyInitialKwh         = float(sys.argv[index])
+index += 1
+slotDurationHour                = float(sys.argv[index])
 index += 1
 number_slots                    = int  (sys.argv[index])
 index += 1
@@ -104,11 +104,11 @@ tariffImportPerKwhs = []
 tariffExportPerKwhs = []
 i = 0
 while i < number_slots:
-    load_kws   .append(float(sys.argv[index]))
-    index += 1
     tariffImportPerKwhs.append(float(sys.argv[index]))
     index += 1
     tariffExportPerKwhs.append(float(sys.argv[index]))
+    index += 1
+    load_kws   .append(float(sys.argv[index]))
     index += 1
     i+= 1
 
@@ -116,12 +116,12 @@ while i < number_slots:
 gridSlotKwhs = []
 i = 0
 while i < number_slots:
-    gridSlotKwhs.append(float(sys.argv[index]))
+    gridSlotKwhs   .append(float(sys.argv[index]))
     index += 1
     i+= 1
 
 # get cost
-#cost = day_cost(gridSlotKwhs)
+cost = day_cost(gridSlotKwhs)
 
 # optimise
 result = minimize(day_cost, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-10, 'maxiter': 1000000})

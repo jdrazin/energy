@@ -117,9 +117,12 @@ class EnergyCost extends Root
     }
 
     private function makeSlotsArrays($problem): array {
-        foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $serial_parameter) {
-            if ($serial_parameter_value = $problem[$serial_parameter . '_weights'] ?? false) {
-
+        foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {
+            if ($parameter_array = $problem[$parameter_name . '_weights'] ?? false) {
+                $acc = 0.0;
+                foreach ($parameter_array as $hour => $value) {
+                    $acc += $value;
+                }
             }
         }
         return $problem;
@@ -149,7 +152,7 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= $this->argSubstring($import_gbp_per_kwhs [$slot_count]);
             $command .= $this->argSubstring($export_gbp_per_kwhs [$slot_count]);
-            $command .= $this->argSubstring($load_kws           [$slot_count]);
+            $command .= $this->argSubstring($load_kws            [$slot_count]);
         }
         // use load power for first guess
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {

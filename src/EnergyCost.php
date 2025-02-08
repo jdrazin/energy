@@ -7,12 +7,18 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG = false;
+    const bool      DEBUG = true;
     const float     THRESHOLD_POWER_W = 100.0;
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
+
+    const array     SERIAL_PARAMETERS       = [
+                                                'import_gbp_per_kws',
+                                                'export_gbp_per_kws',
+                                                'load_kws'
+                                              ];
 
     // setup parameters
     protected float $batteryCapacityKwh,
@@ -87,7 +93,7 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
-        $problem = json_decode(file_get_contents( self::DEBUG ? self::JSON_PROBLEM_DEBUG : self::JSON_PROBLEM), true);
+        $problem = $this->makeSlotsArrays(json_decode(file_get_contents( self::DEBUG ? self::JSON_PROBLEM_DEBUG : self::JSON_PROBLEM), true));
         $command = $this->command($problem);
         $costs = [];
         $costs['raw'] = $this->costCLI($command, $problem['load_kws']);     // calculate pre-optimised cost using load with CLI command
@@ -108,6 +114,15 @@ class EnergyCost extends Root
         $this->insertOptimumGridInverterKw($optimumGridKws);                // insert for each slot: grid and battery discharge energies (kWh)
         $this->insertSlotNextDayCostEstimates($costs, $slot_command = $this->slotCommands()[0]);
         return $slot_command;
+    }
+
+    private function makeSlotsArrays($problem): array {
+        foreach (self::SERIAL_PARAMETERS as $serial_parameter) {
+            if ($serial_parameter_value = $problem[$serial_parameter] ?? false) {
+
+            }
+        }
+        return $problem;
     }
 
     private function command($problem): string {

@@ -65,11 +65,11 @@ class EnergyCost extends Root
                                         'exportLimitKw'                  => $this->config['energy']['electric']['export']['limit_kw'],
                                         'batteryEnergyInitialKwh'        => (new GivEnergy())->battery($this->db_slots)['effective_stored_kwh'], // get battery state of charge and extrapolate to beginning of slots
                                         'slotDurationHour'               => $this->slotDurationHour,
-                                        'load_kws'                       => $loadImportExports['load_kws'],
                                         'import_gbp_per_day'             => $loadImportExports['import_gbp_per_day'],
                                         'export_gbp_per_day'             => $loadImportExports['export_gbp_per_day'],
                                         'import_gbp_per_kws'             => $loadImportExports['import_gbp_per_kwhs'],
-                                        'export_gbp_per_kws'             => $loadImportExports['export_gbp_per_kwhs']
+                                        'export_gbp_per_kws'             => $loadImportExports['export_gbp_per_kwhs'],
+                                        'load_kws'                       => $loadImportExports['load_kws'],
                                     ];
         if (!($json_problem_parameters = json_encode($problem_parameters, JSON_PRETTY_PRINT)) ||
             !file_put_contents(self::JSON_PROBLEM_PARAMETERS, $json_problem_parameters)) {

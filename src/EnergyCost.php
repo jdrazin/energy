@@ -104,7 +104,6 @@ class EnergyCost extends Root
             echo 'Php    raw cost: '        . $costs['raw']['cost']         . ' GBP' . PHP_EOL;
             echo 'Python optimised cost: '  . $result['energyCost']         . ' GBP' . PHP_EOL;
             echo 'Php    optimised cost: '  . $costs['optimised']['cost']   . ' GBP' . PHP_EOL;
-            echo 'CLI: ' . $command . PHP_EOL;
         }
         $this->insertOptimumGridInverterKw($optimumGridKws);                // insert for each slot: grid and battery discharge energies (kWh)
         $this->insertSlotNextDayCostEstimates($costs, $slot_command = $this->slotCommands()[0]);

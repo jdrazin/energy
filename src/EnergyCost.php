@@ -7,10 +7,10 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root
 {
-    const bool  DEBUG = false;
-    const float THRESHOLD_POWER_W = 100.0;
+    const bool      DEBUG = false;
+    const float     THRESHOLD_POWER_W = 100.0;
 
-    const string PYTHON_SCRIPT_COMMAND = 'python3 /var/www/html/energy/src/optimize.py';
+    const string    PYTHON_SCRIPT_COMMAND = 'python3 /var/www/html/energy/src/optimize.py';
 
     // setup parameters
     protected float $batteryCapacityKwh,

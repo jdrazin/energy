@@ -2,8 +2,6 @@
 
 namespace Src;
 
-use Energy;
-
 require_once __DIR__ . "/Climate.php";
 require_once __DIR__ . "/Energy.php";
 

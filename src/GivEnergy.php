@@ -54,15 +54,15 @@ class GivEnergy extends Root
                                             'Pause Battery' => 'Pause Charge & Discharge',
                                             ],
         DEFAULT_CHARGE_DISCHARGE_BLOCKS = [
-                                            'CHARGE' => [2 => ['start' => '04:00',
-                                                'stop' => '07:00',
-                                                'target_level_percent' => 95],
-                                                3 => ['start' => '13:00',
-                                                    'stop' => '16:00',
-                                                    'target_level_percent' => 95],
-                                                4 => ['start' => '22:00',
-                                                    'stop' => '00:00',
-                                                    'target_level_percent' => 95]],
+                                            'CHARGE' => [   2 => [  'start'                 => '04:00',
+                                                                    'stop'                  => '07:00',
+                                                                    'target_level_percent'  => 95],
+                                                            3 => [  'start'                 => '13:00',
+                                                                    'stop'                  => '16:00',
+                                                                    'target_level_percent'  => 95],
+                                                            4 => [  'start'                 => '22:00',
+                                                                    'stop'                  => '00:00',
+                                                                    'target_level_percent'  => 95]],
                                             'DISCHARGE' => []
                                         ],
         POST_DEFAULTS                   = [
@@ -248,7 +248,7 @@ class GivEnergy extends Root
                               VALUES (?,        ?,      ?,          ?)
                         ON DUPLICATE KEY UPDATE `value` = ?, `timestamp` = NOW()';
         $entity = 'LOAD_EV_W';
-        $type = 'MEASURED';
+        $type   = 'MEASURED';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssdd', $entity, $type, $datetime, $power_w, $power_w)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

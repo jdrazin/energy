@@ -8,13 +8,7 @@ use GuzzleHttp\Exception\GuzzleException;
 class EnergyCost extends Root
 {
     const bool  DEBUG = false;
-    const float DEBUG_BATTERY_LEVEL_PERCENT = 50.0,
-        DEBUG_BATTERY_RAW_CAPACITY_KWH = 13.5,
-        DEBUG_DEPTH_OF_DISCHARGE_PERCENT = 90.0,
-        THRESHOLD_POWER_W = 100.0;
-    const array DEBUG_FIRST_GUESS_KW = [
-        //             0 => 2.0, 8 => 5.8, 9 => 5.9, 10 => 6.0
-    ];
+    const float THRESHOLD_POWER_W = 100.0;
 
     const string PYTHON_SCRIPT_COMMAND = 'python3 /var/www/html/energy/src/optimize.py';
 
@@ -63,14 +57,8 @@ class EnergyCost extends Root
         $this->batteryMaxDischargeKw = $this->config['battery']['max_discharge_kw'];
         $this->importLimitKw = $this->config['energy']['electric']['import']['limit_kw'];
         $this->exportLimitKw = $this->config['energy']['electric']['export']['limit_kw'];
-        if (self::DEBUG) {
-            $this->batteryDepthOfDischargePercent = self::DEBUG_DEPTH_OF_DISCHARGE_PERCENT;
-            $this->batteryCapacityKwh = self::DEBUG_BATTERY_RAW_CAPACITY_KWH;
-            $this->batteryEnergyInitialKwh = $this->batteryCapacityKwh * $this->batteryDepthOfDischargePercent * self::DEBUG_BATTERY_LEVEL_PERCENT / 10000.0;
-        } else {
-            $this->batteryDepthOfDischargePercent = $this->config['battery']['permitted_depth_of_discharge_percent'];
-            $this->batteryCapacityKwh = $this->config['battery']['initial_raw_capacity_kwh'];
-        }
+        $this->batteryDepthOfDischargePercent = $this->config['battery']['permitted_depth_of_discharge_percent'];
+        $this->batteryCapacityKwh = $this->config['battery']['initial_raw_capacity_kwh'];
         $loadImportExports = $this->loadImportExport();
         $this->load_kws = $loadImportExports['load_kws'];
         $this->import_gbp_per_kws = $loadImportExports['import_gbp_per_kwhs'];
@@ -141,15 +129,9 @@ class EnergyCost extends Root
             $command .= $this->argSubstring($this->export_gbp_per_kws[$slot_count]);
         }
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {   // equate grid power to load power (i.e. zero battery power) as first guess
-            if (isset($optimumGridKws[$slot_count])) {
-                $grid_kw = $optimumGridKws[$slot_count];                            // use grid values if provided
-            } elseif (Root::DEBUG && ($first_guess_kw = self::DEBUG_FIRST_GUESS_KW[$slot_count] ?? false)) {
-                $grid_kw = $first_guess_kw;                                         // if no grid array element, use DEBUG array element if exists
-            } else {
-                $grid_kw = $this->load_kws[$slot_count];                            // by default: equate grid power to load power
-            }
-            $this->grid_kws[$slot_count] = $grid_kw;
-            $command .= $this->argSubstring($grid_kw);
+            $grid_kw                         = $optimumGridKws[$slot_count] ?? $this->load_kws[$slot_count];
+            $this->grid_kws[$slot_count]     = $grid_kw;
+            $command                        .= $this->argSubstring($grid_kw);
         }
         return $command;
     }
@@ -323,11 +305,7 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        if (Root::DEBUG) {
-            $battery_kwh = self::DEBUG_BATTERY_LEVEL_PERCENT * self::DEBUG_BATTERY_RAW_CAPACITY_KWH / 100.0;
-        } else {
-            $battery_kwh = $this->batteryEnergyInitialKwh;
-        }
+        $battery_kwh = $this->batteryEnergyInitialKwh;
         foreach ($optimum_grid_kws as $slot => $optimum_grid_kw) {
             $battery_kw = $optimum_grid_kw - $this->load_kws[$slot];
             $battery_kwh += $battery_kw * DbSlots::SLOT_DURATION_MIN / 60;

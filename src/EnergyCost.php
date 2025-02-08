@@ -14,9 +14,9 @@ class EnergyCost extends Root
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
-    const array     HOURLY_WEIGHTING_PARAMETER_NAMES = [
-                                                        'import_gbp_per_kws',
-                                                        'export_gbp_per_kws',
+    const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
+                                                        'import_gbp_per_kwhs',
+                                                        'export_gbp_per_kwhs',
                                                         'load_kws'
                                                        ];
 
@@ -71,8 +71,8 @@ class EnergyCost extends Root
                                         'batteryEnergyInitialKwh'        => (new GivEnergy())->battery($this->db_slots)['effective_stored_kwh'], // get battery state of charge and extrapolate to beginning of slots
                                         'slotDurationHour'               => $this->slotDurationHour,
                                         'numberSlots'                    => $this->number_slots,
-                                        'import_gbp_per_kws'             => $loadImportExports['import_gbp_per_kwhs'],
-                                        'export_gbp_per_kws'             => $loadImportExports['export_gbp_per_kwhs'],
+                                        'import_gbp_per_kwhs'            => $loadImportExports['import_gbp_per_kwhs'],
+                                        'export_gbp_per_kwhs'            => $loadImportExports['export_gbp_per_kwhs'],
                                         'load_kws'                       => $loadImportExports['load_kws'],
                                       ];
         if (!($json_problem = json_encode($problem, JSON_PRETTY_PRINT)) ||
@@ -117,8 +117,8 @@ class EnergyCost extends Root
     }
 
     private function makeSlotsArrays($problem): array {
-        foreach (self::HOURLY_WEIGHTING_PARAMETER_NAMES as $serial_parameter) {
-            if ($serial_parameter_value = $problem[$serial_parameter . '_serial'] ?? false) {
+        foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $serial_parameter) {
+            if ($serial_parameter_value = $problem[$serial_parameter . '_weights'] ?? false) {
 
             }
         }
@@ -143,12 +143,12 @@ class EnergyCost extends Root
         $command .= $this->argSubstring($problem['batteryEnergyInitialKwh']);
         $command .= $this->argSubstring($problem['slotDurationHour']);
         $command .= $this->argSubstring($number_slots = $problem['numberSlots']);
-        $load_kws           = $problem['load_kws'];
-        $import_gbp_per_kws = $problem['import_gbp_per_kws'];
-        $export_gbp_per_kws = $problem['export_gbp_per_kws'];
+        $import_gbp_per_kwhs = $problem['import_gbp_per_kwhs'];
+        $export_gbp_per_kwhs = $problem['export_gbp_per_kwhs'];
+        $load_kws            = $problem['load_kws'];
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $this->argSubstring($import_gbp_per_kws [$slot_count]);
-            $command .= $this->argSubstring($export_gbp_per_kws [$slot_count]);
+            $command .= $this->argSubstring($import_gbp_per_kwhs [$slot_count]);
+            $command .= $this->argSubstring($export_gbp_per_kwhs [$slot_count]);
             $command .= $this->argSubstring($load_kws           [$slot_count]);
         }
         // use load power for first guess

@@ -54,7 +54,7 @@ class EnergyCost extends Root
         $this->slotDurationHour     = (float)(DbSlots::SLOT_DURATION_MIN / 60);
         $this->number_slots         = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
         $loadImportExports          = $this->loadImportExport();
-        $problem_parameters = [
+        $problem_parameters         = [
                                         'batteryCapacityKwh'             => $this->config['battery']['initial_raw_capacity_kwh'],
                                         'batteryDepthOfDischargePercent' => $this->config['battery']['permitted_depth_of_discharge_percent'],
                                         'batteryOneWayStorageEfficiency' => $this->config['battery']['inverter']['one_way_storage_efficiency'],
@@ -68,12 +68,10 @@ class EnergyCost extends Root
                                         'batteryEnergyInitialKwh'        => (new GivEnergy())->battery($this->db_slots)['effective_stored_kwh'], // get battery state of charge and extrapolate to beginning of slots
                                         'slotDurationHour'               => $this->slotDurationHour,
                                         'numberSlots'                    => $this->number_slots,
-                                        'import_gbp_per_day'             => $loadImportExports['import_gbp_per_day'],
-                                        'export_gbp_per_day'             => $loadImportExports['export_gbp_per_day'],
                                         'import_gbp_per_kws'             => $loadImportExports['import_gbp_per_kwhs'],
                                         'export_gbp_per_kws'             => $loadImportExports['export_gbp_per_kwhs'],
                                         'load_kws'                       => $loadImportExports['load_kws'],
-                                    ];
+                                      ];
         if (!($json_problem_parameters = json_encode($problem_parameters, JSON_PRETTY_PRINT)) ||
             !file_put_contents(self::JSON_PROBLEM_PARAMETERS, $json_problem_parameters)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
@@ -107,9 +105,9 @@ class EnergyCost extends Root
         $command = $this->command($optimumGridKws);                         // made CLI with grid solution
         $costs['optimised'] = $this->costCLI($command, $optimumGridKws);    // calculate optimised cost elements using CLI command
         if (self::DEBUG) {
-            echo 'Php    raw cost: ' . $costs['raw']['cost'] . ' GBP' . PHP_EOL;
-            echo 'Python optimised cost: ' . $result['energyCost'] . ' GBP' . PHP_EOL;
-            echo 'Php    optimised cost: ' . $costs['optimised']['cost'] . ' GBP' . PHP_EOL;
+            echo 'Php    raw cost: '        . $costs['raw']['cost']         . ' GBP' . PHP_EOL;
+            echo 'Python optimised cost: '  . $result['energyCost']         . ' GBP' . PHP_EOL;
+            echo 'Php    optimised cost: '  . $costs['optimised']['cost']   . ' GBP' . PHP_EOL;
             echo 'CLI: ' . $command . PHP_EOL;
         }
         $this->insertOptimumGridInverterKw($optimumGridKws);                // insert for each slot: grid and battery discharge energies (kWh)
@@ -135,6 +133,7 @@ class EnergyCost extends Root
         $command .= $this->argSubstring($problem['slotDurationHour']);
         $command .= $this->argSubstring($problem['batteryEnergyInitialKwh']);
         $command .= $this->argSubstring($problem['numberSlots']);
+
         $load_kws           = $problem['load_kws'];
         $import_gbp_per_kws = $problem['import_gbp_per_kws'];
         $export_gbp_per_kws = $problem['export_gbp_per_kws'];
@@ -155,8 +154,8 @@ class EnergyCost extends Root
         //
         // calculates cost using SciPy command line arguments and $grid_kw solution
         //
-        $this->load_kws = [];
-        $this->import_gbp_per_kws = [];
+        $this->load_kws             = [];
+        $this->import_gbp_per_kws   = [];
         $this->export_gbp_per_kws[] = [];
         $this->string = $command;
         $this->strip();
@@ -173,7 +172,7 @@ class EnergyCost extends Root
         $this->exportLimitKw                    = (float) $this->strip();
         $this->batteryEnergyInitialKwh          = (float) $this->strip();
         $this->slotDurationHour                 = (float) $this->strip();
-        $this->number_slots                     = (int) $this->strip();
+        $this->number_slots                     = (int)   $this->strip();
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $this->import_gbp_per_kws[]         = (float) $this->strip();
             $this->export_gbp_per_kws[]         = (float) $this->strip();
@@ -190,10 +189,10 @@ class EnergyCost extends Root
         $cost_min_per_kwh = 2.0 * $this->batteryWearCostGbpPerKwh / (1.0 + $this->batteryWearRatio);             // minimum wear cost at midpoint level
         $cost_grid_import = 0.0;
         $cost_grid_export = 0.0;
-        $cost_wear = 0.0;
+        $cost_wear        = 0.0;
         $cost_out_of_spec = 0.0;
-        $import_kwh = 0.0;
-        $export_kwh = 0.0;
+        $import_kwh       = 0.0;
+        $export_kwh       = 0.0;
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $grid_power_slot_kw = $grid_kws[$slot_count];
             if ($grid_power_slot_kw < -$this->exportLimitKw) {          // clip grid power to import/export limit
@@ -247,12 +246,14 @@ class EnergyCost extends Root
         }
         $cost_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float)$this->number_slots);
         $cost = $cost_grid_import + $cost_grid_export + $cost_wear + $cost_out_of_spec + $cost_level_change;
-        return ['cost' => $cost,
-                'cost_import' => $cost_grid_import,
-                'cost_export' => $cost_grid_export,
-                'cost_wear' => $cost_wear,
-                'import_kwh' => $import_kwh,
-                'export_kwh' => $export_kwh];
+        return [
+                    'cost'          => $cost,
+                    'cost_import'   => $cost_grid_import,
+                    'cost_export'   => $cost_grid_export,
+                    'cost_wear'     => $cost_wear,
+                    'import_kwh'    => $import_kwh,
+                    'export_kwh'    => $export_kwh
+        ];
     }
 
     /**

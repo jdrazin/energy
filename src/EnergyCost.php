@@ -14,11 +14,11 @@ class EnergyCost extends Root
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
-    const array     SERIAL_PARAMETERS       = [
-                                                'import_gbp_per_kws',
-                                                'export_gbp_per_kws',
-                                                'load_kws'
-                                              ];
+    const array     HOURLY_WEIGHTING_PARAMETER_NAMES = [
+                                                        'import_gbp_per_kws',
+                                                        'export_gbp_per_kws',
+                                                        'load_kws'
+                                                       ];
 
     // setup parameters
     protected float $batteryCapacityKwh,
@@ -117,8 +117,8 @@ class EnergyCost extends Root
     }
 
     private function makeSlotsArrays($problem): array {
-        foreach (self::SERIAL_PARAMETERS as $serial_parameter) {
-            if ($serial_parameter_value = $problem[$serial_parameter] ?? false) {
+        foreach (self::HOURLY_WEIGHTING_PARAMETER_NAMES as $serial_parameter) {
+            if ($serial_parameter_value = $problem[$serial_parameter . '_serial'] ?? false) {
 
             }
         }

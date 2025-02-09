@@ -15,10 +15,11 @@ class EnergyCost extends Root
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
     const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
+                                                        'load_kws',
                                                         'import_gbp_per_kwhs',
-                                                        'export_gbp_per_kwhs',
-                                                        'load_kws'
-                                                       ];
+                                                        'export_gbp_per_kwhs'
+                                                      ];
+
 
     // setup parameters
     protected float $batteryCapacityKwh,
@@ -120,19 +121,22 @@ class EnergyCost extends Root
         $number_slots = $problem['numberSlots'];
         foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {
             if ($parameter_array = $problem[$parameter_name . '_weights'] ?? false) {
-                $acc    = 0.0;
-                $values = [];
-                $value  = 0.0;
+                $weight_acc = 0.0;
+                $weights    = [];
+                $weight     = 0.0;
                 for ($slot = 0; $slot < $number_slots; $slot++) {
-                    $value = $parameter_array[$slot/2] ?? $value;
-                    $values[$slot++] = $value;
-                    $values[$slot  ] = $value;
-                    $acc += $value;
+                    $weight = $parameter_array[$slot/2] ?? $weight;
+                    $weights[$slot++] = $weight;
+                    $weights[$slot  ] = $weight;
+                    $weight_acc += $weight;
                 }
-                foreach ($values as $slot => $value) {
-                    $values[$slot] = 0.5 * $value /$acc;
+                if (isset($problem[$parameter_name])) {
+                    $value = $problem[$parameter_name];
+                    foreach ($weights as $slot => $weight) {
+                      $weights[$slot] = round(0.5 * $number_slots * $value * $weight / $weight_acc, 3);
+                    }
                 }
-                $problem[$parameter_name] = $values;
+                $problem[$parameter_name] = $weights;
             }
         }
         return $problem;

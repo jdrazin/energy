@@ -1,0 +1,39 @@
+{
+    "batteryCapacityKwh": 13.5,
+    "batteryDepthOfDischargePercent": 90,
+    "batteryOneWayStorageEfficiency": 0.964,
+    "batteryWearCostGbpPerKwh": 0.03,
+    "batteryWearRatio": 3,
+    "batteryOutOfSpecCostMultiplier": 5000,
+    "batteryMaxChargeKw": 6,
+    "batteryMaxDischargeKw": 6,
+    "importLimitKw": 24,
+    "exportLimitKw": 8,
+    "batteryEnergyInitialKwh": 9.584503995,
+    "slotDurationHour": 0.5,
+    "numberSlots": 48,
+    "import_gbp_per_kwh": 0.25,
+    "export_gbp_per_kwh": 0.15,
+    "load_kw": 2.5,
+    "import_gbp_per_kwhs": 0.025,
+    "export_gbp_per_kwhs": 0.015,
+    "load_kws" : 2.5,
+    "import_gbp_per_kwhs_weights": {
+                 "0": 0.5,
+                 "7": 2,
+                "21": 1,
+                "23": 0.5
+            },
+    "export_gbp_per_kwhs_weights": {
+                 "0": 0.5,
+                 "7": 2,
+                "21": 1,
+                "23": 0.5
+            },
+    "load_kws_weights": {
+                 "0": 0.5,
+                 "7": 2,
+                "21": 1,
+                "23": 0.5
+            }
+}

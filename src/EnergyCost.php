@@ -125,8 +125,8 @@ class EnergyCost extends Root
                 $value  = 0.0;
                 for ($slot = 0; $slot < $number_slots; $slot++) {
                     $value = $parameter_array[$slot/2] ?? $value;
-                    $values[$slot  ] = $value;
                     $values[$slot++] = $value;
+                    $values[$slot  ] = $value;
                     $acc += $value;
                 }
                 foreach ($values as $slot => $value) {

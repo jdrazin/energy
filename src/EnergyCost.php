@@ -117,12 +117,22 @@ class EnergyCost extends Root
     }
 
     private function makeSlotsArrays($problem): array {
+        $number_slots = $problem['numberSlots'];
         foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {
             if ($parameter_array = $problem[$parameter_name . '_weights'] ?? false) {
-                $acc = 0.0;
-                foreach ($parameter_array as $hour => $value) {
+                $acc    = 0.0;
+                $values = [];
+                $value  = 0.0;
+                for ($slot = 0; $slot < $number_slots; $slot++) {
+                    $value = $parameter_array[$slot/2] ?? $value;
+                    $values[$slot  ] = $value;
+                    $values[$slot++] = $value;
                     $acc += $value;
                 }
+                foreach ($values as $slot => $value) {
+                    $values[$slot] = 0.5 * $value /$acc;
+                }
+                $problem[$parameter_name] = $values;
             }
         }
         return $problem;

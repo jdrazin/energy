@@ -31,8 +31,6 @@ class EnergyCost extends Root
                     $batteryMaxDischargeKw,
                     $slotDurationHour,
                     $batteryEnergyInitialKwh,
-                    $import_gbp_per_day,
-                    $export_gbp_per_day,
                     $importLimitKw,
                     $exportLimitKw;
 
@@ -384,6 +382,8 @@ class EnergyCost extends Root
                    SET      `total_load_kw`         = ?,
                             `import_gbp_per_kwh`    = ?,
                             `export_gbp_per_kwh`    = ?,
+                            `import_gbp_per_day`    = NULL,
+                            `export_gbp_per_day`    = NULL,
                             `solar_kw`              = NULL,
                             `load_non_heating_kw`   = NULL,
                             `load_heating_kw`       = NULL     

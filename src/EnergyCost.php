@@ -100,7 +100,7 @@ class EnergyCost extends Root
         $this->problem = $this->makeSlotsArrays(json_decode(file_get_contents( self::DEBUG ? self::JSON_PROBLEM_DEBUG : self::JSON_PROBLEM), true));
         $command = $this->command();
         $this->costs = [];
-        $this->costs['raw'] = $this->costCLI($command, $problem['load_kws']);     // calculate pre-optimised cost using load with CLI command
+        $this->costs['raw'] = $this->costCLI($command, $this->problem['load_kws']);     // calculate pre-optimised cost using load with CLI command
         $output = shell_exec($command);                                     // execute Python command and capture output
         $result = json_decode($output, true);                     // decode JSON output from Python
         if (!($result['success'] ?? false)) {
@@ -171,22 +171,22 @@ class EnergyCost extends Root
         $command .= 'import_gbp_per_kwhs= ';
         $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $this->parameter_name_value($import_gbp_per_kwhs [$slot_count]);
+            $command .= $import_gbp_per_kwhs[$slot_count] . ' ';
         }
         $command .= 'export_gbp_per_kwhs= ';
         $export_gbp_per_kwhs = $this->problem['export_gbp_per_kwhs'];
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $this->parameter_name_value($export_gbp_per_kwhs [$slot_count]);
+            $command .= $export_gbp_per_kwhs[$slot_count] . ' ';
         }
         $command .= 'load_kws= ';
-        $load_kws            = $this->problem['load_kws'];
+        $load_kws = $this->problem['load_kws'];
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $this->parameter_name_value($load_kws            [$slot_count]);
+            $command .= $load_kws[$slot_count] . ' ';
         }
         // use load power for first guess
         $command .= 'FIRST_GUESS_grid_kws= ';
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $this->parameter_name_value($load_kws[$slot_count]);
+            $command .= $load_kws[$slot_count] . ' ';
         }
         return $command;
     }
@@ -340,7 +340,7 @@ class EnergyCost extends Root
     }
 
     protected function parameter_name_value($parameter_name): string {  // make parameter substring
-        return $parameter_name . '= ' . $this->problem[$parameter_name];
+        return $parameter_name . '= ' . $this->problem[$parameter_name] . ' ';
     }
 
     /**

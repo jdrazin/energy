@@ -10,7 +10,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class Solcast extends Root
 {
-    private const bool SKIP = FALSE;
+    private const bool SKIP = TRUE;
     private array $api;
 
     /**

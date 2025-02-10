@@ -70,54 +70,67 @@ def day_cost(grid_kws):
     return cost
 
 # constants
-index = 1
+index =  2
 batteryCapacityKwh              = float(sys.argv[index])
-index += 1
+index += 2
 batteryDepthOfDischargePercent  = float(sys.argv[index])
-index += 1
+index += 2
 batteryOneWayStorageEfficiency  = float(sys.argv[index])
-index += 1
+index += 2
 batteryWearCostGbpPerKwh        = float(sys.argv[index])
-index += 1
+index += 2
 batteryWearRatio                = float(sys.argv[index])
-index += 1
+index += 2
 batteryOutOfSpecCostMultiplier  = float(sys.argv[index])
-index += 1
+index += 2
 batteryMaxChargeRateKw          = float(sys.argv[index])
-index += 1
+index += 2
 batteryMaxDischargeRateKw       = float(sys.argv[index])
-index += 1
+index += 2
 importLimitKw                   = float(sys.argv[index])
-index += 1
+index += 2
 exportLimitKw                   = float(sys.argv[index])
-index += 1
+index += 2
 batteryEnergyInitialKwh         = float(sys.argv[index])
-index += 1
+index += 2
 slotDurationHour                = float(sys.argv[index])
-index += 1
+index += 2
 number_slots                    = int  (sys.argv[index])
-index += 1
 
-# load powerImportExports
-load_kws    = []
+# load import_gbp_per_kwhs
+index += 1
 tariffImportPerKwhs = []
+i = 0
+while i < number_slots:
+    index += 1
+    tariffImportPerKwhs.append(float(sys.argv[index]))
+    i+= 1
+
+# load export_gbp_per_kwhs
+index += 1
 tariffExportPerKwhs = []
 i = 0
 while i < number_slots:
-    tariffImportPerKwhs.append(float(sys.argv[index]))
     index += 1
     tariffExportPerKwhs.append(float(sys.argv[index]))
+    i+= 1
+
+# load load_kws
+index += 1
+load_kws = []
+i = 0
+while i < number_slots:
     index += 1
     load_kws   .append(float(sys.argv[index]))
-    index += 1
     i+= 1
 
 # load initial guesses
+index += 1
 gridSlotKwhs = []
 i = 0
 while i < number_slots:
-    gridSlotKwhs   .append(float(sys.argv[index]))
     index += 1
+    gridSlotKwhs   .append(float(sys.argv[index]))
     i+= 1
 
 # get cost

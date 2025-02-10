@@ -129,7 +129,6 @@ class EnergyCost extends Root
             $this->insertSlotNextDayCostEstimates();
             $this->slotCommands();
             return $this->slotCommands[0];
-
         }
     }
 

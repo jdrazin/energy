@@ -62,7 +62,8 @@ class Octopus extends Root
                 $db_slots->makeDbSlots($tariff_combination);                  // make slots for this tariff combination
                 $this->makeSlotRates($db_slots);                              // make tariffs
                 $powers->estimatePowers($db_slots);                           // forecast slot solar, heating, non-heating and load powers
-                $slot_command = (new EnergyCost($db_slots))->optimise();
+                $energy_cost = new EnergyCost($db_slots);
+                $slot_command = $energy_cost->optimise();
                 if ($tariff_combination['active']) {                          // make battery command
                  //   $giv_energy->control($slot_command);
                 }

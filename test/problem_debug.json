@@ -15,14 +15,16 @@
 
     "load_kws" : 2.5,
     "load_kws_weights": {
-      "0":   0.5,
-      "1":   2.5,
-      "9" :  2.5,
-      "21":  1.5,
-      "23":  1.0
+      "0":   1.0
     },
 
     "import_gbp_per_kwhs_weights": {
+      "0": 1.0,
+      "12": 0.125,
+      "13": 1.0
+    },
+
+    "import_gbp_per_kwhs_weights_old": {
         "0": 0.25,
         "4": 0.125,
         "7": 0.25,
@@ -32,11 +34,8 @@
        "22": 0.125
     },
 
-    "export_gbp_per_kwhs": 0.015,
+    "export_gbp_per_kwhs": 0.0,
     "export_gbp_per_kwhs_weights": {
-         "0": 0.5,
-         "7": 2,
-        "21": 1,
-        "23": 0.5
+         "0": 1
     }
 }

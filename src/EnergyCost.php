@@ -190,7 +190,7 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= $export_gbp_per_kwhs[$slot_count] . ' ';
         }
-        $command .= 'load_kws= ';
+        $command .= 'total_load_kws= ';
         $total_load_kws = $this->problem['total_load_kws'];
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= $total_load_kws[$slot_count] . ' ';

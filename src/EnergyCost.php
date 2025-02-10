@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG = false;
+    const bool      DEBUG = true;
     const float     THRESHOLD_POWER_W = 100.0;
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
@@ -101,7 +101,7 @@ class EnergyCost extends Root
         //
         if (self::DEBUG) {  // use debug JSON and make slot arrays as necessary
            $this->problem           = $this->makeSlotsArrays( json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
-           $this->total_load_kws    = $this->problem['load_kws'];  // get load from problem
+           $this->total_load_kws    = $this->problem['total_load_kws'];  // get load from problem
            $this->insertLoadKwsClean();
         }
         else {

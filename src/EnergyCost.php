@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG = true;
+    const bool      DEBUG = false;
     const float     THRESHOLD_POWER_W = 100.0;
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
@@ -15,7 +15,7 @@ class EnergyCost extends Root
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
     const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
-                                                        'load_kws',
+                                                        'total_load_kws',
                                                         'import_gbp_per_kwhs',
                                                         'export_gbp_per_kwhs'
                                                       ];
@@ -97,10 +97,18 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
-        $this->problem = $this->makeSlotsArrays(json_decode(file_get_contents( self::DEBUG ? self::JSON_PROBLEM_DEBUG : self::JSON_PROBLEM), true));
+        if (self::DEBUG) {  // use debug JSON and make slot arrays as necessary
+           $this->problem = json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG, true));
+           $this->problem = $this->makeSlotsArrays($this->problem);
+           $this->load_kws = $this->problem['load_kws'];  // get load from problem
+        }
+        else {
+            $this->problem = json_decode(file_get_contents(self::JSON_PROBLEM, true));
+            $this->load_kws = $this->total_load_kws();  // get load_kws from db
+        }
         $command = $this->command();
         $this->costs = [];
-        $this->costs['raw'] = $this->costCLI($command, $this->problem['load_kws']);     // calculate pre-optimised cost using load with CLI command
+        $this->costs['raw'] = $this->costCLI($command, $this->grid_kws);    // calculate pre-optimised cost using load with CLI command
         $output = shell_exec($command);                                     // execute Python command and capture output
         $result = json_decode($output, true);                     // decode JSON output from Python
         if (!($result['success'] ?? false)) {
@@ -391,6 +399,28 @@ class EnergyCost extends Root
             $stmt->execute();
         }
         $this->mysqli->commit();
+    }
+
+    private function total_load_kws(): array
+    {
+        $tariff_combination_id = $this->tariff_combination['id'];
+        $sql = 'SELECT      `total_load_kw` 
+                   FROM     `slots`         
+                   WHERE    `tariff_combination` = ?
+                   ORDER BY `slot`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $tariff_combination_id) ||
+            !$stmt->bind_result($total_load_kw) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $total_load_kws = [];
+        while ($stmt->fetch()) {
+            $total_load_kws[] = $total_load_kw;
+        }
+        return $total_load_kws;
     }
 
     private function strip(): string

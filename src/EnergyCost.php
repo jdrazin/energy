@@ -36,7 +36,8 @@ class EnergyCost extends Root
                     $importLimitKw,
                     $exportLimitKw;
 
-    private array   $load_kws,
+    private array   $problem,
+                    $load_kws,
                     $import_gbp_per_kws,
                     $export_gbp_per_kws,
                     $tariff_combination,
@@ -60,7 +61,7 @@ class EnergyCost extends Root
         $this->slotDurationHour     = (float)(DbSlots::SLOT_DURATION_MIN / 60);
         $this->number_slots         = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
         $loadImportExports          = $this->loadImportExport();
-        $problem                    = [
+        $this->problem              = [
                                         'batteryCapacityKwh'             => $this->config['battery']['initial_raw_capacity_kwh'],
                                         'batteryDepthOfDischargePercent' => $this->config['battery']['permitted_depth_of_discharge_percent'],
                                         'batteryOneWayStorageEfficiency' => $this->config['battery']['inverter']['one_way_storage_efficiency'],
@@ -78,7 +79,7 @@ class EnergyCost extends Root
                                         'export_gbp_per_kwhs'            => $loadImportExports['export_gbp_per_kwhs'],
                                         'load_kws'                       => $loadImportExports['load_kws'],
                                       ];
-        if (!($json_problem = json_encode($problem, JSON_PRETTY_PRINT)) ||
+        if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
             !file_put_contents(self::JSON_PROBLEM, $json_problem)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
             $this->logDb('MESSAGE', $message, 'FATAL');
@@ -96,8 +97,8 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
-        $problem = $this->makeSlotsArrays(json_decode(file_get_contents( self::DEBUG ? self::JSON_PROBLEM_DEBUG : self::JSON_PROBLEM), true));
-        $command = $this->command($problem);
+        $this->problem = $this->makeSlotsArrays(json_decode(file_get_contents( self::DEBUG ? self::JSON_PROBLEM_DEBUG : self::JSON_PROBLEM), true));
+        $command = $this->command();
         $this->costs = [];
         $this->costs['raw'] = $this->costCLI($command, $problem['load_kws']);     // calculate pre-optimised cost using load with CLI command
         $output = shell_exec($command);                                     // execute Python command and capture output
@@ -146,35 +147,46 @@ class EnergyCost extends Root
         return $problem;
     }
 
-    private function command($problem): string {
+    private function command(): string {
         //
         // make CLI command string
         //
         $command = self::PYTHON_SCRIPT_COMMAND . ' ';
-        $command .= $this->argSubstring($problem['batteryCapacityKwh']);
-        $command .= $this->argSubstring($problem['batteryDepthOfDischargePercent']);
-        $command .= $this->argSubstring($problem['batteryOneWayStorageEfficiency']);
-        $command .= $this->argSubstring($problem['batteryWearCostGbpPerKwh']);
-        $command .= $this->argSubstring($problem['batteryWearRatio']);
-        $command .= $this->argSubstring($problem['batteryOutOfSpecCostMultiplier']);
-        $command .= $this->argSubstring($problem['batteryMaxChargeKw']);
-        $command .= $this->argSubstring($problem['batteryMaxDischargeKw']);
-        $command .= $this->argSubstring($problem['importLimitKw']);
-        $command .= $this->argSubstring($problem['exportLimitKw']);
-        $command .= $this->argSubstring($problem['batteryEnergyInitialKwh']);
-        $command .= $this->argSubstring($problem['slotDurationHour']);
-        $command .= $this->argSubstring($number_slots = $problem['numberSlots']);
-        $import_gbp_per_kwhs = $problem['import_gbp_per_kwhs'];
-        $export_gbp_per_kwhs = $problem['export_gbp_per_kwhs'];
-        $load_kws            = $problem['load_kws'];
+        $command .= $this->parameter_name_value('batteryCapacityKwh');
+        $command .= $this->parameter_name_value('batteryDepthOfDischargePercent');
+        $command .= $this->parameter_name_value('batteryOneWayStorageEfficiency');
+        $command .= $this->parameter_name_value('batteryWearCostGbpPerKwh');
+        $command .= $this->parameter_name_value('batteryWearRatio');
+        $command .= $this->parameter_name_value('batteryOutOfSpecCostMultiplier');
+        $command .= $this->parameter_name_value('batteryMaxChargeKw');
+        $command .= $this->parameter_name_value('batteryMaxDischargeKw');
+        $command .= $this->parameter_name_value('importLimitKw');
+        $command .= $this->parameter_name_value('exportLimitKw');
+        $command .= $this->parameter_name_value('batteryEnergyInitialKwh');
+        $command .= $this->parameter_name_value('slotDurationHour');
+        $command .= $this->parameter_name_value('numberSlots');
+
+        $number_slots = $this->problem['numberSlots'];
+
+        $command .= 'import_gbp_per_kwhs= ';
+        $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $this->argSubstring($import_gbp_per_kwhs [$slot_count]);
-            $command .= $this->argSubstring($export_gbp_per_kwhs [$slot_count]);
-            $command .= $this->argSubstring($load_kws            [$slot_count]);
+            $command .= $this->parameter_name_value($import_gbp_per_kwhs [$slot_count]);
+        }
+        $command .= 'export_gbp_per_kwhs= ';
+        $export_gbp_per_kwhs = $this->problem['export_gbp_per_kwhs'];
+        for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
+            $command .= $this->parameter_name_value($export_gbp_per_kwhs [$slot_count]);
+        }
+        $command .= 'load_kws= ';
+        $load_kws            = $this->problem['load_kws'];
+        for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
+            $command .= $this->parameter_name_value($load_kws            [$slot_count]);
         }
         // use load power for first guess
+        $command .= 'FIRST_GUESS_grid_kws= ';
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $this->argSubstring($load_kws[$slot_count]);
+            $command .= $this->parameter_name_value($load_kws[$slot_count]);
         }
         return $command;
     }
@@ -327,9 +339,8 @@ class EnergyCost extends Root
         ];
     }
 
-    protected function argSubstring($value): string
-    {  // make argument substring
-        return $value . ' ';
+    protected function parameter_name_value($parameter_name): string {  // make parameter substring
+        return $parameter_name . '= ' . $this->problem[$parameter_name];
     }
 
     /**

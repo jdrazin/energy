@@ -199,26 +199,45 @@ class EnergyCost extends Root
         $this->string = $command;
         $this->strip();
         $this->strip(); // removes PYTHON_SCRIPT_COMMAND
+        $this->strip();
         $this->batteryCapacityKwh               = (float) $this->strip();
+        $this->strip();
         $this->batteryDepthOfDischargePercent   = (float) $this->strip();
+        $this->strip();
         $this->batteryOneWayStorageEfficiency   = (float) $this->strip();
+        $this->strip();
         $this->batteryWearCostGbpPerKwh         = (float) $this->strip();
+        $this->strip();
         $this->batteryWearRatio                 = (float) $this->strip();
+        $this->strip();
         $this->batteryOutOfSpecCostMultiplier   = (float) $this->strip();
+        $this->strip();
         $this->batteryMaxChargeKw               = (float) $this->strip();
+        $this->strip();
         $this->batteryMaxDischargeKw            = (float) $this->strip();
+        $this->strip();
         $this->importLimitKw                    = (float) $this->strip();
+        $this->strip();
         $this->exportLimitKw                    = (float) $this->strip();
+        $this->strip();
         $this->batteryEnergyInitialKwh          = (float) $this->strip();
+        $this->strip();
         $this->slotDurationHour                 = (float) $this->strip();
-
-        $this->load_kws           = [];
-        $this->import_gbp_per_kws = [];
-        $this->export_gbp_per_kws = [];
+        $this->strip();
         $this->number_slots                     = (int)   $this->strip();
+        $this->strip();
+        $this->import_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $this->import_gbp_per_kws[]         = (float) $this->strip();
+        }
+        $this->strip();
+        $this->export_gbp_per_kws = [];
+        for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $this->export_gbp_per_kws[]         = (float) $this->strip();
+        }
+        $this->strip();
+        $this->load_kws           = [];
+        for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $this->load_kws[]                   = (float) $this->strip();
         }
         return $this->dayCosts($grid_kws);

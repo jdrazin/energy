@@ -11,27 +11,18 @@
     "exportLimitKw": 8,
     "batteryEnergyInitialKwh": 9.584503995,
     "slotDurationHour": 0.5,
-    "numberSlots": 48,
 
-    "load_kws" : 2.5,
-    "load_kws_weights": {
+    "number_slots": 48,
+
+    "total_load_kws" : 2.5,
+    "total_load_kws_weights": {
       "0":   1.0
     },
 
     "import_gbp_per_kwhs_weights": {
       "0": 1.0,
-      "12": 0.125,
-      "13": 1.0
-    },
-
-    "import_gbp_per_kwhs_weights_old": {
-        "0": 0.25,
-        "4": 0.125,
-        "7": 0.25,
-       "13": 0.125,
-       "16": 0.5,
-       "19": 0.25,
-       "22": 0.125
+      "10": 0.125,
+      "14": 1.0
     },
 
     "export_gbp_per_kwhs": 0.0,

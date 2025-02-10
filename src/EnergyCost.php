@@ -75,6 +75,8 @@ class EnergyCost extends Root
                                         'batteryEnergyInitialKwh'        => (new GivEnergy())->battery($this->db_slots)['effective_stored_kwh'], // get battery state of charge and extrapolate to beginning of slots
                                         'slotDurationHour'               => $this->slotDurationHour,
                                         'number_slots'                   => $this->number_slots,
+                                        'import_gbp_per_day'             => $loadImportExports['import_gbp_per_day'],
+                                        'export_gbp_per_day'             => $loadImportExports['export_gbp_per_day'],
                                         'import_gbp_per_kwhs'            => $loadImportExports['import_gbp_per_kwhs'],
                                         'export_gbp_per_kwhs'            => $loadImportExports['export_gbp_per_kwhs'],
                                         'load_kws'                       => $loadImportExports['load_kws'],
@@ -360,11 +362,11 @@ class EnergyCost extends Root
             $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
         }
         return [
-                'load_kws' => $load_kws,
-                'import_gbp_per_kwhs' => $import_gbp_per_kwhs,
-                'export_gbp_per_kwhs' => $export_gbp_per_kwhs,
-                'import_gbp_per_day' => $import_gbp_per_day,
-                'export_gbp_per_day' => $export_gbp_per_day
+                'load_kws'              => $load_kws,
+                'import_gbp_per_kwhs'   => $import_gbp_per_kwhs,
+                'export_gbp_per_kwhs'   => $export_gbp_per_kwhs,
+                'import_gbp_per_day'    => $import_gbp_per_day,
+                'export_gbp_per_day'    => $export_gbp_per_day
         ];
     }
 
@@ -555,7 +557,7 @@ class EnergyCost extends Root
     private function insertSlotNextDayCostEstimates(): void
     {
         $slot                   = $this->slotCommands[0]['id'];
-        $standing               = $this->import_gbp_per_day + $this->export_gbp_per_day;
+        $standing               = ($this->problem['import_gbp_per_day'] ?? 0.0) + ($this->problem['export_gbp_per_day'] ?? 0.0);
         $raw                    = $this->costs['raw'];
         $raw_import             = round($raw['cost_import'], 3);
         $raw_export             = round($raw['cost_export'], 3);

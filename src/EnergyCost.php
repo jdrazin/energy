@@ -390,7 +390,7 @@ class EnergyCost extends Root
                    WHERE    `slot`                  = ? AND
                             `tariff_combination`    = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('dddi', $total_load_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $tariff_combination_id) ||
+            !$stmt->bind_param('dddii', $total_load_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $slot, $tariff_combination_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');

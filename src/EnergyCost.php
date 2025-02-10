@@ -20,7 +20,6 @@ class EnergyCost extends Root
                                                         'export_gbp_per_kwhs'
                                                       ];
 
-
     // setup parameters
     protected float $batteryCapacityKwh,
                     $batteryOneWayStorageEfficiency,
@@ -40,7 +39,10 @@ class EnergyCost extends Root
     private array   $load_kws,
                     $import_gbp_per_kws,
                     $export_gbp_per_kws,
-                    $tariff_combination;
+                    $tariff_combination,
+                    $costs;
+
+    public array   $slotCommands;
 
     public string $string;
     private int $number_slots;
@@ -96,8 +98,8 @@ class EnergyCost extends Root
         //
         $problem = $this->makeSlotsArrays(json_decode(file_get_contents( self::DEBUG ? self::JSON_PROBLEM_DEBUG : self::JSON_PROBLEM), true));
         $command = $this->command($problem);
-        $costs = [];
-        $costs['raw'] = $this->costCLI($command, $problem['load_kws']);     // calculate pre-optimised cost using load with CLI command
+        $this->costs = [];
+        $this->costs['raw'] = $this->costCLI($command, $problem['load_kws']);     // calculate pre-optimised cost using load with CLI command
         $output = shell_exec($command);                                     // execute Python command and capture output
         $result = json_decode($output, true);                     // decode JSON output from Python
         if (!($result['success'] ?? false)) {
@@ -106,15 +108,17 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         // calculate optimised cost elements using CLI command
-        $costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
-        if (self::DEBUG) {
-            echo 'Php    raw cost: '        . $costs['raw']['cost']         . ' GBP' . PHP_EOL;
-            echo 'Python optimised cost: '  . $result['energyCost']         . ' GBP' . PHP_EOL;
-            echo 'Php    optimised cost: '  . $costs['optimised']['cost']   . ' GBP' . PHP_EOL;
-        }
+        $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
         $this->insertOptimumGridInverterKw($optimumGridKws);                // insert for each slot: grid and battery discharge energies (kWh)
-        $this->insertSlotNextDayCostEstimates($costs, $slot_command = $this->slotCommands()[0]);
-        return $slot_command;
+        if (self::DEBUG) {
+            echo 'Php    raw cost: '        . $this->costs['raw']['cost']         . ' GBP' . PHP_EOL;
+            echo 'Python optimised cost: '  . $result['energyCost']               . ' GBP' . PHP_EOL;
+            echo 'Php    optimised cost: '  . $this->costs['optimised']['cost']   . ' GBP' . PHP_EOL;
+        }
+        else {
+            $this->insertSlotNextDayCostEstimates();
+        }
+        return $this->slotCommands[0];
     }
 
     private function makeSlotsArrays($problem): array {
@@ -314,11 +318,12 @@ class EnergyCost extends Root
             $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
             $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
         }
-        return ['load_kws' => $load_kws,
-            'import_gbp_per_kwhs' => $import_gbp_per_kwhs,
-            'export_gbp_per_kwhs' => $export_gbp_per_kwhs,
-            'import_gbp_per_day' => $import_gbp_per_day,
-            'export_gbp_per_day' => $export_gbp_per_day
+        return [
+                'load_kws' => $load_kws,
+                'import_gbp_per_kwhs' => $import_gbp_per_kwhs,
+                'export_gbp_per_kwhs' => $export_gbp_per_kwhs,
+                'import_gbp_per_day' => $import_gbp_per_day,
+                'export_gbp_per_day' => $export_gbp_per_day
         ];
     }
 
@@ -369,7 +374,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function slotCommands(): array {
+    private function slotCommands(): void {
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'SELECT          `id`,
                                 `start` AS `start_datetime`,  
@@ -389,7 +394,7 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $slot_commands = [];
+        $this->slotCommands = [];
         while ($stmt->fetch()) {
             $grid_w = (int)(1000.0 * $grid_kw);
             $dod_margin = (100.0 - $this->batteryDepthOfDischargePercent) / 2.0;
@@ -416,16 +421,16 @@ class EnergyCost extends Root
                 $target_level_percent = $target_level_percent_min;
                 $message = '';
             }
-            $slot_commands[] = [
-                                    'id'                    => $id,
-                                    'start_datetime'        => $start_datetime,
-                                    'start'                 => $start,
-                                    'stop'                  => $stop,
-                                    'mode'                  => $mode,
-                                    'abs_charge_power_w'    => $abs_charge_power_w,
-                                    'target_level_percent'  => $target_level_percent,
-                                    'message'               => $mode . $message
-                                ];
+            $this->slotCommands[] = [
+                                        'id'                    => $id,
+                                        'start_datetime'        => $start_datetime,
+                                        'start'                 => $start,
+                                        'stop'                  => $stop,
+                                        'mode'                  => $mode,
+                                        'abs_charge_power_w'    => $abs_charge_power_w,
+                                        'target_level_percent'  => $target_level_percent,
+                                        'message'               => $mode . $message
+                                    ];
         }
         unset($stmt);
         // update slots with command parameteres
@@ -441,36 +446,34 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        foreach ($slot_commands as $slot => $slot_command) {
+        foreach ($this->slotCommands as $slot => $slot_command) {
             $mode                 = $slot_command['mode'];
             $abs_charge_power_w   = $slot_command['abs_charge_power_w'];
             $target_level_percent = $slot_command['target_level_percent'];
             $stmt->execute();
         }
         $this->mysqli->commit();
-        return $slot_commands;
     }
 
     /**
      * @throws Exception
      */
-    private function insertSlotNextDayCostEstimates($costs, $nextSlotParameters): void
+    private function insertSlotNextDayCostEstimates(): void
     {
-        $slot = $nextSlotParameters['id'];
-        $standing = $this->import_gbp_per_day + $this->export_gbp_per_day;
-        $raw = $costs['raw'];
-        $raw_import = round($raw['cost_import'], 3);
-        $raw_export = round($raw['cost_export'], 3);
-        $raw_import_kwh = round($raw['import_kwh'], 3);
-        $raw_export_kwh = round($raw['export_kwh'], 3);
-
-        $optimised = $costs['optimised'];
-        $optimised_import = round($optimised['cost_import'], 3);
-        $optimised_export = round($optimised['cost_export'], 3);
-        $optimised_wear = round($optimised['cost_wear'], 3);
-        $optimised_import_kwh = round($optimised['import_kwh'], 3);
-        $optimised_export_kwh = round($optimised['export_kwh'], 3);
-        $tariff_combination_id = $this->tariff_combination['id'];
+        $slot                   = $this->slotCommands[0]['id'];
+        $standing               = $this->import_gbp_per_day + $this->export_gbp_per_day;
+        $raw                    = $this->costs['raw'];
+        $raw_import             = round($raw['cost_import'], 3);
+        $raw_export             = round($raw['cost_export'], 3);
+        $raw_import_kwh         = round($raw['import_kwh'], 3);
+        $raw_export_kwh         = round($raw['export_kwh'], 3);
+        $optimised              = $this->costs['optimised'];
+        $optimised_import       = round($optimised['cost_import'], 3);
+        $optimised_export       = round($optimised['cost_export'], 3);
+        $optimised_wear         = round($optimised['cost_wear'], 3);
+        $optimised_import_kwh   = round($optimised['import_kwh'], 3);
+        $optimised_export_kwh   = round($optimised['export_kwh'], 3);
+        $tariff_combination_id  = $this->tariff_combination['id'];
         $sql = 'INSERT IGNORE INTO `slot_next_day_cost_estimates` (`slot`, `tariff_combination`, `standing`, `raw_import`, `raw_export`, `raw_import_kwh`, `raw_export_kwh`, `optimised_import`, `optimised_export`, `optimised_wear`, `optimised_import_kwh`, `optimised_export_kwh`)
                                                            VALUES (?,       ?,                   ?,          ?,            ?,            ?,                ?,                ?,                  ?,                  ?,                ?,                      ?                     )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||

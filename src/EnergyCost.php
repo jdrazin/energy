@@ -90,7 +90,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    public function optimise(): array // returns optimum battery charge level for next slot
+    public function optimise(): ?array // returns optimum battery charge level for next slot
     {
         //
         // see https://scipy-lectures.org/advanced/mathematical_optimization/#knowing-your-problem
@@ -98,8 +98,7 @@ class EnergyCost extends Root
         // convex, non-smooth, exact cost
         //
         if (self::DEBUG) {  // use debug JSON and make slot arrays as necessary
-           $this->problem           = json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true);
-           $this->problem           = $this->makeSlotsArrays($this->problem);
+           $this->problem           = $this->makeSlotsArrays( json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
            $this->total_load_kws    = $this->problem['load_kws'];  // get load from problem
            $this->insertLoadKwsClean();
         }
@@ -119,16 +118,19 @@ class EnergyCost extends Root
         }
         // calculate optimised cost elements using CLI command
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
-        $this->insertOptimumGridInverterKw($optimumGridKws);                // insert for each slot: grid and battery discharge energies (kWh)
+        $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
         if (self::DEBUG) {
             echo 'Php    raw cost: '        . $this->costs['raw']['cost']         . ' GBP' . PHP_EOL;
             echo 'Python optimised cost: '  . $result['energyCost']               . ' GBP' . PHP_EOL;
             echo 'Php    optimised cost: '  . $this->costs['optimised']['cost']   . ' GBP' . PHP_EOL;
+            return null;
         }
         else {
             $this->insertSlotNextDayCostEstimates();
+            $this->slotCommands();
+            return $this->slotCommands[0];
+
         }
-        return $this->slotCommands[0];
     }
 
     private function makeSlotsArrays($problem): array {
@@ -374,7 +376,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function insertLoadKwsClean($problem): void
+    private function insertLoadKwsClean(): void
     {
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'UPDATE      `slots` 
@@ -393,11 +395,11 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $number_slots = $problem['number_slots'];
+        $number_slots = $this->problem['number_slots'];
         for ($slot = 0; $slot < $number_slots; $slot++) {
-            $total_load_kw      = $problem['total_load_kws']     [$slot];
-            $import_gbp_per_kwh = $problem['import_gbp_per_kwhs'][$slot];
-            $export_gbp_per_kwh = $problem['export_gbp_per_kwhs'][$slot];
+            $total_load_kw      = $this->problem['total_load_kws']     [$slot];
+            $import_gbp_per_kwh = $this->problem['import_gbp_per_kwhs'][$slot];
+            $export_gbp_per_kwh = $this->problem['export_gbp_per_kwhs'][$slot];
             $stmt->execute();
         }
         $this->mysqli->commit();

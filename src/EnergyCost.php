@@ -37,7 +37,7 @@ class EnergyCost extends Root
                     $exportLimitKw;
 
     private array   $problem,
-                    $load_kws,
+                    $total_load_kws,
                     $import_gbp_per_kws,
                     $export_gbp_per_kws,
                     $tariff_combination,
@@ -74,7 +74,7 @@ class EnergyCost extends Root
                                         'exportLimitKw'                  => $this->config['energy']['electric']['export']['limit_kw'],
                                         'batteryEnergyInitialKwh'        => (new GivEnergy())->battery($this->db_slots)['effective_stored_kwh'], // get battery state of charge and extrapolate to beginning of slots
                                         'slotDurationHour'               => $this->slotDurationHour,
-                                        'numberSlots'                    => $this->number_slots,
+                                        'number_slots'                   => $this->number_slots,
                                         'import_gbp_per_kwhs'            => $loadImportExports['import_gbp_per_kwhs'],
                                         'export_gbp_per_kwhs'            => $loadImportExports['export_gbp_per_kwhs'],
                                         'load_kws'                       => $loadImportExports['load_kws'],
@@ -98,19 +98,20 @@ class EnergyCost extends Root
         // convex, non-smooth, exact cost
         //
         if (self::DEBUG) {  // use debug JSON and make slot arrays as necessary
-           $this->problem = json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG, true));
-           $this->problem = $this->makeSlotsArrays($this->problem);
-           $this->load_kws = $this->problem['load_kws'];  // get load from problem
+           $this->problem           = json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true);
+           $this->problem           = $this->makeSlotsArrays($this->problem);
+           $this->total_load_kws    = $this->problem['load_kws'];  // get load from problem
+           $this->insertLoadKwsClean();
         }
         else {
-            $this->problem = json_decode(file_get_contents(self::JSON_PROBLEM, true));
-            $this->load_kws = $this->total_load_kws();  // get load_kws from db
+            $this->problem          = json_decode(file_get_contents(self::JSON_PROBLEM), true);
+            $this->total_load_kws   = $this->total_load_kws();  // get load_kws from db
         }
         $command = $this->command();
         $this->costs = [];
-        $this->costs['raw'] = $this->costCLI($command, $this->grid_kws);    // calculate pre-optimised cost using load with CLI command
-        $output = shell_exec($command);                                     // execute Python command and capture output
-        $result = json_decode($output, true);                     // decode JSON output from Python
+        $this->costs['raw'] = $this->costCLI($command, $this->total_load_kws);    // calculate pre-optimised cost using load with CLI command
+        $output = shell_exec($command);                                           // execute Python command and capture output
+        $result = json_decode($output, true);                           // decode JSON output from Python
         if (!($result['success'] ?? false)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
             $this->logDb('MESSAGE', $message, 'FATAL');
@@ -131,7 +132,7 @@ class EnergyCost extends Root
     }
 
     private function makeSlotsArrays($problem): array {
-        $number_slots = $problem['numberSlots'];
+        $number_slots = $problem['number_slots'];
         foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {
             if ($parameter_array = $problem[$parameter_name . '_weights'] ?? false) {
                 $weight_acc = 0.0;
@@ -172,9 +173,9 @@ class EnergyCost extends Root
         $command .= $this->parameter_name_value('exportLimitKw');
         $command .= $this->parameter_name_value('batteryEnergyInitialKwh');
         $command .= $this->parameter_name_value('slotDurationHour');
-        $command .= $this->parameter_name_value('numberSlots');
+        $command .= $this->parameter_name_value('number_slots');
 
-        $number_slots = $this->problem['numberSlots'];
+        $number_slots = $this->problem['number_slots'];
 
         $command .= 'import_gbp_per_kwhs= ';
         $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
@@ -244,9 +245,9 @@ class EnergyCost extends Root
             $this->export_gbp_per_kws[]         = (float) $this->strip();
         }
         $this->strip();
-        $this->load_kws           = [];
+        $this->total_load_kws           = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $this->load_kws[]                   = (float) $this->strip();
+            $this->total_load_kws[]                   = (float) $this->strip();
         }
         return $this->dayCosts($grid_kws);
     }
@@ -270,7 +271,7 @@ class EnergyCost extends Root
             } elseif ($grid_power_slot_kw > $this->importLimitKw) {
                 $grid_power_slot_kw = $this->importLimitKw;
             }
-            $load_kw = $this->load_kws[$slot_count];
+            $load_kw = $this->total_load_kws[$slot_count];
             $tariff_import_per_kwh = $this->import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $this->export_gbp_per_kws[$slot_count];
             $energy_grid_kwh = $grid_power_slot_kw * $this->slotDurationHour;
@@ -373,6 +374,38 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
+    private function insertLoadKwsClean($problem): void
+    {
+        $tariff_combination_id = $this->tariff_combination['id'];
+        $sql = 'UPDATE      `slots` 
+                   SET      `total_load_kw`         = ?,
+                            `import_gbp_per_kwh`    = ?,
+                            `export_gbp_per_kwh`    = ?,
+                            `solar_kw`              = NULL,
+                            `load_non_heating_kw`   = NULL,
+                            `load_heating_kw`       = NULL     
+                   WHERE    `slot`                  = ? AND
+                            `tariff_combination`    = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('dddi', $total_load_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $tariff_combination_id) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $number_slots = $problem['number_slots'];
+        for ($slot = 0; $slot < $number_slots; $slot++) {
+            $total_load_kw      = $problem['total_load_kws']     [$slot];
+            $import_gbp_per_kwh = $problem['import_gbp_per_kwhs'][$slot];
+            $export_gbp_per_kwh = $problem['export_gbp_per_kwhs'][$slot];
+            $stmt->execute();
+        }
+        $this->mysqli->commit();
+    }
+
+    /**
+     * @throws Exception
+     */
     private function insertOptimumGridInverterKw($optimum_grid_kws): void
     {
         $tariff_combination_id = $this->tariff_combination['id'];
@@ -391,7 +424,7 @@ class EnergyCost extends Root
         }
         $battery_kwh = $this->batteryEnergyInitialKwh;
         foreach ($optimum_grid_kws as $slot => $optimum_grid_kw) {
-            $battery_kw = $optimum_grid_kw - $this->load_kws[$slot];
+            $battery_kw = $optimum_grid_kw - $this->total_load_kws[$slot];
             $battery_kwh += $battery_kw * DbSlots::SLOT_DURATION_MIN / 60;
             $battery_kw = round($battery_kw, 3);
             $battery_kwh = round($battery_kwh, 3);

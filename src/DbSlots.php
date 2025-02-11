@@ -49,7 +49,7 @@ class DbSlots extends Root
     /**
      * @throws DateMalformedStringException|Exception
      */
-    public function makeDbSlots($tariff_combination): void
+    public function makeDbSlotsNext24hrs($tariff_combination): void
     {
         $this->tariff_combination = $tariff_combination;
         $tariff_combination_id = $this->tariff_combination['id'];

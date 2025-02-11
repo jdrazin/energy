@@ -109,6 +109,25 @@ class Powers extends Root
         $this->updateSlotPowerskW($powers_kw, 'solar_kw');
     }
 
+    public function powersKwAverage($entity, $type, $start, $stop): float
+    {
+        $sql = 'SELECT   AVG(`value`)/1000.0
+                  FROM   `values`
+                  WHERE  `entity` = ? AND
+                         `type`   = ? AND
+                         `datetime` BETWEEN ? AND ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('ssss', $entity, $type, $start, $stop) ||
+            !$stmt->bind_result($power_kw) ||
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        return $power_kw;
+    }
+
     /**
      * @throws Exception
      */

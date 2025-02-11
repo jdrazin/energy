@@ -6,7 +6,7 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
-class Octopus extends Root
+class Optimise extends Root
 {
     const string    URL_BASE_PRODUCTS   = 'https://api.octopus.energy/v1/products/',
                     ELECTRICITY_TARIFFS = 'electricity-tariffs/';
@@ -23,7 +23,12 @@ class Octopus extends Root
                     RATE_PERS = [
                                     'KWH' => 'standard-unit-rates/',
                                     'DAY' => 'standing-charges/',
-                                ];
+                                ],
+                    ENTITIES = [
+                                    'GRID_W'                    => 'grid_kw',
+                                    'SOLAR_W'                   => 'solar_kw',
+                                    'TOTAL_LOAD_W'              => 'total_load_kw'
+                               ];
 
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api, $tariff_combinations;
@@ -59,7 +64,7 @@ class Octopus extends Root
         foreach ($this->tariff_combinations as $tariff_combination) {
             if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
                 (new Root())->LogDb('OPTIMISING', $tariff_combination['name'], 'NOTICE');
-                $db_slots->makeDbSlots($tariff_combination);                  // make slots for this tariff combination
+                $db_slots->makeDbSlotsNext24hrs($tariff_combination);         // make slots for this tariff combination
                 $this->makeSlotRates($db_slots);                              // make tariffs
                 $powers->estimatePowers($db_slots);                           // forecast slot solar, heating, non-heating and load powers
                 $energy_cost = new EnergyCost($db_slots);
@@ -67,6 +72,7 @@ class Octopus extends Root
                 if ($tariff_combination['active']) {                          // make battery command
                  //   $giv_energy->control($slot_command);
                 }
+                $this->makeDbSlotsLast24hrs();                                // make historic slots for last 24 hours
             }
         }
     }
@@ -318,5 +324,65 @@ class Octopus extends Root
             $tariff_codes[$id] = $tariff_code;
         }
         return $tariff_codes;
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function makeDbSlotsLast24hrs(): void {
+        $sql = 'INSERT INTO `slots` (`slot`, `start`, `stop`)
+                    SELECT `slot`  - 48,
+                           `start` - INTERVAL 24 HOUR,
+                           `stop`  - INTERVAL 24 HOUR
+                      FROM `slots`
+                      WHERE `slot` >= 1 AND
+                             NOT `final`
+                      ORDER BY `slot`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_result($slot, $start, $stop) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $slots = [];
+        while ($stmt->fetch()) {
+            $slots[$slot] = [
+                            'start' => $start,
+                            'stop'  => $stop
+                            ];
+        }
+
+        $powers = new Powers();
+        foreach (self::ENTITIES as $entity => $column) {
+            foreach ($slots as $slot => $v) {
+                $v[$slot][$column] = $powers->powersKwAverage($entity, 'MEASURED', $v['start'], $v['stop']);
+            }
+            unset($stmt);
+            $sql = 'UPDATE  `slots` 
+                      SET   `' . $column . '` = ?
+                      WHERE `slot`            = ? AND
+                            NOT `final`';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('di', $value, $slot)) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
+            }
+            foreach ($slots as $slot => $v) {
+                $value = $v[$slot][$column];
+                $stmt->execute();
+            }
+        }
+        $sql = 'UPDATE      `slots` 
+                  SET       `final` = TRUE
+                  WHERE NOT `final`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $this->mysqli->commit();
     }
 }

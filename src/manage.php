@@ -61,7 +61,7 @@ try {
         if (!Root::DEBUG) {
             (new Solcast())->getSolarActualForecast();       // solar actuals & forecasts > 'powers'
         }
-        (new Octopus())->traverseTariffCombinations();       // traverse all tariffs
+        (new Optimise())->traverseTariffCombinations();       // traverse all tariffs
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null, 'NOTICE');
     }
     if (!DEBUG) {

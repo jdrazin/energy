@@ -390,6 +390,16 @@ class Octopus extends Root
                 }
             }
         }
+        $sql = 'DELETE FROM `slots` 
+                  WHERE `final` AND
+                        `slot` >= 0';
+        unset($stmt);
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
         $sql = 'UPDATE      `slots` 
                   SET       `final` = TRUE
                   WHERE NOT `final`';

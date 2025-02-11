@@ -77,7 +77,7 @@ class EnergyCost extends Root
                                         'export_gbp_per_day'             => $loadImportExports['export_gbp_per_day'],
                                         'import_gbp_per_kwhs'            => $loadImportExports['import_gbp_per_kwhs'],
                                         'export_gbp_per_kwhs'            => $loadImportExports['export_gbp_per_kwhs'],
-                                        'load_kws'                       => $loadImportExports['load_kws'],
+                                        'total_load_kws'                 => $loadImportExports['total_load_kws'],
                                       ];
         if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
             !file_put_contents(self::JSON_PROBLEM, $json_problem)) {

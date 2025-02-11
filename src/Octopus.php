@@ -69,10 +69,12 @@ class Octopus extends Root
                 $powers->estimatePowers($db_slots);                           // forecast slot solar, heating, non-heating and load powers
                 $energy_cost = new EnergyCost($db_slots);
                 $slot_command = $energy_cost->optimise();
-                if ($tariff_combination['active']) {                          // make battery command
-                 //   $giv_energy->control($slot_command);
+                if (!EnergyCost::DEBUG) {
+                    if ($tariff_combination['active']) {                       // make battery command
+                        //   $giv_energy->control($slot_command);
+                    }
+                    $this->makeDbSlotsLast24hrs();                             // make historic slots for last 24 hours
                 }
-                $this->makeDbSlotsLast24hrs();                                // make historic slots for last 24 hours
             }
         }
     }

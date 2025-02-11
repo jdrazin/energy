@@ -39,7 +39,7 @@ class EmonCms extends Root
      */
     public function getData(): void
     {
-        if ($this->skip_request(__CLASS__)) {  // skip request if called recently
+        if ($this->skip_request(__NAMESPACE__, __CLASS__)) {  // skip request if called recently
             return;
         }
         $this->getHeating();

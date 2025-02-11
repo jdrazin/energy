@@ -10,7 +10,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class Solcast extends Root
 {
-    private const bool SKIP = true;
+    private const bool SKIP = false;
     private array $api;
 
     /**
@@ -30,7 +30,7 @@ class Solcast extends Root
      */
     public function getSolarActualForecast(): void
     {
-        if (self::SKIP || $this->skip_request(__CLASS__)) { // skip request if called recently
+        if (self::SKIP || $this->skip_request(__NAMESPACE__, __CLASS__)) { // skip request if called recently
             return;
         }
         // $this->insertEnergy(Types::ACTUAL);

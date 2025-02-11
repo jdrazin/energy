@@ -254,8 +254,9 @@ class Root
     /**
      * @throws Exception
      */
-    public function skip_request($class): bool
+    public function skip_request($namespace, $class): bool
     { // returns whether to skip request to prevent throttling
+        $class = $this->strip_namespace($namespace, $class);
         $sql = 'SELECT NOW() < `last_successful_request` + INTERVAL `min_minutes_since_last` MINUTE
                     FROM `requests`
                     WHERE `host` = ?';

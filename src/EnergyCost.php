@@ -246,7 +246,7 @@ class EnergyCost extends Root
             $this->export_gbp_per_kws[]         = (float) $this->strip();
         }
         $this->strip();
-        $this->total_load_kws           = [];
+        $this->total_load_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $this->total_load_kws[]                   = (float) $this->strip();
         }
@@ -346,22 +346,22 @@ class EnergyCost extends Root
         $id = $this->tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $id) ||
-            !$stmt->bind_result($load_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
+            !$stmt->bind_result($total_load_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $load_kw = [];
+        $total_load_kw = [];
         $import_gbp_per_kwh = [];
         $export_gbp_per_kwh = [];
         while ($stmt->fetch()) {
-            $load_kws[] = $load_kw;
+            $total_load_kws[]      = $total_load_kw;
             $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
             $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
         }
         return [
-                'load_kws'              => $load_kws,
+                'total_load_kws'        => $total_load_kws,
                 'import_gbp_per_kwhs'   => $import_gbp_per_kwhs,
                 'export_gbp_per_kwhs'   => $export_gbp_per_kwhs,
                 'import_gbp_per_day'    => $import_gbp_per_day,

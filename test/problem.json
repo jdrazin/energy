@@ -9,13 +9,12 @@
     "batteryMaxDischargeKw": 6,
     "importLimitKw": 24,
     "exportLimitKw": 8,
-    "batteryEnergyInitialKwh": 12.149999999999999,
+    "batteryEnergyInitialKwh": 12.285,
     "slotDurationHour": 0.5,
     "number_slots": 48,
     "import_gbp_per_day": 0.427696,
     "export_gbp_per_day": 0,
     "import_gbp_per_kwhs": [
-        0.129232,
         0.395284,
         0.395284,
         0.395284,
@@ -58,6 +57,7 @@
         0.263523,
         0.263523,
         0.263523,
+        0.129232,
         0.129232,
         0.129232,
         0.129232,
@@ -65,7 +65,6 @@
         0.129232
     ],
     "export_gbp_per_kwhs": [
-        0.1252,
         0.1994,
         0.2156,
         0.2127,
@@ -112,10 +111,10 @@
         0.1174,
         0.1268,
         0.1221,
-        0.1174
+        0.1174,
+        0.1252
     ],
-    "load_kws": [
-        2.97634,
+    "total_load_kws": [
         2.14935,
         3.03987,
         2.26443,
@@ -162,6 +161,7 @@
         4.02666,
         2.8879,
         2.99381,
-        3.28094
+        3.29535,
+        3.5498
     ]
 }

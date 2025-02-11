@@ -217,7 +217,8 @@ class Octopus extends Root
                             `import_gbp_per_day` = ?,
                             `export_gbp_per_day` = ?
                     WHERE   `slot` = ? AND
-                            `tariff_combination` = ?';
+                            `tariff_combination` = ? AND
+                            NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ddddii', $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day, $slot, $tariff_combination_id)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

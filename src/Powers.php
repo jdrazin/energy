@@ -269,7 +269,8 @@ class Powers extends Root
         $sql = 'UPDATE   `slots` 
                    SET   ' . $column . ' = ?
                    WHERE `slot` = ? AND
-                         `tariff_combination` = ?';
+                         `tariff_combination` = ? AND
+                         NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('dii', $power_kw, $slot, $tariff_combination_id)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -347,7 +348,8 @@ class Powers extends Root
     {
         $sql = 'UPDATE      `slots`
                   SET       `total_load_kw` = `load_non_heating_kw` + `load_heating_kw`
-                  WHERE     `tariff_combination` = ? ';
+                  WHERE     `tariff_combination` = ? AND
+                            NOT `final`';
         $tariff_combination_id = $this->db_slots->tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||

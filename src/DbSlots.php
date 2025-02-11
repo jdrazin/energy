@@ -17,7 +17,7 @@ class DbSlots extends Root
     public function __construct()
     {
         parent::__construct();
-        $sql = 'DELETE FROM `slots`';
+        $sql = 'DELETE FROM `slots` WHERE NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -53,8 +53,8 @@ class DbSlots extends Root
     {
         $this->tariff_combination = $tariff_combination;
         $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'INSERT INTO `slots` (`tariff_combination`, `slot`, `start`, `stop`)
-                             VALUES (?,                    ?,      ?,       ?     )
+        $sql = 'INSERT INTO `slots` (`tariff_combination`, `slot`, `start`, `stop`, `final`)
+                             VALUES (?,                    ?,      ?,       ?     , FALSE)
                     ON DUPLICATE KEY UPDATE `slot`                  = ?,
                                             `total_load_kw`         = NULL,
                                             `grid_kw`               = NULL,
@@ -66,7 +66,8 @@ class DbSlots extends Root
                                             `export_gbp_per_day`    = NULL,
                                             `solar_kw`              = NULL,
                                             `load_non_heating_kw`   = NULL,
-                                            `load_heating_kw`       = NULL';
+                                            `load_heating_kw`       = NULL,
+                                            `final`                 = FALSE';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('iisss', $tariff_combination_id, $slot, $start, $stop, $slot)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -105,7 +106,8 @@ class DbSlots extends Root
         $sql = 'SELECT  `id`, `slot`, `start`, `stop`, `start` + INTERVAL CEIL(TIMESTAMPDIFF(SECOND, `start`, `stop`)/2.0) SECOND `mid`
                   FROM  `slots`
                   WHERE `tariff_combination` = ? AND
-                        `slot` IS NOT NULL
+                        `slot` IS NOT NULL AND
+                        NOT `final`
                   ORDER BY `slot` ASC';
         $tariff_combination_id = $tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||

@@ -340,7 +340,8 @@ class EnergyCost extends Root
                             `export_gbp_per_day`
                    FROM     `slots`
                    WHERE    `tariff_combination` = ? AND 
-                            `slot` IS NOT NULL
+                            `slot` IS NOT NULL AND
+                            NOT `final`
                    ORDER BY `slot`';
         $id = $this->tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
@@ -388,7 +389,8 @@ class EnergyCost extends Root
                             `load_non_heating_kw`   = NULL,
                             `load_heating_kw`       = NULL     
                    WHERE    `slot`                  = ? AND
-                            `tariff_combination`    = ?';
+                            `tariff_combination`    = ? AND 
+                            NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('dddii', $total_load_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $slot, $tariff_combination_id) ||
             !$stmt->execute()) {
@@ -417,7 +419,8 @@ class EnergyCost extends Root
                             `battery_charge_kw`  = ?,
                             `battery_level_kwh`  = ?
                    WHERE    `slot`               = ? AND
-                            `tariff_combination` = ?';
+                            `tariff_combination` = ? AND
+                            NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('dddii', $optimum_grid_kw, $battery_kw, $battery_kwh, $slot, $tariff_combination_id) ||
             !$stmt->execute()) {
@@ -442,7 +445,8 @@ class EnergyCost extends Root
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'SELECT      `total_load_kw` 
                    FROM     `slots`         
-                   WHERE    `tariff_combination` = ?
+                   WHERE    `tariff_combination` = ? AND
+                            NOT `final`
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
@@ -480,7 +484,8 @@ class EnergyCost extends Root
                                 `battery_charge_kw`,
                                 `battery_level_kwh`
                     FROM        `slots`
-                    WHERE       `tariff_combination` = ?
+                    WHERE       `tariff_combination` = ? AND
+                                NOT `final`
                     ORDER BY    `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
@@ -535,7 +540,8 @@ class EnergyCost extends Root
                             `abs_charge_power_w`   = ?,
                             `target_level_percent` = ?
                    WHERE    `tariff_combination`   = ? AND
-                            `slot`                 = ?';
+                            `slot`                 = ? AND
+                            NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sdiii', $mode, $abs_charge_power_w, $target_level_percent, $tariff_combination_id, $slot)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

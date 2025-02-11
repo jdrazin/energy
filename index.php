@@ -23,7 +23,10 @@ $app->addRoutingMiddleware();
  * for middleware added after it.
  */
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
-
+$app->get('/example', function (Request $request, Response $response, $args) {
+    $response->getBody()->write('[{"label": "Category1", "value": 10}, {"label": "Category2", "value": 20}]');
+    return $response;
+});
 $app->get('/slots', function (Request $request, Response $response, $args) {
     $energy = new Energy(null);
     $slots = $energy->slots();

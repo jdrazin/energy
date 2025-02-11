@@ -24,6 +24,12 @@ $app->addRoutingMiddleware();
  */
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 
+$app->get('/slots', function (Request $request, Response $response, $args) {
+    $energy = new Energy(null);
+    $slots = $energy->slots();
+    $response->getBody()->write($slots);
+    return $response;
+});
 $app->post('/permute', function (Request $request, Response $response, $args) {
     $config = json_decode((string) $request->getBody(), true);
     $energy = new Energy($config);

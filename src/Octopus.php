@@ -6,7 +6,7 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
-class Optimise extends Root
+class Octopus extends Root
 {
     const string    URL_BASE_PRODUCTS   = 'https://api.octopus.energy/v1/products/',
                     ELECTRICITY_TARIFFS = 'electricity-tariffs/';
@@ -330,14 +330,13 @@ class Optimise extends Root
      * @throws Exception
      */
     private function makeDbSlotsLast24hrs(): void {
-        $sql = 'INSERT INTO `slots` (`slot`, `start`, `stop`)
-                    SELECT `slot`  - 48,
-                           `start` - INTERVAL 24 HOUR,
-                           `stop`  - INTERVAL 24 HOUR
-                      FROM `slots`
-                      WHERE `slot` >= 1 AND
-                             NOT `final`
-                      ORDER BY `slot`';
+        $sql = 'SELECT `slot`  - 48,
+                       `start` - INTERVAL 24 HOUR,
+                       `stop`  - INTERVAL 24 HOUR
+                  FROM `slots`
+                  WHERE `slot` >= 1 AND
+                         NOT `final`
+                  ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($slot, $start, $stop) ||
             !$stmt->execute()) {
@@ -352,17 +351,31 @@ class Optimise extends Root
                             'stop'  => $stop
                             ];
         }
-
+        $sql = 'INSERT INTO `slots` (`slot`, `start`, `stop`)
+                    SELECT `slot`  - 48,
+                           `start` - INTERVAL 24 HOUR,
+                           `stop`  - INTERVAL 24 HOUR
+                      FROM `slots`
+                      WHERE `slot` >= 1 AND
+                             NOT `final`
+                      ORDER BY `slot`';
+        unset($stmt);
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
         $powers = new Powers();
         foreach (self::ENTITIES as $entity => $column) {
             foreach ($slots as $slot => $v) {
-                $v[$slot][$column] = $powers->powersKwAverage($entity, 'MEASURED', $v['start'], $v['stop']);
+                $slots[$slot][$column] = $powers->powersKwAverage($entity, 'MEASURED', $v['start'], $v['stop']);
             }
-            unset($stmt);
             $sql = 'UPDATE  `slots` 
                       SET   `' . $column . '` = ?
                       WHERE `slot`            = ? AND
                             NOT `final`';
+            unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('di', $value, $slot)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -370,13 +383,15 @@ class Optimise extends Root
                 throw new Exception($message);
             }
             foreach ($slots as $slot => $v) {
-                $value = $v[$slot][$column];
-                $stmt->execute();
+                if (!is_null($value = $v[$column])) {
+                     $stmt->execute();
+                }
             }
         }
         $sql = 'UPDATE      `slots` 
                   SET       `final` = TRUE
                   WHERE NOT `final`';
+        unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

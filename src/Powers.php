@@ -109,7 +109,7 @@ class Powers extends Root
         $this->updateSlotPowerskW($powers_kw, 'solar_kw');
     }
 
-    public function powersKwAverage($entity, $type, $start, $stop): float
+    public function powersKwAverage($entity, $type, $start, $stop): ?float
     {
         $sql = 'SELECT   AVG(`value`)/1000.0
                   FROM   `values`

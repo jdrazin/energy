@@ -25,6 +25,35 @@ class Energy extends Root
         parent::__construct();
     }
 
+    public function slots(): string {
+        $sql = 'SELECT  `slot`,
+                        `start`,
+                        `total_load_kw`,
+                        `grid_kw`,
+                        `solar_kw`
+                  FROM  `slots`
+                  WHERE `final`
+                  ORDER BY `slot`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_result($slot, $start, $total_load_kw, $grid_kw, $solar_kw) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $slots = [];
+        while ($stmt->fetch()) {
+            $slots[] = [
+                        'slot'          => $slot,
+                        'start'         => $start,
+                        'total_load_kw' => $total_load_kw,
+                        'grid_kw'       => $grid_kw,
+                        'solar_kw'      => $solar_kw
+                        ];
+        }
+        return json_encode($slots, JSON_PRETTY_PRINT);
+    }
+
     /**
      * @throws Exception
      */

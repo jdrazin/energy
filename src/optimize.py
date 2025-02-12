@@ -20,12 +20,12 @@ def day_cost(grid_kws):
     export_kwh                      = 0.0
     slot_count                      = 0
     while slot_count < number_slots:
-        grid_power_slot_kw    = grid_kws[slot_count]
-        if grid_power_slot_kw  < -exportLimitKw:              # clip grid power to import/export limit
-            grid_power_slot_kw = -exportLimitKw
+        grid_power_slot_kw = grid_kws[slot_count]
+        if grid_power_slot_kw > exportLimitKw:              # clip grid power to import/export limit
+            grid_power_slot_kw = exportLimitKw
         else:
-            if grid_power_slot_kw  > importLimitKw:
-                grid_power_slot_kw = importLimitKw
+            if grid_power_slot_kw < -importLimitKw:
+                grid_power_slot_kw = -importLimitKw
         load_kw               = load_kws[slot_count]
         tariff_import_per_kwh = tariffImportPerKwhs[slot_count]
         tariff_export_per_kwh = tariffExportPerKwhs[slot_count]
@@ -33,16 +33,16 @@ def day_cost(grid_kws):
         load_kwh              = load_kw * slotDurationHour
         #
         # grid
-        if energy_grid_kwh < 0.0:
+        if energy_grid_kwh > 0.0:
             export_kwh       += energy_grid_kwh
-            cost_grid_export += tariff_export_per_kwh * energy_grid_kwh
+            cost_grid_export -= tariff_export_per_kwh * energy_grid_kwh
         else:
-            import_kwh       += energy_grid_kwh
+            import_kwh       += -energy_grid_kwh
             cost_grid_import += tariff_import_per_kwh * energy_grid_kwh
 
         # battery
         battery_charge_kwh           = energy_grid_kwh - load_kwh
-        battery_charge_kw            = grid_power_slot_kw - load_kw
+        battery_charge_kw            = -grid_power_slot_kw - load_kw
         battery_level_kwh           += battery_charge_kwh * batteryOneWayStorageEfficiency
 
         # wear

@@ -73,7 +73,7 @@ class Octopus extends Root
                     if ($tariff_combination['active']) {                       // make battery command
                         //   $giv_energy->control($slot_command);
                     }
-                    $this->makeDbSlotsLast24hrs();                             // make historic slots for last 24 hours
+                    $this->makeDbSlotsLast24hrs($tariff_combination);          // make historic slots for last 24 hours
                 }
             }
         }
@@ -331,7 +331,8 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function makeDbSlotsLast24hrs(): void {
+    private function makeDbSlotsLast24hrs($tariff_combination): void {
+        $tariff_combination_id = $tariff_combination['id'];
         $sql = 'SELECT `slot`  - 48,
                        `start` - INTERVAL 24 HOUR,
                        `stop`  - INTERVAL 24 HOUR
@@ -359,10 +360,12 @@ class Octopus extends Root
                            `stop`  - INTERVAL 24 HOUR
                       FROM `slots`
                       WHERE `slot` >= 1 AND
+                            `tariff_combination` = ? AND
                              NOT `final`
                       ORDER BY `slot`';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('s', $tariff_combination_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');

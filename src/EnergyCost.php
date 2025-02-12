@@ -108,7 +108,7 @@ class EnergyCost extends Root
         }
         $command = $this->command();
         $this->costs = [];
-        $this->costs['raw'] = $this->costCLI($command, $this->total_load_kws);    // calculate pre-optimised cost using load with CLI command
+        $this->costs['raw'] = $this->costCLI($command, -$this->total_load_kws);   // calculate pre-optimised cost using load with CLI command
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
         if (!($result['success'] ?? false)) {
@@ -267,29 +267,30 @@ class EnergyCost extends Root
         $export_kwh       = 0.0;
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $grid_power_slot_kw = $grid_kws[$slot_count];
-            if ($grid_power_slot_kw < -$this->exportLimitKw) {          // clip grid power to import/export limit
-                $grid_power_slot_kw = -$this->exportLimitKw;
-            } elseif ($grid_power_slot_kw > $this->importLimitKw) {
-                $grid_power_slot_kw = $this->importLimitKw;
+            if ($grid_power_slot_kw > $this->exportLimitKw) {          // clip grid power to import/export limit
+                $grid_power_slot_kw = $this->exportLimitKw;
+            }
+            elseif ($grid_power_slot_kw < -$this->importLimitKw) {
+                $grid_power_slot_kw = -$this->importLimitKw;
             }
             $load_kw = $this->total_load_kws[$slot_count];
             $tariff_import_per_kwh = $this->import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $this->export_gbp_per_kws[$slot_count];
-            $energy_grid_kwh = $grid_power_slot_kw * $this->slotDurationHour;
+            $energy_grid_kwh       = $grid_power_slot_kw * $this->slotDurationHour;
             $load_kwh = $load_kw * $this->slotDurationHour;
 
             // grid
-            if ($energy_grid_kwh < 0.0) {
-                $export_kwh += $energy_grid_kwh;
-                $cost_grid_export += $tariff_export_per_kwh * $energy_grid_kwh;
+            if ($energy_grid_kwh > 0.0) {
+                $export_kwh       += $energy_grid_kwh;
+                $cost_grid_export -= $tariff_export_per_kwh * $energy_grid_kwh;
             } else {
-                $import_kwh += $energy_grid_kwh;
+                $import_kwh       += -$energy_grid_kwh;
                 $cost_grid_import += $tariff_import_per_kwh * $energy_grid_kwh;
             }
 
             // battery
             $battery_charge_kwh = $energy_grid_kwh - $load_kwh;
-            $battery_charge_kw = $grid_power_slot_kw - $load_kw;
+            $battery_charge_kw  = -$grid_power_slot_kw - $load_kw;
             $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayStorageEfficiency;
 
             // wear

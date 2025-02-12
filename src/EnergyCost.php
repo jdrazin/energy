@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG = false;
+    const bool      DEBUG = true;
     const float     THRESHOLD_POWER_W = 100.0;
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
@@ -288,11 +288,11 @@ class EnergyCost extends Root
                 $cost_grid_export -= $tariff_export_per_kwh * $energy_grid_kwh;
             } else {
                 $import_kwh       += -$energy_grid_kwh;
-                $cost_grid_import += $tariff_import_per_kwh * $energy_grid_kwh;
+                $cost_grid_import -= $tariff_import_per_kwh * $energy_grid_kwh;
             }
 
             // battery
-            $battery_charge_kwh = $energy_grid_kwh - $load_kwh;
+            $battery_charge_kwh = -$energy_grid_kwh - $load_kwh;
             $battery_charge_kw  = -$grid_power_slot_kw - $load_kw;
             $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayStorageEfficiency;
 

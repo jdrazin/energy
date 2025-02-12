@@ -38,7 +38,7 @@ $app->get('/slots', function (Request $request, Response $response, $args) {
     $energy = new Energy(null);
     $slots = $energy->slots();
     $response->getBody()->write($slots);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->post('/permute', function (Request $request, Response $response, $args) {
     $config = json_decode((string) $request->getBody(), true);

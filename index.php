@@ -19,13 +19,20 @@ $app->addRoutingMiddleware();
  * @param bool                  $logErrorDetails -> Display error details in error log
  * @param LoggerInterface|null  $logger -> Optional PSR-3 Logger
  *
- * Note: This middleware should be added last. It will not handle any exceptions/errors
- * for middleware added after it.
  */
-$errorMiddleware = $app->addErrorMiddleware(true, true, true);
 $app->get('/example', function (Request $request, Response $response, $args) {
-    $response->getBody()->write('[{"label": "Category1", "value": 10}, {"label": "Category2", "value": 20}]');
-    return $response->withHeader('Content-Type', 'application/json');
+    $json_text = '[
+                       ["Employee Name", "Salary"],
+                       ["Mike", 22500], 
+                       ["Bob", 35000],
+                       ["Alice", 44000],
+                       ["Frank", 27000],
+                       ["Floyd", 92000],
+                       ["Fritz", 18500]
+                  ]';
+    $response->getBody()->write($json_text);
+    return $response->withHeader('Content-Type', 'application/json')
+                    ->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->get('/slots', function (Request $request, Response $response, $args) {
     $energy = new Energy(null);
@@ -40,6 +47,6 @@ $app->post('/permute', function (Request $request, Response $response, $args) {
     $response->getBody()->write("Hello!");
     return $response;
 });
-
+$errorMiddleware = $app->addErrorMiddleware(true, true, true);
 // Run app
 $app->run();

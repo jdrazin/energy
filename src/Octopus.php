@@ -393,21 +393,18 @@ class Octopus extends Root
                 }
             }
         }
-        $sql = 'DELETE FROM `slots` 
-                  WHERE `final` AND
-                        `slot` >= 0';
+        $this->mysqli->commit();
+        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `total_load_kw`, `grid_kw`, `solar_kw`) 
+                       (SELECT        TRUE,    `tariff_combination`, `slot`, `start`, `stop`, `total_load_kw`, `grid_kw`, `solar_kw`
+                                      FROM `slots` `s`
+                                      WHERE NOT `final` AND
+                                                `tariff_combination` IN (0, ?)) 
+                                  ON DUPLICATE KEY UPDATE `total_load_kw` = `s`.`total_load_kw`, 
+                                                          `grid_kw`       = `s`.`grid_kw`,
+                                                          `solar_kw`      = `s`.`solar_kw`';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        $sql = 'UPDATE      `slots` 
-                  SET       `final` = TRUE
-                  WHERE NOT `final`';
-        unset($stmt);
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $tariff_combination_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');

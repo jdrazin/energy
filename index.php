@@ -23,7 +23,7 @@ $app->addRoutingMiddleware();
 $app->get('/example', function (Request $request, Response $response, $args) {
     $json_text = '[
                        ["Employee Name", "Salary"],
-                       ["Mike", 22500], 
+                       ["Mick", 22500], 
                        ["Bob", 35000],
                        ["Alice", 44000],
                        ["Frank", 27000],

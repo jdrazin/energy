@@ -38,20 +38,27 @@
             }
             var options = {
                 title: 'Next and previous 24hrs',
-                width: 1200,
+                width: 1800,
                 height: 800,
            //     fill: '#000000',
            //     backgroundColor: '#A4E4E4',
                 lineWidth: 5,
                 series: {
-                    0: { lineWidth: 5 },
-                    1: { lineWidth: 2 },
-                    2: { lineWidth: 5 },
-                    3: { lineWidth: 2 },
-                    4: { lineWidth: 5 },
-                    5: { lineWidth: 2 },
+                    0: { lineWidth: 5 },  // total_load_kw
+                    1: { lineWidth: 2 },  // PREV total_load_kw
+                    2: { lineWidth: 5 },  // grid_kw
+                    3: { lineWidth: 2 },  // PREV grid_kw
+                    4: { lineWidth: 5 },  // solar_kw
+                    5: { lineWidth: 2 },  // PREV solar_kw
                 },
-                colors: ['#0000aa', '#0000aa', '#008800', '#008800', '#e49307', '#e49307'],
+                colors: [
+                            '#4fbba9',    // total_load_kw
+                            '#4fbba9',    // PREV total_load_kw
+                            '#e02f25',    // grid_kw
+                            '#e02f25',    // PREV grid_kw
+                            '#e49307',    // solar_kw
+                            '#e49307'     // PREV solar_kw
+                        ],
                 is3D: false,
                 hAxis:	{
                     format: 'HH:mm',

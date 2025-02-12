@@ -39,6 +39,19 @@
                 title: 'Next and previous 24hrs',
                 width: 1200,
                 height: 800,
+           //     fill: '#000000',
+           //     backgroundColor: '#A4E4E4',
+                lineWidth: 5,
+                series: {
+                    0: { lineWidth: 5 },
+                    1: { lineWidth: 2 },
+                    2: { lineWidth: 5 },
+                    3: { lineWidth: 2 },
+                    4: { lineWidth: 5 },
+                    5: { lineWidth: 2 },
+                },
+                colors: ['#0000aa', '#0000aa', '#008800', '#008800', '#e49307', '#e49307'],
+                is3D: false,
                 hAxis:	{
                     format: 'HH:mm',
                     gridlines: {count: 24}

@@ -1,0 +1,59 @@
+<html>
+<head>
+    <!--Load the AJAX API-->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+
+        // Load the Visualization API and the corechart package.
+        google.charts.load('current', {'packages':['corechart']});
+
+        // Set a callback to run when the Google Visualization API is loaded.
+        google.charts.setOnLoadCallback(fetchData);
+
+        // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
+        function fetchData() {
+            fetch('http://192.168.1.14/slots')
+                .then(response => response.text()) // First get response as text
+                .then(text => {
+                    if (!text) throw new Error("Empty response from server");
+                    return JSON.parse(text);
+                })
+                .then(data => drawChart(data))
+                .catch(error => console.error('Error fetching data:', error));
+        }
+        function drawChart(data) {
+            var timeSeries = new google.visualization.DataTable();
+            timeSeries.addColumn('date',   'Time of day');
+            timeSeries.addColumn('number', 'total_load_kw');
+            timeSeries.addColumn('number', 'PREV total_load_kw');
+            timeSeries.addColumn('number', 'grid_kw');
+            timeSeries.addColumn('number', 'PREV grid_kw');
+            timeSeries.addColumn('number', 'solar_kw');
+            timeSeries.addColumn('number', 'PREV solar_kw');
+            var row;
+            for (var item = 1; item < data.length; item++) {
+                row = data[item];
+                timeSeries.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6]]);
+            }
+            var options = {
+                title: 'Next and previous 24hrs',
+                width: 1200,
+                height: 800,
+                hAxis:	{
+                    format: 'HH:mm',
+                    gridlines: {count: 24}
+                },
+                vAxis:	{
+                    gridlines: {color: 'none'},
+                    minValue: 0
+                }
+            };
+            var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+            chart.draw(timeSeries, options);
+        }
+    </script>
+</head>
+<body>
+<div id="chart_div"></div>
+</body>
+</html>

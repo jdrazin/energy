@@ -108,8 +108,7 @@ class EnergyCost extends Root
         }
         $command = $this->command();
         $this->costs = [];
-        // match pre-optimised first guess to total load
-        $grid_kws = array_map(function ($total_load_kw) {
+        $grid_kws = array_map(function ($total_load_kw) {                         // match pre-optimised first guess to total load
             return -$total_load_kw;
         }, $this->total_load_kws);
         $this->costs['raw'] = $this->costCLI($command, $grid_kws);

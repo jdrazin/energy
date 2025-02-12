@@ -50,7 +50,7 @@ class Energy extends Root
             throw new Exception($message);
         }
         $slots = [];
-  //      $slots[]     = ['datetime', 'total_load_kw', 'previous_load_kw',     'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
+        $slots[]     = ['unix_timestamp', 'total_load_kw', 'previous_load_kw',     'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
         while ($stmt->fetch()) {
             $slots[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
         }

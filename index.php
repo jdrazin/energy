@@ -25,13 +25,13 @@ $app->addRoutingMiddleware();
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 $app->get('/example', function (Request $request, Response $response, $args) {
     $response->getBody()->write('[{"label": "Category1", "value": 10}, {"label": "Category2", "value": 20}]');
-    return $response;
+    return $response->withHeader('Content-Type', 'application/json');
 });
 $app->get('/slots', function (Request $request, Response $response, $args) {
     $energy = new Energy(null);
     $slots = $energy->slots();
     $response->getBody()->write($slots);
-    return $response;
+    return $response->withHeader('Content-Type', 'application/json');
 });
 $app->post('/permute', function (Request $request, Response $response, $args) {
     $config = json_decode((string) $request->getBody(), true);

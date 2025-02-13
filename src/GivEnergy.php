@@ -282,7 +282,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function battery($db_slots): array
+    public function batteryLevel($db_slots): array
     {
         //
         // return effective battery level and capacity for input to optimiser
@@ -312,7 +312,7 @@ class GivEnergy extends Root
         }
         $raw_stored_min_kwh = (1.0 - $permitted_depth_of_discharge) * $initial_raw_capacity_kwh / 2.0;
         $effective_stored_now_kwh = $raw_stored_now_kwh - $raw_stored_min_kwh;
-        $energy_now_to_start_kwh = -($battery_power_now_w * ((float)$time_now_start_s) / \Src\Energy::JOULES_PER_KWH);
+        $energy_now_to_start_kwh = -($battery_power_now_w * ((float)$time_now_start_s) / Energy::JOULES_PER_KWH);
         $effective_stored_start_kwh = $effective_stored_now_kwh + $energy_now_to_start_kwh;
         $raw_stored_max_kwh = (1.0 + $permitted_depth_of_discharge) * $initial_raw_capacity_kwh / 2.0;
         if ($effective_stored_start_kwh > $raw_stored_max_kwh) {   // limit state of charge to within effective range
@@ -321,7 +321,7 @@ class GivEnergy extends Root
             $effective_stored_start_kwh = $raw_stored_min_kwh;
         }
         return ['effective_stored_kwh' => $effective_stored_start_kwh,
-            'effective_capacity_kwh' => $effective_capacity_kwh];
+                'effective_capacity_kwh' => $effective_capacity_kwh];
     }
 
     /**

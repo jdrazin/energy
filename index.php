@@ -26,6 +26,18 @@ $app->get('/slots', function (Request $request, Response $response) {
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
+$app->get('/status', function (Request $request, Response $response) {
+    $energy = new Energy(null);
+    $slots = $energy->status();
+    $response->getBody()->write($slots);
+    return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
+});
+$app->get('/tariffs', function (Request $request, Response $response) {
+    $energy = new Energy(null);
+    $slots = $energy->tariffs();
+    $response->getBody()->write($slots);
+    return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
+});
 $app->post('/permute', function (Request $request, Response $response) {
     $config = json_decode((string) $request->getBody(), true);
     $energy = new Energy($config);

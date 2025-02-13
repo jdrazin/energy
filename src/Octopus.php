@@ -49,7 +49,7 @@ class Octopus extends Root
      * @throws Exception
      * @throws GuzzleException
      */
-    public function traverseTariffCombinations($cron): void {
+    public function traverseTariffs($cron): void {
         $this->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
         $db_slots   = new DbSlots();                                            // make day slots
         if (!EnergyCost::DEBUG) {                                               // bypass empirical data if in DEBUG mode

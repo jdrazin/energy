@@ -136,10 +136,10 @@ class EnergyCost extends Root
         }
         // calculate optimised cost elements using CLI command
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
+        echo 'Php    raw cost: '        . round($this->costs['raw']['cost'],       2) . ' GBP' . PHP_EOL;
+        echo 'Python optimised cost: '  . round($result['energyCost'],             2) . ' GBP' . PHP_EOL;
+        echo 'Php    optimised cost: '  . round($this->costs['optimised']['cost'], 2) . ' GBP' . PHP_EOL;
         if (self::DEBUG_MINIMISER) {
-            echo 'Php    raw cost: '        . round($this->costs['raw']['cost'],       2) . ' GBP' . PHP_EOL;
-            echo 'Python optimised cost: '  . round($result['energyCost'],             2) . ' GBP' . PHP_EOL;
-            echo 'Php    optimised cost: '  . round($this->costs['optimised']['cost'], 2) . ' GBP' . PHP_EOL;
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
             foreach ($this->total_load_kws as $k => $v) {

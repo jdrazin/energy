@@ -303,7 +303,7 @@ class EnergyCost extends Root
 
             // wear
             if (($battery_level_max_mid_kwh = ($battery_level_max_kwh - $battery_level_mid_kwh)) > 0.0) {
-                $battery_level_wear_fraction = abs($battery_level_kwh - $battery_level_mid_kwh) / $battery_level_max_mid_kwh;
+                $battery_level_wear_fraction = ($battery_level_kwh - $battery_level_mid_kwh) / $battery_level_max_mid_kwh;
                 if ($battery_level_wear_fraction <= 1.0) {    // wear
                     $cost_wear += $cost_min_per_kwh * abs($battery_charge_kwh) * (1.0 + $this->batteryWearRatio * $battery_level_wear_fraction);
                 } else {                                        // out of spec

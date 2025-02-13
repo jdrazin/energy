@@ -55,10 +55,10 @@ class EnergyCost extends Root
         $this->slotDurationHour     = (float)(DbSlots::SLOT_DURATION_MIN / 60);
         $this->number_slots         = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
         if (!self::DEBUG_MINIMISER) {
-            $this->batteryEnergyInitialKwh = $batteryInitialKwh;
-            $this->db_slots             = $db_slots;
-            $this->tariff_combination   = $this->db_slots->tariff_combination;
-            $loadImportExports          = $this->loadImportExport();
+            $this->batteryEnergyInitialKwh  = $batteryInitialKwh;
+            $this->db_slots                 = $db_slots;
+            $this->tariff_combination       = $this->db_slots->tariff_combination;
+            $loadImportExports              = $this->loadImportExport();
         }
         else {
             $loadImportExports          = [

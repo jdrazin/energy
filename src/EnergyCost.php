@@ -3,11 +3,10 @@
 namespace Src;
 
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG_MINIMISER = true;
+    const bool      DEBUG_MINIMISER = false;
     const float     THRESHOLD_POWER_W = 100.0;
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
@@ -137,7 +136,7 @@ class EnergyCost extends Root
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
             foreach ($this->total_load_kws as $k => $v) {
-                echo $k . ':             ' . round($this->total_load_kws[$k], 3) . ', ' . round($optimumGridKws[$k], 3) . PHP_EOL;
+                echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->total_load_kws[$k], 3) . ', ' . round($optimumGridKws[$k], 3) . PHP_EOL;
             }
             return null;
         }
@@ -448,7 +447,7 @@ class EnergyCost extends Root
         }
         $battery_kwh = $this->batteryEnergyInitialKwh;
         foreach ($optimum_grid_kws as $slot => $optimum_grid_kw) {
-            $battery_kw = $optimum_grid_kw - $this->total_load_kws[$slot];
+            $battery_kw = -$optimum_grid_kw - $this->total_load_kws[$slot];
             $battery_kwh += $battery_kw * DbSlots::SLOT_DURATION_MIN / 60;
             $battery_kw = round($battery_kw, 3);
             $battery_kwh = round($battery_kwh, 3);

@@ -302,13 +302,11 @@ class EnergyCost extends Root
             $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayStorageEfficiency;
 
             // wear
-            if (($battery_level_max_mid_kwh = ($battery_level_max_kwh - $battery_level_mid_kwh)) > 0.0) {
-                $battery_level_wear_fraction = ($battery_level_kwh - $battery_level_mid_kwh) / $battery_level_max_mid_kwh;
-                if ($battery_level_wear_fraction <= 1.0) {    // wear
-                    $cost_wear += $cost_min_per_kwh * abs($battery_charge_kwh) * (1.0 + $this->batteryWearRatio * $battery_level_wear_fraction);
-                } else {                                        // out of spec
-                    $cost_out_of_spec += $cost_min_per_kwh * abs($battery_charge_kwh) * ($this->batteryWearRatio + ($battery_level_wear_fraction - 1.0) * $this->batteryOutOfSpecCostMultiplier);
-                }
+            $battery_level_wear_fraction = abs($battery_level_kwh - $battery_level_mid_kwh) / ($battery_level_max_kwh - $battery_level_mid_kwh);
+            if ($battery_level_wear_fraction <= 1.0) {    // wear
+                $cost_wear += $cost_min_per_kwh * abs($battery_charge_kwh) * (1.0 + $this->batteryWearRatio * $battery_level_wear_fraction);
+            } else {                                        // out of spec
+                $cost_out_of_spec += $cost_min_per_kwh * abs($battery_charge_kwh) * ($this->batteryWearRatio + ($battery_level_wear_fraction - 1.0) * $this->batteryOutOfSpecCostMultiplier);
             }
 
             // out of spec power
@@ -513,9 +511,9 @@ class EnergyCost extends Root
             $target_level_percent_min = $dod_margin;
             $target_level_percent_max = 100.0 - $dod_margin;
             if ($battery_charge_kw > 0.0) {  // CHARGE
-                $charge_power_w = (int)round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
+                $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
             } else {                           // DISCHARGE
-                $charge_power_w = (int)round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
+                $charge_power_w = (int) round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
             }
             if (abs($grid_w) < self::THRESHOLD_POWER_W) {                                 // ECO if no appreciable import/export
                 $mode = 'ECO';
@@ -525,7 +523,7 @@ class EnergyCost extends Root
             } elseif (abs($charge_power_w) > self::THRESHOLD_POWER_W) {                   // CHARGE, DISCHARGE when above threshold charge power
                 $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
                 $abs_charge_power_w = abs($charge_power_w);
-                $target_level_percent = (int)round(min(max(round(100.0 * $target_level_kwh / $this->batteryCapacityKwh), $target_level_percent_min), $target_level_percent_max));
+                $target_level_percent = (int) round(min(max(round(100.0 * $target_level_kwh / $this->batteryCapacityKwh), $target_level_percent_min), $target_level_percent_max));
                 $message = '@' . round($abs_charge_power_w) . 'W to ' . $target_level_percent . '% between ' . $start . ' and ' . $stop;
             } else {                                                                       // otherwise IDLE
                 $mode = 'IDLE';

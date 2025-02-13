@@ -49,9 +49,8 @@ class EnergyCost extends Root
 
     /**
      * @throws Exception
-     * @throws GuzzleException
      */
-    public function __construct($db_slots)
+    public function __construct($db_slots, $batteryInitialKwh)
     {
         parent::__construct();
         $this->db_slots             = $db_slots;
@@ -70,7 +69,7 @@ class EnergyCost extends Root
                                         'batteryMaxDischargeKw'          => $this->config['battery']['max_discharge_kw'],
                                         'importLimitKw'                  => $this->config['energy']['electric']['import']['limit_kw'],
                                         'exportLimitKw'                  => $this->config['energy']['electric']['export']['limit_kw'],
-                                        'batteryEnergyInitialKwh'        => (new GivEnergy())->battery($this->db_slots)['effective_stored_kwh'], // get battery state of charge and extrapolate to beginning of slots
+                                        'batteryEnergyInitialKwh'        => $batteryInitialKwh,
                                         'slotDurationHour'               => $this->slotDurationHour,
                                         'number_slots'                   => $this->number_slots,
                                         'import_gbp_per_day'             => $loadImportExports['import_gbp_per_day'],

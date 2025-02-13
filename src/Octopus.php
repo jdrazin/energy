@@ -51,30 +51,33 @@ class Octopus extends Root
      */
     public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
-        $db_slots = new DbSlots();                                              // make day slots
-        $powers   = new Powers();
         if (!EnergyCost::DEBUG) {                                                // bypass empirical data if in DEBUG mode
-            // (new GivEnergy())->initialise();
-            (new GivEnergy())->getData();                                        // grid, total_load, solar (yesterday, today) > `values`
+            $db_slots  = new DbSlots();                                           // make day slots
+            $powers    = new Powers();
+            $givenergy = new GivEnergy();
+            // $givenergy->initialise();
+            $givenergy->getData();                                               // grid, total_load, solar (yesterday, today) > `values`
             (new EmonCms())->getData();                                          // home heating and temperature > `values`
             $powers->makeHeatingPowerLookupDaySlotExtTemp();                     // make heating power look up table vs dayslot and external temperature
             (new Solcast())->getSolarActualForecast();                           // solar actuals & forecasts > 'powers'
             (new MetOffice())->forecast();                                       // get temperature forecast
-        }
-        foreach ($this->tariff_combinations as $tariff_combination) {
-            if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
-                (new Root())->LogDb('OPTIMISING', $tariff_combination['name'], 'NOTICE');
-                $db_slots->makeDbSlotsNext24hrs($tariff_combination);            // make slots for this tariff combination
-                $this->makeSlotRates($db_slots);                                 // make tariffs
-                $powers->estimatePowers($db_slots);                              // forecast slot solar, heating, non-heating and load powers
-                $slot_command = (new EnergyCost($db_slots))->minimise();         // minimise energy cost
-                if (!EnergyCost::DEBUG) {
+            foreach ($this->tariff_combinations as $tariff_combination) {
+                if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
+                    (new Root())->LogDb('OPTIMISING', $tariff_combination['name'], 'NOTICE');
+                    $db_slots->makeDbSlotsNext24hrs($tariff_combination);        // make slots for this tariff combination
+                    $this->makeSlotRates($db_slots);                             // make tariffs
+                    $powers->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
+                    $batteryInitialKwh = $givenergy->batteryLevel($db_slots)['effective_stored_kwh']; // battery state of charge and extrapolate to beginning of slots
+                    $slot_command = (new EnergyCost($db_slots, $batteryInitialKwh))->minimise(); // minimise energy cost
                     if ($tariff_combination['active']) {                         // make battery command
                         //   $giv_energy->control($slot_command);
                     }
                     $this->makeDbSlotsLast24hrs($tariff_combination);            // make historic slots for last 24 hours
                 }
             }
+        }
+        else {
+            (new EnergyCost(null, null))->minimise();     // minimise energy cost
         }
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null, 'NOTICE');
     }

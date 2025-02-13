@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG = true;
+    const bool      DEBUG = false;
     const float     THRESHOLD_POWER_W = 100.0;
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
@@ -127,9 +127,9 @@ class EnergyCost extends Root
             echo 'Python optimised cost: '  . round($result['energyCost'],             2) . ' GBP' . PHP_EOL;
             echo 'Php    optimised cost: '  . round($this->costs['optimised']['cost'], 2) . ' GBP' . PHP_EOL;
             echo PHP_EOL;
-            echo 'grid_kw             raw,   optimised' . PHP_EOL;
+            echo 'grid_kw        raw,   optimised' . PHP_EOL;
             foreach ($this->total_load_kws as $k => $v) {
-                echo $k . '                   ' . round($this->total_load_kws[$k], 3) . ', ' . round($optimumGridKws[$k], 3) . PHP_EOL;
+                echo $k . ':             ' . round($this->total_load_kws[$k], 3) . ', ' . round($optimumGridKws[$k], 3) . PHP_EOL;
             }
             return null;
         }
@@ -302,11 +302,13 @@ class EnergyCost extends Root
             $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayStorageEfficiency;
 
             // wear
-            $battery_level_wear_fraction = abs($battery_level_kwh - $battery_level_mid_kwh) / ($battery_level_max_kwh - $battery_level_mid_kwh);
-            if ($battery_level_wear_fraction <= 1.0) {    // wear
-                $cost_wear += $cost_min_per_kwh * abs($battery_charge_kwh) * (1.0 + $this->batteryWearRatio * $battery_level_wear_fraction);
-            } else {                                        // out of spec
-                $cost_out_of_spec += $cost_min_per_kwh * abs($battery_charge_kwh) * ($this->batteryWearRatio + ($battery_level_wear_fraction - 1.0) * $this->batteryOutOfSpecCostMultiplier);
+            if (($battery_level_max_mid_kwh = ($battery_level_max_kwh - $battery_level_mid_kwh)) > 0.0) {
+                $battery_level_wear_fraction = abs($battery_level_kwh - $battery_level_mid_kwh) / $battery_level_max_mid_kwh;
+                if ($battery_level_wear_fraction <= 1.0) {    // wear
+                    $cost_wear += $cost_min_per_kwh * abs($battery_charge_kwh) * (1.0 + $this->batteryWearRatio * $battery_level_wear_fraction);
+                } else {                                        // out of spec
+                    $cost_out_of_spec += $cost_min_per_kwh * abs($battery_charge_kwh) * ($this->batteryWearRatio + ($battery_level_wear_fraction - 1.0) * $this->batteryOutOfSpecCostMultiplier);
+                }
             }
 
             // out of spec power

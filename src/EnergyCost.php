@@ -122,7 +122,6 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, 'FATAL');
             throw new Exception($message);
         }
-        $command = $this->command();
         $this->costs = [];
         $grid_kws = array_map(function ($total_load_kw) {                         // match pre-optimised first guess to total load
             return -$total_load_kw;

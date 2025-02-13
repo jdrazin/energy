@@ -400,41 +400,6 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function insertLoadKwsClean(): void
-    {
-        $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'UPDATE      `slots` 
-                   SET      `total_load_kw`         = ?,
-                            `import_gbp_per_kwh`    = ?,
-                            `export_gbp_per_kwh`    = ?,
-                            `import_gbp_per_day`    = NULL,
-                            `export_gbp_per_day`    = NULL,
-                            `solar_kw`              = NULL,
-                            `load_non_heating_kw`   = NULL,
-                            `load_heating_kw`       = NULL     
-                   WHERE    `slot`                  = ? AND
-                            `tariff_combination`    = ? AND 
-                            NOT `final`';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('dddii', $total_load_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $slot, $tariff_combination_id) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        $number_slots = $this->problem['number_slots'];
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $total_load_kw      = $this->problem['total_load_kws']     [$slot];
-            $import_gbp_per_kwh = $this->problem['import_gbp_per_kwhs'][$slot];
-            $export_gbp_per_kwh = $this->problem['export_gbp_per_kwhs'][$slot];
-            $stmt->execute();
-        }
-        $this->mysqli->commit();
-    }
-
-    /**
-     * @throws Exception
-     */
     private function insertOptimumGridInverterKw($optimum_grid_kws): void
     {
         $tariff_combination_id = $this->tariff_combination['id'];

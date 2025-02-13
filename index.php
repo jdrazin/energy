@@ -20,13 +20,13 @@ $app->addRoutingMiddleware();
  * @param LoggerInterface|null  $logger -> Optional PSR-3 Logger
  *
  */
-$app->get('/slots', function (Request $request, Response $response, $args) {
+$app->get('/slots', function (Request $request, Response $response) {
     $energy = new Energy(null);
     $slots = $energy->slots();
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->post('/permute', function (Request $request, Response $response, $args) {
+$app->post('/permute', function (Request $request, Response $response) {
     $config = json_decode((string) $request->getBody(), true);
     $energy = new Energy($config);
     $energy->permute();

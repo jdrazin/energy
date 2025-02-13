@@ -50,8 +50,8 @@ class Octopus extends Root
      * @throws GuzzleException
      */
     public function traverseTariffs($cron): void {
-        $this->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
-        $db_slots = new DbSlots();                                              // make day slots
+        (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
+         $db_slots = new DbSlots();                                              // make day slots
         if (!EnergyCost::DEBUG) {                                               // bypass empirical data if in DEBUG mode
             // $giv_energy->initialise();
             (new GivEnergy())->getData();                                        // grid, total_load, solar (yesterday, today) > `values`
@@ -78,7 +78,7 @@ class Octopus extends Root
                 }
             }
         }
-        $this->logDb(($cron ? 'CRON_' : '') . 'STOP', null, 'NOTICE');
+        (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null, 'NOTICE');
     }
 
     /**
@@ -229,10 +229,6 @@ class Octopus extends Root
                     WHERE   `slot` = ? AND
                             `tariff_combination` = ? AND
                             NOT `final`';
-        $stmt = $this->mysqli->prepare($sql);
-        $stmt->bind_param('ddddii', $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day, $slot, $tariff_combination_id);
-        $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-        $this->logDb('MESSAGE', $message, 'ERROR');
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ddddii', $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day, $slot, $tariff_combination_id)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

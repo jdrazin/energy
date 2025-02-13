@@ -123,9 +123,14 @@ class EnergyCost extends Root
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
         $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
         if (self::DEBUG) {
-            echo 'Php    raw cost: '        . $this->costs['raw']['cost']         . ' GBP' . PHP_EOL;
-            echo 'Python optimised cost: '  . $result['energyCost']               . ' GBP' . PHP_EOL;
-            echo 'Php    optimised cost: '  . $this->costs['optimised']['cost']   . ' GBP' . PHP_EOL;
+            echo 'Php    raw cost: '        . round($this->costs['raw']['cost'],       2) . ' GBP' . PHP_EOL;
+            echo 'Python optimised cost: '  . round($result['energyCost'],             2) . ' GBP' . PHP_EOL;
+            echo 'Php    optimised cost: '  . round($this->costs['optimised']['cost'], 2) . ' GBP' . PHP_EOL;
+            echo PHP_EOL;
+            echo 'grid_kw             raw,   optimised' . PHP_EOL;
+            foreach ($this->total_load_kws as $k => $v) {
+                echo $k . '                   ' . round($this->total_load_kws[$k], 3) . ', ' . round($optimumGridKws[$k], 3) . PHP_EOL;
+            }
             return null;
         }
         else {

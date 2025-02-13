@@ -33,6 +33,4 @@ $app->post('/permute', function (Request $request, Response $response, $args) {
     $response->getBody()->write("Hello!");
     return $response;
 });
-$errorMiddleware = $app->addErrorMiddleware(true, true, true);
-// Run app
 $app->run();

@@ -38,9 +38,10 @@
             }
             var options = {
                 title: 'Next and previous 24hrs',
+                curveType: 'function',
                 width: 1800,
                 height: 800,
-           //     fill: '#000000',
+            //     fill: '#000000',
            //     backgroundColor: '#A4E4E4',
                 lineWidth: 5,
                 series: {
@@ -62,11 +63,15 @@
                 is3D: false,
                 hAxis:	{
                     title: 'slot start times',
+                    titleTextStyle: { color: 'black', fontSize: 25, bold: true, italic: false},
+                    textStyle : {fontSize: 20, bold: false},
                     format: 'HH:mm',
                     gridlines: {count: 24}
                 },
                 vAxis:	{
-                    title: 'kW',
+                    title: 'kilowatts (kW)',
+                    titleTextStyle: { color: 'black', fontSize: 25, bold: true, italic: false},
+                    textStyle : {fontSize: 20, bold: false},
                     gridlines: {color: 'none'},
                     minValue: 0
                 }

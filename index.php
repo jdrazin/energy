@@ -20,20 +20,6 @@ $app->addRoutingMiddleware();
  * @param LoggerInterface|null  $logger -> Optional PSR-3 Logger
  *
  */
-$app->get('/example', function (Request $request, Response $response, $args) {
-    $json_text = '[
-                       ["Employee Name", "Salary"],
-                       ["Mick", 22500], 
-                       ["Bob", 35000],
-                       ["Alice", 44000],
-                       ["Frank", 27000],
-                       ["Floyd", 92000],
-                       ["Fritz", 18500]
-                  ]';
-    $response->getBody()->write($json_text);
-    return $response->withHeader('Content-Type', 'application/json')
-                    ->withHeader('Access-Control-Allow-Origin', '*');
-});
 $app->get('/slots', function (Request $request, Response $response, $args) {
     $energy = new Energy(null);
     $slots = $energy->slots();

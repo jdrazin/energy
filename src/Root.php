@@ -318,7 +318,7 @@ class Root
             throw new Exception($message);
         }
         if (is_null($value)) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'no forecast found'));
+            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "no $entity latest forecast found"));
         } else {
             return $value;
         }
@@ -342,7 +342,7 @@ class Root
             throw new Exception($message);
         }
         if (is_null($value)) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'no forecast found'));
+            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "no $entity average latest forecast found"));
         } else {
             return $value;
         }

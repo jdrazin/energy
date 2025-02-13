@@ -11,7 +11,8 @@ class EnergyCost extends Root
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
-                    PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
+                    PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py',
+                    COMMAND_LOG             = 'python3 /var/www/html/energy/test/command.log';
 
     const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
                                                         'total_load_kws',
@@ -114,6 +115,12 @@ class EnergyCost extends Root
         else {
             $this->problem          = json_decode(file_get_contents(self::JSON_PROBLEM), true);
             $this->total_load_kws   = $this->total_load_kws();                   // get total load from db
+        }
+        if (!($command = $this->command()) ||
+            !file_put_contents(self::COMMAND_LOG, $command)) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command log');
+            $this->logDb('MESSAGE', $message, 'FATAL');
+            throw new Exception($message);
         }
         $command = $this->command();
         $this->costs = [];

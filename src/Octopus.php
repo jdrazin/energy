@@ -52,7 +52,7 @@ class Octopus extends Root
     public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
         $db_slots = new DbSlots();                                              // make day slots
-        $powers = new Powers();
+        $powers   = new Powers();
         if (!EnergyCost::DEBUG) {                                                // bypass empirical data if in DEBUG mode
             // (new GivEnergy())->initialise();
             (new GivEnergy())->getData();                                        // grid, total_load, solar (yesterday, today) > `values`
@@ -64,18 +64,15 @@ class Octopus extends Root
         foreach ($this->tariff_combinations as $tariff_combination) {
             if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
                 (new Root())->LogDb('OPTIMISING', $tariff_combination['name'], 'NOTICE');
+                $db_slots->makeDbSlotsNext24hrs($tariff_combination);            // make slots for this tariff combination
+                $this->makeSlotRates($db_slots);                                 // make tariffs
+                $powers->estimatePowers($db_slots);                              // forecast slot solar, heating, non-heating and load powers
+                $slot_command = (new EnergyCost($db_slots))->minimise();         // minimise energy cost
                 if (!EnergyCost::DEBUG) {
-                    $db_slots->makeDbSlotsNext24hrs($tariff_combination);         // make slots for this tariff combination
-                    $this->makeSlotRates($db_slots);                              // make tariffs
-                    $powers->estimatePowers($db_slots);                           // forecast slot solar, heating, non-heating and load powers
-                }
-                $energy_cost = new EnergyCost($db_slots);
-                $slot_command = $energy_cost->optimise();
-                if (!EnergyCost::DEBUG) {
-                    if ($tariff_combination['active']) {                       // make battery command
+                    if ($tariff_combination['active']) {                         // make battery command
                         //   $giv_energy->control($slot_command);
                     }
-                    $this->makeDbSlotsLast24hrs($tariff_combination);          // make historic slots for last 24 hours
+                    $this->makeDbSlotsLast24hrs($tariff_combination);            // make historic slots for last 24 hours
                 }
             }
         }

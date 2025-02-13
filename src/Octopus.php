@@ -394,14 +394,26 @@ class Octopus extends Root
             }
         }
         $this->mysqli->commit();
-        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `total_load_kw`, `grid_kw`, `solar_kw`) 
-                       (SELECT        TRUE,    `tariff_combination`, `slot`, `start`, `stop`, `total_load_kw`, `grid_kw`, `solar_kw`
+        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `total_load_kw`, `grid_kw`, `solar_kw`,  `mode`, `target_level_percent`, `abs_charge_power_w`, `battery_charge_kw`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
+                       (SELECT        TRUE,    `tariff_combination`, `slot`, `start`, `stop`, `total_load_kw`, `grid_kw`, `solar_kw`, `mode`, `target_level_percent`, `abs_charge_power_w`, `battery_charge_kw`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
                                       FROM `slots` `s`
                                       WHERE NOT `final` AND
-                                                `tariff_combination` IN (0, ?)) 
-                                  ON DUPLICATE KEY UPDATE `total_load_kw` = `s`.`total_load_kw`, 
-                                                          `grid_kw`       = `s`.`grid_kw`,
-                                                          `solar_kw`      = `s`.`solar_kw`';
+                                                `tariff_combination` IN (0, ?))  
+                    ON DUPLICATE KEY UPDATE   `start`                     = `s`.`start`,
+                                              `stop`                      = `s`.`stop`,
+                                              `total_load_kw`             = `s`.`total_load_kw`, 
+                                              `grid_kw`                   = `s`.`grid_kw`,
+                                              `solar_kw`                  = `s`.`solar_kw`,
+                                              `mode`                      = `s`.`mode`,
+                                              `target_level_percent`      = `s`.`target_level_percent`,
+                                              `abs_charge_power_w`        = `s`.`abs_charge_power_w`, 
+                                              `battery_charge_kw`         = `s`.`battery_charge_kw`, 
+                                              `import_gbp_per_kwh`        = `s`.`import_gbp_per_kwh`, 
+                                              `export_gbp_per_kwh`        = `s`.`export_gbp_per_kwh`, 
+                                              `import_gbp_per_day`        = `s`.`import_gbp_per_day`, 
+                                              `export_gbp_per_day`        = `s`.`export_gbp_per_day`, 
+                                              `load_non_heating_kw`       = `s`.`load_non_heating_kw`, 
+                                              `load_heating_kw`           = `s`.`load_heating_kw`';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||

@@ -11,8 +11,8 @@ class EnergyCost extends Root
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
-                    PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py',
-                    COMMAND_LOG             = 'python3 /var/www/html/energy/test/command.log';
+                    COMMAND_LOG             = '/var/www/html/energy/test/command.log',
+                    PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
     const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
                                                         'total_load_kws',
@@ -109,7 +109,7 @@ class EnergyCost extends Root
         // convex, non-smooth, exact cost
         //
         if (self::DEBUG_MINIMISER) {  // use debug JSON and make slot arrays as necessary
-           $this->problem           = $this->makeSlotsArrays( json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
+           $this->problem           = $this->makeSlotsArrays(json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
            $this->total_load_kws    = $this->problem['total_load_kws'];          // get total load from problem
         }
         else {

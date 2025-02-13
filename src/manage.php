@@ -57,9 +57,7 @@ try {
         }
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
-        (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
-        (new Octopus())->traverseTariffCombinations();       // traverse all tariffs
-        (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null, 'NOTICE');
+        (new Octopus())->traverseTariffs($cron);       // traverse all tariffs
     }
     if (!DEBUG) {
         if (!unlink(PID_FILENAME)) {

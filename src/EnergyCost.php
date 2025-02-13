@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG = false;
+    const bool      DEBUG = true;
     const float     THRESHOLD_POWER_W = 100.0;
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
@@ -90,7 +90,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    public function optimise(): ?array // returns optimum battery charge level for next slot
+    public function minimise(): ?array // returns optimum battery charge level for next slot
     {
         //
         // see https://scipy-lectures.org/advanced/mathematical_optimization/#knowing-your-problem

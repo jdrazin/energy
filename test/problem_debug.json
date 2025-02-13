@@ -20,9 +20,7 @@
     },
 
     "import_gbp_per_kwhs_weights": {
-      "0": 1.0,
-      "10": 0.125,
-      "14": 1.0
+      "0": 1.0
     },
 
     "export_gbp_per_kwhs": 0.0,

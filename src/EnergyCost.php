@@ -109,12 +109,11 @@ class EnergyCost extends Root
         //
         if (self::DEBUG_MINIMISER) {  // use debug JSON and make slot arrays as necessary
            $this->problem           = $this->makeSlotsArrays( json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
-           $this->total_load_kws    = $this->problem['total_load_kws'];  // get load from problem
-           $this->insertLoadKwsClean();
+           $this->total_load_kws    = $this->problem['total_load_kws'];          // get total load from problem
         }
         else {
             $this->problem          = json_decode(file_get_contents(self::JSON_PROBLEM), true);
-            $this->total_load_kws   = $this->total_load_kws();  // get load_kws from db
+            $this->total_load_kws   = $this->total_load_kws();                   // get total load from db
         }
         $command = $this->command();
         $this->costs = [];
@@ -131,7 +130,6 @@ class EnergyCost extends Root
         }
         // calculate optimised cost elements using CLI command
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
-        $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
         if (self::DEBUG_MINIMISER) {
             echo 'Php    raw cost: '        . round($this->costs['raw']['cost'],       2) . ' GBP' . PHP_EOL;
             echo 'Python optimised cost: '  . round($result['energyCost'],             2) . ' GBP' . PHP_EOL;
@@ -144,6 +142,7 @@ class EnergyCost extends Root
             return null;
         }
         else {
+            $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
             $this->slotCommands();
             $this->insertSlotNextDayCostEstimates();
             return $this->slotCommands[0];

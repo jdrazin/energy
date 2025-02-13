@@ -51,12 +51,13 @@ class Octopus extends Root
      */
     public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
-         $db_slots = new DbSlots();                                              // make day slots
-        if (!EnergyCost::DEBUG) {                                               // bypass empirical data if in DEBUG mode
-            // $giv_energy->initialise();
+        $db_slots = new DbSlots();                                              // make day slots
+        $powers = new Powers();
+        if (!EnergyCost::DEBUG) {                                                // bypass empirical data if in DEBUG mode
+            // (new GivEnergy())->initialise();
             (new GivEnergy())->getData();                                        // grid, total_load, solar (yesterday, today) > `values`
             (new EmonCms())->getData();                                          // home heating and temperature > `values`
-            (new Powers())->makeHeatingPowerLookupDaySlotExtTemp();              // make heating power look up table vs dayslot and external temperature
+            $powers->makeHeatingPowerLookupDaySlotExtTemp();                     // make heating power look up table vs dayslot and external temperature
             (new Solcast())->getSolarActualForecast();                           // solar actuals & forecasts > 'powers'
             (new MetOffice())->forecast();                                       // get temperature forecast
         }
@@ -66,7 +67,7 @@ class Octopus extends Root
                 if (!EnergyCost::DEBUG) {
                     $db_slots->makeDbSlotsNext24hrs($tariff_combination);         // make slots for this tariff combination
                     $this->makeSlotRates($db_slots);                              // make tariffs
-                    (new Powers())->estimatePowers($db_slots);                    // forecast slot solar, heating, non-heating and load powers
+                    $powers->estimatePowers($db_slots);                           // forecast slot solar, heating, non-heating and load powers
                 }
                 $energy_cost = new EnergyCost($db_slots);
                 $slot_command = $energy_cost->optimise();

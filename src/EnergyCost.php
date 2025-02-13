@@ -294,7 +294,7 @@ class EnergyCost extends Root
             $tariff_import_per_kwh = $this->import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $this->export_gbp_per_kws[$slot_count];
             $energy_grid_kwh       = $grid_power_slot_kw * $this->slotDurationHour;
-            $load_kwh = $load_kw * $this->slotDurationHour;
+            $load_kwh              = $load_kw            * $this->slotDurationHour;
 
             // grid
             if ($energy_grid_kwh > 0.0) {

@@ -1,5 +1,5 @@
 {
-    "batteryCapacityKwh": 13.5,
+    "batteryCapacityKwh": 0.135,
     "batteryDepthOfDischargePercent": 90,
     "batteryOneWayStorageEfficiency": 0.964,
     "batteryWearCostGbpPerKwh": 0.03,
@@ -23,7 +23,7 @@
       "0": 1.0
     },
 
-    "export_gbp_per_kwhs": 0.0,
+    "export_gbp_per_kwhs": 0.125,
     "export_gbp_per_kwhs_weights": {
          "0": 1
     }

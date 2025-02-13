@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG = false;
+    const bool      DEBUG_MINIMISER = true;
     const float     THRESHOLD_POWER_W = 100.0;
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
@@ -53,11 +53,22 @@ class EnergyCost extends Root
     public function __construct($db_slots, $batteryInitialKwh)
     {
         parent::__construct();
-        $this->db_slots             = $db_slots;
-        $this->tariff_combination   = $this->db_slots->tariff_combination;
         $this->slotDurationHour     = (float)(DbSlots::SLOT_DURATION_MIN / 60);
         $this->number_slots         = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
-        $loadImportExports          = $this->loadImportExport();
+        if (!self::DEBUG_MINIMISER) {
+            $this->db_slots             = $db_slots;
+            $this->tariff_combination   = $this->db_slots->tariff_combination;
+            $loadImportExports          = $this->loadImportExport();
+        }
+        else {
+            $loadImportExports          = [
+                                          'total_load_kws'        => [],
+                                          'import_gbp_per_kwhs'   => [],
+                                          'export_gbp_per_kwhs'   => [],
+                                          'import_gbp_per_day'    => [],
+                                          'export_gbp_per_day'    => []
+            ];
+        }
         $this->problem              = [
                                         'batteryCapacityKwh'             => $this->config['battery']['initial_raw_capacity_kwh'],
                                         'batteryDepthOfDischargePercent' => $this->config['battery']['permitted_depth_of_discharge_percent'],
@@ -96,7 +107,7 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
-        if (self::DEBUG) {  // use debug JSON and make slot arrays as necessary
+        if (self::DEBUG_MINIMISER) {  // use debug JSON and make slot arrays as necessary
            $this->problem           = $this->makeSlotsArrays( json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
            $this->total_load_kws    = $this->problem['total_load_kws'];  // get load from problem
            $this->insertLoadKwsClean();
@@ -121,7 +132,7 @@ class EnergyCost extends Root
         // calculate optimised cost elements using CLI command
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
         $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
-        if (self::DEBUG) {
+        if (self::DEBUG_MINIMISER) {
             echo 'Php    raw cost: '        . round($this->costs['raw']['cost'],       2) . ' GBP' . PHP_EOL;
             echo 'Python optimised cost: '  . round($result['energyCost'],             2) . ' GBP' . PHP_EOL;
             echo 'Php    optimised cost: '  . round($this->costs['optimised']['cost'], 2) . ' GBP' . PHP_EOL;

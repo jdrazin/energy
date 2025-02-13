@@ -49,24 +49,30 @@ class Octopus extends Root
      * @throws Exception
      * @throws GuzzleException
      */
-    public function traverseTariffCombinations(): void
-    {
-        $db_slots   = new DbSlots();                                         // make day slots
-        $giv_energy = new GivEnergy();
-        $powers     = new Powers();
-        $emoncms    = new EmonCms();
-        $metoffice  = new MetOffice();
-        // $giv_energy->initialise();
-        $giv_energy->getData();                                              // grid, total_load, solar (yesterday, today) > `values`
-        $emoncms->getData();                                                 // home heating and temperature > `values`
-        $powers->makeHeatingPowerLookupDaySlotExtTemp();                     // make heating power look up table vs dayslot and external temperature
-        $metoffice->forecast();                                              // get temperature forecast
+    public function traverseTariffCombinations($cron): void {
+        $this->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
+        $db_slots   = new DbSlots();                                            // make day slots
+        if (!EnergyCost::DEBUG) {                                               // bypass empirical data if in DEBUG mode
+            $giv_energy = new GivEnergy();
+            $powers     = new Powers();
+            $emoncms    = new EmonCms();
+            $solcast    = new Solcast();
+            $metoffice  = new MetOffice();
+            // $giv_energy->initialise();
+            $giv_energy->getData();                                              // grid, total_load, solar (yesterday, today) > `values`
+            $emoncms->getData();                                                 // home heating and temperature > `values`
+            $powers->makeHeatingPowerLookupDaySlotExtTemp();                     // make heating power look up table vs dayslot and external temperature
+            $solcast->getSolarActualForecast();                                  // solar actuals & forecasts > 'powers'
+            $metoffice->forecast();                                              // get temperature forecast
+        }
         foreach ($this->tariff_combinations as $tariff_combination) {
             if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
                 (new Root())->LogDb('OPTIMISING', $tariff_combination['name'], 'NOTICE');
-                $db_slots->makeDbSlotsNext24hrs($tariff_combination);         // make slots for this tariff combination
-                $this->makeSlotRates($db_slots);                              // make tariffs
-                $powers->estimatePowers($db_slots);                           // forecast slot solar, heating, non-heating and load powers
+                if (!EnergyCost::DEBUG) {
+                    $db_slots->makeDbSlotsNext24hrs($tariff_combination);         // make slots for this tariff combination
+                    $this->makeSlotRates($db_slots);                              // make tariffs
+                    $powers->estimatePowers($db_slots);                           // forecast slot solar, heating, non-heating and load powers
+                }
                 $energy_cost = new EnergyCost($db_slots);
                 $slot_command = $energy_cost->optimise();
                 if (!EnergyCost::DEBUG) {
@@ -77,6 +83,7 @@ class Octopus extends Root
                 }
             }
         }
+        $this->logDb(($cron ? 'CRON_' : '') . 'STOP', null, 'NOTICE');
     }
 
     /**

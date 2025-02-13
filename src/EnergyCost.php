@@ -136,9 +136,10 @@ class EnergyCost extends Root
         }
         // calculate optimised cost elements using CLI command
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
-        echo 'Php    raw cost: '        . round($this->costs['raw']['cost'],       2) . ' GBP' . PHP_EOL;
-        echo 'Python optimised cost: '  . round($result['energyCost'],             2) . ' GBP' . PHP_EOL;
-        echo 'Php    optimised cost: '  . round($this->costs['optimised']['cost'], 2) . ' GBP' . PHP_EOL;
+        echo 'Php    raw cost:            '  . round($this->costs['raw']['cost'],            2) . ' GBP' . PHP_EOL;
+        echo 'Python optimised cost:      '  . round($result['energyCost'],                  2) . ' GBP' . PHP_EOL;
+        echo 'Php    optimised cost:      '  . round($this->costs['optimised']['cost'],      2) . ' GBP' . PHP_EOL;
+        echo 'Php    optimised grid_cost: '  . round($this->costs['optimised']['cost_grid'], 2) . ' GBP' . PHP_EOL;
         if (self::DEBUG_MINIMISER) {
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
@@ -344,6 +345,7 @@ class EnergyCost extends Root
         $cost = $cost_grid_import + $cost_grid_export + $cost_wear + $cost_out_of_spec + $cost_level_change;
         return [
                     'cost'          => $cost,
+                    'cost_grid'     => $cost_grid_import+$cost_grid_export,
                     'cost_import'   => $cost_grid_import,
                     'cost_export'   => $cost_grid_export,
                     'cost_wear'     => $cost_wear,

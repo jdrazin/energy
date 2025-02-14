@@ -56,11 +56,11 @@ class Octopus extends Root
             $powers    = new Powers();
             $givenergy = new GivEnergy();
             // $givenergy->initialise();
-            $givenergy->getData();                                               // grid, total_load, solar (yesterday, today) > `values`
-            (new EmonCms())->getData();                                          // home heating and temperature > `values`
-            $powers->makeHeatingPowerLookupDaySlotExtTemp();                     // make heating power look up table vs dayslot and external temperature
-            (new Solcast())->getSolarActualForecast();                           // solar actuals & forecasts > 'powers'
-            (new MetOffice())->forecast();                                       // get temperature forecast
+            $givenergy->getData();                                                // grid, total_load, solar (yesterday, today) > `values`
+            (new EmonCms())->getData();                                           // home heating and temperature > `values`
+            $powers->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature
+            (new Solcast())->getSolarActualForecast();                            // solar actuals & forecasts > 'powers'
+            (new MetOffice())->forecast();                                        // get temperature forecast
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
             foreach ($this->tariff_combinations as $tariff_combination) {
@@ -76,8 +76,8 @@ class Octopus extends Root
                     $slot_command = (new EnergyCost($db_slots, $batteryInitialKwh))->minimise(); // minimise energy cost
                     if ($active_tariff) {                         // make battery command
                         //   $giv_energy->control($slot_command);                // control battery for active combination on completion of countdown to next slot
+                        $this->makeDbSlotsLast24hrs($tariff_combination);            // make historic slots for last 24 hours
                     }
-                    $this->makeDbSlotsLast24hrs($tariff_combination);            // make historic slots for last 24 hours
                 }
             }
         }

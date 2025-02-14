@@ -148,8 +148,7 @@ class Powers extends Root
         $this->updateSlotPowerskW($powers_kw, 'load_heating_kw');
     }
 
-    private function electricLoadHeatingW(int $day_slot, float $temperature_c): ?float
-    {
+    private function electricLoadHeatingW(int $day_slot, float $temperature_c): ?float {
         $temperature_c = (int)round($temperature_c);
         if (isset($this->power_w[$day_slot][$temperature_c])) { // return exact if exists
             return $this->power_w[$day_slot][$temperature_c];
@@ -174,8 +173,7 @@ class Powers extends Root
         }
     }
 
-    private function interpolate_slots(int $day_slot, float $temperature_c): ?float
-    {
+    private function interpolate_slots(int $day_slot, float $temperature_c): ?float {
         $day_slot_nearest_lower = $day_slot;        // find nearest lower slot
         $day_slot_distance_nearest_lower = 0;
         do {
@@ -198,8 +196,7 @@ class Powers extends Root
         return $power_nearest_lower + ($power_nearest_higher - $power_nearest_lower) * (((float)$day_slot_distance_nearest_lower) / ((float)($day_slot_distance_nearest_lower + $slot_distance_nearest_higher)));
     }
 
-    private function interpolate_temperature(int $slot, $temperature): ?float
-    {
+    private function interpolate_temperature(int $slot, $temperature): ?float {
         $temperature_nearest_lower = $temperature;        // find nearest lower temperature
         $temperature_distance_nearest_lower = 0;
         do {

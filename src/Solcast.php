@@ -102,24 +102,25 @@ class Solcast extends Root
     /**
      * @throws Exception
      */
-    private function insertPowers($data): void
+    private function insertPowers($data, $forecast): void
     {
         $powers = $data['data'];
-        $sql = 'INSERT INTO `values`     (`entity`,`type`, `value`, `status`, `datetime`)
-                                 VALUES  (?,       ?,      ?,       ?,        ?)
-                   ON DUPLICATE KEY UPDATE `value` = ?, `timestamp` = CURRENT_TIMESTAMP';
-        $entity = 'SOLAR_W';
-        $status = 'CURRENT';
+        $sql = 'INSERT INTO `values`     (`entity`,     `type`, `value`,    `status`, `datetime`, `forecast`)
+                                 VALUES  (\'SOLAR_W\',       ?,       ?, \'CURRENT\',         ?,           ?)
+                   ON DUPLICATE KEY UPDATE  `value`     = ?,
+                                            `forecast`  = ?,
+                                            `timestamp` = CURRENT_TIMESTAMP';
+
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ssdssd', $entity, $type, $power, $status, $datetime, $power)) {
+            !$stmt->bind_param('sdssds', $type, $power, $datetime, $forecast, $power, $forecast)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
         foreach ($powers as $power) {
             $datetime = $power['datetime'];
-            $type = $power['type'];
-            $power = $power['power_w'];
+            $type     = $power['type'];
+            $power    = $power['power_w'];
             $stmt->execute();
         }
         $this->mysqli->commit();

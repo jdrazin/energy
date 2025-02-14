@@ -303,6 +303,8 @@ class GivEnergy extends Root
         $raw_stored_now_kwh = (((float)$battery['percent']) / 100.0) * $initial_raw_capacity_kwh;
         $battery_power_now_w = ((float)$battery['power']) / 1000.0;
         $timestamp_now = (new DateTime())->getTimestamp();
+
+        // extrapolate battery level to beginning of next slot
         $timestamp_start = (new DateTime($db_slots->getDbNextDaySlots($db_slots->tariff_combination)[0]['start']))->getTimestamp();
         $time_now_start_s = $timestamp_start - $timestamp_now;
         if ($time_now_start_s < 0 && !self::DEBUG_MINIMISER) {
@@ -320,7 +322,7 @@ class GivEnergy extends Root
         } else if ($effective_stored_start_kwh < $raw_stored_min_kwh) {
             $effective_stored_start_kwh = $raw_stored_min_kwh;
         }
-        return ['effective_stored_kwh' => $effective_stored_start_kwh,
+        return ['effective_stored_kwh'  => $effective_stored_start_kwh,
                 'effective_capacity_kwh' => $effective_capacity_kwh];
     }
 

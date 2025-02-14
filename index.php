@@ -32,9 +32,9 @@ $app->get('/status', function (Request $request, Response $response) {
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->get('/tariffs', function (Request $request, Response $response) {
+$app->get('/tariff_combinations', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    $slots = $energy->tariffs();
+    $slots = $energy->tariff_combinations();
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });

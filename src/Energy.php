@@ -95,7 +95,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function tariffs(): string {
+    public function tariff_combinations(): string {
         $sql = 'SELECT `s`.`start` AS `start`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`, CONVERT(IF((`tc`.`active` IS NULL), \'\', \' *ACTIVE*\') USING utf8mb4), \' (\', `tc`.`id`, \')\') AS `tariff [import, export]`,
                         ROUND(((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`), 2) AS `RAW (GBP)`,

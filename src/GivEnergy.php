@@ -322,7 +322,7 @@ class GivEnergy extends Root
         } else if ($effective_stored_start_kwh < $raw_stored_min_kwh) {
             $effective_stored_start_kwh = $raw_stored_min_kwh;
         }
-        return ['effective_stored_kwh'  => $effective_stored_start_kwh,
+        return ['effective_stored_kwh'   => $effective_stored_start_kwh,
                 'effective_capacity_kwh' => $effective_capacity_kwh];
     }
 

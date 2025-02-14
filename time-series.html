@@ -76,7 +76,7 @@
             chart.draw(timeSeries, options);
         }
         /*
-         * table: tariff combinations
+         * table: tariff combinations, see https://developers.google.com/chart/interactive/docs/gallery/table
          */
         google.charts.setOnLoadCallback(fetchTariffCombinations);
         function fetchTariffCombinations() {
@@ -110,7 +110,7 @@
     </script>
 </head>
 <body>
-<div id="chart_time_series"></div>
-<div id="chart_tariff_combinations"></div>
+    <div id="chart_time_series"></div>
+    <div id="table_tariff_combinations"></div>
 </body>
 </html>

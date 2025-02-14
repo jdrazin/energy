@@ -41,8 +41,8 @@ class Octopus extends Root
     {
         parent::__construct();
         $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
-        $this->combinations();
-        $this->requestTariffs();
+        $this->tariffCombinationsActiveFirst();                                 // get tariff combinations of interest, starting with active combination
+        $this->requestTariffs();                                                // get latest tariff data
     }
 
     /**
@@ -51,7 +51,7 @@ class Octopus extends Root
      */
     public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
-        if (!EnergyCost::DEBUG_MINIMISER) {                                                // bypass empirical data if in DEBUG mode
+        if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
             $db_slots  = new DbSlots();                                           // make day slots
             $powers    = new Powers();
             $givenergy = new GivEnergy();
@@ -61,16 +61,20 @@ class Octopus extends Root
             $powers->makeHeatingPowerLookupDaySlotExtTemp();                     // make heating power look up table vs dayslot and external temperature
             (new Solcast())->getSolarActualForecast();                           // solar actuals & forecasts > 'powers'
             (new MetOffice())->forecast();                                       // get temperature forecast
+
+            // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
             foreach ($this->tariff_combinations as $tariff_combination) {
                 if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
                     (new Root())->LogDb('OPTIMISING', $tariff_combination['name'], 'NOTICE');
                     $db_slots->makeDbSlotsNext24hrs($tariff_combination);        // make slots for this tariff combination
                     $this->makeSlotRates($db_slots);                             // make tariffs
                     $powers->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
-                    $batteryInitialKwh = $givenergy->batteryLevel($db_slots)['effective_stored_kwh']; // battery state of charge and extrapolate to beginning of slots
+
+                    // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
+                    $batteryInitialKwh = $batteryInitialKwh ?? $givenergy->batteryLevel($db_slots)['effective_stored_kwh'];
                     $slot_command = (new EnergyCost($db_slots, $batteryInitialKwh))->minimise(); // minimise energy cost
                     if ($tariff_combination['active']) {                         // make battery command
-                        //   $giv_energy->control($slot_command);
+                        //   $giv_energy->control($slot_command);                // control battery for active combination on completion of countdown to next slot
                     }
                     $this->makeDbSlotsLast24hrs($tariff_combination);            // make historic slots for last 24 hours
                 }
@@ -121,7 +125,7 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function combinations(): void
+    private function tariffCombinationsActiveFirst(): void
     {
         $sql = 'SELECT     `tc`.`id`,
                             CONCAT(`ti`.`code`, \', \', `te`.`code`, IF(`tc`.`active` IS NULL, \'\', \' *ACTIVE*\')),

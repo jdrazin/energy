@@ -43,11 +43,12 @@ ini_set('mysql.connect_timeout','36000');
 const PID_FILENAME      = '/var/www/html/energy/manage.pid',
       USE_PID_SEMAPHORE = false,
       ARGS              = ['CRON' => 1],
-      BLOCK_CRON        = false;
+      BLOCK_CRON        = false,
+      ALLOW_CONTROL     = false;
 
 try {
    // (new GivEnergy())->initialise();
-    if (!USE_PID_SEMAPHORE) {
+    if (USE_PID_SEMAPHORE) {
         if (file_exists(PID_FILENAME)) {
             echo 'Cannot start: semaphore exists';
             exit(1);
@@ -59,7 +60,7 @@ try {
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
         (new Octopus())->traverseTariffs($cron);       // traverse all tariffs
     }
-    if (!USE_PID_SEMAPHORE) {
+    if (USE_PID_SEMAPHORE) {
         if (!unlink(PID_FILENAME)) {
             throw new Exception('Cannot delete semaphore');
         }
@@ -70,7 +71,7 @@ catch (exception $e) {
     $message = $e->getMessage();
     (new Root())->logDb('MESSAGE', $message, 'FATAL');
     echo $message . PHP_EOL;
-    if (!USE_PID_SEMAPHORE) {
+    if (!USE_PID_SEMAPHORE && ALLOW_CONTROL) {
         echo 'Attempting to reset ...';
         (new GivEnergy())->initialise();
         echo ' done';

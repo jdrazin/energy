@@ -66,7 +66,6 @@ class Octopus extends Root
             foreach ($this->tariff_combinations as $tariff_combination) {
                 $active_tariff = $tariff_combination['active'];
                 if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
-                    (new Root())->LogDb('OPTIMISING', $tariff_combination['name'], 'NOTICE');
                     $db_slots->makeDbSlotsNext24hrs($tariff_combination);        // make slots for this tariff combination
                     $this->makeSlotRates($db_slots);                             // make tariffs
                     $powers->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers

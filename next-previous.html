@@ -91,18 +91,19 @@
         }
         function drawTable(data) {
             var tariffCombinations = new google.visualization.DataTable();
-                tariffCombinations.addColumn('datetime',   'Starting');
-                tariffCombinations.addColumn('string', 'Tariff combination [import, export]');
-                tariffCombinations.addColumn('number', 'Raw GBP');
-                tariffCombinations.addColumn('number', 'Optimised GBP');
-                tariffCombinations.addColumn('number', 'Grid saving GBP');
-                tariffCombinations.addColumn('number', 'Total saving GBP');
-                tariffCombinations.addColumn('number', 'Saving %');
-                tariffCombinations.addColumn('number', 'Wear %');
+                tariffCombinations.addColumn('datetime',    'Starting');
+                tariffCombinations.addColumn('string',      'Tariff combination [import, export]');
+                tariffCombinations.addColumn('string',      'Result');
+                tariffCombinations.addColumn('number',      'Raw GBP');
+                tariffCombinations.addColumn('number',      'Optimised GBP');
+                tariffCombinations.addColumn('number',      'Grid saving GBP');
+                tariffCombinations.addColumn('number',      'Total saving GBP');
+                tariffCombinations.addColumn('number',      'Saving %');
+                tariffCombinations.addColumn('number',      'Wear %');
             var row;
             for (var item = 1; item < data.length; item++) {
                 row = data[item];
-                tariffCombinations.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7]]);
+                tariffCombinations.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]]);
             }
             var table = new google.visualization.Table(document.getElementById('table_tariff_combinations'));
             var options = {

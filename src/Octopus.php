@@ -128,6 +128,7 @@ class Octopus extends Root
      */
     private function tariffCombinationsActiveFirst(): void
     {
+        // select tariff combinations, active first
         $sql = 'SELECT     `tc`.`id`,
                             CONCAT(`ti`.`code`, \', \', `te`.`code`, IF(`tc`.`active` IS NULL, \'\', \' *ACTIVE*\')),
                            `tc`.`import`,

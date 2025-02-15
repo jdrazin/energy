@@ -160,10 +160,10 @@ class EnergyCost extends Root
     }
 
     private function optimisation_result($result): void {
-        $sql = 'UPDATE    `tariff_combinations` 
-                    SET   `result` = ?
-                    WHERE `id`     = ?';
-        $result = 'elapsed=' . $result['elapsed_s'] . 's, evaluations=' . $result['evaluations'];
+        $sql = 'UPDATE  `tariff_combinations` 
+                  SET   `result` = ?
+                  WHERE `id`     = ?';
+        $result = 'elapsed=' . round($result['elapsed_s'], 1) . 's, evaluations=' . $result['evaluations'];
         $tariff_combination_id = $this->tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('si', $result, $tariff_combination_id) ||

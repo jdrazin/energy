@@ -133,15 +133,24 @@ while i < number_slots:
     gridSlotKwhs   .append(float(sys.argv[index]))
     i+= 1
 
+# get cpu time
+import time
+obj = time.gmtime(0)
+epoch = time.asctime(obj)
+start_time = time.time()
+
 # get cost
 cost = day_cost(gridSlotKwhs)
 
 # optimise
 result = minimize(day_cost, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-10, 'maxiter': 1000000})
+elapsed_time = time.time() - start_time
 
 # output result as json
 output = {
     "success": result.success,
+    "cpu": elapsed_time,
+    "evaluations": result.nfev,
     "status": result.status,
     "message": result.message,
     "optimumGridKws": result.x.tolist(),

@@ -28,18 +28,18 @@ use GuzzleHttp\Exception\GuzzleException;
 class GivEnergy extends Root
 {
     private const int   RESPONSE_OK = 2,
-        HOLD_TO_START_GUARD_PERIOD_SECONDS = 30,
-        MAX_HOLD_SECONDS = 600,
-        CHARGE_DISCHARGE_SLOT_START = 1,
-        CHARGE_DISCHARGE_SLOT_STOP = 10,
-        CONTROL_CHARGE_DISCHARGE_SLOT = 1;  // slot number used for control
+                        HOLD_TO_START_GUARD_PERIOD_SECONDS = 30,
+                        MAX_HOLD_SECONDS = 600,
+                        CHARGE_DISCHARGE_SLOT_START = 1,
+                        CHARGE_DISCHARGE_SLOT_STOP = 10,
+                        CONTROL_CHARGE_DISCHARGE_SLOT = 1;  // slot number used for control
     private const array ENTITIES_BATTERY_AIO = ['SOLAR_W' => 'solar',
                                                 'GRID_W' => 'grid',
                                                 'TOTAL_LOAD_W' => 'consumption'];
 
     private const       EV_POWER_ACTIVE_IMPORT = 13,  // Instantaneous active power imported by EV. (W or kW)
-        EV_POWER_ACTIVE_IMPORT_UNIT = 5,   // kW
-        EV_METER_ID = 0;   // meter id
+                        EV_POWER_ACTIVE_IMPORT_UNIT = 5,   // kW
+                        EV_METER_ID = 0;   // meter id
     private const array CONTROL_VALUES = [  'Pause Battery'             => ['Not Paused' => 0,
                                             'Pause Charge'              => 1,
                                             'Pause Discharge'           => 2,

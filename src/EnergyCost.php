@@ -108,6 +108,7 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
+        (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'], 'NOTICE');
         if (self::DEBUG_MINIMISER) {  // use debug JSON and make slot arrays as necessary
            $this->problem           = $this->makeSlotsArrays(json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
            $this->total_load_kws    = $this->problem['total_load_kws'];          // get total load from problem
@@ -134,6 +135,8 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, 'FATAL');
             throw new Exception($message);
         }
+        $this->optimisation_result($result);
+
         // calculate optimised cost elements using CLI command
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
         echo 'Php    raw cost:            '  . round($this->costs['raw']['cost'],            2) . ' GBP' . PHP_EOL;
@@ -153,6 +156,21 @@ class EnergyCost extends Root
             $this->slotCommands();
             $this->insertSlotNextDayCostEstimates();
             return $this->slotCommands[0];
+        }
+    }
+
+    private function optimisation_result($result): void {
+        $sql = 'UPDATE    `tariff_combinations` 
+                    SET   `result` = ?
+                    WHERE `id`     = ?';
+        $result = 'elapsed=' . $result['elapsed_s'] . 's, evaluations=' . $result['evaluations'];
+        $tariff_combination_id = $this->tariff_combination['id'];
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('si', $result, $tariff_combination_id) ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
         }
     }
 

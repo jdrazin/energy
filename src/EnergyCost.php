@@ -163,7 +163,7 @@ class EnergyCost extends Root
         $sql = 'UPDATE  `tariff_combinations` 
                   SET   `result` = ?
                   WHERE `id`     = ?';
-        $result = 'elapsed=' . round($result['elapsed_s'], 1) . 's, evaluations=' . $result['evaluations'];
+        $result = 'ended=' . date('Y-m-d H:i:s') . ', elapsed=' . round($result['elapsed_s'], 1) . 's, evaluations=' . $result['evaluations'];
         $tariff_combination_id = $this->tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('si', $result, $tariff_combination_id) ||

@@ -138,7 +138,7 @@ class Octopus extends Root
                   JOIN     `tariff_exports` `te` ON `tc`.`export` = `te`.`id`
                   WHERE    `tc`.`status` = \'CURRENT\' AND 
                             NOT `tc`.`ignore`
-                  ORDER BY `tc`.`active`';
+                  ORDER BY `tc`.`active` DESC';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($id, $name, $import, $export, $active) ||
             !$stmt->execute()) {

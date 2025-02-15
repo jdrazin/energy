@@ -4,13 +4,12 @@
     <!--Load the AJAX API-->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">                                       // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
+        const SERVER = 'http://192.168.1.15/';
+
         google.charts.load('current', {'packages':['corechart', 'table']});        // load the Visualization API and corechart package
-        /*
-         * plot: next/previous day time series
-         */
         google.charts.setOnLoadCallback(fetchTimeSeries);                       // Set a callback to run when the Google Visualization API is loaded
         function fetchTimeSeries() {
-            fetch('http://192.168.1.15/slots')
+            fetch(SERVER + 'slots')
                 .then(response => response.text()) // First get response as text
                 .then(text => {
                     if (!text) throw new Error("Empty response from server");
@@ -21,7 +20,7 @@
         }
 
         function fetchTariffCombinations() {
-            fetch('http://192.168.1.15/tariff_combinations')
+            fetch(SERVER + 'tariff_combinations')
                 .then(response => response.text()) // First get response as text
                 .then(text => {
                     if (!text) throw new Error("Empty response from server");

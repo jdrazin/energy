@@ -488,9 +488,9 @@ class GivEnergy extends Root
      */
     public function set_charge_discharge_block($slot_number, $settings): void
     {
-        $mode = $settings['mode'];
+        $mode  = $settings['mode'];
         $start = $settings['start'];
-        $stop = $settings['stop'];
+        $stop  = $settings['stop'];
         $abs_charge_power_w = $settings['abs_charge_power_w'] ?? 0;
         $target_level_percent = $settings['target_level_percent'];
         $message = $settings['message'];

@@ -60,44 +60,10 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function status(): string {
-        $sql = 'SELECT      UNIX_TIMESTAMP(`n`.`start`) AS `unix_timestamp`,
-                            ROUND(`n`.`total_load_kw`, 3),
-                            ROUND(`p`.`total_load_kw`, 3) AS `previous_total_load_kw`,
-                            ROUND(`n`.`grid_kw`, 3),
-                            ROUND(`p`.`grid_kw`, 3)       AS `previous_grid_kw`,
-                            ROUND(`n`.`solar_kw`, 3),
-                            ROUND(`p`.`solar_kw`, 3)      AS `previous_solar_kw`
-                  FROM      `slots` `n`
-                  LEFT JOIN (SELECT `slot`,
-                                    `start`,
-                                    `total_load_kw`,
-                                    `grid_kw`,
-                                    `solar_kw`
-                                FROM `slots`) `p` ON `p`.`slot`+48 = `n`.`slot`
-                  WHERE     `n`.`slot` >= 0 AND `n`.`final`
-                  ORDER BY  `n`.`slot`';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        $slots = [];
-        $slots[]     = ['unix_timestamp', 'total_load_kw', 'previous_load_kw',     'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
-        while ($stmt->fetch()) {
-            $slots[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
-        }
-        return json_encode($slots, JSON_PRETTY_PRINT);
-    }
-
-    /**
-     * @throws Exception
-     */
     public function tariff_combinations(): string {
         $sql = 'SELECT  UNIX_TIMESTAMP(`s`.`start`) AS `start`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`, CONVERT(IF((`tc`.`active` IS NULL), \'\', \' *ACTIVE*\') USING utf8mb4), \' (\', `tc`.`id`, \')\') AS `tariff [import, export]`,
+                        `tc`.`result`,
                         ROUND(((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`), 2) AS `RAW (GBP)`,
                         ROUND((((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`) + `sndce`.`optimised_wear`), 2) AS `optimised (GBP)`,
                         ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)), 2) AS `grid saving (GBP)`,
@@ -111,16 +77,16 @@ class Energy extends Root
                     JOIN `slots`               `s`  ON `s`.`id` = `sndce`.`slot`
                     ORDER BY ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)), 2) DESC';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($start, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent) ||
+            !$stmt->bind_result($start, $result, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
         $tariff_combinations = [];
-        $tariff_combinations[]     = ['Starting', 'Tariff combination [import, export]', 'Raw GBP', 'Optimised GBP', 'Grid saving GBP', 'Total saving GBP', 'Saving %', 'Wear %'];
+        $tariff_combinations[]     = ['Starting', 'Tariff combination [import, export]', 'Result', 'Raw GBP', 'Optimised GBP', 'Grid saving GBP', 'Total saving GBP', 'Saving %', 'Wear %'];
         while ($stmt->fetch()) {
-            $tariff_combinations[] = [$start, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent];
+            $tariff_combinations[] = [$start, $result, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent];
         }
         return json_encode($tariff_combinations, JSON_PRETTY_PRINT);
     }

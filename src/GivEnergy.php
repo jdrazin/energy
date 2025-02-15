@@ -351,7 +351,7 @@ class GivEnergy extends Root
     public function initialise(): void
     {
         $this->defaults(self::PRE_DEFAULTS);
-        $this->set_charge_discharge_blocks_to_default();
+   //     $this->set_charge_discharge_blocks_to_default();
         $this->defaults(self::POST_DEFAULTS);
     }
 

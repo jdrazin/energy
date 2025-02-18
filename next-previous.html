@@ -81,6 +81,10 @@
                     minValue: 0
                 },
             };
+            /*
+             * Google Line Chart curve fitting is rubbish, so consider cubic splines for future
+             * see Python scipy/numpy library: https://pythonnumericalmethods.studentorg.berkeley.edu/notebooks/chapter17.03-Cubic-Spline-Interpolation.html
+             */
             var chart = new google.visualization.LineChart(document.getElementById('chart_time_series'));
             chart.draw(timeSeries, options);
         }

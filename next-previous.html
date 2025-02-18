@@ -29,7 +29,7 @@
                 .catch(error => console.error('Error fetching data:', error));
         }
         function drawChart(data) {
-            var timeSeries = new google.visualization.DataTable();
+            var timeSeries = new google.visualization.DataTable(data);
                 timeSeries.addColumn('date',   'Time of day');
                 timeSeries.addColumn('number', 'total_load_kw');
                 timeSeries.addColumn('number', 'PREV total_load_kw');
@@ -48,7 +48,6 @@
                 width: 1800,
                 height: 800,
                 backgroundColor: '#EEEEEE',
-                lineWidth: 5,
                 series: {
                     0: { lineWidth: 5 },  // total_load_kw
                     1: { lineWidth: 2 },  // PREV total_load_kw
@@ -65,7 +64,8 @@
                             '#e49307',    // solar_kw
                             '#e49307'     // PREV solar_kw
                         ],
-                is3D: false,
+                curveType: 'function',
+                is3D: true,
                 hAxis:	{
                     title: 'slot start times',
                     titleTextStyle: { color: 'black', fontSize: 25, bold: true, italic: false},
@@ -79,7 +79,7 @@
                     textStyle : {fontSize: 20, bold: false},
                     gridlines: {color: 'none'},
                     minValue: 0
-                }
+                },
             };
             var chart = new google.visualization.LineChart(document.getElementById('chart_time_series'));
             chart.draw(timeSeries, options);

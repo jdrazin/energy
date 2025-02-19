@@ -11,7 +11,7 @@ class EnergyCost extends Root
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
-                    COMMAND_LOG             = '/var/www/html/energy/test/command.log',
+                    COMMAND_LOG             = '/var/www/html/energy/test/energy_cost.log',
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
     const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
@@ -414,7 +414,7 @@ class EnergyCost extends Root
         ];
     }
 
-    protected function parameter_name_value($parameter_name): string {  // make parameter substring
+    private function parameter_name_value($parameter_name): string {  // make parameter substring
         return $parameter_name . '= ' . $this->problem[$parameter_name] . ' ';
     }
 

@@ -9,6 +9,7 @@
 
 	$cubic_spline = new CubicSpline(3);
     $cubic_spline->x($x);
+    $y = $cubic_spline->cubic_spline_y($y);
 
 
 

@@ -27,6 +27,7 @@ class CubicSpline extends Root
     /**
      * @param $y
      * @return array
+     * @throws Exception
      */
     public function cubic_spline_y($y): array {
         $y = $this->interpolate($this->exterpolate($y));
@@ -44,9 +45,8 @@ class CubicSpline extends Root
             $this->logDb('MESSAGE', $message, 'FATAL');
             throw new Exception($message);
         }
-        $output = shell_exec($command);                                           // execute Python command and capture output
-        $result = json_decode($output, true);                           // decode JSON output from Python
-
+        $output = shell_exec($command);               // execute Python command and capture output
+        return json_decode($output, true);  // decode JSON output from Python
     }
 
     private function exterpolate($array): array {

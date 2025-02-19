@@ -33,10 +33,10 @@ class CubicSpline extends Root
         $command = self::PYTHON_SCRIPT_COMMAND . ' ';
         $command .= 'multiple= '  . $this->multiple;
         $command .= ' size= '     . count($y);
-        $command .= ' elements: ' . count($y);
+        $command .= ' elements: ';
         foreach ($this->x as $index => $x) {
-            $command .= ' ' . $x;
-            $command .= ' ' . $y[$index];
+            $command .= $x         . ' ';
+            $command .= $y[$index] . ' ';
         }
         if (!$command ||
             !file_put_contents(self::COMMAND_LOG, $command)) {

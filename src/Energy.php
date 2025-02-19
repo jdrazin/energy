@@ -4,7 +4,8 @@ use Exception;
 
 class Energy extends Root
 {
-    const   int TEMPERATURE_INTERNAL_LIVING_CELSIUS = 20;
+    const   int TEMPERATURE_INTERNAL_LIVING_CELSIUS = 20,
+                CUBIC_SPLINE_MULTIPLE               = 8;
     const   float JOULES_PER_KWH                    = 1000.0 * 3600.0;
     const   float DAYS_PER_YEAR                     = 365.25;
     const   int HOURS_PER_DAY                       = 24;
@@ -58,15 +59,21 @@ class Energy extends Root
             $slots[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
         }
         $columns = $slots[0];
-        $columns_size = count($columns);
-        $x = 0;
-        for ($index = 1; $index < $columns_size; $index++) {
-            $x[] = $slots[$index][0];
-        }
-        $cubic_spline = new CubicSpline(100);
-        $cubic_spline->x($x);
+        $cubic_spline = new CubicSpline(self::CUBIC_SPLINE_MULTIPLE);
+        $cubic_splines = [];
         foreach ($columns as $index => $column) {
-
+            $z = [];
+            foreach ($slots as $slot) {
+                $z[] = $slot[$index];
+            }
+            unset($z[0]);
+            if (!$index) {
+                $cubic_spline->x($z);
+            }
+            else {
+                $cubic_spline->cubic_spline_y($z);
+            }
+         //   $cubic_splines[$index] = $z;
         }
         return json_encode($slots, JSON_PRETTY_PRINT);
     }

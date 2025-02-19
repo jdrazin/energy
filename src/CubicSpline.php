@@ -10,17 +10,23 @@ use Exception;
 
 class CubicSpline
 {
+    public int $multiple;
     public array $x = [];
-    public function __construct($config) {
-        if (!is_null($config)) {
-
-        }
-        parent::__construct();
+    public function __construct($multiple) {
+        $this->multiple = $multiple;
     }
-
-    //
     public function x($array) {
         $this->x = $array;
+    }
+
+    /**
+     * @return array
+     */
+    public function cubic_spline_y(): array {
+        return $this->x;
+    }
+
+    private function remove_nulls(): array {
 
     }
 }

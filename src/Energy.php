@@ -25,6 +25,9 @@ class Energy extends Root
         parent::__construct();
     }
 
+    /**
+     * @throws Exception
+     */
     public function slots(): string {
         $sql = 'SELECT      UNIX_TIMESTAMP(`n`.`start`) AS `unix_timestamp`,
                             ROUND(`n`.`total_load_kw`, 3),
@@ -53,6 +56,17 @@ class Energy extends Root
         $slots[]     = ['unix_timestamp', 'total_load_kw', 'previous_load_kw',     'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
         while ($stmt->fetch()) {
             $slots[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
+        }
+        $columns = $slots[0];
+        $columns_size = count($columns);
+        $x = 0;
+        for ($index = 1; $index < $columns_size; $index++) {
+            $x[] = $slots[$index][0];
+        }
+        $cubic_spline = new CubicSpline(100);
+        $cubic_spline->x($x);
+        foreach ($columns as $index => $column) {
+
         }
         return json_encode($slots, JSON_PRETTY_PRINT);
     }

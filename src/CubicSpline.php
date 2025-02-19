@@ -38,14 +38,6 @@ class CubicSpline
         foreach ($this->y as $y) {
             $command .= ' ' . $y;
         }
-
-        $number_slots = $this->problem['number_slots'];
-        $command .= 'import_gbp_per_kwhs= ';
-        $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
-        for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $import_gbp_per_kwhs[$slot_count] . ' ';
-        }
-
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
 

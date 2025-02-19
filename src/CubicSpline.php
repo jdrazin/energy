@@ -8,7 +8,7 @@ use Exception;
  * see https://pythonnumericalmethods.studentorg.berkeley.edu/notebooks/chapter17.03-Cubic-Spline-Interpolation.html
  */
 
-class CubicSpline
+class CubicSpline extends Root
 {
     const string    COMMAND_LOG             = '/var/www/html/energy/test/cubic_spline.log',
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/cubicSpline.py';
@@ -17,6 +17,7 @@ class CubicSpline
     public int $multiple;
     public array $x;
     public function __construct($multiple) {
+        parent::__construct();
         $this->multiple = $multiple;
     }
     public function x($array): void {
@@ -36,6 +37,12 @@ class CubicSpline
         foreach ($this->x as $index => $x) {
             $command .= ' ' . $x;
             $command .= ' ' . $y[$index];
+        }
+        if (!$command ||
+            !file_put_contents(self::COMMAND_LOG, $command)) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command log');
+            $this->logDb('MESSAGE', $message, 'FATAL');
+            throw new Exception($message);
         }
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python

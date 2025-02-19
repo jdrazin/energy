@@ -38,12 +38,13 @@ class Energy extends Root
                             ROUND(`n`.`solar_kw`, 3),
                             ROUND(`p`.`solar_kw`, 3)      AS `previous_solar_kw`
                   FROM      `slots` `n`
-                  LEFT JOIN (SELECT `slot`,
-                                    `start`,
-                                    `total_load_kw`,
-                                    `grid_kw`,
-                                    `solar_kw`
-                                FROM `slots`) `p` ON `p`.`slot`+48 = `n`.`slot`
+                  LEFT JOIN (SELECT     `slot`,
+                                        `start`,
+                                        `total_load_kw`,
+                                        `grid_kw`,
+                                        `solar_kw`
+                                FROM    `slots`
+                                WHERE   `final`) `p` ON `p`.`slot`+48 = `n`.`slot`
                   WHERE     `n`.`slot` >= 0 AND `n`.`final`
                   ORDER BY  `n`.`slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
@@ -63,17 +64,16 @@ class Energy extends Root
         $cubic_splines = [];
         foreach ($columns as $index => $column) {
             $z = [];
-            foreach ($slots as $slot) {
-                $z[] = $slot[$index];
+            foreach ($slots as $k => $slot) {
+                $z[$k-1] = $slot[$index];
             }
-            unset($z[0]);
+            unset($z[-1]);
             if (!$index) {
                 $cubic_spline->x($z);
             }
             else {
-                $cubic_spline->cubic_spline_y($z);
+                $y = $cubic_spline->cubic_spline_y($z);
             }
-         //   $cubic_splines[$index] = $z;
         }
         return json_encode($slots, JSON_PRETTY_PRINT);
     }

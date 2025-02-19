@@ -1,5 +1,6 @@
 <?php
 namespace Src;
+use Exception;
 
 /*
  * wrapper to Python scipy cubic spline library
@@ -9,5 +10,18 @@ namespace Src;
 
 class CubicSpline
 {
+    public array $x = [];
+    public function __construct($config) {
+        if (!is_null($config)) {
 
+        }
+        parent::__construct();
+    }
+
+    //
+    public function x($array) {
+        $this->x = $array;
+
+    }
 }
+

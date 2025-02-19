@@ -26,8 +26,8 @@ class CubicSpline
     public function cubic_spline_y($y): array {
         $input = [
             0 => null,
-            1 => 30,
-            2 => 0,
+            1 => 'abc',
+            2 => 30,
             3 => '',
             4 => '',
             5 => '',
@@ -56,15 +56,26 @@ class CubicSpline
     }
 
     private function exterpolate($array): array {
-        $last_value = null;
+        $last_value_forward = null;
+        $last_value_reverse = null;
         $count = count($array);
-        for ($i = 0; $i < $count-1; $i++) {
-            $value = $array[$i];
-            if (is_numeric($value)) {
-                $last_value = $value;
+        for ($i = 0; $i < $count; $i++) {
+            $value_forward = $array[$i];
+            if (is_numeric($value_forward)) {
+                $last_value_forward = $value_forward;
             }
-            if (($i == $count-1) && !is_numeric($value) && $value != 0) {
-                $array[$i] = $last_value;
+            if (($i == $count-1) && !is_numeric($value_forward)) {
+                $array[$i] = $last_value_forward;
+            }
+            $value_reverse = $array[$count - $i -1];
+            if (is_numeric($value_reverse)) {
+                $last_value_reverse = $value_reverse;
+            }
+            $t = ($i == $count-1);
+            $u = !is_numeric($value_reverse);
+            $v = ($value_reverse != 0);
+            if (($i == $count-1) && !is_numeric($value_reverse)) {
+                $array[0] = $last_value_reverse;
             }
         }
         return $array;

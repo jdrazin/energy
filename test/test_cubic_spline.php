@@ -8,10 +8,10 @@
     $x = [0, 1, 2];
     $y = [1, 3, 2];
 
-	$cubic_spline = new CubicSpline(3);
+	$cubic_spline = new CubicSpline(100);
     $cubic_spline->x($x);
-    $y = $cubic_spline->cubic_spline_y($y);
-
+    $result = $cubic_spline->cubic_spline_y($y);
+    exit(0);
 
 
 	

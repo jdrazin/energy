@@ -24,30 +24,7 @@ class CubicSpline
      * @return array
      */
     public function cubic_spline_y($y): array {
-        $input = [
-            0 => null,
-            1 => 'abc',
-            2 => 30,
-            3 => '',
-            4 => '',
-            5 => '',
-            6 => 40,
-            7 => '',
-            8 => '',
-            9 => '10',
-            10 => 5,
-            11 => null,
-            12 => null,
-            13 => '',
-            14 => '5',
-            15 => '0',
-            16 => '',
-            17 => '',
-            18 => '100',
-            19 => '',
-            20 => 'baz'];
-        $result = $this->exterpolate($input);
-        $result = $this->interpolate($input);
+        $y = $this->interpolate($this->exterpolate($y));
         $this->y = $y;
         return $this->x;
     }
@@ -56,6 +33,11 @@ class CubicSpline
     }
 
     private function exterpolate($array): array {
+        foreach ($array as $key => $value) {
+            if (!is_numeric($value)) {
+                $array[$key] = null;
+            }
+        }
         $last_value_forward = null;
         $last_value_reverse = null;
         $count = count($array);

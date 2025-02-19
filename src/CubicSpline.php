@@ -15,7 +15,7 @@ class CubicSpline
 
 
     public int $multiple;
-    public array $x, $y;
+    public array $x;
     public function __construct($multiple) {
         $this->multiple = $multiple;
     }
@@ -30,13 +30,12 @@ class CubicSpline
     public function cubic_spline_y($y): array {
         $y = $this->interpolate($this->exterpolate($y));
         $command = self::PYTHON_SCRIPT_COMMAND . ' ';
-        $command .= 'multiple= ' . $this->multiple;
-        $command .= 'size= '     . count($y);
-        foreach ($this->x as $x) {
+        $command .= 'multiple= '  . $this->multiple;
+        $command .= ' size= '     . count($y);
+        $command .= ' elements: ' . count($y);
+        foreach ($this->x as $index => $x) {
             $command .= ' ' . $x;
-        }
-        foreach ($this->y as $y) {
-            $command .= ' ' . $y;
+            $command .= ' ' . $y[$index];
         }
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python

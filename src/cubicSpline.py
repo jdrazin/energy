@@ -1,5 +1,5 @@
 #
-# Nelder-Mead cost optimiser, see https://docs.scipy.org/doc/scipy/reference/optimize.minimize-neldermead.html#optimize-minimize-neldermead
+# Cubic Spline, see https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html
 #
 import sys
 import json

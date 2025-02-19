@@ -3,6 +3,7 @@
     namespace Src;
     require_once __DIR__ . '/../vendor/autoload.php';
 
+    $e = empty(0);
 
     $x = [0, 1, 2];
     $y = [1, 3, 2];

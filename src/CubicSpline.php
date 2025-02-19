@@ -20,56 +20,73 @@ class CubicSpline
     }
 
     /**
+     * @param $y
      * @return array
      */
     public function cubic_spline_y($y): array {
-        $this->y = $y;
-        return $this->x;
-    }
-
-    private function remove_nulls(): array {
         $input = [
-            0 => 'foo',
-            1 => 'bar',
-            2 => '',
-            3 => '10',
+            0 => null,
+            1 => 30,
+            2 => 0,
+            3 => '',
             4 => '',
             5 => '',
-            6 => '40',
+            6 => 40,
             7 => '',
             8 => '',
             9 => '10',
-            10 => '5',
-            11 => '',
-            12 => '',
+            10 => 5,
+            11 => null,
+            12 => null,
             13 => '',
             14 => '5',
             15 => '0',
             16 => '',
             17 => '',
-            18 => '',
-            19 => '100',
+            18 => '100',
+            19 => '',
             20 => 'baz'];
-        $result = $this->interpolate();
+        $result = $this->exterpolate($input);
+        $result = $this->interpolate($input);
+        $this->y = $y;
+        return $this->x;
+    }
+
+    private function remove_nulls(): array {
+    }
+
+    private function exterpolate($array): array {
+        $last_value = null;
+        $count = count($array);
+        for ($i = 0; $i < $count-1; $i++) {
+            $value = $array[$i];
+            if (is_numeric($value)) {
+                $last_value = $value;
+            }
+            if (($i == $count-1) && !is_numeric($value) && $value != 0) {
+                $array[$i] = $last_value;
+            }
+        }
+        return $array;
     }
 
     /*
      * interpolates missing numbers
      */
-    private function interpolate($row = array() ) {
+    private function interpolate($row = [] ) {
         if (!is_array( $row ) || empty( $row )) {
             return $row;
         }
 
-        $items = array();
+        $items = [];
         $item  = array(
             'start'         => null,
             'end'           => null,
-            'empty_indexes' => array(),
+            'empty_indexes' => [],
         );
         foreach ( $row as $index => $current_val ) {
-            $prev_val = $row[ $index - 1 ];
-            $next_val = $row[ $index + 1 ];
+            $prev_val = $row[ $index - 1 ] ?? null;
+            $next_val = $row[ $index + 1 ] ?? null;
             if ( empty( $current_val ) && $current_val != '0' ) {
 
                 // Look behind
@@ -93,7 +110,7 @@ class CubicSpline
                     $item    = array(
                         'start'         => null,
                         'end'           => null,
-                        'empty_indexes' => array(),
+                        'empty_indexes' => [],
                     );
                 }
 
@@ -105,7 +122,7 @@ class CubicSpline
                     $item = array(
                         'start'         => null,
                         'end'           => null,
-                        'empty_indexes' => array(),
+                        'empty_indexes' => [],
                     );
                 }
             }

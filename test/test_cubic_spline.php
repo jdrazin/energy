@@ -8,7 +8,11 @@
     $x = [0, 1, 2];
     $y = [1, 3, 2];
 
-	$cubic_spline = new CubicSpline(100);
+    try {
+        $cubic_spline = new CubicSpline(100);
+    } catch (\Exception $e) {
+
+    }
     $cubic_spline->x($x);
     $result = $cubic_spline->cubic_spline_y($y);
     exit(0);

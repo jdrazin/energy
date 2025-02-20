@@ -55,24 +55,20 @@ class Energy extends Root
             throw new Exception($message);
         }
         $slots = [];
-        $slots[]     = ['unix_timestamp', 'total_load_kw', 'previous_load_kw',     'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
+        $slots[] = ['unix_timestamp', 'total_load_kw', 'previous_load_kw',     'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
         while ($stmt->fetch()) {
             $slots[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
         }
         $columns = $slots[0];
-        $cubic_spline = new CubicSpline(self::CUBIC_SPLINE_MULTIPLE);
-        $cubic_splines = [];
+        $cubic_spline = new CubicSpline(self::CUBIC_SPLINE_MULTIPLE*(count($slots)-1));
         foreach ($columns as $index => $column) {
-            $z = [];
+            $y = [];
             foreach ($slots as $k => $slot) {
-                $z[$k-1] = $slot[$index];
+                $y[$k-1] = $slot[$index];
             }
-            unset($z[-1]);
-            if (!$index) {
-                $cubic_spline->x($z);
-            }
-            else {
-                $y = $cubic_spline->cubic_spline_y($z);
+            unset($y[-1]);
+            if ($index) {
+              $y = $cubic_spline->cubic_spline_y($y);
             }
         }
         return json_encode($slots, JSON_PRETTY_PRINT);
@@ -105,7 +101,7 @@ class Energy extends Root
             throw new Exception($message);
         }
         $tariff_combinations = [];
-        $tariff_combinations[]     = ['Starting', 'Tariff combination [import, export]', 'Result', 'Raw GBP', 'Optimised GBP', 'Grid saving GBP', 'Total saving GBP', 'Saving %', 'Wear %'];
+        $tariff_combinations[] = ['Starting', 'Tariff combination [import, export]', 'Result', 'Raw GBP', 'Optimised GBP', 'Grid saving GBP', 'Total saving GBP', 'Saving %', 'Wear %'];
         while ($stmt->fetch()) {
             $tariff_combinations[] = [$start, $result, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent];
         }

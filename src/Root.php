@@ -330,8 +330,7 @@ class Root
                    FROM   `values`
                    WHERE  `entity` = ? AND
                           `type`   = \'FORECAST\' AND
-                          `datetime` BETWEEN ? AND ? AND
-                          `timestamp` > ?';
+                          `datetime` BETWEEN ? AND ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ssss', $entity, $start, $stop, $from) ||
             !$stmt->bind_result($value) ||

@@ -332,7 +332,7 @@ class Root
                           `type`   = \'FORECAST\' AND
                           `datetime` BETWEEN ? AND ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ssss', $entity, $start, $stop) ||
+            !$stmt->bind_param('sss', $entity, $start, $stop) ||
             !$stmt->bind_result($value) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {

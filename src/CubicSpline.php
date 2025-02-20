@@ -33,8 +33,8 @@ class CubicSpline extends Root
         $command .= 'multiple= '  . $this->multiple;
         $command .= ' size= '     . count($y);
         $command .= ' elements: ';
-        foreach ($this->x as $index => $x) {
-             $command .= $y[$index] . ' ';
+        foreach ($y as $v) {
+             $command .= $v . ' ';
         }
         $output = shell_exec($command);               // execute Python command and capture output
         return json_decode($output, true);  // decode JSON output from Python

@@ -14,17 +14,16 @@ multiple = int(sys.argv[index])
 index   += 2
 size     = int(sys.argv[index])
 
-# load x, y array element pairs
+# load y array element (x is implicity evenly spaced 0, 1, 2, 3 ... n)
 x = []
 y = []
 
 index += 2
 i = 0
 while i < size:
-    x.append(float(sys.argv[index]))
+    x.append(float(i))
     index += 1
     y.append(float(sys.argv[index]))
-    index += 1
     i+= 1
 
 # use bc_type = 'natural' adds the constraints as we described above

@@ -6,6 +6,8 @@ use Exception;
  * wrapper to Python scipy cubic spline library
  *
  * see https://pythonnumericalmethods.studentorg.berkeley.edu/notebooks/chapter17.03-Cubic-Spline-Interpolation.html
+ *
+ * *** NOTE: samples must be evenly and contiguously spaced along x-axis ***
  */
 
 class CubicSpline extends Root
@@ -13,15 +15,11 @@ class CubicSpline extends Root
     const string    COMMAND_LOG             = '/var/www/html/energy/test/cubic_spline.log',
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/cubicSpline.py';
 
-
     public int $multiple;
-    public array $x;
+
     public function __construct($multiple) {
         parent::__construct();
         $this->multiple = $multiple;
-    }
-    public function x($array): void {
-        $this->x = $array;
     }
 
     /**
@@ -36,14 +34,7 @@ class CubicSpline extends Root
         $command .= ' size= '     . count($y);
         $command .= ' elements: ';
         foreach ($this->x as $index => $x) {
-            $command .= $x         . ' ';
-            $command .= $y[$index] . ' ';
-        }
-        if (!$command ||
-            !file_put_contents(self::COMMAND_LOG, $command)) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command log');
-            $this->logDb('MESSAGE', $message, 'FATAL');
-            throw new Exception($message);
+             $command .= $y[$index] . ' ';
         }
         $output = shell_exec($command);               // execute Python command and capture output
         return json_decode($output, true);  // decode JSON output from Python

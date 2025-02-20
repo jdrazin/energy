@@ -55,20 +55,33 @@ class Energy extends Root
             throw new Exception($message);
         }
         $slots = [];
-        $slots[] = ['unix_timestamp', 'total_load_kw', 'previous_load_kw',     'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
         while ($stmt->fetch()) {
             $slots[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
         }
-        $columns = $slots[0];
-        $cubic_spline = new CubicSpline(self::CUBIC_SPLINE_MULTIPLE*(count($slots)-1));
+        $number_slots = count($slots);
+        $number_slots_cubic_spline = self::CUBIC_SPLINE_MULTIPLE*($number_slots-1);
+        $cubic_spline = new CubicSpline($number_slots_cubic_spline);
+        $columns = ['unix_timestamp', 'total_load_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
+        $slots_cubic_spline[0] = $columns;
         foreach ($columns as $index => $column) {
             $y = [];
             foreach ($slots as $k => $slot) {
                 $y[$k-1] = $slot[$index];
             }
             unset($y[-1]);
-            if ($index) {
-              $y = $cubic_spline->cubic_spline_y($y);
+            if (!$index) { // generate x-array
+                $t_min = $slots[1][0];
+                $t_max = $slots[$number_slots-1][0];
+                $t_duration = $t_max - $t_min;
+                for ($k=0; $k < $number_slots_cubic_spline; $k++) {
+                    $slots_cubic_spline[$k+1][$index] = (int) round($t_min + $t_duration * ($k / ($number_slots_cubic_spline-1)));
+                }
+            }
+            else {
+                $y = $cubic_spline->cubic_spline_y($y);
+                foreach ($y as $k => $v) {
+                    $slots[$k+1][$index] = $y[$k];
+                }
             }
         }
         return json_encode($slots, JSON_PRETTY_PRINT);

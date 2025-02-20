@@ -22,9 +22,9 @@ index += 2
 i = 0
 while i < size:
     x.append(float(i))
-    index += 1
     y.append(float(sys.argv[index]))
-    i+= 1
+    index += 1
+    i += 1
 
 # use bc_type = 'natural' adds the constraints as we described above
 f = CubicSpline(x, y, bc_type='natural')

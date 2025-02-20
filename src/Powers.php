@@ -97,14 +97,12 @@ class Powers extends Root
     /**
      * @throws Exception
      */
-    private function solarForecast(): void
-    {                  // get average solar forecast for slots
-        $from = $this->db_slots->previous_slot['start'];      // latest time of forecast
+    private function solarForecast(): void {                  // get average solar forecast for slots
         $powers_kw = [];
         foreach ($this->db_slots->slots as $slot => $v) {
             $start = $v['start'];
             $stop = $v['stop'];
-            $powers_kw[$slot] = round($this->forecast_average_latest('SOLAR_W', $start, $stop, $from) / 1000.0, 3);
+            $powers_kw[$slot] = round($this->forecast_average_latest('SOLAR_W', $start, $stop) / 1000.0, 3);
         }
         $this->updateSlotPowerskW($powers_kw, 'solar_kw');
     }

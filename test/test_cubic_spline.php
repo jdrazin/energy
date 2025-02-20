@@ -13,7 +13,6 @@
     } catch (\Exception $e) {
 
     }
-    $cubic_spline->x($x);
     $result = $cubic_spline->cubic_spline_y($y);
     exit(0);
 

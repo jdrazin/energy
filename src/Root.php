@@ -324,7 +324,7 @@ class Root
         }
     }
 
-    public function forecast_average_latest($entity, $start, $stop, $from): float
+    public function forecast_average_latest($entity, $start, $stop): float
     { // returns average of forecast points in slot since from
         $sql = 'SELECT    AVG(`value`) AS `value`
                    FROM   `values`
@@ -332,7 +332,7 @@ class Root
                           `type`   = \'FORECAST\' AND
                           `datetime` BETWEEN ? AND ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ssss', $entity, $start, $stop, $from) ||
+            !$stmt->bind_param('ssss', $entity, $start, $stop) ||
             !$stmt->bind_result($value) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {
@@ -341,7 +341,7 @@ class Root
             throw new Exception($message);
         }
         if (is_null($value)) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "no $entity average latest forecast from=$from found: start=$start, stop=$stop"));
+            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "no $entity average latest forecast: start=$start, stop=$stop"));
         } else {
             return $value;
         }

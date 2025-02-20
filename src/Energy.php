@@ -59,14 +59,14 @@ class Energy extends Root
             $slots[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
         }
         $number_slots = count($slots);
-        $number_slots_cubic_spline = self::CUBIC_SPLINE_MULTIPLE*($number_slots-1);
+        $number_slots_cubic_spline = $number_slots*self::CUBIC_SPLINE_MULTIPLE;
         $cubic_spline = new CubicSpline($number_slots_cubic_spline);
         $columns = ['unix_timestamp', 'total_load_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
         $slots_cubic_spline[0] = $columns;
         foreach ($columns as $index => $column) {
             $y = [];
             foreach ($slots as $k => $slot) {
-                $y[$k-1] = $slot[$index];
+                $y[$k] = $slot[$index];
             }
             unset($y[-1]);
             if (!$index) { // generate x-array
@@ -80,11 +80,11 @@ class Energy extends Root
             else {
                 $y = $cubic_spline->cubic_spline_y($y);
                 foreach ($y as $k => $v) {
-                    $slots[$k+1][$index] = $y[$k];
+                    $slots_cubic_spline[$k+1][$index] = round($y[$k], 3);
                 }
             }
         }
-        return json_encode($slots, JSON_PRETTY_PRINT);
+        return json_encode($slots_cubic_spline, JSON_PRETTY_PRINT);
     }
 
     /**

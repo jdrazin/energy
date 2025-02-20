@@ -23,21 +23,26 @@ class CubicSpline extends Root
     }
 
     /**
-     * @param $y
+     * @param $y_array
      * @return array
      * @throws Exception
      */
-    public function cubic_spline_y($y): array {
-        $y = $this->interpolate($this->exterpolate($y));
+    public function cubic_spline_y($y_array): array {
+        $y_array = $this->interpolate($this->exterpolate($y_array));
         $command = self::PYTHON_SCRIPT_COMMAND . ' ';
         $command .= 'multiple= '  . $this->multiple;
-        $command .= ' size= '     . count($y);
+        $command .= ' size= '     . count($y_array);
         $command .= ' elements: ';
-        foreach ($y as $v) {
+        foreach ($y_array as $v) {
              $command .= $v . ' ';
         }
-        $output = shell_exec($command);               // execute Python command and capture output
-        return json_decode($output, true);  // decode JSON output from Python
+        $output_json = shell_exec($command);               // execute Python command and capture output
+        if (($y_array = json_decode($output_json, true)['y'] ?? false) === false) {
+           $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad cubic spline');
+           $this->logDb('MESSAGE', $message, 'ERROR');
+           throw new Exception($message);
+        }
+        return $y_array;
     }
 
     private function exterpolate($array): array {

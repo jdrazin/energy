@@ -485,7 +485,7 @@ class Octopus extends Root
                                         `load_house_kw`,
                                         `grid_kw`,
                                         `solar_kw`,
-                                        `battery_level_kwh`
+                                        `battery_level_percent`
                                 FROM    `slots`
                                 WHERE   `final`) `p` ON `p`.`slot`+48 = `n`.`slot`
                   WHERE     `n`.`slot` >= 0 AND `n`.`final`

@@ -437,8 +437,9 @@ class Octopus extends Root
         }
         if ($battery_capacity_kwh = $this->config['battery']['initial_raw_capacity_kwh']) {
             $sql = 'UPDATE  `slots`
-                      SET   `battery_level_kwh`     = ROUND(IFNULL(`battery_level_kwh`,     ? * `battery_level_percent` /100.0),  1)
-                      WHERE `final`';
+                      SET   `battery_level_kwh` = ROUND(IFNULL(`battery_level_kwh`, ? * `battery_level_percent` /100.0),  1)
+                      WHERE `final` AND 
+                            `battery_level_percent` IS NOT NULL';
             unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('d', $battery_capacity_kwh) ||
@@ -448,8 +449,9 @@ class Octopus extends Root
                 throw new Exception($message);
             }
             $sql = 'UPDATE  `slots`
-                      SET   `battery_level_percent` = ROUND(IFNULL(`battery_level_percent`, 100.0 * `battery_level_percent` / ?), 1)
-                      WHERE `final`';
+                      SET   `battery_level_percent` = ROUND(IFNULL(`battery_level_percent`, 100.0 * `battery_level_kwh` / ?), 1)
+                      WHERE `final` AND
+                            `battery_level_kwh` IS NOT NULL';
             unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('d', $battery_capacity_kwh) ||

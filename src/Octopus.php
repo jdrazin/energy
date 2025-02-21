@@ -474,13 +474,11 @@ class Octopus extends Root
         $number_slots_cubic_spline = $number_slots*self::CUBIC_SPLINE_MULTIPLE;
         $cubic_spline = new CubicSpline($number_slots_cubic_spline);
         $columns = ['unix_timestamp', 'total_load_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
-        $slots_cubic_splines[0] = $columns;
         foreach ($columns as $index => $column) {
             $y = [];
             foreach ($slots as $k => $slot) {
                 $y[$k] = $slot[$index];
             }
-            unset($y[-1]);
             if (!$index) { // generate x-array
                 $t_min = $slots[1][0];
                 $t_max = $slots[$number_slots-1][0];

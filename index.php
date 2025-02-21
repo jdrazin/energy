@@ -26,12 +26,6 @@ $app->get('/slots', function (Request $request, Response $response) {
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->get('/status', function (Request $request, Response $response) {
-    $energy = new Energy(null);
-    $slots = $energy->status();
-    $response->getBody()->write($slots);
-    return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
-});
 $app->get('/tariff_combinations', function (Request $request, Response $response) {
     $energy = new Energy(null);
     $slots = $energy->tariff_combinations();

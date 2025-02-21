@@ -79,7 +79,7 @@ class Energy extends Root
             throw new Exception($message);
         }
         $tariff_combinations = [];
-        $tariff_combinations[] = ['Starting', 'Tariff combination [import, export]', 'Result', 'grid: raw (£)', 'grid: optimised (£)', 'grid: saving (£)', 'net saving (£)', 'grid: saving (%)', 'wear (%)'];
+        $tariff_combinations[] = ['Starting', 'Tariff combination [import, export]', 'Result', 'Grid: raw (£)', 'Grid: optimised (£)', 'Grid: saving (£)', 'Net saving (£)', 'Grid: saving (%)', 'Wear (%)'];
         while ($stmt->fetch()) {
             $tariff_combinations[] = [$start, $result, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent];
         }

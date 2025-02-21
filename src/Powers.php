@@ -10,8 +10,8 @@ class Powers extends Root
 {
 
     const int   SLOT_DISTANCE_MAX = 12,
-        TEMPERATURE_DISTANCE_MAX = 2,
-        HISTORY_DAY_LIMIT = 14;
+                TEMPERATURE_DISTANCE_MAX = 2,
+                HISTORY_DAY_LIMIT = 14;
 
 
     const float MAX_POWER_W = 7500.0,
@@ -91,7 +91,7 @@ class Powers extends Root
         $this->db_slots = $db_slots;
         $this->solarForecast();                                                                                                 // solar forecast
         $this->heatingEstimate();                                                                                               // estimate heating power for each slot based on historic performance
-        $this->nonHeating();                                                                                                    // calculate non_heating historic slots
+        $this->estimateLoadNonHeating();                                                                                                    // calculate non_heating historic slots
         $this->totalLoad();                                                                                                     // total load
     }
 
@@ -232,52 +232,6 @@ class Powers extends Root
         return $slot % DbSlots::SLOTS_PER_DAY;
     }
 
-    /**
-     * @throws Exception
-     */
-    public function averageSlotLoadNonHeating(): void
-    {
-        /*
-         * get non_heating load for each slot
-         *
-         * calculate as average over past couple of weeks of same day
-         *
-         * load_non_heating = total_non_heating - ev powers
-         *
-         */
-        $sql = 'SELECT      ROUND(AVG(`value`)/1000.0, 3) AS `load_non_heating_kw`
-                  FROM      `values`
-                  WHERE     `entity` = \'LOAD_NON_HEATING_W\' AND
-                            `type`   = \'CALCULATED\' AND
-                            (60*HOUR(`datetime`) + MINUTE(`datetime`)) BETWEEN ? AND ? AND
-                            `datetime` > NOW() - INTERVAL ' . self::HISTORY_DAY_LIMIT . ' DAY AND
-                            `value` <= ' . self::HISTORY_POWER_LIMIT_W;
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ii', $start_minutes, $stop_minutes) ||
-            !$stmt->bind_result($domestic_non_heating_kw)) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        $powers_kw = [];
-        foreach ($this->db_slots->slots as $slot => $v) {
-            $datetime_start = new DateTime($v['start']);
-            $start_hour = (int)$datetime_start->format('H');
-            $start_minute = (int)$datetime_start->format('i');
-            $start_minutes = $start_minute + (60 * $start_hour);
-            $stop_minutes = $start_minutes + DbSlots::SLOT_DURATION_MIN;
-            if (!$stmt->execute() ||
-                !$stmt->fetch() ||
-                is_null($domestic_non_heating_kw)) {
-                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
-                throw new Exception($message);
-            }
-            $powers_kw[$slot] = $domestic_non_heating_kw;
-        }
-        $this->updateSlotPowerskW($powers_kw, 'load_non_heating_kw');
-    }
-
     private function updateSlotPowerskW($powers_kw, $column): void
     {
         $tariff_combination_id = $this->db_slots->tariff_combination['id'];
@@ -305,17 +259,17 @@ class Powers extends Root
     /**
      * @throws DateMalformedStringException
      */
-    private function powersKwSlotAverage($entity, $type): array
+    private function powersKwSlotAverage($entity, $type, $history_day_limit): array
     {
         $sql = 'SELECT      AVG(`value`)/1000.0
                   FROM      `values`
                   WHERE     `entity` = ? AND
                             `type`   = ? AND
                             (60*HOUR(`datetime`) + MINUTE(`datetime`)) BETWEEN ? AND ? AND
-                            `datetime` > NOW() - INTERVAL ' . self::HISTORY_DAY_LIMIT . ' DAY AND
+                            `datetime` > NOW() - INTERVAL ? DAY AND
                             `not_setback`(`datetime`)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ssii', $entity, $type, $start_minutes, $stop_minutes) ||
+            !$stmt->bind_param('ssiii', $entity, $type, $start_minutes, $stop_minutes, $history_day_limit) ||
             !$stmt->bind_result($power_kw)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -343,10 +297,13 @@ class Powers extends Root
     /**
      * @throws Exception
      */
-    private function nonHeating(): void
+    private function estimateLoadNonHeating(): void
     {
-        $powers_average_total_load_kw = $this->powersKwSlotAverage('TOTAL_LOAD_W', 'MEASURED');
-        $powers_average_load_heating_electric_kw = $this->powersKwSlotAverage('LOAD_HEATING_ELECTRIC_W', 'MEASURED');
+        /*
+         *  estimate non-heating load from average difference between total and heating load in recent past
+         */
+        $powers_average_total_load_kw               = $this->powersKwSlotAverage('TOTAL_LOAD_W',            'MEASURED', self::HISTORY_DAY_LIMIT);
+        $powers_average_load_heating_electric_kw    = $this->powersKwSlotAverage('LOAD_HEATING_ELECTRIC_W', 'MEASURED', self::HISTORY_DAY_LIMIT);
         $average_powers_load_non_heating_kw = [];
         foreach ($this->db_slots->slots as $slot => $v) {
             $average_total_load_kw = $powers_average_total_load_kw[$slot];

@@ -9,7 +9,7 @@
     "batteryMaxDischargeKw": 6,
     "importLimitKw": 24,
     "exportLimitKw": 8,
-    "batteryEnergyInitialKwh": 11.0697890625,
+    "batteryEnergyInitialKwh": 10.799971970833335,
     "slotDurationHour": 0.5,
     "number_slots": 48,
     "import_gbp_per_day": 0.427696,
@@ -162,6 +162,6 @@
         2.23888,
         1.8459,
         2.20377,
-        2.36825
+        2.36937
     ]
 }

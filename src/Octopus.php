@@ -525,18 +525,20 @@ class Octopus extends Root
                 }
             }
         }
-        $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `load_house_kw`,     `previous_load_house_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`) 
-                                           VALUES (?,       ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?                  )
-                               ON DUPLICATE KEY UPDATE `unix_timestamp`         = ?,
-                                                       `load_house_kw`          = ?,
-                                                       `previous_load_house_kw` = ?,
-                                                       `grid_kw`                = ?,
-                                                       `previous_grid_kw`       = ?,
-                                                       `solar_kw`               = ?,
-                                                       `previous_solar_kw`      = ?';
+        $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `load_house_kw`,     `previous_load_house_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`, `battery_level_percent`, `previous_battery_level_percent`) 
+                                           VALUES (?,       ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?                    )
+                               ON DUPLICATE KEY UPDATE `unix_timestamp`                 = ?,
+                                                       `load_house_kw`                  = ?,
+                                                       `previous_load_house_kw`         = ?,
+                                                       `grid_kw`                        = ?,
+                                                       `previous_grid_kw`               = ?,
+                                                       `solar_kw`                       = ?,
+                                                       `previous_solar_kw`              = ?,
+                                                       `battery_level_percent`          = ?,
+                                                       `previous_battery_level_percent` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iiddddddidddddd', $slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw,
-                                                                    $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw)) {
+            !$stmt->bind_param('iidddddddiddddddd', $slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw,
+                                                                    $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_percent, $previous_battery_level_percent)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);

@@ -31,8 +31,8 @@
         function drawChart(data) {
             var timeSeries = new google.visualization.DataTable(data);
                 timeSeries.addColumn('date',   'Time of day');
-                timeSeries.addColumn('number', 'NEXT total_load_kw');
-                timeSeries.addColumn('number', 'PREV total_load_kw');
+                timeSeries.addColumn('number', 'NEXT load_house_kw');
+                timeSeries.addColumn('number', 'PREV load_house_kw');
                 timeSeries.addColumn('number', 'NEXT grid_kw');
                 timeSeries.addColumn('number', 'PREV grid_kw');
                 timeSeries.addColumn('number', 'NEXT solar_kw');

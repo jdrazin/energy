@@ -59,8 +59,8 @@ class Energy extends Root
         $sql = 'SELECT  UNIX_TIMESTAMP(`s`.`start`) AS `start`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`, CONVERT(IF((`tc`.`active` IS NULL), \'\', \' *ACTIVE*\') USING utf8mb4), \' (\', `tc`.`id`, \')\') AS `tariff [import, export]`,
                         `tc`.`result`,
-                        ROUND(((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`), 2) AS `RAW (GBP)`,
-                        ROUND((((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`) + `sndce`.`optimised_wear`), 2) AS `optimised (GBP)`,
+                        ROUND(((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`), 2) AS `raw grid (GBP)`,
+                        ROUND(((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`), 2) AS `optimised grid (GBP)`,
                         ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)), 2) AS `grid saving (GBP)`,
                         ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - (((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`) + `sndce`.`optimised_wear`)), 2) AS `saving (GBP)`,
                         ROUND(((100.0 * (((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - (((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`) + `sndce`.`optimised_wear`))) / ((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`)), 0) AS `saving (%)`,
@@ -79,7 +79,7 @@ class Energy extends Root
             throw new Exception($message);
         }
         $tariff_combinations = [];
-        $tariff_combinations[] = ['Starting', 'Tariff combination [import, export]', 'Result', 'Raw GBP', 'Optimised GBP', 'Grid saving GBP', 'Total saving GBP', 'Saving %', 'Wear %'];
+        $tariff_combinations[] = ['Starting', 'Tariff combination [import, export]', 'Result', 'grid: raw (£)', 'grid: optimised (£)', 'grid: saving (£)', 'net saving (£)', 'grid: saving (%)', 'wear (%)'];
         while ($stmt->fetch()) {
             $tariff_combinations[] = [$start, $result, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent];
         }

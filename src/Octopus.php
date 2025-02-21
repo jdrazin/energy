@@ -471,7 +471,7 @@ class Octopus extends Root
         }
         $slots = [];
         while ($stmt->fetch()) {
-            $slots[$slot] = [$unix_timestamp,  $load_house_kw,  $previous_load_house_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
+            $slots[$slot] = [$unix_timestamp,  $load_house_kw,  $previous_load_house_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh];
         }
         $number_slots = count($slots);
         $number_slots_cubic_spline = $number_slots*self::CUBIC_SPLINE_MULTIPLE;

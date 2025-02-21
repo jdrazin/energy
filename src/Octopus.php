@@ -437,7 +437,7 @@ class Octopus extends Root
     private function slots_make_cubic_splines(): void
     {
         $sql = 'SELECT      `n`.`slot`,
-                            UNIX_TIMESTAMP(`n`.`start`) AS `unix_timestamp`,
+                            UNIX_TIMESTAMP(`n`.`start`)   AS `unix_timestamp`,
                             ROUND(`n`.`total_load_kw`, 3),
                             ROUND(`p`.`total_load_kw`, 3) AS `previous_total_load_kw`,
                             ROUND(`n`.`grid_kw`, 3),
@@ -455,7 +455,7 @@ class Octopus extends Root
                   WHERE     `n`.`slot` >= 0 AND `n`.`final`
                   ORDER BY  `n`.`slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw) ||
+            !$stmt->bind_result($slot, $unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -463,13 +463,13 @@ class Octopus extends Root
         }
         $slots = [];
         while ($stmt->fetch()) {
-            $slots[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
+            $slots[$slot] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
         }
         $number_slots = count($slots);
         $number_slots_cubic_spline = $number_slots*self::CUBIC_SPLINE_MULTIPLE;
         $cubic_spline = new CubicSpline($number_slots_cubic_spline);
         $columns = ['unix_timestamp', 'total_load_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
-        $slots_cubic_spline[0] = $columns;
+        $slots_cubic_splines[0] = $columns;
         foreach ($columns as $index => $column) {
             $y = [];
             foreach ($slots as $k => $slot) {
@@ -481,16 +481,42 @@ class Octopus extends Root
                 $t_max = $slots[$number_slots-1][0];
                 $t_duration = $t_max - $t_min;
                 for ($k=0; $k < $number_slots_cubic_spline; $k++) {
-                    $slots_cubic_spline[$k+1][$index] = (int) round($t_min + $t_duration * ($k / ($number_slots_cubic_spline-1)));
+                    $slots_cubic_splines[$k+1][$index] = (int) round($t_min + $t_duration * ($k / ($number_slots_cubic_spline-1)));
                 }
             }
             else {
                 $y = $cubic_spline->cubic_spline_y($y);
                 foreach ($y as $k => $v) {
-                    $slots_cubic_spline[$k+1][$index] = round($y[$k], 3);
+                    $slots_cubic_splines[$k+1][$index] = round($y[$k], 3);
                 }
             }
         }
-
+        $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `total_load_kw`,     `previous_total_load_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`) 
+                                           VALUES (`?`,     ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?                  )
+                               ON DUPLICATE KEY UPDATE `unix_timestamp` = ?,
+                                                       `total_load_kw`  =?,
+                                                       `previous_total_load_kw` = ?,
+                                                       `grid_kw` = ?,
+                                                       `previous_grid_kw = ?`,
+                                                       `solar_kw` = ?,
+                                                       `previous_solar_kw` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('idddddddddddd', $slot, $unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw,
+                                                                    $unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw)) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        foreach ($slots_cubic_splines as $slot => $slots_cubic_spline) {
+            $unix_timestamp         = $slots_cubic_spline[0];
+            $total_load_kw          = $slots_cubic_spline[1];
+            $previous_total_load_kw = $slots_cubic_spline[2];
+            $grid_kw                = $slots_cubic_spline[3];
+            $previous_grid_kw       = $slots_cubic_spline[4];
+            $solar_kw               = $slots_cubic_spline[5];
+            $previous_solar_kw      = $slots_cubic_spline[6];
+            $stmt->execute();
+        }
+        $this->mysqli->commit();
     }
 }

@@ -435,6 +435,10 @@ class Octopus extends Root
         }
         $this->mysqli->commit();
     }
+
+    /**
+     * @throws Exception
+     */
     private function slots_make_cubic_splines(): void
     {
         $sql = 'SELECT      `n`.`slot`,
@@ -494,13 +498,13 @@ class Octopus extends Root
         }
         $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `total_load_kw`,     `previous_total_load_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`) 
                                            VALUES (`?`,     ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?                  )
-                               ON DUPLICATE KEY UPDATE `unix_timestamp` = ?,
-                                                       `total_load_kw`  =?,
+                               ON DUPLICATE KEY UPDATE `unix_timestamp`         = ?,
+                                                       `total_load_kw`          = ?,
                                                        `previous_total_load_kw` = ?,
-                                                       `grid_kw` = ?,
-                                                       `previous_grid_kw = ?`,
-                                                       `solar_kw` = ?,
-                                                       `previous_solar_kw` = ?';
+                                                       `grid_kw`                = ?,
+                                                       `previous_grid_kw`       = ?,
+                                                       `solar_kw`               = ?,
+                                                       `previous_solar_kw`      = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('idddddddddddd', $slot, $unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw,
                                                                     $unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw)) {

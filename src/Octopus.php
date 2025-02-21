@@ -497,7 +497,7 @@ class Octopus extends Root
             }
         }
         $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `total_load_kw`,     `previous_total_load_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`) 
-                                           VALUES (`?`,     ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?                  )
+                                           VALUES (?,       ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?                  )
                                ON DUPLICATE KEY UPDATE `unix_timestamp`         = ?,
                                                        `total_load_kw`          = ?,
                                                        `previous_total_load_kw` = ?,
@@ -506,7 +506,7 @@ class Octopus extends Root
                                                        `solar_kw`               = ?,
                                                        `previous_solar_kw`      = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('idddddddddddd', $slot, $unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw,
+            !$stmt->bind_param('iiddddddidddddd', $slot, $unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw,
                                                                     $unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');

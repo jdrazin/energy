@@ -443,11 +443,11 @@ class Octopus extends Root
     {
         $sql = 'SELECT      `n`.`slot`,
                             UNIX_TIMESTAMP(`n`.`start`)   AS `unix_timestamp`,
-                            ROUND(`n`.`load_house_kw`, 3),
+                            ROUND(`n`.`load_house_kw`, 3) AS `load_house_kw`,
                             ROUND(`p`.`load_house_kw`, 3) AS `previous_load_house_kw`,
-                            ROUND(`n`.`grid_kw`, 3),
+                            ROUND(`n`.`grid_kw`, 3)       AS `grid_kw`,
                             ROUND(`p`.`grid_kw`, 3)       AS `previous_grid_kw`,
-                            ROUND(`n`.`solar_kw`, 3),
+                            ROUND(`n`.`solar_kw`, 3)      AS `solar_kw`,
                             ROUND(`p`.`solar_kw`, 3)      AS `previous_solar_kw`
                   FROM      `slots` `n`
                   LEFT JOIN (SELECT     `slot`,

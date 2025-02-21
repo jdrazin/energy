@@ -230,7 +230,6 @@ class GivEnergy extends Root
         }
         foreach (self::ENTITIES_BATTERY_AIO as $entity => $label) {
             foreach ($points as $point) {
-
                 $power_w = (float) $point['power'][$label[0]][$label[1]];
                 $datetime = rtrim($point['time'], 'Z');
                 if (!$stmt->execute()) {

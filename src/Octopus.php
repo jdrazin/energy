@@ -435,6 +435,19 @@ class Octopus extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
+        $sql = 'UPDATE  `slots`
+                  SET   `battery_level_kwh`     = ROUND(IFNULL(`battery_level_kwh`,     ? * `battery_level_percent` /100.0),  1),
+                        `battery_level_percent` = ROUND(IFNULL(`battery_level_percent`, 100.0 * `battery_level_percent` / ?), 1)
+                  WHERE `final`';
+        unset($stmt);
+        $battery_capacity_kwh = 13.5;
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('dd', $battery_capacity_kwh, $battery_capacity_kwh) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
         $this->mysqli->commit();
     }
 

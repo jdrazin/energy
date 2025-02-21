@@ -76,6 +76,7 @@ class Octopus extends Root
                     if ($active_tariff) {                                        // make battery command
                         //   $giv_energy->control($slot_command);                // control battery for active combination on completion of countdown to next slot
                         $this->makeDbSlotsLast24hrs($tariff_combination);        // make historic slots for last 24 hours
+                        $this->slots_make_cubic_splines();                       // generate cubic splines
                     }
                 }
             }
@@ -432,5 +433,64 @@ class Octopus extends Root
             throw new Exception($message);
         }
         $this->mysqli->commit();
+    }
+    private function slots_make_cubic_splines(): void
+    {
+        $sql = 'SELECT      `n`.`slot`,
+                            UNIX_TIMESTAMP(`n`.`start`) AS `unix_timestamp`,
+                            ROUND(`n`.`total_load_kw`, 3),
+                            ROUND(`p`.`total_load_kw`, 3) AS `previous_total_load_kw`,
+                            ROUND(`n`.`grid_kw`, 3),
+                            ROUND(`p`.`grid_kw`, 3)       AS `previous_grid_kw`,
+                            ROUND(`n`.`solar_kw`, 3),
+                            ROUND(`p`.`solar_kw`, 3)      AS `previous_solar_kw`
+                  FROM      `slots` `n`
+                  LEFT JOIN (SELECT     `slot`,
+                                        `start`,
+                                        `total_load_kw`,
+                                        `grid_kw`,
+                                        `solar_kw`
+                                FROM    `slots`
+                                WHERE   `final`) `p` ON `p`.`slot`+48 = `n`.`slot`
+                  WHERE     `n`.`slot` >= 0 AND `n`.`final`
+                  ORDER BY  `n`.`slot`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_result($unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $slots = [];
+        while ($stmt->fetch()) {
+            $slots[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
+        }
+        $number_slots = count($slots);
+        $number_slots_cubic_spline = $number_slots*self::CUBIC_SPLINE_MULTIPLE;
+        $cubic_spline = new CubicSpline($number_slots_cubic_spline);
+        $columns = ['unix_timestamp', 'total_load_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
+        $slots_cubic_spline[0] = $columns;
+        foreach ($columns as $index => $column) {
+            $y = [];
+            foreach ($slots as $k => $slot) {
+                $y[$k] = $slot[$index];
+            }
+            unset($y[-1]);
+            if (!$index) { // generate x-array
+                $t_min = $slots[1][0];
+                $t_max = $slots[$number_slots-1][0];
+                $t_duration = $t_max - $t_min;
+                for ($k=0; $k < $number_slots_cubic_spline; $k++) {
+                    $slots_cubic_spline[$k+1][$index] = (int) round($t_min + $t_duration * ($k / ($number_slots_cubic_spline-1)));
+                }
+            }
+            else {
+                $y = $cubic_spline->cubic_spline_y($y);
+                foreach ($y as $k => $v) {
+                    $slots_cubic_spline[$k+1][$index] = round($y[$k], 3);
+                }
+            }
+        }
+
     }
 }

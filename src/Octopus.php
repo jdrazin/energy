@@ -383,12 +383,12 @@ class Octopus extends Root
             throw new Exception($message);
         }
         $values = new Values();
-        foreach (self::ENTITIES as $entity => $column) {
+        foreach (self::ENTITIES as $entity => $properties) {
             foreach ($slots as $slot => $v) {
-                $slots[$slot][$column[0]] = $values->average($entity, 'MEASURED', $v['start'], $v['stop'])/$column[1];
+                $slots[$slot][$properties[0]] = $values->average($entity, 'MEASURED', $v['start'], $v['stop'])/$properties[1];
             }
             $sql = 'UPDATE  `slots` 
-                      SET   `' . $column[0] . '` = ?
+                      SET   `' . $properties[0] . '` = ?
                       WHERE `slot`            = ? AND
                             NOT `final`';
             unset($stmt);
@@ -399,7 +399,7 @@ class Octopus extends Root
                 throw new Exception($message);
             }
             foreach ($slots as $slot => $v) {
-                if (!is_null($value = $v[$column[0]])) {
+                if (!is_null($value = $v[$properties[0]])) {
                      $stmt->execute();
                 }
             }

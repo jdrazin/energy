@@ -52,8 +52,9 @@ class Powers extends Root
                                             2*HOUR(`datetime`)+FLOOR(MINUTE(`datetime`) / 30) AS `day_slot`,
                                             ROUND(AVG(`value`)) AS `value`
                                             FROM `values`
-                                            WHERE `entity` = 'TEMPERATURE_EXTERNAL_C' AND
-                                                  `type`   = 'MEASURED' AND 
+                                            WHERE `entity`   = 'TEMPERATURE_EXTERNAL_C' AND
+                                                  `type`     = 'MEASURED' AND 
+                                                  `datetime` > NOW() - INTERVAL 90 DAY AND
                                                   `not_setback`(`datetime`)
                                             GROUP BY `date`, `day_slot`
                                             ORDER BY `date`, `day_slot`) `temp_c`

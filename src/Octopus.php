@@ -442,19 +442,22 @@ class Octopus extends Root
     private function slots_make_cubic_splines(): void
     {
         $sql = 'SELECT      `n`.`slot`,
-                            UNIX_TIMESTAMP(`n`.`start`)   AS `unix_timestamp`,
-                            ROUND(`n`.`load_house_kw`, 3) AS `load_house_kw`,
-                            ROUND(`p`.`load_house_kw`, 3) AS `previous_load_house_kw`,
-                            ROUND(`n`.`grid_kw`, 3)       AS `grid_kw`,
-                            ROUND(`p`.`grid_kw`, 3)       AS `previous_grid_kw`,
-                            ROUND(`n`.`solar_kw`, 3)      AS `solar_kw`,
-                            ROUND(`p`.`solar_kw`, 3)      AS `previous_solar_kw`
+                            UNIX_TIMESTAMP(`n`.`start`)         AS `unix_timestamp`,
+                            ROUND(`n`.`load_house_kw`, 3)       AS `load_house_kw`,
+                            ROUND(`p`.`load_house_kw`, 3)       AS `previous_load_house_kw`,
+                            ROUND(`n`.`grid_kw`, 3)             AS `grid_kw`,
+                            ROUND(`p`.`grid_kw`, 3)             AS `previous_grid_kw`,
+                            ROUND(`n`.`solar_kw`, 3)            AS `solar_kw`,
+                            ROUND(`p`.`solar_kw`, 3)            AS `previous_solar_kw`,
+                            ROUND(`n`.`battery_level_kwh`, 3)   AS `battery_level_kwh`,
+                            ROUND(`p`.`battery_level_kwh`, 3)   AS `previous_battery_level_kwh`
                   FROM      `slots` `n`
                   LEFT JOIN (SELECT     `slot`,
                                         `start`,
                                         `load_house_kw`,
                                         `grid_kw`,
-                                        `solar_kw`
+                                        `solar_kw`,
+                                        `battery_level_kwh`
                                 FROM    `slots`
                                 WHERE   `final`) `p` ON `p`.`slot`+48 = `n`.`slot`
                   WHERE     `n`.`slot` >= 0 AND `n`.`final`

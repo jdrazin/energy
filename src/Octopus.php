@@ -406,10 +406,10 @@ class Octopus extends Root
         }
         $this->mysqli->commit();
         $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_kw`, `mode`, `target_level_percent`, `abs_charge_power_w`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
-                       (SELECT        TRUE,   `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_kw`, `mode`, `target_level_percent`, `abs_charge_power_w`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
-                                      FROM `slots` `s`
-                                      WHERE NOT `final` AND
-                                                `tariff_combination` IN (0, ?))  
+                       (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_kw`, `mode`, `target_level_percent`, `abs_charge_power_w`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
+                                    FROM `slots` `s`
+                                    WHERE NOT `final` AND
+                                              `tariff_combination` IN (0, ?))  
                     ON DUPLICATE KEY UPDATE   `start`                     = `s`.`start`,
                                               `stop`                      = `s`.`stop`,
                                               `load_house_kw`             = `s`.`load_house_kw`, 

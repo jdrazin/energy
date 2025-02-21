@@ -526,7 +526,7 @@ class Octopus extends Root
             }
         }
         $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `load_house_kw`,     `previous_load_house_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`, `battery_level_percent`, `previous_battery_level_percent`) 
-                                           VALUES (?,       ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?                    )
+                                           VALUES (?,       ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?,                      ?,                       ?                              )
                                ON DUPLICATE KEY UPDATE `unix_timestamp`                 = ?,
                                                        `load_house_kw`                  = ?,
                                                        `previous_load_house_kw`         = ?,

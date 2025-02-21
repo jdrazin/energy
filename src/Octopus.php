@@ -26,10 +26,10 @@ class Octopus extends Root
                                     'DAY' => 'standing-charges/',
                                 ],
                     ENTITIES = [
-                                    'GRID_W'                    => 'grid_kw',
-                                    'SOLAR_W'                   => 'solar_kw',
-                                    'LOAD_HOUSE_W'              => 'load_house_kw',
-                                    'BATTERY_LEVEL_PERCENT'     => 'battery_level_percent'
+                                    'GRID_W'                    => ['grid_kw',                  1000.0],
+                                    'SOLAR_W'                   => ['solar_kw',                 1000.0],
+                                    'LOAD_HOUSE_W'              => ['load_house_kw',            1000.0],
+                                    'BATTERY_LEVEL_PERCENT'     => ['battery_level_percent',       1.0]
                                ];
 
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
@@ -55,12 +55,12 @@ class Octopus extends Root
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
         if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
             $db_slots  = new DbSlots();                                           // make day slots
-            $powers    = new Powers();
+            $values    = new Values();
             $givenergy = new GivEnergy();
             // $givenergy->initialise();
             $givenergy->getData();                                                // grid, load_house, solar (yesterday, today) > `values`
             (new EmonCms())->getData();                                           // home heating and temperature > `values`
-            $powers->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature
+            $values->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature
             (new Solcast())->getSolarActualForecast();                            // solar actuals & forecasts > 'powers'
             (new MetOffice())->forecast();                                        // get temperature forecast
 
@@ -70,7 +70,7 @@ class Octopus extends Root
                 if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
                     $db_slots->makeDbSlotsNext24hrs($tariff_combination);        // make slots for this tariff combination
                     $this->makeSlotRates($db_slots);                             // make tariffs
-                    $powers->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
+                    $values->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
 
                     // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
                     $batteryInitialKwh = $batteryInitialKwh ?? $givenergy->batteryLevel($db_slots)['effective_stored_kwh'];
@@ -382,13 +382,13 @@ class Octopus extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $powers = new Powers();
+        $values = new Values();
         foreach (self::ENTITIES as $entity => $column) {
             foreach ($slots as $slot => $v) {
-                $slots[$slot][$column] = $powers->powersKwAverage($entity, 'MEASURED', $v['start'], $v['stop']);
+                $slots[$slot][$column[0]] = $values->average($entity, 'MEASURED', $v['start'], $v['stop'])/$column[1];
             }
             $sql = 'UPDATE  `slots` 
-                      SET   `' . $column . '` = ?
+                      SET   `' . $column[0] . '` = ?
                       WHERE `slot`            = ? AND
                             NOT `final`';
             unset($stmt);
@@ -399,7 +399,7 @@ class Octopus extends Root
                 throw new Exception($message);
             }
             foreach ($slots as $slot => $v) {
-                if (!is_null($value = $v[$column])) {
+                if (!is_null($value = $v[$column[0]])) {
                      $stmt->execute();
                 }
             }

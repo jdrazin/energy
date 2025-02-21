@@ -470,15 +470,15 @@ class Octopus extends Root
     private function slots_make_cubic_splines(): void
     {
         $sql = 'SELECT      `n`.`slot`,
-                            UNIX_TIMESTAMP(`n`.`start`)         AS `unix_timestamp`,
-                            ROUND(`n`.`load_house_kw`, 3)       AS `load_house_kw`,
-                            ROUND(`p`.`load_house_kw`, 3)       AS `previous_load_house_kw`,
-                            ROUND(`n`.`grid_kw`, 3)             AS `grid_kw`,
-                            ROUND(`p`.`grid_kw`, 3)             AS `previous_grid_kw`,
-                            ROUND(`n`.`solar_kw`, 3)            AS `solar_kw`,
-                            ROUND(`p`.`solar_kw`, 3)            AS `previous_solar_kw`,
-                            ROUND(`n`.`battery_level_kwh`, 3)   AS `battery_level_kwh`,
-                            ROUND(`p`.`battery_level_kwh`, 3)   AS `previous_battery_level_kwh`
+                            UNIX_TIMESTAMP(`n`.`start`)             AS `unix_timestamp`,
+                            ROUND(`n`.`load_house_kw`, 3)           AS `load_house_kw`,
+                            ROUND(`p`.`load_house_kw`, 3)           AS `previous_load_house_kw`,
+                            ROUND(`n`.`grid_kw`, 3)                 AS `grid_kw`,
+                            ROUND(`p`.`grid_kw`, 3)                 AS `previous_grid_kw`,
+                            ROUND(`n`.`solar_kw`, 3)                AS `solar_kw`,
+                            ROUND(`p`.`solar_kw`, 3)                AS `previous_solar_kw`,
+                            ROUND(`n`.`battery_level_percent`, 3)   AS `battery_level_percent`,
+                            ROUND(`p`.`battery_level_percent`, 3)   AS `previous_battery_percent`
                   FROM      `slots` `n`
                   LEFT JOIN (SELECT     `slot`,
                                         `start`,
@@ -491,7 +491,7 @@ class Octopus extends Root
                   WHERE     `n`.`slot` >= 0 AND `n`.`final`
                   ORDER BY  `n`.`slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh) ||
+            !$stmt->bind_result($slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_percent, $previous_battery_level_percent) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -499,12 +499,12 @@ class Octopus extends Root
         }
         $slots = [];
         while ($stmt->fetch()) {
-            $slots[$slot] = [$unix_timestamp,  $load_house_kw,  $previous_load_house_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh];
+            $slots[$slot] = [$unix_timestamp,  $load_house_kw,  $previous_load_house_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw, $battery_level_percent, $previous_battery_level_percent];
         }
         $number_slots = count($slots);
         $number_slots_cubic_spline = $number_slots*self::CUBIC_SPLINE_MULTIPLE;
         $cubic_spline = new CubicSpline($number_slots_cubic_spline);
-        $columns = ['unix_timestamp', 'load_house_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw'];
+        $columns = ['unix_timestamp', 'load_house_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw', 'battery_level_percent', 'previous_battery_level_percent'];
         foreach ($columns as $index => $column) {
             $y = [];
             foreach ($slots as $k => $slot) {

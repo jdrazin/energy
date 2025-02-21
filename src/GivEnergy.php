@@ -34,10 +34,10 @@ class GivEnergy extends Root
                         CHARGE_DISCHARGE_SLOT_STOP = 10,
                         CONTROL_CHARGE_DISCHARGE_SLOT = 1;  // slot number used for control
     private const array ENTITIES_BATTERY_AIO = [
-                                                    'SOLAR_W'           => ['solar'],
-                                                    'GRID_W'            => ['grid'],
-                                                    'LOAD_HOUSE_W'      => ['consumption'],
-                                                    'BATTERY_LEVEL_KWH' => ['battery', 'percent']
+                                                    'SOLAR_W'                => ['solar',       'power'],
+                                                    'GRID_W'                 => ['grid',        'power'],
+                                                    'LOAD_HOUSE_W'           => ['consumption', 'power'],
+                                                    'BATTERY_LEVEL_PERCENT'  => ['battery',     'percent']
                                                 ];
 
     private const       EV_POWER_ACTIVE_IMPORT = 13,  // Instantaneous active power imported by EV. (W or kW)
@@ -230,7 +230,8 @@ class GivEnergy extends Root
         }
         foreach (self::ENTITIES_BATTERY_AIO as $entity => $label) {
             foreach ($points as $point) {
-                $power_w = (float)$point['power'][$label]['power'];
+
+                $power_w = (float) $point['power'][$label[0]][$label[1]];
                 $datetime = rtrim($point['time'], 'Z');
                 if (!$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

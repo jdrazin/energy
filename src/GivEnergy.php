@@ -35,7 +35,7 @@ class GivEnergy extends Root
                         CONTROL_CHARGE_DISCHARGE_SLOT = 1;  // slot number used for control
     private const array ENTITIES_BATTERY_AIO = ['SOLAR_W' => 'solar',
                                                 'GRID_W' => 'grid',
-                                                'TOTAL_LOAD_W' => 'consumption'];
+                                                'LOAD_HOUSE_W' => 'consumption'];
 
     private const       EV_POWER_ACTIVE_IMPORT = 13,  // Instantaneous active power imported by EV. (W or kW)
                         EV_POWER_ACTIVE_IMPORT_UNIT = 5,   // kW

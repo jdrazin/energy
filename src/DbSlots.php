@@ -56,7 +56,7 @@ class DbSlots extends Root
         $sql = 'INSERT INTO `slots` (`tariff_combination`, `slot`, `start`, `stop`, `final`)
                              VALUES (?,                    ?,      ?,       ?     , FALSE)
                     ON DUPLICATE KEY UPDATE `slot`                  = ?,
-                                            `total_load_kw`         = NULL,
+                                            `load_house_kw`         = NULL,
                                             `grid_kw`               = NULL,
                                             `battery_charge_kw`     = NULL,
                                             `battery_level_kwh`     = NULL,

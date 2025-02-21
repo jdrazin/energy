@@ -302,13 +302,13 @@ class Powers extends Root
         /*
          *  estimate non-heating load from average difference between total and heating load in recent past
          */
-        $powers_average_total_load_kw               = $this->powersKwSlotAverage('TOTAL_LOAD_W',            'MEASURED', self::HISTORY_DAY_LIMIT);
+        $powers_average_load_house_kw               = $this->powersKwSlotAverage('LOAD_HOUSE_W',            'MEASURED', self::HISTORY_DAY_LIMIT);
         $powers_average_load_heating_electric_kw    = $this->powersKwSlotAverage('LOAD_HEATING_ELECTRIC_W', 'MEASURED', self::HISTORY_DAY_LIMIT);
         $average_powers_load_non_heating_kw = [];
         foreach ($this->db_slots->slots as $slot => $v) {
-            $average_total_load_kw = $powers_average_total_load_kw[$slot];
+            $average_load_house_kw = $powers_average_load_house_kw[$slot];
             $average_load_heating_electric_kw = $powers_average_load_heating_electric_kw[$slot];
-            $average_powers_load_non_heating_kw[$slot] = $average_total_load_kw - $average_load_heating_electric_kw; // - $average_load_ev_kw;
+            $average_powers_load_non_heating_kw[$slot] = $average_load_house_kw - $average_load_heating_electric_kw; // - $average_load_ev_kw;
         }
         $this->updateSlotPowerskW($average_powers_load_non_heating_kw, 'load_non_heating_kw');
     }
@@ -319,7 +319,7 @@ class Powers extends Root
     private function totalLoad(): void
     {
         $sql = 'UPDATE      `slots`
-                  SET       `total_load_kw` = `load_non_heating_kw` + `load_heating_kw`
+                  SET       `load_house_kw` = `load_non_heating_kw` + `load_heating_kw`
                   WHERE     `tariff_combination` = ? AND
                             NOT `final`';
         $tariff_combination_id = $this->db_slots->tariff_combination['id'];

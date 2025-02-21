@@ -30,8 +30,8 @@ class Energy extends Root
      */
     public function slots(): string {
         $sql = 'SELECT      `unix_timestamp`,
-                            `total_load_kw`,
-                            `previous_total_load_kw`,
+                            `load_house_kw`,
+                            `previous_load_house_kw`,
                             `grid_kw`,
                             `previous_grid_kw`,
                             `solar_kw`,
@@ -39,7 +39,7 @@ class Energy extends Root
                   FROM      `slots_cubic_splines`
                   ORDER BY  `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($unix_timestamp, $total_load_kw, $previous_total_load_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw) ||
+            !$stmt->bind_result($unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -47,7 +47,7 @@ class Energy extends Root
         }
         $slots_cubic_splines = [];
         while ($stmt->fetch()) {
-            $slots_cubic_splines[] = [$unix_timestamp,  $total_load_kw,  $previous_total_load_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
+            $slots_cubic_splines[] = [$unix_timestamp,  $load_house_kw,  $previous_load_house_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw];
         }
         return json_encode($slots_cubic_splines, JSON_PRETTY_PRINT);
     }

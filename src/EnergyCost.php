@@ -15,7 +15,7 @@ class EnergyCost extends Root
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
     const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
-                                                        'total_load_kws',
+                                                        'load_house_kws',
                                                         'import_gbp_per_kwhs',
                                                         'export_gbp_per_kwhs'
                                                       ];
@@ -35,7 +35,7 @@ class EnergyCost extends Root
                     $exportLimitKw;
 
     private array   $problem,
-                    $total_load_kws,
+                    $load_house_kws,
                     $import_gbp_per_kws,
                     $export_gbp_per_kws,
                     $tariff_combination,
@@ -63,7 +63,7 @@ class EnergyCost extends Root
         }
         else {
             $loadImportExports          = [
-                                          'total_load_kws'        => [],
+                                          'load_house_kws'        => [],
                                           'import_gbp_per_kwhs'   => [],
                                           'export_gbp_per_kwhs'   => [],
                                           'import_gbp_per_day'    => [],
@@ -88,7 +88,7 @@ class EnergyCost extends Root
                                         'export_gbp_per_day'             => $loadImportExports['export_gbp_per_day'],
                                         'import_gbp_per_kwhs'            => $loadImportExports['import_gbp_per_kwhs'],
                                         'export_gbp_per_kwhs'            => $loadImportExports['export_gbp_per_kwhs'],
-                                        'total_load_kws'                 => $loadImportExports['total_load_kws'],
+                                        'load_house_kws'                 => $loadImportExports['load_house_kws'],
                                       ];
         if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
             !file_put_contents(self::JSON_PROBLEM, $json_problem)) {
@@ -111,11 +111,11 @@ class EnergyCost extends Root
         (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'], 'NOTICE');
         if (self::DEBUG_MINIMISER) {  // use debug JSON and make slot arrays as necessary
            $this->problem           = $this->makeSlotsArrays(json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
-           $this->total_load_kws    = $this->problem['total_load_kws'];          // get total load from problem
+           $this->load_house_kws    = $this->problem['load_house_kws'];          // get total load from problem
         }
         else {
             $this->problem          = json_decode(file_get_contents(self::JSON_PROBLEM), true);
-            $this->total_load_kws   = $this->total_load_kws();                   // get total load from db
+            $this->load_house_kws   = $this->load_house_kws();                   // get total load from db
         }
         if (!($command = $this->command()) ||
             !file_put_contents(self::COMMAND_LOG, $command)) {
@@ -124,9 +124,9 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         $this->costs = [];
-        $grid_kws = array_map(function ($total_load_kw) {                         // match pre-optimised first guess to total load
-            return -$total_load_kw;
-        }, $this->total_load_kws);
+        $grid_kws = array_map(function ($load_house_kw) {                         // match pre-optimised first guess to total load
+            return -$load_house_kw;
+        }, $this->load_house_kws);
         $this->costs['raw'] = $this->costCLI($command, $grid_kws);
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
@@ -146,8 +146,8 @@ class EnergyCost extends Root
         if (self::DEBUG_MINIMISER) {
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
-            foreach ($this->total_load_kws as $k => $v) {
-                echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->total_load_kws[$k], 3) . ', ' . round($optimumGridKws[$k], 3) . PHP_EOL;
+            foreach ($this->load_house_kws as $k => $v) {
+                echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->load_house_kws[$k], 3) . ', ' . round($optimumGridKws[$k], 3) . PHP_EOL;
             }
             return null;
         }
@@ -231,15 +231,15 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= $export_gbp_per_kwhs[$slot_count] . ' ';
         }
-        $command .= 'total_load_kws= ';
-        $total_load_kws = $this->problem['total_load_kws'];
+        $command .= 'load_house_kws= ';
+        $load_house_kws = $this->problem['load_house_kws'];
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $total_load_kws[$slot_count] . ' ';
+            $command .= $load_house_kws[$slot_count] . ' ';
         }
         // use load power for first guess
         $command .= 'FIRST_GUESS_grid_kws= ';
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= -$total_load_kws[$slot_count] . ' ';
+            $command .= -$load_house_kws[$slot_count] . ' ';
         }
         return $command;
     }
@@ -289,9 +289,9 @@ class EnergyCost extends Root
             $this->export_gbp_per_kws[]         = (float) $this->strip();
         }
         $this->strip();
-        $this->total_load_kws = [];
+        $this->load_house_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $this->total_load_kws[]                   = (float) $this->strip();
+            $this->load_house_kws[]                   = (float) $this->strip();
         }
         return $this->dayCosts($grid_kws);
     }
@@ -316,7 +316,7 @@ class EnergyCost extends Root
             elseif ($grid_power_slot_kw < -$this->importLimitKw) {
                 $grid_power_slot_kw = -$this->importLimitKw;
             }
-            $load_kw = $this->total_load_kws[$slot_count];
+            $load_kw = $this->load_house_kws[$slot_count];
             $tariff_import_per_kwh = $this->import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $this->export_gbp_per_kws[$slot_count];
             $energy_grid_kwh       = $grid_power_slot_kw * $this->slotDurationHour;
@@ -378,7 +378,7 @@ class EnergyCost extends Root
      */
     private function loadImportExport(): array
     { // get slot load, import and export tariffs for each slot
-        $sql = 'SELECT      `total_load_kw`,
+        $sql = 'SELECT      `load_house_kw`,
                             `import_gbp_per_kwh`,
                             `export_gbp_per_kwh`,
                             `import_gbp_per_day`,
@@ -391,22 +391,22 @@ class EnergyCost extends Root
         $id = $this->tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $id) ||
-            !$stmt->bind_result($total_load_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
+            !$stmt->bind_result($load_house_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $total_load_kw = [];
+        $load_house_kw = [];
         $import_gbp_per_kwh = [];
         $export_gbp_per_kwh = [];
         while ($stmt->fetch()) {
-            $total_load_kws[]      = $total_load_kw;
+            $load_house_kws[]      = $load_house_kw;
             $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
             $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
         }
         return [
-                'total_load_kws'        => $total_load_kws,
+                'load_house_kws'        => $load_house_kws,
                 'import_gbp_per_kwhs'   => $import_gbp_per_kwhs,
                 'export_gbp_per_kwhs'   => $export_gbp_per_kwhs,
                 'import_gbp_per_day'    => $import_gbp_per_day,
@@ -440,7 +440,7 @@ class EnergyCost extends Root
         }
         $battery_kwh = $this->batteryEnergyInitialKwh;
         foreach ($optimum_grid_kws as $slot => $optimum_grid_kw) {
-            $battery_kw = -$optimum_grid_kw - $this->total_load_kws[$slot];
+            $battery_kw = -$optimum_grid_kw - $this->load_house_kws[$slot];
             $battery_kwh += $battery_kw * DbSlots::SLOT_DURATION_MIN / 60;
             $battery_kw = round($battery_kw, 3);
             $battery_kwh = round($battery_kwh, 3);
@@ -450,27 +450,27 @@ class EnergyCost extends Root
         $this->mysqli->commit();
     }
 
-    private function total_load_kws(): array
+    private function load_house_kws(): array
     {
         $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'SELECT      `total_load_kw` 
+        $sql = 'SELECT      `load_house_kw` 
                    FROM     `slots`         
                    WHERE    `tariff_combination` = ? AND
                             NOT `final`
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($total_load_kw) ||
+            !$stmt->bind_result($load_house_kw) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $total_load_kws = [];
+        $load_house_kws = [];
         while ($stmt->fetch()) {
-            $total_load_kws[] = $total_load_kw;
+            $load_house_kws[] = $load_house_kw;
         }
-        return $total_load_kws;
+        return $load_house_kws;
     }
 
     private function strip(): string

@@ -58,7 +58,7 @@ class Root
         }
     }
 
-    protected function basicAuth($request): bool {
+    protected function basicAuth(): bool {
         $username = $_SERVER['PHP_AUTH_USER'];
         $password = $_SERVER['PHP_AUTH_PW'];
         $sql = 'SELECT EXISTS (SELECT  `username`

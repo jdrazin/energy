@@ -22,13 +22,17 @@ $app->addRoutingMiddleware();
  */
 $app->get('/slots', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    $slots = $energy->slots($request);
+    if (($slots = $energy->slots($request)) === false) {
+
+    }
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->get('/tariff_combinations', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    $slots = $energy->tariff_combinations($request);
+    if (($slots = $energy->tariff_combinations($request)) === false) {
+
+    }
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });

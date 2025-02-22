@@ -28,7 +28,10 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function slots(): string {
+    public function slots($request): bool|string {
+        if (!$this->basicAuth($request)) {
+            return false;
+        }
         $sql = 'SELECT      `unix_timestamp`,
                             `load_house_kw`,
                             `previous_load_house_kw`,
@@ -57,7 +60,10 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function tariff_combinations(): string {
+    public function tariff_combinations($request): bool|string {
+        if (!$this->basicAuth($request)) {
+            return false;
+        }
         $sql = 'SELECT  UNIX_TIMESTAMP(`s`.`start`) AS `start`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`, CONVERT(IF((`tc`.`active` IS NULL), \'\', \' *ACTIVE*\') USING utf8mb4), \' (\', `tc`.`id`, \')\') AS `tariff [import, export]`,
                         `tc`.`result`,

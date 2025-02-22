@@ -58,6 +58,25 @@ class Root
         }
     }
 
+    protected function basicAuth($request): bool {
+        $username = $_SERVER['PHP_AUTH_USER'];
+        $password = $_SERVER['PHP_AUTH_PW'];
+        $sql = 'SELECT EXISTS (SELECT  `username`
+                                 FROM  `users`
+                                 WHERE CRC32(`username`) = CRC32(?) AND 
+                                       CRC32(`password`) = CRC32(?))';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('ss', $username, $password) ||
+            !$stmt->bind_result($exists) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $basic_auth = $stmt->fetch() && $exists;
+        return $basic_auth;
+    }
+
     protected function strip_namespace($namespace, $class): string {
         $prefix = $namespace . '\\';
         if (str_starts_with($class, $prefix)) {

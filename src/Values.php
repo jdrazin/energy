@@ -108,15 +108,15 @@ class Values extends Root
         $this->updateSlotPowerskW($powers_kw, 'solar_kw');
     }
 
-    public function average($entity, $type, $start, $stop): ?float
+    public function average($entity, $type, $start, $stop, $offset_minutes): ?float
     {
         $sql = 'SELECT   AVG(`value`)
                   FROM   `values`
                   WHERE  `entity` = ? AND
                          `type`   = ? AND
-                         `datetime` BETWEEN ? AND ?';
+                         `datetime` BETWEEN (? + INTERVAL ? MINUTE) AND (? + INTERVAL ? MINUTE)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ssss', $entity, $type, $start, $stop) ||
+            !$stmt->bind_param('sssisi', $entity, $type, $start, $offset_minutes, $stop, $offset_minutes) ||
             !$stmt->bind_result($average) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {

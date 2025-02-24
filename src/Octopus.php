@@ -384,8 +384,8 @@ class Octopus extends Root
         }
         $values = new Values();
         foreach (self::ENTITIES as $entity => $properties) {
-            foreach ($slots as $slot => $v) {
-                $slots[$slot][$properties[0]] = $values->average($entity, 'MEASURED', $v['start'], $v['stop'])/$properties[1];
+            foreach ($slots as $slot => $v) {       // returns averages for graphing purposes, about START times (i.e. slot_start_time - 15mins TO slot_start_time + 15mins
+                $slots[$slot][$properties[0]] = $values->average($entity, 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MIN/2)/$properties[1];
             }
             $sql = 'UPDATE  `slots` 
                       SET   `' . $properties[0] . '` = ?

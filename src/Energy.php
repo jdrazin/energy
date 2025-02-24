@@ -28,7 +28,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function slots($request): bool|string {
+    public function slots(): bool|string {
         if (!$this->basicAuth()) {
             return false;
         }
@@ -60,7 +60,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function tariff_combinations($request): bool|string {
+    public function tariff_combinations(): bool|string {
         if (!$this->basicAuth()) {
             return false;
         }

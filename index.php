@@ -20,7 +20,7 @@ $app->addRoutingMiddleware();
  * @param LoggerInterface|null  $logger -> Optional PSR-3 Logger
  *
  */
-$app->get('/slots', function (Request $request, Response $response) {
+$app->get('/control/slots', function (Request $request, Response $response) {
     $energy = new Energy(null);
     if (($slots = $energy->slots($request)) === false) {
         return $response->withStatus(401);
@@ -28,7 +28,7 @@ $app->get('/slots', function (Request $request, Response $response) {
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->get('/tariff_combinations', function (Request $request, Response $response) {
+$app->get('/control/tariff_combinations', function (Request $request, Response $response) {
     $energy = new Energy(null);
     if (($slots = $energy->tariff_combinations($request)) === false) {
         return $response->withStatus(401);
@@ -36,7 +36,7 @@ $app->get('/tariff_combinations', function (Request $request, Response $response
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->post('/permute', function (Request $request, Response $response) {
+$app->post('/control/permute', function (Request $request, Response $response) {
     $config = json_decode((string) $request->getBody(), true);
     $energy = new Energy($config);
     $energy->permute();

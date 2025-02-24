@@ -22,7 +22,7 @@ $app->addRoutingMiddleware();
  */
 $app->get('/control/slots', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($slots = $energy->slots($request)) === false) {
+    if (($slots = $energy->slots()) === false) {
         return $response->withStatus(401);
     }
     $response->getBody()->write($slots);
@@ -30,7 +30,7 @@ $app->get('/control/slots', function (Request $request, Response $response) {
 });
 $app->get('/control/tariff_combinations', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($slots = $energy->tariff_combinations($request)) === false) {
+    if (($slots = $energy->tariff_combinations()) === false) {
         return $response->withStatus(401);
     }
     $response->getBody()->write($slots);

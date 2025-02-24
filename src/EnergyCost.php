@@ -135,7 +135,7 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, 'FATAL');
             throw new Exception($message);
         }
-        $this->optimisation_result($result);
+        $this->optimisation_result($result);                                       // save optimiser performance parameters
 
         // calculate optimised cost elements using CLI command
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
@@ -440,10 +440,10 @@ class EnergyCost extends Root
         }
         $battery_kwh = $this->batteryEnergyInitialKwh;
         foreach ($optimum_grid_kws as $slot => $optimum_grid_kw) {
-            $battery_kw = -$optimum_grid_kw - $this->load_house_kws[$slot];
-            $battery_kwh += $battery_kw * DbSlots::SLOT_DURATION_MIN / 60;
-            $battery_kw = round($battery_kw, 3);
-            $battery_kwh = round($battery_kwh, 3);
+            $battery_kw      = -$optimum_grid_kw - $this->load_house_kws[$slot];
+            $battery_kwh    += $battery_kw * DbSlots::SLOT_DURATION_MIN / 60;
+            $battery_kw      = round($battery_kw, 3);
+            $battery_kwh     = round($battery_kwh, 3);
             $optimum_grid_kw = round($optimum_grid_kw, 3);
             $stmt->execute();
         }

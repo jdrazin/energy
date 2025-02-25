@@ -506,12 +506,12 @@ class Octopus extends Root
         $cubic_spline = new CubicSpline($number_slots_cubic_spline);
         $columns = ['unix_timestamp', 'load_house_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw', 'battery_level_kwh', 'previous_battery_level_kwh'];
         foreach ($columns as $index => $column) {
-            $y = [];
+            $vector_cubic_splines = [];
             foreach ($slots as $slot => $column_values) {
-                $y[$slot] = $column_values[$index];
+                $vector_cubic_splines[$slot] = $column_values[$index];
             }
-            if (!$index) { // generate x-array
-                $t_min = $slots[1][0];
+            if (!$index) { // generate time array
+                $t_min = $slots[0][0];
                 $t_max = $slots[$number_slots-1][0];
                 $t_duration = $t_max - $t_min;
                 for ($k=0; $k < $number_slots_cubic_spline; $k++) {
@@ -519,9 +519,9 @@ class Octopus extends Root
                 }
             }
             else {
-                $y = $cubic_spline->cubic_spline_y($y);
-                foreach ($y as $k => $v) {
-                    $slots_cubic_splines[$k][$index] = round($y[$k], 3);
+                $vector_cubic_splines = $cubic_spline->cubic_spline_y($vector_cubic_splines);
+                foreach ($vector_cubic_splines as $k => $v) {
+                    $slots_cubic_splines[$k][$index] = round($vector_cubic_splines[$k], 3);
                 }
             }
         }

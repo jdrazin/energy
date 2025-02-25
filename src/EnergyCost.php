@@ -454,7 +454,7 @@ class EnergyCost extends Root
          * calculate total load (L) net of solar generation
          */
         $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'SELECT      `load_house_kw`  - `solar_kw` AS `total_load_kw`
+        $sql = 'SELECT      `load_house_kw` - `solar_kw` AS `total_load_kw`
                    FROM     `slots`         
                    WHERE    `tariff_combination` = ? AND
                             NOT `final`

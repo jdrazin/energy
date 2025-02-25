@@ -137,11 +137,12 @@ class EnergyCost extends Root
         $this->optimisation_result($result);                                       // save optimiser performance parameters
 
         // calculate optimised cost elements using CLI command
+        $standing_costs_gbp_per_day = $this->problem['import_gbp_per_day'] + $this->problem['export_gbp_per_day'];
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
-        echo 'Php    raw cost:            '  . round($this->costs['raw']['cost'],            2) . ' GBP' . PHP_EOL;
-        echo 'Python optimised cost:      '  . round($result['energyCost'],                  2) . ' GBP' . PHP_EOL;
-        echo 'Php    optimised cost:      '  . round($this->costs['optimised']['cost'],      2) . ' GBP' . PHP_EOL;
-        echo 'Php    optimised grid_cost: '  . round($this->costs['optimised']['cost_grid'], 2) . ' GBP' . PHP_EOL;
+        echo 'Php    raw cost:            '  . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+        echo 'Python optimised cost:      '  . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+        echo 'Php    optimised cost:      '  . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+        echo 'Php    optimised grid_cost: '  . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
         if (self::DEBUG_MINIMISER) {
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
@@ -247,6 +248,8 @@ class EnergyCost extends Root
         //
         // calculates cost using SciPy command line arguments and $grid_kw solution
         //
+        // excludes standing costs
+        //
         $this->string = $command;
         $this->strip();
         $this->strip(); // removes PYTHON_SCRIPT_COMMAND
@@ -294,7 +297,10 @@ class EnergyCost extends Root
         return $this->dayCosts($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws);
     }
 
-    private function dayCosts($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws): array {  // calculate cost components
+    private function dayCosts($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws): array {
+        /*
+         * calculate cost components: does not include standing costs
+         */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;          // initial battery level
         $battery_level_mid_kwh = $this->batteryCapacityKwh / 2.0;     // midpoint battery level

@@ -423,9 +423,9 @@ class EnergyCost extends Root
     {
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'UPDATE      `slots` 
-                   SET      `grid_kw`            = ?,
-                            `battery_charge_kw`  = ?,
-                            `battery_level_kwh`  = ?
+                   SET      `grid_kw`            = ROUND(?, 3),
+                            `battery_charge_kw`  = ROUND(?, 3),
+                            `battery_level_kwh`  = ROUND(?, 3)
                    WHERE    `slot`               = ? AND
                             `tariff_combination` = ? AND
                             NOT `final`';
@@ -439,11 +439,8 @@ class EnergyCost extends Root
         $battery_level_kwh = $this->batteryEnergyInitialKwh;
         foreach ($optimum_grid_kws as $slot => $optimum_grid_kw) {
             $battery_charge_kw   = -$optimum_grid_kw - $this->total_load_kws[$slot];
-            $battery_level_kwh  += $battery_charge_kw * DbSlots::SLOT_DURATION_MIN / 60;
-            $battery_charge_kw   = round($battery_charge_kw, 3);
-            $battery_level_kwh   = round($battery_level_kwh, 3);
-            $optimum_grid_kw     = round($optimum_grid_kw, 3);
             $stmt->execute();
+            $battery_level_kwh  += $battery_charge_kw * DbSlots::SLOT_DURATION_MIN / 60;
         }
         $this->mysqli->commit();
     }

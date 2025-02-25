@@ -234,7 +234,7 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= $this->total_load_kws[$slot_count] . ' ';
         }
-        // use load power for first guess
+        // use total load power for first guess
         $command .= 'FIRST_GUESS_grid_kws= ';
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= -$this->total_load_kws[$slot_count] . ' ';

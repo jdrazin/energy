@@ -11,7 +11,7 @@ class EnergyCost extends Root
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
-                    COMMAND_LOG             = '/var/www/html/energy/test/energy_cost.log',
+                    OPTIMISATION_LOG        = '/var/www/html/energy/test/optimisation.log',
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
     const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
@@ -36,8 +36,6 @@ class EnergyCost extends Root
 
     private array   $problem,
                     $total_load_kws,
-                    $import_gbp_per_kws,
-                    $export_gbp_per_kws,
                     $tariff_combination,
                     $costs;
 
@@ -117,22 +115,22 @@ class EnergyCost extends Root
             $this->problem          = json_decode(file_get_contents(self::JSON_PROBLEM), true);
             $this->total_load_kws   = $this->total_load_kws();                   // get total load from db
         }
-        if (!($command = $this->command()) ||
-            !file_put_contents(self::COMMAND_LOG, $command)) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command log');
-            $this->logDb('MESSAGE', $message, 'FATAL');
-            throw new Exception($message);
-        }
         $this->costs = [];
         $grid_kws = [];
         foreach ($this->total_load_kws as $slot => $total_load_kw) {              // match pre-optimised first guess to total load
             $grid_kws[$slot] = -$total_load_kw;
         }
-        $this->costs['raw'] = $this->costCLI($command, $grid_kws);
+        $this->costs['raw'] = $this->costCLI($command = $this->command(), $grid_kws);
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
         if (!($result['success'] ?? false)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
+            $this->logDb('MESSAGE', $message, 'FATAL');
+            throw new Exception($message);
+        }
+        if (!($command = $this->command()) ||
+            !file_put_contents(self::OPTIMISATION_LOG, $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
             $this->logDb('MESSAGE', $message, 'FATAL');
             throw new Exception($message);
         }
@@ -280,29 +278,29 @@ class EnergyCost extends Root
         $this->strip();
         $this->number_slots                     = (int)   $this->strip();
         $this->strip();
-        $this->import_gbp_per_kws = [];
+        $import_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $this->import_gbp_per_kws[]         = (float) $this->strip();
+            $import_gbp_per_kws[]               = (float) $this->strip();
         }
         $this->strip();
-        $this->export_gbp_per_kws = [];
+        $export_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $this->export_gbp_per_kws[]         = (float) $this->strip();
+            $export_gbp_per_kws[]               = (float) $this->strip();
         }
         $this->strip();
-        $this->total_load_kws = [];
+        $total_load_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $this->total_load_kws[]                   = (float) $this->strip();
+            $total_load_kws[]                   = (float) $this->strip();
         }
-        return $this->dayCosts($grid_kws);
+        return $this->dayCosts($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws);
     }
 
-    private function dayCosts($grid_kws): array {                     // calculate cost components
+    private function dayCosts($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws): array {  // calculate cost components
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;          // initial battery level
         $battery_level_mid_kwh = $this->batteryCapacityKwh / 2.0;     // midpoint battery level
         $battery_level_max_kwh = (100.0 + $this->batteryDepthOfDischargePercent) * $this->batteryCapacityKwh / 200.0; // max battery operating level
-        $cost_min_per_kwh = 2.0 * $this->batteryWearCostGbpPerKwh / (1.0 + $this->batteryWearRatio);             // minimum wear cost at midpoint level
+        $cost_min_per_kwh = 2.0 * $this->batteryWearCostGbpPerKwh / (1.0 + $this->batteryWearRatio);          // minimum wear cost at midpoint level
         $cost_grid_import = 0.0;
         $cost_grid_export = 0.0;
         $cost_wear        = 0.0;
@@ -317,11 +315,11 @@ class EnergyCost extends Root
             elseif ($grid_power_slot_kw < -$this->importLimitKw) {
                 $grid_power_slot_kw = -$this->importLimitKw;
             }
-            $load_kw = $this->total_load_kws[$slot_count];
-            $tariff_import_per_kwh = $this->import_gbp_per_kws[$slot_count];
-            $tariff_export_per_kwh = $this->export_gbp_per_kws[$slot_count];
+            $total_load_kw         = $total_load_kws[$slot_count];
+            $tariff_import_per_kwh = $import_gbp_per_kws[$slot_count];
+            $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
             $energy_grid_kwh       = $grid_power_slot_kw * $this->slotDurationHour;
-            $load_kwh              = $load_kw            * $this->slotDurationHour;
+            $total_load_kwh        = $total_load_kw * $this->slotDurationHour;
 
             // grid
             if ($energy_grid_kwh > 0.0) {
@@ -333,8 +331,8 @@ class EnergyCost extends Root
             }
 
             // battery
-            $battery_charge_kwh = -$energy_grid_kwh - $load_kwh;
-            $battery_charge_kw  = -$grid_power_slot_kw - $load_kw;
+            $battery_charge_kwh = -$energy_grid_kwh - $total_load_kwh;
+            $battery_charge_kw  = -$grid_power_slot_kw - $total_load_kw;
             $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayStorageEfficiency;
 
             // wear

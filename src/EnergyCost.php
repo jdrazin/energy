@@ -231,14 +231,13 @@ class EnergyCost extends Root
             $command .= $export_gbp_per_kwhs[$slot_count] . ' ';
         }
         $command .= 'total_load_kws= ';
-        $load_house_kws = $this->problem['total_load_kws'];
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $load_house_kws[$slot_count] . ' ';
+            $command .= $this->total_load_kws[$slot_count] . ' ';
         }
         // use load power for first guess
         $command .= 'FIRST_GUESS_grid_kws= ';
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= -$load_house_kws[$slot_count] . ' ';
+            $command .= -$this->total_load_kws[$slot_count] . ' ';
         }
         return $command;
     }

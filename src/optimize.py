@@ -26,11 +26,11 @@ def day_cost(grid_kws):
         else:
             if grid_power_slot_kw < -importLimitKw:
                 grid_power_slot_kw = -importLimitKw
-        load_kw               = load_kws[slot_count]
+        load_kw               = total_load_kws[slot_count]
         tariff_import_per_kwh = tariffImportPerKwhs[slot_count]
         tariff_export_per_kwh = tariffExportPerKwhs[slot_count]
         energy_grid_kwh       = grid_power_slot_kw * slotDurationHour
-        load_kwh              = load_kw * slotDurationHour
+        total_load_kwh              = load_kw * slotDurationHour
         #
         # grid
         if energy_grid_kwh > 0.0:
@@ -41,7 +41,7 @@ def day_cost(grid_kws):
             cost_grid_import -= tariff_import_per_kwh * energy_grid_kwh
 
         # battery
-        battery_charge_kwh   = -energy_grid_kwh - load_kwh
+        battery_charge_kwh   = -energy_grid_kwh - total_load_kwh
         battery_charge_kw    = -grid_power_slot_kw - load_kw
         battery_level_kwh   += battery_charge_kwh * batteryOneWayStorageEfficiency
 
@@ -115,13 +115,13 @@ while i < number_slots:
     tariffExportPerKwhs.append(float(sys.argv[index]))
     i+= 1
 
-# load load_kws
+# load total_load_kws
 index += 1
-load_kws = []
+total_load_kws = []
 i = 0
 while i < number_slots:
     index += 1
-    load_kws   .append(float(sys.argv[index]))
+    total_load_kws   .append(float(sys.argv[index]))
     i+= 1
 
 # load initial guesses

@@ -124,9 +124,10 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         $this->costs = [];
-        $grid_kws = array_map(function ($load_house_kw) {                         // match pre-optimised first guess to total load
-            return -$load_house_kw;
-        }, $this->total_load_kws);
+        $grid_kws = [];
+        foreach ($this->total_load_kws as $slot => $total_load_kw) {              // match pre-optimised first guess to total load
+            $grid_kws[$slot] = -$total_load_kw;
+        }
         $this->costs['raw'] = $this->costCLI($command, $grid_kws);
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python

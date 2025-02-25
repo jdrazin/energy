@@ -137,8 +137,8 @@ class EnergyCost extends Root
         $this->optimisation_result($result);                                       // save optimiser performance parameters
 
         // calculate optimised cost elements using CLI command
-        $standing_costs_gbp_per_day = $this->problem['import_gbp_per_day'] + $this->problem['export_gbp_per_day'];
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
+        $standing_costs_gbp_per_day = $this->problem['import_gbp_per_day'] + $this->problem['export_gbp_per_day'];
         echo 'Php    raw cost:            '  . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
         echo 'Python optimised cost:      '  . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
         echo 'Php    optimised cost:      '  . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;

@@ -544,15 +544,15 @@ class Octopus extends Root
             throw new Exception($message);
         }
         foreach ($slots_cubic_splines as $slot => $slots_cubic_spline) {
-            $unix_timestamp                 = $slots_cubic_spline[0];
-            $load_house_kw                  = $slots_cubic_spline[1];
-            $previous_load_house_kw         = $slots_cubic_spline[2];
-            $grid_kw                        = $slots_cubic_spline[3];
-            $previous_grid_kw               = $slots_cubic_spline[4];
-            $solar_kw                       = $slots_cubic_spline[5];
-            $previous_solar_kw              = $slots_cubic_spline[6];
-            $battery_level_kwh              = $slots_cubic_spline[7];
-            $previous_battery_level_kwh     = $slots_cubic_spline[8];
+            $unix_timestamp              = $slots_cubic_spline[0];
+            $load_house_kw               = $slots_cubic_spline[1];
+            $previous_load_house_kw      = $slots_cubic_spline[2];
+            $grid_kw                     = $slots_cubic_spline[3];
+            $previous_grid_kw            = $slots_cubic_spline[4];
+            $solar_kw                    = $slots_cubic_spline[5];
+            $previous_solar_kw           = $slots_cubic_spline[6];
+            $battery_level_kwh           = $slots_cubic_spline[7];
+            $previous_battery_level_kwh  = $slots_cubic_spline[8];
             $stmt->execute();
         }
         $this->mysqli->commit();

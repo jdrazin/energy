@@ -507,8 +507,8 @@ class Octopus extends Root
         $columns = ['unix_timestamp', 'load_house_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw', 'battery_level_kwh', 'previous_battery_level_kwh'];
         foreach ($columns as $index => $column) {
             $y = [];
-            foreach ($slots as $k => $slot) {
-                $y[$k] = $slot[$index];
+            foreach ($slots as $slot => $column_values) {
+                $y[$slot] = $column_values[$index];
             }
             if (!$index) { // generate x-array
                 $t_min = $slots[1][0];
@@ -521,7 +521,7 @@ class Octopus extends Root
             else {
                 $y = $cubic_spline->cubic_spline_y($y);
                 foreach ($y as $k => $v) {
-                    $slots_cubic_splines[$k+1][$index] = round($y[$k], 3);
+                    $slots_cubic_splines[$k][$index] = round($y[$k], 3);
                 }
             }
         }

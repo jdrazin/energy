@@ -515,7 +515,7 @@ class Octopus extends Root
                 $t_max = $slots[$number_slots-1][0];
                 $t_duration = $t_max - $t_min;
                 for ($k=0; $k < $number_slots_cubic_spline; $k++) {
-                    $slots_cubic_splines[$k+1][$index] = (int) round($t_min + $t_duration * ($k / ($number_slots_cubic_spline-1)));
+                    $slots_cubic_splines[$k][$index] = (int) round($t_min + $t_duration * ($k / ($number_slots_cubic_spline-1)));
                 }
             }
             else {

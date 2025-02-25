@@ -128,7 +128,7 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, 'FATAL');
             throw new Exception($message);
         }
-        if (!($command = $this->command()) ||
+        if (!$command ||
             !file_put_contents(self::OPTIMISATION_LOG, $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
             $this->logDb('MESSAGE', $message, 'FATAL');
@@ -230,8 +230,8 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= $export_gbp_per_kwhs[$slot_count] . ' ';
         }
-        $command .= 'load_house_kws= ';
-        $load_house_kws = $this->problem['load_house_kws'];
+        $command .= 'total_load_kws= ';
+        $load_house_kws = $this->problem['total_load_kws'];
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= $load_house_kws[$slot_count] . ' ';
         }
@@ -454,24 +454,24 @@ class EnergyCost extends Root
          * calculate total load (L) net of solar generation
          */
         $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'SELECT      `load_house_kw`  - `solar_kw`
+        $sql = 'SELECT      `load_house_kw`  - `solar_kw` AS `total_load_kw`
                    FROM     `slots`         
                    WHERE    `tariff_combination` = ? AND
                             NOT `final`
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($load_house_kw) ||
+            !$stmt->bind_result($total_load_kw) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $load_house_kws = [];
+        $total_load_kws = [];
         while ($stmt->fetch()) {
-            $load_house_kws[] = $load_house_kw;
+            $total_load_kws[] = $total_load_kw;
         }
-        return $load_house_kws;
+        return $total_load_kws;
     }
 
     private function strip(): string

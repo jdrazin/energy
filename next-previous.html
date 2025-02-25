@@ -43,14 +43,14 @@
     function drawChart(data) {
         var timeSeries = new google.visualization.DataTable(data);
         timeSeries.addColumn('date',   'Time of day');
-        timeSeries.addColumn('number', 'NEXT load_house_kw');
-        timeSeries.addColumn('number', 'PREV load_house_kw');
-        timeSeries.addColumn('number', 'NEXT grid_kw');
-        timeSeries.addColumn('number', 'PREV grid_kw');
-        timeSeries.addColumn('number', 'NEXT solar_kw');
-        timeSeries.addColumn('number', 'PREV solar_kw');
-        timeSeries.addColumn('number', 'NEXT battery %');
-        timeSeries.addColumn('number', 'PREV battery %');
+        timeSeries.addColumn('number', 'NEXT house consumption (kw)');
+        timeSeries.addColumn('number', 'PREV house consumption (kw)');
+        timeSeries.addColumn('number', 'NEXT grid export power (kw)');
+        timeSeries.addColumn('number', 'PREV grid export power (kw)');
+        timeSeries.addColumn('number', 'NEXT solar generation (kw)');
+        timeSeries.addColumn('number', 'PREV solar generation (kw)');
+        timeSeries.addColumn('number', 'NEXT battery level (kwh)');
+        timeSeries.addColumn('number', 'PREV battery level (kwh)');
         var row;
         for (var item = 1; item < data.length; item++) {
             row = data[item];
@@ -69,12 +69,12 @@
                 3: { lineWidth: 2, targetAxisIndex: 0},  // PREV grid_kw
                 4: { lineWidth: 5, targetAxisIndex: 0},  // solar_kw
                 5: { lineWidth: 2, targetAxisIndex: 0},  // PREV solar_kw
-                6: { lineWidth: 5, targetAxisIndex: 1},    // battery_percent
-                7: { lineWidth: 2, targetAxisIndex: 1},    // PREV battery_percent
+                6: { lineWidth: 5, targetAxisIndex: 1},  // battery level
+                7: { lineWidth: 2, targetAxisIndex: 1},  // PREV battery level
             },
             vAxes: {
-                0: {title: 'kilowatts (kW)'},
-                1: {title: 'battery level (%)'}
+                0: {title: 'power (kW)'},
+                1: {title: 'energy (kWh)'}
             },
             colors: [
                 '#4fbba9',    // total_load_kw

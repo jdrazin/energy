@@ -64,8 +64,8 @@ class Root
         $token    = $_GET['token']              ?? null;
         $sql = 'SELECT EXISTS (SELECT  `username`
                                  FROM  `users`
-                                 WHERE (CRC32(`username`) = CRC32(?) AND CRC32(`password`) = CRC32(?))) OR 
-                                       `token` = CRC32(?)';
+                                 WHERE (CRC32(`username`) = CRC32(?) AND CRC32(`password`) = CRC32(?)) OR 
+                                       `token` = CRC32(?))';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sss', $username, $password, $token) ||
             !$stmt->bind_result($exists) ||

@@ -27,9 +27,8 @@ class SMTPEmail
             $mail->Password     = $credentials['password'];         // SMTP password
             $mail->SMTPSecure   = $credentials['security'];         // security method
             $mail->Port         = $credentials['port'];             // TCP port to connect to
-            if ($from = $credentials['from']) {
-                $mail->setFrom($from['email']);
-            }
+            $mail->setFrom($credentials['user']);
+
             if ($to = $credentials['to']) {
                 $mail->addAddress($to['email']);
             }

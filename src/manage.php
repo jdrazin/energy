@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 namespace Src;
-require_once __DIR__ . '/../vendor/autoload.php';
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+
+require_once __DIR__ . '/../vendor/autoload.php';
 
 /*
  * woken by crontab every 5 mins
@@ -68,7 +69,10 @@ try {
     exit(0);
 }
 catch (exception $e) {
-    $message = $e->getMessage();
+    (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
+                              'html'      => false,
+                              'bodyHTML'  => '',
+                              'bodyAlt'   => ($message = $e->getMessage()),]);
     (new Root())->logDb('MESSAGE', $message, 'FATAL');
     echo $message . PHP_EOL;
     if (!USE_PID_SEMAPHORE && ALLOW_CONTROL) {
@@ -83,4 +87,5 @@ catch (GuzzleException $e) {
     (new Root())->logDb('MESSAGE', $message, 'FATAL');
     echo $message . PHP_EOL;
     exit(1);
+} catch (Exception $e) {
 }

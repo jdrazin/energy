@@ -18,8 +18,10 @@ $credentials = [
                 ];
 
 $content =  [
-            'subject'   =>  "Test Subject",
-            'body'       => "Test Body",
+                'subject'   => 'Test Subject',
+                'html'      => false,
+                'bodyHTML'  => 'This is the HTML message body <b>in bold!</b>',
+                'bodyAlt'   => 'This is the body in plain text for non-HTML mail clients',
             ];
 
 try {

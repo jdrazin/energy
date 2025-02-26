@@ -59,14 +59,15 @@ class Root
     }
 
     protected function basicAuth(): bool {
-        $username = $_SERVER['PHP_AUTH_USER'];
-        $password = $_SERVER['PHP_AUTH_PW'];
+        $username = $_SERVER['PHP_AUTH_USER']   ?? null;
+        $password = $_SERVER['PHP_AUTH_PW']     ?? null;
+        $token    = $_GET['token']              ?? null;
         $sql = 'SELECT EXISTS (SELECT  `username`
                                  FROM  `users`
-                                 WHERE CRC32(`username`) = CRC32(?) AND 
-                                       CRC32(`password`) = CRC32(?))';
+                                 WHERE (CRC32(`username`) = CRC32(?) AND CRC32(`password`) = CRC32(?))) OR 
+                                       `token` = CRC32(?)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ss', $username, $password) ||
+            !$stmt->bind_param('sss', $username, $password, $token) ||
             !$stmt->bind_result($exists) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

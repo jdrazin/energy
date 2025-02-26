@@ -7,7 +7,8 @@
     const SERVER    = 'https://www.drazin.net:8443/control/';
     const user      = getParameterByName('user');
     const password  = getParameterByName('password');
-    const headers = new Headers({
+    const token     = '?token=' + encodeURIComponent(getParameterByName('token'));
+    const headers   = new Headers({
         "Authorization": "Basic " + btoa(`${user}:${password}`)
     });
     google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
@@ -21,7 +22,8 @@
         return decodeURIComponent(results[2].replace(/\+/g, ' '));
     }
     function fetchTimeSeries() {
-        fetch(SERVER + 'slots', { method: "GET", headers: headers })
+        var url = SERVER + 'slots' + token;
+        fetch(url, { method: "GET", headers: headers })
             .then(response => response.text()) // First get response as text
             .then(text => {
                 if (!text) throw new Error("Empty response from server");
@@ -31,7 +33,8 @@
             .catch(error => console.error('Error fetching data:', error));
     }
     function fetchTariffCombinations() {
-        fetch(SERVER + 'tariff_combinations', { method: "GET", headers: headers })
+        var url = SERVER + 'tariff_combinations' + token;
+        fetch(url, { method: "GET", headers: headers })
             .then(response => response.text()) // First get response as text
             .then(text => {
                 if (!text) throw new Error("Empty response from server");

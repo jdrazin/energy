@@ -5,27 +5,15 @@ use PHPMailer\PHPMailer\Exception;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$credentials = [
-                    'host'      =>  'smtp.gmail.com',
-                    'port'      =>  587,
-                    'user'      =>  'visionsrenewable@gmail.com',
-                    'password'  =>  'ucdx rhhu wtyz ekxy',
-                    'security'  =>  'tls',
-                    'to'        => 	['email' => 'jonathan@drazin.net',        'name' => 'Jonathan Drazin'],
-                    'cc'        =>  [],
-                    'bcc'       =>  [],
-                    'reply'     =>  [],
-                ];
-
 $content =  [
-                'subject'   => 'Test Subject A',
+                'subject'   => 'Test Subject D',
                 'html'      => false,
-                'bodyHTML'  => 'This is the HTML message body <b>in bold!</b>',
+                'bodyHTML'  => 'This is the body in plain text for HTML mail clients',
                 'bodyAlt'   => 'This is the body in plain text for non-HTML mail clients',
             ];
 
 try {
-  (new SMTPEmail())->email($credentials, $content);       // traverse all tariffs
+  (new SMTPEmail())->email($content);
   exit(0);
 }
 catch (Exception $e) {

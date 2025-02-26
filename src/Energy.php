@@ -94,6 +94,30 @@ class Energy extends Root
         return json_encode($tariff_combinations, JSON_PRETTY_PRINT);
     }
 
+    public function slot_command(): bool|string {
+        if (!$this->basicAuth()) {
+            return false;
+        }
+        $sql = 'SELECT CONCAT(\'NOW: \', `message`, \' (\', `timestamp`, \')\')
+                      FROM `log`
+                      WHERE `id` = (SELECT MAX(`id`)
+                                      FROM `log`
+                                      WHERE `event` = \'SLOT_COMMAND\')';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_result($slot_command) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        if (!$stmt->fetch()) {
+            return false;
+        }
+        else {
+            return $slot_command;
+        }
+    }
+
     /**
      * @throws Exception
      */

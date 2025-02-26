@@ -11,7 +11,6 @@ $credentials = [
                     'user'      =>  'visionsrenewable@gmail.com',
                     'password'  =>  'ucdx rhhu wtyz ekxy',
                     'security'  =>  'tls',
-                    'from'      =>  ['email' => 'visionsrenewable@gmail.com', 'name' => 'Renewable Visions'],
                     'to'        => 	['email' => 'jonathan@drazin.net',        'name' => 'Jonathan Drazin'],
                     'cc'        =>  [],
                     'bcc'       =>  [],

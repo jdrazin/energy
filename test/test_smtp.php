@@ -8,7 +8,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $credentials = [
                     'host'      =>  'smtp.gmail.com',
                     'port'      =>  587,
-                    'user'      =>  '86b611001@smtp-brevo.com',
+                    'user'      =>  'visionsrenewable@gmail.com',
                     'password'  =>  'mQ9ZLsrSAeSlAIwhLYP1',
                     'security'  =>  'tls',
                     'from'      =>  ['email' => 'jonathan@drazin.net', 'name' => 'Jonathan Drazin'],

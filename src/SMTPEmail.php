@@ -19,42 +19,8 @@ class SMTPEmail
     public function email($credentials, $content): void {
         $mail = new PHPMailer();
         try {
-
-            $mail = new PHPMailer;
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'visionsrenewable@gmail.com';
-            $mail->Password = 'mQ9ZLsrSAeSlAIwhLYP1';
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
-            $mail->setFrom('visionsrenewable@gmail.com', 'V R');
-            $mail->addAddress('jonathan@drazin.net', 'J D');
-            $mail->isHTML(false);
-            $mail->Subject  = 'Test subject';
-            $mail->Body     = 'Test body';
-            $mail->AltBody  = 'Test alt body';
-            $mail->send();
-
-
-
-
-
-
-
-
-
-
-
-            $mail->SMTPDebug = SMTP::DEBUG_SERVER;            // Enable verbose debug output
+                      $mail->SMTPDebug = SMTP::DEBUG_SERVER;            // Enable verbose debug output
             $mail->isSMTP();                                  // Set mailer to use SMTP
-            $mail->SMTPOptions = [
-                                        'ssl' => [
-                                                'verify_peer'       => false,
-                                                'verify_peer_name'  => false,
-                                                'allow_self_signed' => true
-                                                ]
-                                  ];
             $mail->Host         = $credentials['host'];             // Specify main and backup SMTP servers
             $mail->SMTPAuth     = true;                             // enable SMTP authentication
             $mail->Username     = $credentials['user'];             // SMTP username

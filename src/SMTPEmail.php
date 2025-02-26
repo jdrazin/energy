@@ -19,21 +19,21 @@ class SMTPEmail
     public function email($credentials, $content): void {
         $mail = new PHPMailer();
         try {
-                      $mail->SMTPDebug = SMTP::DEBUG_SERVER;            // Enable verbose debug output
-            $mail->isSMTP();                                  // Set mailer to use SMTP
+      //      $mail->SMTPDebug = SMTP::DEBUG_SERVER;                  // Enable verbose debug output
+            $mail->isSMTP();                                        // Set mailer to use SMTP
             $mail->Host         = $credentials['host'];             // Specify main and backup SMTP servers
             $mail->SMTPAuth     = true;                             // enable SMTP authentication
             $mail->Username     = $credentials['user'];             // SMTP username
             $mail->Password     = $credentials['password'];         // SMTP password
-            $mail->SMTPSecure   = PHPMailer::ENCRYPTION_SMTPS;      // security method
+            $mail->SMTPSecure   = $credentials['security'];         // security method
             $mail->Port         = $credentials['port'];             // TCP port to connect to
             if ($from = $credentials['from']) {
-                $mail->setFrom($from['email'], $from['name']);
+                $mail->setFrom($from['email']);
             }
             if ($to = $credentials['to']) {
-                $mail->addAddress($to['email'], $to['name']);
+                $mail->addAddress($to['email']);
             }
-            if ($cc = $credentials['cc']) {
+  /*          if ($cc = $credentials['cc']) {
                 $mail->addCC($cc['email']);
             }
             if ($bcc = $credentials['bcc']) {
@@ -41,7 +41,7 @@ class SMTPEmail
             }
             if ($reply = $credentials['reply']) {
                 $mail->addReplyTo($reply['email']);
-            }
+            } */
             $mail->isHTML($content['html'] ?? false);
             $mail->Subject  = $content['subject']   ?? '';
             $mail->Body     = $content['bodyHTML']  ?? '';

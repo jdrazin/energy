@@ -12,14 +12,14 @@ $credentials = [
                     'password'  =>  'ucdx rhhu wtyz ekxy',
                     'security'  =>  'tls',
                     'from'      =>  ['email' => 'visionsrenewable@gmail.com', 'name' => 'Renewable Visions'],
-                    'to'        => 	['email' => 'jonathandrazin@gmail.com',   'name' => 'Jonathan Drazin'],
+                    'to'        => 	['email' => 'jonathan@drazin.net',        'name' => 'Jonathan Drazin'],
                     'cc'        =>  [],
                     'bcc'       =>  [],
                     'reply'     =>  [],
                 ];
 
 $content =  [
-                'subject'   => 'Test Subject',
+                'subject'   => 'Test Subject A',
                 'html'      => false,
                 'bodyHTML'  => 'This is the HTML message body <b>in bold!</b>',
                 'bodyAlt'   => 'This is the body in plain text for non-HTML mail clients',

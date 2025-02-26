@@ -6,13 +6,14 @@ use PHPMailer\PHPMailer\Exception;
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $credentials = [
-                    'host'      =>  'smtp-relay.brevo.com',
+                    'host'      =>  'smtp.gmail.com',
                     'port'      =>  587,
                     'user'      =>  '86b611001@smtp-brevo.com',
-                    'password'  =>  'YzS12IFnJfsK0EG6',
+                    'password'  =>  'mQ9ZLsrSAeSlAIwhLYP1',
                     'security'  =>  'tls',
                     'from'      =>  ['email' => 'jonathan@drazin.net', 'name' => 'Jonathan Drazin'],
                     'to'        => 	['email' => 'jonathan@drazin.net', 'name' => 'Jonathan Drazin'],
+                    'cc'        =>  [],
                     'bcc'       =>  [],
                     'reply'     =>  [],
                 ];

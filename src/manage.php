@@ -41,11 +41,12 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const PID_FILENAME      = '/var/www/html/energy/manage.pid',
-      USE_PID_SEMAPHORE = false,   // todo
-      BLOCK_CRON        = false,
-      ALLOW_CONTROL     = false,
-      ARGS              = ['CRON' => 1];
+const PID_FILENAME          = '/var/www/html/energy/manage.pid',
+      USE_PID_SEMAPHORE     = false,   // todo
+      BLOCK_CRON            = false,
+      ALLOW_CONTROL         = false,
+      EMAIL_NOTIFICATION    = false,
+      ARGS                  = ['CRON' => 1];
 
 try {
    // (new GivEnergy())->initialise();
@@ -69,10 +70,13 @@ try {
     exit(0);
 }
 catch (exception $e) {
-    (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
-                              'html'      => false,
-                              'bodyHTML'  => '',
-                              'bodyAlt'   => ($message = $e->getMessage()),]);
+    $message = $e->getMessage();
+    if (EMAIL_NOTIFICATION) {
+        (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
+                                  'html'      => false,
+                                  'bodyHTML'  => '',
+                                  'bodyAlt'   => $message]);
+    }
     (new Root())->logDb('MESSAGE', $message, 'FATAL');
     echo $message . PHP_EOL;
     if (!USE_PID_SEMAPHORE && ALLOW_CONTROL) {

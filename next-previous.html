@@ -35,7 +35,7 @@
     function fetchTariffCombinations() {
         var url = SERVER + 'tariff_combinations' + token;
         fetch(url, { method: "GET", headers: headers })
-            .then(response => response.text()) // First get response as text
+            .then(response => response.text()) // first get response as text
             .then(text => {
                 if (!text) throw new Error("Empty response from server");
                 return JSON.parse(text);
@@ -60,7 +60,7 @@
             timeSeries.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]]);
         }
         var options = {
-            title: 'Previous and next 24hrs',
+            title: 'Previous and next 24 hrs',
             titleTextStyle: { color: 'black', fontSize: 30, bold: true, italic: false},
             width: 1800,
             height: 800,

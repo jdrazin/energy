@@ -30,11 +30,19 @@ $app->get('/control/slots', function (Request $request, Response $response) {
 });
 $app->get('/control/tariff_combinations', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($slots = $energy->tariff_combinations()) === false) {
+    if (($tariff_combinations = $energy->tariff_combinations()) === false) {
         return $response->withStatus(401);
     }
-    $response->getBody()->write($slots);
+    $response->getBody()->write($tariff_combinations);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
+});
+$app->get('/control/slot_command', function (Request $request, Response $response) {
+    $energy = new Energy(null);
+    if (($slot_command = $energy->slot_command()) === false) {
+        return $response->withStatus(401);
+    }
+    $response->getBody()->write($slot_command);
+    return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->post('/control/permute', function (Request $request, Response $response) {
     $config = json_decode((string) $request->getBody(), true);

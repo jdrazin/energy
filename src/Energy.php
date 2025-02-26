@@ -98,7 +98,7 @@ class Energy extends Root
         if (!$this->basicAuth()) {
             return false;
         }
-        $sql = 'SELECT CONCAT(\'NOW: \', `message`, \' (\', `timestamp`, \')\')
+        $sql = 'SELECT CONCAT(`message`, \' (\', `timestamp`, \' UTC)\')
                       FROM `log`
                       WHERE `id` = (SELECT MAX(`id`)
                                       FROM `log`

@@ -12,39 +12,31 @@ require_once __DIR__ . '/../vendor/autoload.php';
  *
  */
 
-class SMTPEmail
+class SMTPEmail extends Root
 {
-    /**
-     */
-    public function email($credentials, $content): void {
+    private array $api;
+    public function __construct()
+    {
+        parent::__construct();
+    }
+    public function email($content): void {
         $mail = new PHPMailer();
         try {
-      //      $mail->SMTPDebug = SMTP::DEBUG_SERVER;                  // Enable verbose debug output
+        //    $mail->SMTPDebug = SMTP::DEBUG_SERVER;                  // Enable verbose debug output
+            $smtp_settings = $this->apis['smtp'];
             $mail->isSMTP();                                        // Set mailer to use SMTP
-            $mail->Host         = $credentials['host'];             // Specify main and backup SMTP servers
+            $mail->Host         = $smtp_settings['host'];             // Specify main and backup SMTP servers
             $mail->SMTPAuth     = true;                             // enable SMTP authentication
-            $mail->Username     = $credentials['user'];             // SMTP username
-            $mail->Password     = $credentials['password'];         // SMTP password
-            $mail->SMTPSecure   = $credentials['security'];         // security method
-            $mail->Port         = $credentials['port'];             // TCP port to connect to
-            $mail->setFrom($credentials['user']);
-
-            if ($to = $credentials['to']) {
-                $mail->addAddress($to['email']);
-            }
-  /*          if ($cc = $credentials['cc']) {
-                $mail->addCC($cc['email']);
-            }
-            if ($bcc = $credentials['bcc']) {
-                $mail->addBCC($bcc['email']);
-            }
-            if ($reply = $credentials['reply']) {
-                $mail->addReplyTo($reply['email']);
-            } */
+            $mail->Username     = $smtp_settings['user'];             // SMTP username
+            $mail->Password     = $smtp_settings['password'];         // SMTP password
+            $mail->SMTPSecure   = $smtp_settings['security'];         // security method
+            $mail->Port         = $smtp_settings['port'];             // TCP port to connect to
+            $mail->setFrom($smtp_settings['user']);
+            $mail->addAddress($smtp_settings['to']);
             $mail->isHTML($content['html'] ?? false);
-            $mail->Subject  = $content['subject']   ?? '';
-            $mail->Body     = $content['bodyHTML']  ?? '';
-            $mail->AltBody  = $content['bodyAlt']   ?? '';
+            $mail->Subject  = $content['subject']   ?? 'No subject';
+            $mail->Body     = $content['bodyHTML']  ?? 'No HTML body';
+            $mail->AltBody  = $content['bodyAlt']   ?? 'No alt body';
             $mail->send();
             echo 'Message has been sent';
     }

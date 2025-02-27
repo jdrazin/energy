@@ -45,7 +45,7 @@ const PID_FILENAME          = '/var/www/html/energy/manage.pid',
       USE_PID_SEMAPHORE     = false,   // todo
       BLOCK_CRON            = false,
       ALLOW_CONTROL         = false,
-      EMAIL_NOTIFICATION    = false,
+      EMAIL_NOTIFICATION    = true,
       ARGS                  = ['CRON' => 1];
 
 try {

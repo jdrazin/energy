@@ -29,7 +29,7 @@ class Energy extends Root
      * @throws Exception
      */
     public function slots(): bool|string {
-        if (!$this->basicAuth()) {
+        if (!$this->authenticate()) {
             return false;
         }
         $sql = 'SELECT      `unix_timestamp`,
@@ -61,7 +61,7 @@ class Energy extends Root
      * @throws Exception
      */
     public function tariff_combinations(): bool|string {
-        if (!$this->basicAuth()) {
+        if (!$this->authenticate()) {
             return false;
         }
         $sql = 'SELECT  UNIX_TIMESTAMP(`s`.`start`) AS `start`,
@@ -95,7 +95,7 @@ class Energy extends Root
     }
 
     public function slot_command(): bool|string {
-        if (!$this->basicAuth()) {
+        if (!$this->authenticate()) {
             return false;
         }
         $sql = 'SELECT CONCAT(`message`, \' (\', `timestamp`, \' UTC)\')

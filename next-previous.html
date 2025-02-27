@@ -4,13 +4,8 @@
     <!--Load the AJAX API-->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">                                       // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
-    const SERVER    = 'https://www.drazin.net:8443/control/';
-    const user      = getParameterByName('user');
-    const password  = getParameterByName('password');
-    const token     = '?token=' + encodeURIComponent(getParameterByName('token'));
-    const headers   = new Headers({
-        "Authorization": "Basic " + btoa(`${user}:${password}`)
-    });
+    const SERVER       = 'https://www.drazin.net:8443/control/';
+    const token        = '?token=' + encodeURIComponent(getParameterByName('token'));
     const slot_command = getText(SERVER + 'slot_command' + token);
     google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
     google.charts.setOnLoadCallback(fetchTimeSeries);                       // Set a callback to run when the Google Visualization API is loaded
@@ -31,7 +26,7 @@
     }
     function fetchTimeSeries() {
         var url = SERVER + 'slots' + token;
-        fetch(url, { method: "GET", headers: headers })
+        fetch(url, { method: "GET"})
             .then(response => response.text()) // First get response as text
             .then(text => {
                 if (!text) throw new Error("Empty response from server");
@@ -42,7 +37,7 @@
     }
     function fetchTariffCombinations() {
         var url = SERVER + 'tariff_combinations' + token;
-        fetch(url, { method: "GET", headers: headers })
+        fetch(url, { method: "GET"})
             .then(response => response.text()) // first get response as text
             .then(text => {
                 if (!text) throw new Error("Empty response from server");
@@ -68,7 +63,7 @@
             timeSeries.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]]);
         }
         var options = {
-            title: 'Previous and next 24 hrs, now: ' + slot_command,
+            title: 'Previous and next 24 hrs [now: ' + slot_command + ']',
             titleTextStyle: { color: 'black', fontSize: 30, bold: true, italic: false},
             width: 1800,
             height: 800,

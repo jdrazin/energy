@@ -58,7 +58,7 @@ class Root
         }
     }
 
-    protected function basicAuth(): bool {
+    protected function authenticate(): bool {  // attempts to authenticate against BasicAuth username:password or token
         $username = $_SERVER['PHP_AUTH_USER']   ?? '';
         $password = $_SERVER['PHP_AUTH_PW']     ?? '';
         $token    = $_GET['token']              ?? '';

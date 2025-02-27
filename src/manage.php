@@ -42,7 +42,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const PID_FILENAME          = '/var/www/html/energy/manage.pid',
-      USE_PID_SEMAPHORE     = false,   // todo
+      USE_PID_SEMAPHORE     = true,
       BLOCK_CRON            = false,
       ALLOW_CONTROL         = false,
       EMAIL_NOTIFICATION    = true,

@@ -11,8 +11,16 @@
     const headers   = new Headers({
         "Authorization": "Basic " + btoa(`${user}:${password}`)
     });
+    const slot_command = getText(SERVER + 'slot_command' + token);
     google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
     google.charts.setOnLoadCallback(fetchTimeSeries);                       // Set a callback to run when the Google Visualization API is loaded
+    function getText(url) {  // WARNING: synchronous
+        var request = new XMLHttpRequest();
+        request.open('GET', url, false);
+        request.send(null);
+        if (request.status !== 200) throw new Error(request.statusText);
+        return request.responseText;
+    }
     function getParameterByName(name, url = window.location.href) {
         name = name.replace(/[\[\]]/g, '\\$&');
         var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
@@ -60,7 +68,7 @@
             timeSeries.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]]);
         }
         var options = {
-            title: 'Previous and next 24 hrs',
+            title: 'Previous and next 24 hrs, now: ' + slot_command,
             titleTextStyle: { color: 'black', fontSize: 30, bold: true, italic: false},
             width: 1800,
             height: 800,

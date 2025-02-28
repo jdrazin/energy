@@ -27,36 +27,35 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class GivEnergy extends Root
 {
-    private const int   RESPONSE_OK = 2,
-                        HOLD_TO_START_GUARD_PERIOD_SECONDS = 30,
-                        MAX_HOLD_SECONDS = 600,
-                        CHARGE_DISCHARGE_SLOT_START = 1,
-                        CHARGE_DISCHARGE_SLOT_STOP = 10,
-                        CONTROL_CHARGE_DISCHARGE_SLOT = 1;  // slot number used for control
+    private const int   RESPONSE_OK                             = 2,
+                        HOLD_TO_START_GUARD_PERIOD_SECONDS      = 30,
+                        MAX_HOLD_SECONDS                        = 600,
+                        CHARGE_DISCHARGE_SLOT_START             = 1,
+                        CHARGE_DISCHARGE_SLOT_STOP              = 10,
+                        CONTROL_CHARGE_DISCHARGE_SLOT           = 1,   // slot number used for control
+                        EV_POWER_ACTIVE_IMPORT                  = 13,  // Instantaneous active power imported by EV. (W or kW)
+                        EV_POWER_ACTIVE_IMPORT_UNIT             = 5,   // kW
+                        EV_METER_ID                             = 0;   // meter id
     private const array ENTITIES_BATTERY_AIO = [
-                                                    'SOLAR_W'                => ['solar',       'power'],
-                                                    'GRID_W'                 => ['grid',        'power'],
-                                                    'LOAD_HOUSE_W'           => ['consumption', 'power'],
-                                                    'BATTERY_LEVEL_PERCENT'  => ['battery',     'percent']
-                                                ];
-
-    private const       EV_POWER_ACTIVE_IMPORT = 13,  // Instantaneous active power imported by EV. (W or kW)
-                        EV_POWER_ACTIVE_IMPORT_UNIT = 5,   // kW
-                        EV_METER_ID = 0;   // meter id
-    private const array CONTROL_VALUES = [  'Pause Battery'             => ['Not Paused' => 0,
-                                            'Pause Charge'              => 1,
-                                            'Pause Discharge'           => 2,
-                                            'Pause Charge & Discharge'  => 3],
-                                        ];
-
-    private const array CHARGE_DIRECTIONS = [
+                                            'SOLAR_W'                => ['solar',       'power'],
+                                            'GRID_W'                 => ['grid',        'power'],
+                                            'LOAD_HOUSE_W'           => ['consumption', 'power'],
+                                            'BATTERY_LEVEL_PERCENT'  => ['battery',     'percent']
+                                            ],
+                        CONTROL_VALUES = [
+                                            'Pause Battery'             => ['Not Paused'                => 0,
+                                                                            'Pause Charge'              => 1,
+                                                                            'Pause Discharge'           => 2,
+                                                                            'Pause Charge & Discharge'  => 3],
+                                        ],
+                        CHARGE_DIRECTIONS = [
                                             'CHARGE',
                                             'DISCHARGE'
                                             ],
-        PRE_DEFAULTS =                      [
+                        PRE_DEFAULTS =      [
                                             'Pause Battery' => 'Pause Charge & Discharge',
                                             ],
-        DEFAULT_CHARGE_DISCHARGE_BLOCKS = [
+                        DEFAULT_CHARGE_DISCHARGE_BLOCKS = [
                                             'CHARGE' => [   2 => [  'start'                 => '04:00',
                                                                     'stop'                  => '07:00',
                                                                     'target_level_percent'  => 95],
@@ -68,7 +67,7 @@ class GivEnergy extends Root
                                                                     'target_level_percent'  => 95]],
                                             'DISCHARGE' => []
                                         ],
-        POST_DEFAULTS                   = [
+                        POST_DEFAULTS = [
                                             'Enable AC Charge Upper % Limit'            => 1,               // Activate upper limits, defaults to OFF
                                             'Enable Eco Mode'                           => 1,               // Set Eco mode, defaults to ON
                                             'AC Charge Enable'                          => 1,               // Activate battery charge timer settings, defaults to OFF
@@ -88,12 +87,12 @@ class GivEnergy extends Root
                                             'Pause Battery End Time'                    => '00:00',         // Pause battery end time (does not reset, no default)
                                             'Force Off Grid'                            => 0,               // Isolate from grid (does not reset, no default)
                                         ],
-        EV_METER_IDS                        = [
-                                                0                  // single meter id=0
-                                            ],
-        EV_MEASURANDS                       = [
-                                                13,                // instantaneous active power imported by EV. (W or kW)
-                                            ];
+                        EV_METER_IDS = [
+                                          0                                                                 // single meter id=0
+                                       ],
+                        EV_MEASURANDS = [
+                                          13,                                                               // instantaneous active power imported by EV. (W or kW)
+                                        ];
 
     private array $api, $battery, $inverterControlSettings;
 
@@ -149,11 +148,12 @@ class GivEnergy extends Root
     { // assume default settings
         foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
             for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
-                $settings = self::DEFAULT_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? ['start' => '00:00',
-                    'stop' => '00:00',
-                    'target_level_percent' => 90];
-                $settings['direction'] = $charge_direction;
-                $settings['message'] = __FUNCTION__;
+                $settings = self::DEFAULT_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? ['start'                 => '00:00',  // stub values
+                                                                                                        'stop'                  => '00:00',  // stub values
+                                                                                                        'target_level_percent'  => 50,       // stub values
+                                                                                                        ];
+                $settings['charge_direction']   = $charge_direction;
+                $settings['message']            = __FUNCTION__;
                 $this->set_charge_discharge_block($block_number, $settings);
             }
         }
@@ -499,13 +499,13 @@ class GivEnergy extends Root
      */
     public function set_charge_discharge_block($slot_number, $settings): void
     {
-        $mode  = $settings['mode'];
-        $start = $settings['start'];
-        $stop  = $settings['stop'];
-        $abs_charge_power_w = $settings['abs_charge_power_w'] ?? 0;
-        $target_level_percent = $settings['target_level_percent'];
+        $charge_direction       = $settings['charge_direction'];
+        $start                  = $settings['start'];
+        $stop                   = $settings['stop'];
+        $abs_charge_power_w     = $settings['abs_charge_power_w'] ?? 0;
+        $target_level_percent   = $settings['target_level_percent'];
         $message = $settings['message'];
-        switch ($mode) {
+        switch ($charge_direction) {
             case 'CHARGE':
             {
                 $type = 'AC Charge';
@@ -524,7 +524,7 @@ class GivEnergy extends Root
             }
             default:
             {
-                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': bad direction: ' . $mode));
+                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $charge_direction . ': bad direction: ' . $charge_direction));
             }
         }
         // set target battery level

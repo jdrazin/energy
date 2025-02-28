@@ -434,27 +434,29 @@ class GivEnergy extends Root
         $countdown_seconds      = $this->countdown_to_start_seconds($start_datetime);
         (new Root())->logDb('BATTERY', $context . ": counting down $countdown_seconds seconds ...", 'NOTICE');
         (new Root())->logDb('BATTERY', 'sending commands ...', 'NOTICE');
-        sleep($countdown_seconds);
+        if (!DISABLE_COUNTDOWN) {
+            sleep($countdown_seconds);
+        }
         switch ($mode) {
             case 'ECO':     { // matches battery discharge power to net load: load - solar (i.e. zero export)
                                 $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                                    [
-                                        'mode'                  => 'CHARGE',
-                                        'start'                 => '00:00',
-                                        'stop'                  => '00:00',
-                                        'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Charge Power'],
-                                        'target_level_percent'  => self::POST_DEFAULTS['AC Charge Upper % Limit'],
-                                        'message'               => __FUNCTION__
-                                    ]);
+                                                                    'CHARGE',
+                                                                    [
+                                                                    'start'                 => '00:00',
+                                                                    'stop'                  => '00:00',
+                                                                    'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Charge Power'],
+                                                                    'target_level_percent'  => self::POST_DEFAULTS['AC Charge Upper % Limit']
+                                                                    ],
+                                                                    __FUNCTION__);
                                 $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                                    [
-                                        'mode'                  => 'DISCHARGE',
-                                        'start'                 => '00:00',
-                                        'stop'                  => '00:00',
-                                        'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Discharge Power'],
-                                        'target_level_percent'  => self::POST_DEFAULTS['Battery Cutoff % Limit'],
-                                        'message'               => __FUNCTION__
-                                    ]);
+                                                                'DISCHARGE',
+                                                                    [
+                                                                        'start'                 => '00:00',
+                                                                        'stop'                  => '00:00',
+                                                                        'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Discharge Power'],
+                                                                        'target_level_percent'  => self::POST_DEFAULTS['Battery Cutoff % Limit']
+                                                                    ],
+                                                                    __FUNCTION__);
                                 $this->command('write', 'Battery Discharge Power', (int)(1000 * $this->battery['max_discharge_kw']), null, __FUNCTION__);
                                 break;
                             }
@@ -516,7 +518,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function set_charge_discharge_block($slot_number, $charge_direction, $settings, $message): void
+    public function set_charge_discharge_block($slot_number, $charge_direction, $settings, $function): void
     {
         $start                  = $settings['start'];
         $stop                   = $settings['stop'];
@@ -528,7 +530,7 @@ class GivEnergy extends Root
                 $type = 'AC Charge';
                 $limit = 'Upper';
                 $charge_power = 'Battery Charge Power';
-                $this->command('write', "AC Charge Enable", 1, null, $message);
+                $this->command('write', "AC Charge Enable", 1, null, $function);
                 break;
             }
             case 'DISCHARGE':
@@ -536,7 +538,7 @@ class GivEnergy extends Root
                 $type = 'DC Discharge';
                 $limit = 'Lower';
                 $charge_power = 'Battery Discharge Power';
-                $this->command('write', "Enable DC Discharge", 1, null, $message);
+                $this->command('write', "Enable DC Discharge", 1, null, $function);
                 break;
             }
             default:
@@ -545,14 +547,14 @@ class GivEnergy extends Root
             }
         }
         // set target battery level
-        $this->command('write', "$type $slot_number $limit SOC % Limit", $target_level_percent, null, $message);
-        $this->command('write', $charge_power, $abs_charge_power_w, null, $message);
+        $this->command('write', "$type $slot_number $limit SOC % Limit", $target_level_percent, null, $function);
+        $this->command('write', $charge_power, $abs_charge_power_w, null, $function);
 
         // set slot times
-        $this->command('write', "$type $slot_number Start Time", null, $start, $message);
-        $this->command('write', "$type $slot_number End Time", null, $stop, $message);
+        $this->command('write', "$type $slot_number Start Time", null, $start, $function);
+        $this->command('write', "$type $slot_number End Time", null, $stop, $function);
 
-        $this->command('write', 'Pause Battery', self::CONTROL_VALUES['Pause Battery']['Not Paused'], null, $message);
+        $this->command('write', 'Pause Battery', self::CONTROL_VALUES['Pause Battery']['Not Paused'], null, $function);
     }
 
     /**

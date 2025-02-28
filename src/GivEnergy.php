@@ -110,6 +110,21 @@ class GivEnergy extends Root
         $this->getInverterControlSettings();  // get settings
     }
 
+
+    /**
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function initialise(): void
+    {
+        /*
+         * restores autonomous battery operation settings
+         */
+        $this->defaults(self::PRE_DEFAULTS);
+        $this->set_charge_discharge_blocks_to_default();
+        $this->defaults(self::POST_DEFAULTS);
+    }
+
     /**
      * @throws GuzzleException
      * @throws Exception
@@ -345,17 +360,6 @@ class GivEnergy extends Root
             $this->inverterControlSettings[$setting['name']] = $setting['id'];
             ksort($this->inverterControlSettings);
         }
-    }
-
-    /**
-     * @throws GuzzleException
-     * @throws Exception
-     */
-    public function initialise(): void
-    {
-        $this->defaults(self::PRE_DEFAULTS);
-        $this->set_charge_discharge_blocks_to_default();
-        $this->defaults(self::POST_DEFAULTS);
     }
 
     /**

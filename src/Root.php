@@ -58,7 +58,7 @@ class Root
         }
     }
 
-    protected function propertyRead($name, $type): float|string|int {  // attempts to authenticate against BasicAuth username:password or token
+    protected function propertyRead($name, $type): null|float|string|int {  // attempts to authenticate against BasicAuth username:password or token
         $sql = 'SELECT  `value_float`,
                         `value_string`,
                         `value_int`
@@ -83,30 +83,38 @@ class Root
             case 'int': {
                 return $value_int;
             }
+            default: {
+                return null;
+            }
         }
     }
 
-    protected function propertyWrite($name, $type, $value): bool {  // attempts to authenticate against BasicAuth username:password or token
+    /**
+     * @throws Exception
+     */
+    protected function propertyWrite($name, $type, $value): void {  // attempts to authenticate against BasicAuth username:password or token
         $sql = 'INSERT INTO `properties`   (`name`,     `value_float`,     `value_string`,     `value_int`)
                                     VALUES (?,          ?,                 ?,                  ?)
                     ON DUPLICATE KEY UPDATE             `value_float` = ?, `value_string` = ?, `value_int` = ?';
+        $value_float = $value_string = $value_int = null;
+        if (is_float($value)) {
+            $value_float = $value;
+        }
+        elseif (is_string($value)) {
+            $value_string = $value;
+        }
+        elseif (is_int($value)) {
+            $value_int = $value;
+        }
+        else {
+            throw new Exception('Bad type for property: ' . $type);
+        }
         if (!($stmt = $this->mysqli->prepare($sql))        ||
             !$stmt->bind_param('sdsidsi', $name, $value_float, $value_string, $value_int)  ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
-        }
-        switch ($type) {
-            case 'float': {
-                return $value_float;
-            }
-            case 'string': {
-                return $value_string;
-            }
-            case 'int': {
-                return $value_int;
-            }
         }
     }
 

@@ -58,44 +58,10 @@ class Root
         }
     }
 
-    protected function propertyRead($name, $type): null|float|string|int {  // attempts to authenticate against BasicAuth username:password or token
-        $sql = 'SELECT  `value_float`,
-                        `value_string`,
-                        `value_int`
-                  FROM  `properties`
-                  WHERE `name` = ?';
-        if (!($stmt = $this->mysqli->prepare($sql))                                ||
-            !$stmt->bind_param('s', $name)                              ||
-            !$stmt->bind_result($value_float, $value_string, $value_int) ||
-            !$stmt->execute()                                                      ||
-            !$stmt->fetch()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        switch ($type) {
-            case 'float': {
-                return $value_float;
-            }
-            case 'string': {
-                return $value_string;
-            }
-            case 'int': {
-                return $value_int;
-            }
-            default: {
-                return null;
-            }
-        }
-    }
-
     /**
      * @throws Exception
      */
-    protected function propertyWrite($name, $type, $value): void {  // attempts to authenticate against BasicAuth username:password or token
-        $sql = 'INSERT INTO `properties`   (`name`,     `value_float`,     `value_string`,     `value_int`)
-                                    VALUES (?,          ?,                 ?,                  ?)
-                    ON DUPLICATE KEY UPDATE             `value_float` = ?, `value_string` = ?, `value_int` = ?';
+    public function propertyWrite($name, $type, $value): void {  // attempts to authenticate against BasicAuth username:password or token
         $value_float = $value_string = $value_int = null;
         if (is_float($value)) {
             $value_float = $value;
@@ -109,12 +75,47 @@ class Root
         else {
             throw new Exception('Bad type for property: ' . $type);
         }
+        $sql = 'INSERT INTO `properties`   (`name`,     `value_float`,     `value_string`,     `value_int`)
+                                    VALUES (?,          ?,                 ?,                  ?)
+                    ON DUPLICATE KEY UPDATE             `value_float` = ?, `value_string` = ?, `value_int` = ?';
         if (!($stmt = $this->mysqli->prepare($sql))        ||
-            !$stmt->bind_param('sdsidsi', $name, $value_float, $value_string, $value_int)  ||
+            !$stmt->bind_param('sdsidsi', $name, $value_float, $value_string, $value_int, $value_float, $value_string, $value_int)  ||
+            !$stmt->execute()                                                                                                                      ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+    }
+
+    public function propertyRead($name, $type): null|float|string|int {  // attempts to authenticate against BasicAuth username:password or token
+        $sql = 'SELECT  `value_float`,
+                        `value_string`,
+                        `value_int`
+                  FROM  `properties`
+                  WHERE `name` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql))                                ||
+            !$stmt->bind_param('s', $name)                              ||
+            !$stmt->bind_result($value_float, $value_string, $value_int) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
+        }
+        $stmt->fetch();
+        switch ($type) {
+            case 'float': {
+                return is_null($value_float) ? null : (float)   $value_float;
+            }
+            case 'string': {
+                return is_null($value_string) ? null : (string) $value_string;
+            }
+            case 'int': {
+                return is_null($value_int)    ? null : (int)    $value_int;
+            }
+            default: {
+                return null;
+            }
         }
     }
 

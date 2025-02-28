@@ -77,7 +77,7 @@ class Octopus extends Root
                     $slot_command = (new EnergyCost($db_slots, $batteryInitialKwh))->minimise(); // minimise energy cost
                     (new Root())->logDb('SLOT_COMMAND', $slot_command['message'],'NOTICE');
                     if ($active_tariff) {                                        // make battery command
-                        if (!DISABLE_SLOT_COMMAND) {
+                        if (ENABLE_SLOT_COMMANDS) {
                             $givenergy->control($slot_command);                  // control battery for active combination on completion of countdown to next slot
                         }
                         $this->makeDbSlotsLast24hrs($tariff_combination);        // make historic slots for last 24 hours

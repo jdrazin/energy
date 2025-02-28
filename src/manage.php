@@ -41,15 +41,15 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const PID_FILENAME          = '/var/www/html/energy/manage.pid',
-      USE_PID_SEMAPHORE     = false,
-      BLOCK_CRON            = false,
-      ALLOW_CONTROL         = false,
-      EMAIL_NOTIFICATION    = true,
-      ARGS                  = ['CRON' => 1];
+const PID_FILENAME              = '/var/www/html/energy/manage.pid',
+      USE_PID_SEMAPHORE         = false,
+      BLOCK_CRON                = true,
+      INITIALISE_ON_EXCEPTION   = false,
+      EMAIL_NOTIFICATION        = true,
+      ARGS                      = ['CRON' => 1],
+      USE_STUB                  = true;
 
 try {
-   // (new GivEnergy())->initialise();
     if (USE_PID_SEMAPHORE) {
         if (file_exists(PID_FILENAME)) {
             echo 'Cannot start: semaphore exists';
@@ -60,7 +60,12 @@ try {
         }
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
-        (new Octopus())->traverseTariffs($cron);       // traverse all tariffs
+        if (USE_STUB) {
+            (new GivEnergy())->initialise();
+        }
+        else {
+           (new Octopus())->traverseTariffs($cron);       // traverse all tariffs
+        }
     }
     if (USE_PID_SEMAPHORE) {
         if (!unlink(PID_FILENAME)) {
@@ -79,10 +84,10 @@ catch (exception $e) {
     }
     (new Root())->logDb('MESSAGE', $message, 'FATAL');
     echo $message . PHP_EOL;
-    if (!USE_PID_SEMAPHORE && ALLOW_CONTROL) {
-        echo 'Attempting to reset ...';
+    if (INITIALISE_ON_EXCEPTION) {
+        (new Root())->logDb('MESSAGE', 'Attempting to initialise ...', 'INFO');
         (new GivEnergy())->initialise();
-        echo ' done';
+        (new Root())->logDb('MESSAGE', '... initialise done', 'INFO');
     }
     exit(1);
 }

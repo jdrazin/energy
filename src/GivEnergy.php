@@ -69,16 +69,16 @@ class GivEnergy extends Root
                                             'DISCHARGE' => []
                                         ],
         POST_DEFAULTS                   = [
-                                            'Enable AC Charge Upper % Limit'            => 1,           // Activate upper limits, defaults to OFF
-                                            //'Enable Eco Mode'                           => 1,           // Set Eco mode, defaults to ON
-                                            'AC Charge Enable'                          => 1,           // Activate battery charge timer settings, defaults to OFF
-                                            'Enable DC Discharge'                       => 1,           // Enables battery discharge timer settings, defaults to OFF
-                                            'AC Charge Upper % Limit'                   => 95,          // Sets upper limit, defaults to 100%
-                                            'Battery Reserve % Limit'                   => 5,           // Set reserve limit, defaults to 4%
-                                            //'Battery Charge Power'                      => 6000,        // Set battery charge power, defaults to 6000W
-                                            //'Battery Discharge Power'                   => 6000,       // Set battery discharge power, defaults to 6000W
+                                            'Enable AC Charge Upper % Limit'            => 1,               // Activate upper limits, defaults to OFF
+                                            'Enable Eco Mode'                           => 1,               // Set Eco mode, defaults to ON
+                                            'AC Charge Enable'                          => 1,               // Activate battery charge timer settings, defaults to OFF
+                                            'Enable DC Discharge'                       => 1,               // Enables battery discharge timer settings, defaults to OFF
+                                            'AC Charge Upper % Limit'                   => 95,              // Sets upper limit, defaults to 100%
+                                            'Battery Reserve % Limit'                   => 5,               // Set reserve limit, defaults to 4%
+                                            'Battery Charge Power'                      => 6000,            // Set battery charge power, defaults to 6000W
+                                            'Battery Discharge Power'                   => 6000,            // Set battery discharge power, defaults to 6000W
                                             'Battery Cutoff % Limit'                    => 5,               // Set cut-off limit, defaults to 4%
-                                            //'Inverter Max Output Active Power Percent'  => 100,         // Sets inverter capacity, defaults to 100%
+                                            'Inverter Max Output Active Power Percent'  => 100,             // Sets inverter capacity, defaults to 100%
                                             'Export Power Priority'                     => 'Load First',    // 'Battery First', 'Grid First' (does not reset, no default)
                                             'Enable EPS'                                => 1,               // Emergency Power Supply (does not reset, no default)
                                             'Inverter Charge Power Percentage'          => 100,             // Inverter charge power percentage (does not reset, no default)

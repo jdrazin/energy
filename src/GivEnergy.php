@@ -154,9 +154,7 @@ class GivEnergy extends Root
         foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
             for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
                 $settings = self::PRESET_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? self::INACTIVE_CHARGE_DISCHARGE_BLOCK;
-                $settings['charge_direction'] = $charge_direction;
-                $settings['message']          = __FUNCTION__;
-                $this->set_charge_discharge_block($block_number, $settings);
+                $this->set_charge_discharge_block($block_number, $charge_direction, $settings, __FUNCTION__);
             }
         }
         $this->propertyWrite('presetChargeDischargeBlocksSet', 'int', 1);
@@ -166,10 +164,11 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function clear_preset_charge_discharge_blocks(): void { // assume default settings
+    public function clear_preset_charge_discharge_blocks(): void {
+        // clear preset charge/discharge time blocks
         foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
             for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
-                $this->set_charge_discharge_block($block_number, self::INACTIVE_CHARGE_DISCHARGE_BLOCK);
+                $this->set_charge_discharge_block($block_number, $charge_direction, self::INACTIVE_CHARGE_DISCHARGE_BLOCK, __FUNCTION__);
             }
         }
         $this->propertyWrite('presetChargeDischargeBlocksSet', 'int', 0);
@@ -517,14 +516,12 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function set_charge_discharge_block($slot_number, $settings): void
+    public function set_charge_discharge_block($slot_number, $charge_direction, $settings, $message): void
     {
-        $charge_direction       = $settings['charge_direction'];
         $start                  = $settings['start'];
         $stop                   = $settings['stop'];
         $abs_charge_power_w     = $settings['abs_charge_power_w'] ?? 0;
         $target_level_percent   = $settings['target_level_percent'];
-        $message = $settings['message'];
         switch ($charge_direction) {
             case 'CHARGE':
             {

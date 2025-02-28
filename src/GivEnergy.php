@@ -67,6 +67,11 @@ class GivEnergy extends Root
                                                                     'target_level_percent'  => 95]],
                                             'DISCHARGE' => []
                                         ],
+                        INACTIVE_CHARGE_DISCHARGE_BLOCK = [
+                                           'start'                 => '00:00',
+                                           'stop'                  => '00:00',
+                                           'target_level_percent'  => 0,
+                                           ],
                         POST_DEFAULTS = [
                                             'Enable AC Charge Upper % Limit'            => 1,               // Activate upper limits, defaults to OFF
                                             'Enable Eco Mode'                           => 1,               // Set Eco mode, defaults to ON
@@ -109,7 +114,6 @@ class GivEnergy extends Root
         $this->getInverterControlSettings();  // get settings
     }
 
-
     /**
      * @throws GuzzleException
      * @throws Exception
@@ -148,13 +152,22 @@ class GivEnergy extends Root
     { // assume default settings
         foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
             for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
-                $settings = self::PRESET_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? ['start'                 => '00:00',  // stub values
-                                                                                                        'stop'                  => '00:00',  // stub values
-                                                                                                        'target_level_percent'  => 0,       // stub values
-                                                                                                        ];
-                $settings['charge_direction']   = $charge_direction;
-                $settings['message']            = __FUNCTION__;
+                $settings = self::PRESET_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? self::INACTIVE_CHARGE_DISCHARGE_BLOCK;
+                $settings['charge_direction'] = $charge_direction;
+                $settings['message']          = __FUNCTION__;
                 $this->set_charge_discharge_block($block_number, $settings);
+            }
+        }
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    public function clear_preset_charge_discharge_blocks(): void
+    { // assume default settings
+        foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
+            for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
+                $this->set_charge_discharge_block($block_number, self::INACTIVE_CHARGE_DISCHARGE_BLOCK);
             }
         }
     }
@@ -404,7 +417,13 @@ class GivEnergy extends Root
     {
         /*
          * all slots except 1 must be manually disabled in app or web portal
+         *
+         * clear preset charge/discharge blocks if set
          */
+        if ($this->propertyRead('autonomousChargeBlocksSet', 'int')) {
+            $this->clear_preset_charge_discharge_blocks();
+            $this->propertyWrite('autonomousChargeBlocksSet', 'int', 0);
+        }
         $start_datetime         = $slot_command['start_datetime']          ?? null;
         $start                  = $slot_command['start']                   ?? null;
         $stop                   = $slot_command['stop']                    ?? null;
@@ -552,7 +571,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    private function command(string $action, string $setting, ?int $value_int, ?string $value_string, ?string $context): mixed
+    private function command(string $action, string $setting, ?int $value_int, ?string $value_string, ?string $context): void
     {
         switch ($action = strtolower(trim($action))) {
             case 'read':                // read setting value into `settings` table
@@ -628,6 +647,5 @@ class GivEnergy extends Root
         }
         $this->mysqli->commit();
         unset($stmt);
-        return $value;
     }
 }

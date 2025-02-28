@@ -466,14 +466,14 @@ class GivEnergy extends Root
                                     throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
                                 }
                                 $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                                    [
-                                        'mode'                  => $mode,
-                                        'start'                 => $start,
-                                        'stop'                  => $stop,
-                                        'abs_charge_power_w'    => $abs_charge_power_w,
-                                        'target_level_percent'  => $target_level_percent,
-                                        'message'               => $context
-                                    ]);
+                                                                    $mode,
+                                                                    [
+                                                                    'start'                 => $start,
+                                                                    'stop'                  => $stop,
+                                                                    'abs_charge_power_w'    => $abs_charge_power_w,
+                                                                    'target_level_percent'  => $target_level_percent
+                                                                    ],
+                                                               __FUNCTION__);
                                 $this->clear_slot($mode == 'CHARGE' ? 'DC Discharge' : 'AC Charge');  // clear other slot direction
                                 break;
                             }

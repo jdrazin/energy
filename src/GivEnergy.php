@@ -120,7 +120,7 @@ class GivEnergy extends Root
          * restores autonomous battery operation settings
          */
         $this->defaults(self::PRE_DEFAULTS);
-        $this->set_charge_discharge_blocks_to_default();
+        $this->reset_charge_discharge_blocks();
         $this->defaults(self::POST_DEFAULTS);
     }
 
@@ -144,13 +144,13 @@ class GivEnergy extends Root
     /**
      * @throws GuzzleException
      */
-    public function set_charge_discharge_blocks_to_default(): void
+    public function reset_charge_discharge_blocks(): void
     { // assume default settings
         foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
             for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
                 $settings = self::DEFAULT_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? ['start'                 => '00:00',  // stub values
                                                                                                         'stop'                  => '00:00',  // stub values
-                                                                                                        'target_level_percent'  => 50,       // stub values
+                                                                                                        'target_level_percent'  => 0,       // stub values
                                                                                                         ];
                 $settings['charge_direction']   = $charge_direction;
                 $settings['message']            = __FUNCTION__;

@@ -58,6 +58,58 @@ class Root
         }
     }
 
+    protected function propertyRead($name, $type): float|string|int {  // attempts to authenticate against BasicAuth username:password or token
+        $sql = 'SELECT  `value_float`,
+                        `value_string`,
+                        `value_int`
+                  FROM  `properties`
+                  WHERE `name` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql))                                ||
+            !$stmt->bind_param('s', $name)                              ||
+            !$stmt->bind_result($value_float, $value_string, $value_int) ||
+            !$stmt->execute()                                                      ||
+            !$stmt->fetch()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        switch ($type) {
+            case 'float': {
+                return $value_float;
+            }
+            case 'string': {
+                return $value_string;
+            }
+            case 'int': {
+                return $value_int;
+            }
+        }
+    }
+
+    protected function propertyWrite($name, $type, $value): bool {  // attempts to authenticate against BasicAuth username:password or token
+        $sql = 'INSERT INTO `properties`   (`name`, `value_float`,     `value_string`,     `value_int`)
+                                    VALUES (?,       ?,                ?,                  ?)
+                    ON DUPLICATE KEY UPDATE `value_float` = ?, `value_string` = ?, `value_int` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql))        ||
+            !$stmt->bind_param('sdsidsi', $name, $value_float, $value_string, $value_int)  ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        switch ($type) {
+            case 'float': {
+                return $value_float;
+            }
+            case 'string': {
+                return $value_string;
+            }
+            case 'int': {
+                return $value_int;
+            }
+        }
+    }
+
     protected function authenticate(): bool {  // attempts to authenticate against BasicAuth username:password or token
         $username = $_SERVER['PHP_AUTH_USER']   ?? '';
         $password = $_SERVER['PHP_AUTH_PW']     ?? '';

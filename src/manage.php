@@ -43,11 +43,11 @@ ini_set('mysql.connect_timeout','36000');
 
 const PID_FILENAME              = '/var/www/html/energy/manage.pid',
       USE_PID_SEMAPHORE         = false,
-      BLOCK_CRON                = true,
+      BLOCK_CRON                = false,
       INITIALISE_ON_EXCEPTION   = false,
       EMAIL_NOTIFICATION        = true,
       ARGS                      = ['CRON' => 1],
-      USE_STUB                  = true;
+      USE_STUB                  = false;
 
 try {
     if (USE_PID_SEMAPHORE) {
@@ -61,7 +61,7 @@ try {
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
         if (USE_STUB) {
-            (new GivEnergy())->initialise();
+            (new GivEnergy())->reset_inverter();
         }
         else {
            (new Octopus())->traverseTariffs($cron);       // traverse all tariffs
@@ -86,7 +86,7 @@ catch (exception $e) {
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
         (new Root())->logDb('MESSAGE', 'Attempting to initialise ...', 'INFO');
-        (new GivEnergy())->initialise();
+        (new GivEnergy())->reset_inverter();
         (new Root())->logDb('MESSAGE', '... initialise done', 'INFO');
     }
     exit(1);

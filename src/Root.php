@@ -87,9 +87,9 @@ class Root
     }
 
     protected function propertyWrite($name, $type, $value): bool {  // attempts to authenticate against BasicAuth username:password or token
-        $sql = 'INSERT INTO `properties`   (`name`, `value_float`,     `value_string`,     `value_int`)
-                                    VALUES (?,       ?,                ?,                  ?)
-                    ON DUPLICATE KEY UPDATE `value_float` = ?, `value_string` = ?, `value_int` = ?';
+        $sql = 'INSERT INTO `properties`   (`name`,     `value_float`,     `value_string`,     `value_int`)
+                                    VALUES (?,          ?,                 ?,                  ?)
+                    ON DUPLICATE KEY UPDATE             `value_float` = ?, `value_string` = ?, `value_int` = ?';
         if (!($stmt = $this->mysqli->prepare($sql))        ||
             !$stmt->bind_param('sdsidsi', $name, $value_float, $value_string, $value_int)  ||
             !$stmt->execute()) {

@@ -55,7 +55,7 @@ class GivEnergy extends Root
                         PRE_DEFAULTS =      [
                                             'Pause Battery' => 'Pause Charge & Discharge',
                                             ],
-                        DEFAULT_CHARGE_DISCHARGE_BLOCKS = [
+                        PRESET_CHARGE_DISCHARGE_BLOCKS = [
                                             'CHARGE' => [   2 => [  'start'                 => '04:00',
                                                                     'stop'                  => '07:00',
                                                                     'target_level_percent'  => 95],
@@ -114,7 +114,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function initialise(): void
+    public function reset_inverter(): void
     {
         /*
          * restores autonomous battery operation settings
@@ -148,7 +148,7 @@ class GivEnergy extends Root
     { // assume default settings
         foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
             for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
-                $settings = self::DEFAULT_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? ['start'                 => '00:00',  // stub values
+                $settings = self::PRESET_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? ['start'                 => '00:00',  // stub values
                                                                                                         'stop'                  => '00:00',  // stub values
                                                                                                         'target_level_percent'  => 0,       // stub values
                                                                                                         ];

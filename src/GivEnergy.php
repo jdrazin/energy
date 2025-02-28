@@ -125,6 +125,40 @@ class GivEnergy extends Root
         $this->defaults(self::POST_DEFAULTS);
     }
 
+
+    /**
+     * @throws GuzzleException
+     */
+    private function defaults($defaults): void
+    {
+        foreach ($defaults as $default => $value) {
+            if (is_int($value)) {
+                $this->command('write', $default, $value, null, __FUNCTION__);
+            } elseif (is_string($value)) {
+                $this->command('write', $default, null, $value, __FUNCTION__);
+            } else {
+                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'unhandled type'));
+            }
+        }
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    public function set_charge_discharge_blocks_to_default(): void
+    { // assume default settings
+        foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
+            for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
+                $settings = self::DEFAULT_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? ['start' => '00:00',
+                    'stop' => '00:00',
+                    'target_level_percent' => 90];
+                $settings['direction'] = $charge_direction;
+                $settings['message'] = __FUNCTION__;
+                $this->set_charge_discharge_block($block_number, $settings);
+            }
+        }
+    }
+
     /**
      * @throws GuzzleException
      * @throws Exception
@@ -359,39 +393,6 @@ class GivEnergy extends Root
         foreach ($settings as $setting) {
             $this->inverterControlSettings[$setting['name']] = $setting['id'];
             ksort($this->inverterControlSettings);
-        }
-    }
-
-    /**
-     * @throws GuzzleException
-     */
-    private function defaults($defaults): void
-    {
-        foreach ($defaults as $default => $value) {
-            if (is_int($value)) {
-                $this->command('write', $default, $value, null, __FUNCTION__);
-            } elseif (is_string($value)) {
-                $this->command('write', $default, null, $value, __FUNCTION__);
-            } else {
-                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'unhandled type'));
-            }
-        }
-    }
-
-    /**
-     * @throws GuzzleException
-     */
-    public function set_charge_discharge_blocks_to_default(): void
-    { // assume default settings
-        foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
-            for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
-                $settings = self::DEFAULT_CHARGE_DISCHARGE_BLOCKS[$charge_direction][$block_number] ?? ['start' => '00:00',
-                    'stop' => '00:00',
-                    'target_level_percent' => 90];
-                $settings['direction'] = $charge_direction;
-                $settings['message'] = __FUNCTION__;
-                $this->set_charge_discharge_block($block_number, $settings);
-            }
         }
     }
 

@@ -47,9 +47,16 @@ const PID_FILENAME              = '/var/www/html/energy/manage.pid',
       INITIALISE_ON_EXCEPTION   = false,
       EMAIL_NOTIFICATION        = true,
       ARGS                      = ['CRON' => 1],
-      USE_STUB                  = false,
+      USE_STUB                  = true,
       DISABLE_COUNTDOWN         = true,
-      DISABLE_SLOT_COMMAND      = false;
+      DISABLE_SLOT_COMMAND      = false,
+      TEST_SLOT_COMMAND         = [
+                                    'start'                 => '',
+                                    'stop'                  => '',
+                                    'mode'                  => '',
+                                    'abs_charge_power_w'    => 3000,
+                                    'target_level_percent'  => 80
+                                  ];
 
 try {
     if (USE_PID_SEMAPHORE) {
@@ -64,6 +71,7 @@ try {
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
         if (USE_STUB) {
             (new GivEnergy())->reset_inverter();
+        //    (new GivEnergy())->control(TEST_SLOT_COMMAND);
         }
         else {
            (new Octopus())->traverseTariffs($cron);       // traverse all tariffs

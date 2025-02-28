@@ -43,12 +43,12 @@ ini_set('mysql.connect_timeout','36000');
 
 const PID_FILENAME              = '/var/www/html/energy/manage.pid',
       USE_PID_SEMAPHORE         = false,
-      BLOCK_CRON                = true,
+      BLOCK_CRON                = false,
       INITIALISE_ON_EXCEPTION   = false,
       EMAIL_NOTIFICATION        = true,
       ARGS                      = ['CRON' => 1],
-      USE_STUB                  = true,
-      DISABLE_COUNTDOWN         = true,
+      USE_STUB                  = false,
+      DISABLE_COUNTDOWN         = false,
       DISABLE_SLOT_COMMAND      = false,
       TEST_SLOT_COMMAND         = [
                                     'start'                 => '',
@@ -70,7 +70,7 @@ try {
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
         if (USE_STUB) {
-            (new GivEnergy())->reset_inverter();
+        //    (new GivEnergy())->reset_inverter();
         //    (new GivEnergy())->control(TEST_SLOT_COMMAND);
         }
         else {

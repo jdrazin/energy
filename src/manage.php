@@ -48,7 +48,8 @@ const PID_FILENAME              = '/var/www/html/energy/manage.pid',
       EMAIL_NOTIFICATION        = true,
       ARGS                      = ['CRON' => 1],
       USE_STUB                  = false,
-      DISABLE_COUNTDOWN         = true;
+      DISABLE_COUNTDOWN         = true,
+      DISABLE_SLOT_COMMAND      = false;
 
 try {
     if (USE_PID_SEMAPHORE) {

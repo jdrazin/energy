@@ -124,7 +124,7 @@ class GivEnergy extends Root
          * restores autonomous battery operation settings
          */
         $this->defaults(self::PRE_DEFAULTS);
-        $this->reset_charge_discharge_blocks();
+        $this->set_preset_charge_discharge_blocks();
         $this->defaults(self::POST_DEFAULTS);
     }
 
@@ -147,8 +147,9 @@ class GivEnergy extends Root
 
     /**
      * @throws GuzzleException
+     * @throws Exception
      */
-    public function reset_charge_discharge_blocks(): void
+    public function set_preset_charge_discharge_blocks(): void
     { // assume default settings
         foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
             for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
@@ -158,18 +159,20 @@ class GivEnergy extends Root
                 $this->set_charge_discharge_block($block_number, $settings);
             }
         }
+        $this->propertyWrite('presetChargeDischargeBlocksSet', 'int', 1);
     }
 
     /**
      * @throws GuzzleException
+     * @throws Exception
      */
-    public function clear_preset_charge_discharge_blocks(): void
-    { // assume default settings
+    public function clear_preset_charge_discharge_blocks(): void { // assume default settings
         foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
             for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {
                 $this->set_charge_discharge_block($block_number, self::INACTIVE_CHARGE_DISCHARGE_BLOCK);
             }
         }
+        $this->propertyWrite('presetChargeDischargeBlocksSet', 'int', 0);
     }
 
     /**
@@ -413,16 +416,14 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function control($slot_command): void
-    {
+    public function control($slot_command): void {
         /*
          * all slots except 1 must be manually disabled in app or web portal
          *
          * clear preset charge/discharge blocks if set
          */
-        if ($this->propertyRead('autonomousChargeBlocksSet', 'int')) {
+        if ($this->propertyRead('presetChargeDischargeBlocksSet', 'int')) {
             $this->clear_preset_charge_discharge_blocks();
-            $this->propertyWrite('autonomousChargeBlocksSet', 'int', 0);
         }
         $start_datetime         = $slot_command['start_datetime']          ?? null;
         $start                  = $slot_command['start']                   ?? null;

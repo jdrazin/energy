@@ -42,6 +42,7 @@
             "comment": "https://www.researchgate.net/figure/Efficiency-curve-of-various-solar-inverters_fig8_258220930",
             "cost_install_gbp": 0,
             "power_threshold_w": 11.0,
+            "out_of_spec_activation_power_kw" : 0.4,
             "one_way_storage_efficiency": 0.96
         },
         "collectors": {
@@ -152,10 +153,9 @@
         "comment": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
         "active": true,
         "initial_raw_capacity_kwh": 13.5,
-        "permitted_depth_of_discharge_percent": 90.0,
         "wear_cost_gbp_per_kwh": 0.03,
-        "wear_flat_ratio": 10.0,
-        "wear_linear_ratio": 10.0,
+        "wear_constant_coefficient": 0.5,
+        "out_of_spec_activation_energy_kwh" : 0.4,
         "cost_install_gbp": 10000.0,
         "max_charge_kw": 6.0,
         "max_discharge_kw": 6.0,

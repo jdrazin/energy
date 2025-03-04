@@ -304,7 +304,7 @@ class EnergyCost extends Root
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;      // initial battery level
-        $normalisation_battery_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+((24.0*$this->batteryWearOutOfSpecCoefficient*$this->batteryWearOutOfSpecActivationEnergyKwh)/$this->batteryCapacityKwh));
+        $normalisation_battery_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+(24.0*$this->batteryWearOutOfSpecCoefficient*$this->batteryWearOutOfSpecActivationEnergyKwh/$this->batteryCapacityKwh));
         $normalisation_inverter_power_coefficient = 12.0/(1.0+24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient/($this->batteryMaxChargeKw+$this->batteryMaxDischargeKw))*(1.0-exp(($this->batteryMaxChargeKw+$this->batteryMaxDischargeKw)/(2.0*$this->batteryWearOutOfSpecActivationEnergyKwh)));
         $cost_grid_import               = 0.0;
         $cost_grid_export               = 0.0;

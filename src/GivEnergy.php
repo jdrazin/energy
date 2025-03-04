@@ -366,7 +366,7 @@ class GivEnergy extends Root
         $data = json_decode((string)$response->getBody(), true);
         $battery = $data['data']['battery'];
         $stored_now_kwh = (((float)$battery['percent']) / 100.0) * $initial_raw_capacity_kwh;
-        $battery_power_now_w = ((float)$battery['power']) / 1000.0;
+        $battery_power_now_w = ((float)$battery['power']);
         $timestamp_now = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot
         $timestamp_start = (new DateTime($db_slots->getDbNextDaySlots($db_slots->tariff_combination)[0]['start']))->getTimestamp();
         $time_duration_s = $timestamp_start - $timestamp_now;

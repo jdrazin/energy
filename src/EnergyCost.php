@@ -304,22 +304,18 @@ class EnergyCost extends Root
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;      // initial battery level
-        $normalisation_battery_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+(24.0*$this->batteryWearOutOfSpecCoefficient        *$this->batteryWearOutOfSpecActivationEnergyKwh/$this->batteryCapacityKwh));
-        $normalisation_inverter_power_coefficient = 12.0/(1.0+                                             (24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient        /($this->batteryMaxDischargeKw+$this->batteryMaxChargeKw)));
+        $normalisation_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+(24.0*$this->batteryWearOutOfSpecCoefficient        *$this->batteryWearOutOfSpecActivationEnergyKwh/$this->batteryCapacityKwh));
+        $normalisation_power_coefficient = 12.0/(1.0+                                             (24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient        /($this->batteryMaxDischargeKw+$this->batteryMaxChargeKw)));
         $cost_grid_import               = 0.0;
         $cost_grid_export               = 0.0;
+        $cost_grid_out_of_spec          = 0.0;
         $cost_energy_wear_out_of_spec   = 0.0;
         $cost_power_out_of_spec         = 0.0;
         $import_kwh                     = 0.0;
         $export_kwh                     = 0.0;
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $grid_power_slot_kw = $grid_kws[$slot_count];
-            if ($grid_power_slot_kw > $this->exportLimitKw) {          // clip grid power to import/export limit
-                $grid_power_slot_kw = $this->exportLimitKw;
-            }
-            elseif ($grid_power_slot_kw < -$this->importLimitKw) {
-                $grid_power_slot_kw = -$this->importLimitKw;
-            }
+
             $total_load_kw         = $total_load_kws[$slot_count];
             $tariff_import_per_kwh = $import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
@@ -335,6 +331,16 @@ class EnergyCost extends Root
                 $cost_grid_import -= $tariff_import_per_kwh * $energy_grid_kwh;
             }
 
+            // grid out of spec import/export limit
+            $cost_grid_out_of_spec += $this->wearOutOfSpecCost( $grid_power_slot_kw,
+                                                               -$this->importLimitKw,
+                                                                $this->exportLimitKw,
+                                                                0.0,
+                                                                0.0,
+                                                                $this->batteryWearOutOfSpecCoefficient,
+                                                                $this->batteryWearOutOfSpecActivationEnergyKwh,
+                                                                $normalisation_power_coefficient)*$this->slotDurationHour;
+
             // battery
             $battery_charge_kwh  = -$energy_grid_kwh - $total_load_kwh;
             $battery_charge_kw   = -$grid_power_slot_kw - $total_load_kw;
@@ -348,7 +354,7 @@ class EnergyCost extends Root
                                                                          $this->batteryWearConstantCoefficient,
                                                                          $this->batteryWearOutOfSpecCoefficient,
                                                                          $this->batteryWearOutOfSpecActivationEnergyKwh,
-                                                                         $normalisation_battery_energy_coefficient)*$this->slotDurationHour;
+                                                                         $normalisation_energy_coefficient)*$this->slotDurationHour;
 
             // out of current spec
             $cost_power_out_of_spec += $this->wearOutOfSpecCost(         $battery_charge_kw,
@@ -358,11 +364,15 @@ class EnergyCost extends Root
                                                                          0.0,
                                                                          $this->batteryWearOutOfSpecCoefficient,
                                                                          $this->batteryWearOutOfSpecActivationEnergyKwh,
-                                                                         $normalisation_inverter_power_coefficient)*$this->slotDurationHour;
+                                                                         $normalisation_power_coefficient)*$this->slotDurationHour;
+
+
+
+
             $cost_energy_average_per_kwh_acc += 0.5 * ($tariff_import_per_kwh + $tariff_export_per_kwh);    // accumulate average energy cost
         }
         $cost_energy_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots);
-        $cost = $cost_grid_import + $cost_grid_export + $cost_energy_wear_out_of_spec + $cost_power_out_of_spec + $cost_energy_level_change;
+        $cost = $cost_grid_import + $cost_grid_export + $cost_grid_out_of_spec + $cost_energy_wear_out_of_spec + $cost_power_out_of_spec + $cost_energy_level_change;
         return [
                     'cost'          => $cost,
                     'cost_grid'     => $cost_grid_import+$cost_grid_export,

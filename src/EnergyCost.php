@@ -308,8 +308,9 @@ class EnergyCost extends Root
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;      // initial battery level
-        $normalisation_coefficient = 12.0 / (1.0 + (11.0 * $this->batteryWearConstantCoefficient) +
-                                                   ((24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient/$this->batteryCapacityKwh)*(1.0-exp($this->batteryCapacityKwh/(2.0*$this->batteryWearOutOfSpecActivationEnergyKwh)))));
+        $normalisation_battery_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+
+                                                                (((24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient/$this->batteryCapacityKwh)*(1.0-exp($this->batteryCapacityKwh/(2.0*$this->batteryWearOutOfSpecActivationEnergyKwh))))));
+        $normalisation_inverter_power_coefficient = 12.0/(1.0+24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient/($this->batteryMaxChargeKw+$this->batteryMaxDischargeKw))*(1.0-exp(($this->batteryMaxChargeKw+$this->batteryMaxDischargeKw)/(2.0*$this->batteryWearOutOfSpecActivationEnergyKwh)));
         $cost_grid_import = 0.0;
         $cost_grid_export = 0.0;
         $cost_wear        = 0.0;
@@ -340,21 +341,30 @@ class EnergyCost extends Root
             }
 
             // battery
-            $battery_charge_kwh = -$energy_grid_kwh - $total_load_kwh;
-            $battery_charge_kw  = -$grid_power_slot_kw - $total_load_kw;
-            $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayStorageEfficiency;
+            $battery_charge_kwh  = -$energy_grid_kwh - $total_load_kwh;
+            $battery_charge_kw   = -$grid_power_slot_kw - $total_load_kw;
+            $battery_level_kwh  += $battery_charge_kwh * $this->batteryOneWayStorageEfficiency;
 
             // wear
-            $cost_wear += $this->wearCost(  $battery_charge_kwh,
-                                        0.0,
-                                            $this->batteryCapacityKwh,
-                                            $this->batteryWearCostAverageGbpPerKwh,
-                                            $this->batteryWearConstantCoefficient,
-                                            $this->batteryWearOutOfSpecCoefficient,
-                                            $this->batteryWearOutOfSpecActivationEnergyKwh,
-                                            $normalisation_coefficient);
+            $cost_wear += $this->wearOutOfSpecCost(  $battery_level_kwh,
+                                                0.0,
+                                                    $this->batteryCapacityKwh,
+                                                    $this->batteryWearCostAverageGbpPerKwh,
+                                                    $this->batteryWearConstantCoefficient,
+                                                    $this->batteryWearOutOfSpecCoefficient,
+                                                    $this->batteryWearOutOfSpecActivationEnergyKwh,
+                                                    $normalisation_battery_energy_coefficient);
 
-            // out of spec power
+            // out of spec
+            $cost_wear += $this->wearOutOfSpecCost(  $battery_charge_kw,
+                                                    -$this->batteryMaxDischargeKw,
+                                                     $this->batteryMaxChargeKw,
+                                                     0.0,
+                                                     0.0,
+                                                     $this->batteryWearOutOfSpecCoefficient,
+                                                     $this->batteryWearOutOfSpecActivationEnergyKwh,
+                                                     $normalisation_inverter_power_coefficient);
+
             $out_of_spec_kwh = 0.0;
             if ($battery_charge_kw > 0.0) {    // charging
                 $excess_kw = $battery_charge_kw - $this->batteryMaxChargeKw;
@@ -367,11 +377,10 @@ class EnergyCost extends Root
                     $out_of_spec_kwh += $excess_kw * $this->slotDurationHour;
                 }
             }
-            $cost_out_of_spec += $out_of_spec_kwh * $this->batteryOutOfSpecCostMultiplier;
             $cost_energy_average_per_kwh_acc += 0.5 * ($tariff_import_per_kwh + $tariff_export_per_kwh);    // accumulate average energy cost
         }
-        $cost_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots);
-        $cost = $cost_grid_import + $cost_grid_export + $cost_wear + $cost_out_of_spec + $cost_level_change;
+        $cost_energy_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots);
+        $cost = $cost_grid_import + $cost_grid_export + $cost_wear + $cost_out_of_spec + $cost_energy_level_change;
         return [
                     'cost'          => $cost,
                     'cost_grid'     => $cost_grid_import+$cost_grid_export,
@@ -383,7 +392,7 @@ class EnergyCost extends Root
         ];
     }
 
-    private function wearCost($x, $x_min, $x_max, $wear_cost_average, $constant_coefficient, $out_of_spec_coefficient, $activation, $normalisation_coefficient): float {
+    private function wearOutOfSpecCost($x, $x_min, $x_max, $wear_cost_average, $constant_coefficient, $out_of_spec_coefficient, $activation, $normalisation_coefficient): float {
         $X  = ((($x - $x_min) / ($x_max - $x_min)) - 0.5);
         $X2 = $X * $X;
         return $normalisation_coefficient * $wear_cost_average * ($constant_coefficient + (1.0 - $constant_coefficient) * $X2 + $out_of_spec_coefficient*exp(($X < 0.0 ? $x_min - $x : $x - $x_max)/$activation));

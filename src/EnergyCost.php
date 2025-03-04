@@ -304,8 +304,8 @@ class EnergyCost extends Root
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;      // initial battery level
-        $normalisation_battery_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+(24.0*$this->batteryWearOutOfSpecCoefficient*$this->batteryWearOutOfSpecActivationEnergyKwh/$this->batteryCapacityKwh));
-        $normalisation_inverter_power_coefficient = 12.0/(1.0+24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient/($this->batteryMaxChargeKw+$this->batteryMaxDischargeKw))*(1.0-exp(($this->batteryMaxChargeKw+$this->batteryMaxDischargeKw)/(2.0*$this->batteryWearOutOfSpecActivationEnergyKwh)));
+        $normalisation_battery_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+(24.0*$this->batteryWearOutOfSpecCoefficient        *$this->batteryWearOutOfSpecActivationEnergyKwh/$this->batteryCapacityKwh));
+        $normalisation_inverter_power_coefficient = 12.0/(1.0+                                             (24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient        /($this->batteryMaxDischargeKw+$this->batteryMaxChargeKw)));
         $cost_grid_import               = 0.0;
         $cost_grid_export               = 0.0;
         $cost_energy_wear_out_of_spec   = 0.0;
@@ -348,7 +348,7 @@ class EnergyCost extends Root
                                                                          $this->batteryWearConstantCoefficient,
                                                                          $this->batteryWearOutOfSpecCoefficient,
                                                                          $this->batteryWearOutOfSpecActivationEnergyKwh,
-                                                                         $normalisation_battery_energy_coefficient);
+                                                                         $normalisation_battery_energy_coefficient)*$this->slotDurationHour;
 
             // out of current spec
             $cost_power_out_of_spec += $this->wearOutOfSpecCost(         $battery_charge_kw,
@@ -358,7 +358,7 @@ class EnergyCost extends Root
                                                                          0.0,
                                                                          $this->batteryWearOutOfSpecCoefficient,
                                                                          $this->batteryWearOutOfSpecActivationEnergyKwh,
-                                                                         $normalisation_inverter_power_coefficient);
+                                                                         $normalisation_inverter_power_coefficient)*$this->slotDurationHour;
             $cost_energy_average_per_kwh_acc += 0.5 * ($tariff_import_per_kwh + $tariff_export_per_kwh);    // accumulate average energy cost
         }
         $cost_energy_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots);

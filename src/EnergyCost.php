@@ -295,10 +295,10 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $total_load_kws[]                   = (float) $this->strip();
         }
-        return $this->dayCosts($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws);
+        return $this->dayCost($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws);
     }
 
-    private function dayCosts($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws): array {
+    private function dayCost($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws): array {
         /*
          * calculate cost components: does not include standing costs
          */

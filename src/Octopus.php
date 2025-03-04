@@ -73,8 +73,8 @@ class Octopus extends Root
                     $values->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
 
                     // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
-                    $batteryInitialKwh = $batteryInitialKwh ?? $givenergy->batteryLevel($db_slots)['effective_stored_kwh'];
-                    $slot_command = (new EnergyCost($db_slots, $batteryInitialKwh))->minimise(); // minimise energy cost
+                    $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelkwh($db_slots);
+                    $slot_command = (new EnergyCost($db_slots, $batteryLevelKwh))->minimise(); // minimise energy cost
                     (new Root())->logDb('SLOT_COMMAND', $slot_command['message'],'NOTICE');
                     if ($active_tariff) {                                        // make battery command
                         if (ENABLE_SLOT_COMMANDS) {

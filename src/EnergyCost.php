@@ -302,9 +302,16 @@ class EnergyCost extends Root
          * calculate cost components: does not include standing costs
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
-        $battery_level_kwh = $this->batteryEnergyInitialKwh;          // initial battery level
+        $battery_level_kwh     = $this->batteryEnergyInitialKwh;      // initial battery level
         $battery_level_mid_kwh = $this->batteryCapacityKwh / 2.0;     // midpoint battery level
         $battery_level_max_kwh = (100.0 + $this->batteryDepthOfDischargePercent) * $this->batteryCapacityKwh / 200.0; // max battery operating level
+
+        /*
+         * cumulative battery wear cost:  a + b.x + c.x^2
+         *
+         *      a = $wear_ratio
+         */
+
         $cost_min_per_kwh = 2.0 * $this->batteryWearCostGbpPerKwh / (1.0 + $this->batteryWearRatio);          // minimum wear cost at midpoint level
         $cost_grid_import = 0.0;
         $cost_grid_export = 0.0;
@@ -342,6 +349,9 @@ class EnergyCost extends Root
 
             // wear
             $battery_level_wear_fraction = abs($battery_level_kwh - $battery_level_mid_kwh) / ($battery_level_max_kwh - $battery_level_mid_kwh);
+
+
+
             if ($battery_level_wear_fraction <= 1.0) {    // wear
                 $cost_wear += $cost_min_per_kwh * abs($battery_charge_kwh) * (1.0 + $this->batteryWearRatio * $battery_level_wear_fraction);
             } else {                                        // out of spec

@@ -349,14 +349,12 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function batteryLevel($db_slots): array
+    public function batteryLevelkwh($db_slots): float
     {
         //
         // return effective battery level and capacity for input to optimiser
         //
-        $permitted_depth_of_discharge = (((float)$this->config['battery']['permitted_depth_of_discharge_percent']) / 100.0);
         $initial_raw_capacity_kwh = $this->config['battery']['initial_raw_capacity_kwh'];
-        $effective_capacity_kwh = $permitted_depth_of_discharge * $initial_raw_capacity_kwh;
         $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/system-data/latest';
         $headers = [
             'Authorization' => 'Bearer ' . $this->api['api_token'],
@@ -367,30 +365,17 @@ class GivEnergy extends Root
         $response = $client->get($url, ['headers' => $headers]);
         $data = json_decode((string)$response->getBody(), true);
         $battery = $data['data']['battery'];
-        $raw_stored_now_kwh = (((float)$battery['percent']) / 100.0) * $initial_raw_capacity_kwh;
+        $stored_now_kwh = (((float)$battery['percent']) / 100.0) * $initial_raw_capacity_kwh;
         $battery_power_now_w = ((float)$battery['power']) / 1000.0;
-        $timestamp_now = (new DateTime())->getTimestamp();
-
-        // extrapolate battery level to beginning of next slot
+        $timestamp_now = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot
         $timestamp_start = (new DateTime($db_slots->getDbNextDaySlots($db_slots->tariff_combination)[0]['start']))->getTimestamp();
-        $time_now_start_s = $timestamp_start - $timestamp_now;
-        if ($time_now_start_s < 0 && !self::DEBUG_MINIMISER) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'time to start must be positive: ' . $time_now_start_s);
+        $time_duration_s = $timestamp_start - $timestamp_now;
+        if ($time_duration_s < 0 && !self::DEBUG_MINIMISER) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'time to start must be positive: ' . $time_duration_s);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $raw_stored_min_kwh = (1.0 - $permitted_depth_of_discharge) * $initial_raw_capacity_kwh / 2.0;
-        $effective_stored_now_kwh = $raw_stored_now_kwh - $raw_stored_min_kwh;
-        $energy_now_to_start_kwh = -($battery_power_now_w * ((float)$time_now_start_s) / Energy::JOULES_PER_KWH);
-        $effective_stored_start_kwh = $effective_stored_now_kwh + $energy_now_to_start_kwh;
-        $raw_stored_max_kwh = (1.0 + $permitted_depth_of_discharge) * $initial_raw_capacity_kwh / 2.0;
-        if ($effective_stored_start_kwh > $raw_stored_max_kwh) {   // limit state of charge to within effective range
-            $effective_stored_start_kwh = $raw_stored_max_kwh;
-        } else if ($effective_stored_start_kwh < $raw_stored_min_kwh) {
-            $effective_stored_start_kwh = $raw_stored_min_kwh;
-        }
-        return ['effective_stored_kwh'   => $effective_stored_start_kwh,
-                'effective_capacity_kwh' => $effective_capacity_kwh];
+        return $stored_now_kwh -($battery_power_now_w * ((float)$time_duration_s) / Energy::JOULES_PER_KWH);
     }
 
     /**

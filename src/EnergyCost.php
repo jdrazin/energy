@@ -71,7 +71,6 @@ class EnergyCost extends Root
         }
         $this->problem              = [
                                         'batteryCapacityKwh'                        => $this->config['battery']['initial_raw_capacity_kwh'],
-                                        'batteryDepthOfDischargePercent'            => $this->config['battery']['permitted_depth_of_discharge_percent'],
                                         'batteryOneWayStorageEfficiency'            => $this->config['battery']['inverter']['one_way_storage_efficiency'],
                                         'batteryWearCostAverageGbpPerKwh'           => $this->config['battery']['wear_cost_average_gbp_per_kwh'],
                                         'batteryWearConstantCoefficient'            => $this->config['battery']['wear_constant_coefficient'],
@@ -208,9 +207,8 @@ class EnergyCost extends Root
         //
         $command = self::PYTHON_SCRIPT_COMMAND . ' ';
         $command .= $this->parameter_name_value('batteryCapacityKwh');
-        $command .= $this->parameter_name_value('batteryDepthOfDischargePercent');
         $command .= $this->parameter_name_value('batteryOneWayStorageEfficiency');
-        $command .= $this->parameter_name_value('batteryWearCostGbpPerKwh');
+        $command .= $this->parameter_name_value('batteryWearCostAverageGbpPerKwh');
         $command .= $this->parameter_name_value('batteryWearConstantCoefficient');
         $command .= $this->parameter_name_value('batteryWearOutOfSpecCoefficient');
         $command .= $this->parameter_name_value('batteryWearOutOfSpecActivationEnergyKwh');
@@ -259,8 +257,6 @@ class EnergyCost extends Root
         $this->strip();
         $this->batteryCapacityKwh                       = (float) $this->strip();
         $this->strip();
-        $this->batteryDepthOfDischargePercent           = (float) $this->strip();
-        $this->strip();
         $this->batteryOneWayStorageEfficiency           = (float) $this->strip();
         $this->strip();
         $this->batteryWearCostAverageGbpPerKwh          = (float) $this->strip();
@@ -308,8 +304,7 @@ class EnergyCost extends Root
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;      // initial battery level
-        $normalisation_battery_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+
-                                                                (((24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient/$this->batteryCapacityKwh)*(1.0-exp($this->batteryCapacityKwh/(2.0*$this->batteryWearOutOfSpecActivationEnergyKwh))))));
+        $normalisation_battery_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+((24.0*$this->batteryWearOutOfSpecCoefficient*$this->batteryWearOutOfSpecActivationEnergyKwh)/$this->batteryCapacityKwh));
         $normalisation_inverter_power_coefficient = 12.0/(1.0+24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient/($this->batteryMaxChargeKw+$this->batteryMaxDischargeKw))*(1.0-exp(($this->batteryMaxChargeKw+$this->batteryMaxDischargeKw)/(2.0*$this->batteryWearOutOfSpecActivationEnergyKwh)));
         $cost_grid_import               = 0.0;
         $cost_grid_export               = 0.0;

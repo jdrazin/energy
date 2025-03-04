@@ -514,9 +514,6 @@ class EnergyCost extends Root
         $this->slotCommands = [];
         while ($stmt->fetch()) {
             $grid_w = (int)(1000.0 * $grid_kw);
-            $dod_margin = (100.0 - $this->batteryDepthOfDischargePercent) / 2.0;
-            $target_level_percent_min = $dod_margin;
-            $target_level_percent_max = 100.0 - $dod_margin;
             if ($battery_charge_kw > 0.0) {  // CHARGE
                 $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
             } else {                           // DISCHARGE
@@ -530,12 +527,12 @@ class EnergyCost extends Root
             } elseif (abs($charge_power_w) > self::THRESHOLD_POWER_W) {                   // CHARGE, DISCHARGE when above threshold charge power
                 $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
                 $abs_charge_power_w = abs($charge_power_w);
-                $target_level_percent = (int) round(min(max(round(100.0 * $target_level_kwh / $this->batteryCapacityKwh), $target_level_percent_min), $target_level_percent_max));
+                $target_level_percent = (int) round(100.0 * $target_level_kwh / $this->batteryCapacityKwh);
                 $message = '@' . round($abs_charge_power_w) . 'W to ' . $target_level_percent . '% between ' . $start . ' and ' . $stop;
             } else {                                                                       // otherwise IDLE
                 $mode = 'IDLE';
                 $abs_charge_power_w = null;
-                $target_level_percent = $target_level_percent_min;
+                $target_level_percent = null;
                 $message = '';
             }
             $this->slotCommands[] = [

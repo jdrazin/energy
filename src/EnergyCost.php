@@ -23,7 +23,6 @@ class EnergyCost extends Root
     // setup parameters
     protected float $batteryCapacityKwh,
                     $batteryOneWayStorageEfficiency,
-                    $batteryDepthOfDischargePercent,
                     $batteryWearCostAverageGbpPerKwh,
                     $batteryWearConstantCoefficient,
                     $batteryWearOutOfSpecCoefficient,

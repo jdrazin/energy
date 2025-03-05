@@ -392,7 +392,7 @@ class EnergyCost extends Root
             $exponent = ($x_min - $x)/$activation;
         }
         else {
-            $exponent = ($x_min - $x)/$activation;
+            $exponent = ($x - $x_max)/$activation;
         }
         $t3 = $out_of_spec_coefficient*exp($exponent);
         $wear_out_of_spec_cost = $normalisation_coefficient*$wear_cost_average*($t1+$t2+$t3);

@@ -451,14 +451,14 @@ class EnergyCost extends Root
     {
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'UPDATE      `slots` 
-                   SET      `grid_kw`            = ROUND(?, 3),
-                            `battery_charge_kw`  = ROUND(?, 3),
-                            `battery_level_kwh`  = ROUND(?, 3)               
-                   WHERE    `slot`               = ? AND
-                            `tariff_combination` = ? AND
+                   SET      `grid_kw`               = ROUND(?, 3),
+                            `battery_charge_kw`     = ROUND(?, 3),
+                            `battery_level_kwh`     = ROUND(?, 3)
+                   WHERE    `slot`                  = ? AND
+                            `tariff_combination`    = ? AND
                             NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('dddddii', $optimum_grid_kw, $battery_charge_kw, $battery_level_kwh, $slot, $tariff_combination_id) ||
+            !$stmt->bind_param('dddii', $optimum_grid_kw, $battery_charge_kw, $battery_level_kwh, $slot, $tariff_combination_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');

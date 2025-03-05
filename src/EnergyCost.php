@@ -546,7 +546,7 @@ class EnergyCost extends Root
             } elseif (abs($charge_power_w) > self::THRESHOLD_POWER_W) {                   // CHARGE, DISCHARGE when above threshold charge power
                 $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
                 $abs_charge_power_w = abs($charge_power_w);
-                $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $charge_power_w * $this->slotDurationHour) / $this->batteryCapacityKwh);
+                $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
                 $message = '@' . round($abs_charge_power_w) . 'W to ' . $target_level_percent . '% between ' . $start . ' and ' . $stop;
             } else {                                                                       // otherwise IDLE
                 $mode = 'IDLE';

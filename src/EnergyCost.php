@@ -386,7 +386,17 @@ class EnergyCost extends Root
     private function wearOutOfSpecCost($x, $x_min, $x_max, $wear_cost_average, $constant_coefficient, $out_of_spec_coefficient, $activation, $normalisation_coefficient): float {
         $X  = ((($x - $x_min) / ($x_max - $x_min)) - 0.5);
         $X2 = $X * $X;
-        return $normalisation_coefficient * $wear_cost_average * ($constant_coefficient + (1.0 - $constant_coefficient) * $X2 + $out_of_spec_coefficient*exp(($X < 0.0 ? $x_min - $x : $x - $x_max)/$activation));
+        $t1 = $constant_coefficient;
+        $t2 = (1.0 - $constant_coefficient) * $X2;
+        if ($X < 0.0) {
+            $exponent = ($x_min - $x)/$activation;
+        }
+        else {
+            $exponent = ($x_min - $x)/$activation;
+        }
+        $t3 = $out_of_spec_coefficient*exp($exponent);
+        $wear_out_of_spec_cost = $normalisation_coefficient*$wear_cost_average*($t1+$t2+$t3);
+        return $wear_out_of_spec_cost;
     }
 
     /**

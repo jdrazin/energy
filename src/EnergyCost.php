@@ -524,7 +524,7 @@ class EnergyCost extends Root
                     ORDER BY    `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($id, $start_datetime, $start, $stop, $grid_kw, $battery_charge_kw, $target_level_kwh) ||
+            !$stmt->bind_result($id, $start_datetime, $start, $stop, $grid_kw, $battery_charge_kw, $battery_level_kwh) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -546,7 +546,7 @@ class EnergyCost extends Root
             } elseif (abs($charge_power_w) > self::THRESHOLD_POWER_W) {                   // CHARGE, DISCHARGE when above threshold charge power
                 $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
                 $abs_charge_power_w = abs($charge_power_w);
-                $target_level_percent = (int) round(100.0 * $target_level_kwh / $this->batteryCapacityKwh);
+                $target_level_percent = round(100.0 * ($battery_level_kwh + $charge_power_w * $this->slotDurationHour) / $this->batteryCapacityKwh);
                 $message = '@' . round($abs_charge_power_w) . 'W to ' . $target_level_percent . '% between ' . $start . ' and ' . $stop;
             } else {                                                                       // otherwise IDLE
                 $mode = 'IDLE';

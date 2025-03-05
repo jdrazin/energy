@@ -67,7 +67,7 @@ def day_cost(grid_kws):
                                                               -batteryMaxDischargeRateKw,
                                                                batteryMaxChargeRateKw,
                                                                batteryWearCostAverageGbpPerKwh / slotDurationHour,
-                                                0.0,
+                                                                0.0,
                                                                 batteryWearOutOfSpecCoefficient,
                                                                 batteryWearOutOfSpecActivationEnergyKwh,
                                                                 normalisation_power_coefficient) * slotDurationHour

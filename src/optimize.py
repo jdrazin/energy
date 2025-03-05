@@ -38,14 +38,14 @@ def day_cost(grid_kws):
             cost_grid_import -= tariff_import_per_kwh * energy_grid_kwh
 
         # grid out of spec import / export limit
-        cost_grid_out_of_spec += wear_out_of_spec_cost( grid_power_slot_kw,
-                                                       -importLimitKw,
-                                                        exportLimitKw,
-                                                        0.0,
-                                                        0.0,
-                                                        batteryWearOutOfSpecCoefficient,
-                                                        batteryWearOutOfSpecActivationEnergyKwh,
-                                                        normalisation_power_coefficient) * slotDurationHour
+        cost_grid_out_of_spec += wear_out_of_spec_cost(         grid_power_slot_kw,
+                                                               -importLimitKw,
+                                                                exportLimitKw,
+                                                                batteryWearCostAverageGbpPerKwh/slotDurationHour,
+                                                                0.0,
+                                                                batteryWearOutOfSpecCoefficient,
+                                                                batteryWearOutOfSpecActivationEnergyKwh,
+                                                                normalisation_power_coefficient) * slotDurationHour
 
         # battery
         battery_charge_kwh   = -energy_grid_kwh - total_load_kwh
@@ -66,7 +66,7 @@ def day_cost(grid_kws):
         cost_power_out_of_spec += wear_out_of_spec_cost(       battery_charge_kw,
                                                               -batteryMaxDischargeRateKw,
                                                                batteryMaxChargeRateKw,
-                                                0.0,
+                                                               batteryWearCostAverageGbpPerKwh / slotDurationHour,
                                                 0.0,
                                                                 batteryWearOutOfSpecCoefficient,
                                                                 batteryWearOutOfSpecActivationEnergyKwh,
@@ -81,11 +81,15 @@ def day_cost(grid_kws):
 def wear_out_of_spec_cost(x, x_min, x_max, wear_cost_average, constant_coefficient, out_of_spec_coefficient, activation, normalisation_coefficient):
     X = (((x - x_min) / (x_max - x_min)) - 0.5)
     X2 = X * X
+    t1 = constant_coefficient
+    t2 = (1.0 - constant_coefficient) * X2
     if X < 0.0:
-        exponent = x_min - x
+        exponent = (x_min - x) / activation
     else:
-        exponent = x - x_max
-    return normalisation_coefficient * wear_cost_average * (constant_coefficient + (1.0 - constant_coefficient) * X2 + out_of_spec_coefficient*math.exp(exponent/activation))
+        exponent = (x - x_max) / activation
+    t3 = out_of_spec_coefficient * math.exp(exponent)
+    wear_out_of_spec_cost = normalisation_coefficient *wear_cost_average * (t1+t2+t3)
+    return wear_out_of_spec_cost
 
 # constants
 index =  2

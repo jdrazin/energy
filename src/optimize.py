@@ -88,7 +88,7 @@ def wear_out_of_spec_cost(x, x_min, x_max, wear_cost_average, constant_coefficie
     else:
         exponent = (x - x_max) / activation
     if exponent < 1E-4:
-        exponential = exponent - 1.0
+        exponential = exponent + 1.0
     else:
         exponential = math.exp(exponent)
     t3 = out_of_spec_coefficient * exponential

@@ -423,28 +423,6 @@ class GivEnergy extends Root
             sleep($countdown_seconds);
         }
         switch ($mode) {
-            case 'ECO':     { // matches battery discharge power to net load: load - solar (i.e. zero export)
-                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                                                                    'CHARGE',
-                                                                    [
-                                                                    'start'                 => '00:00',
-                                                                    'stop'                  => '00:00',
-                                                                    'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Charge Power'],
-                                                                    'target_level_percent'  => self::POST_DEFAULTS['AC Charge Upper % Limit']
-                                                                    ],
-                                                                    __FUNCTION__);
-                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                                                                'DISCHARGE',
-                                                                    [
-                                                                    'start'                 => '00:00',
-                                                                    'stop'                  => '00:00',
-                                                                    'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Discharge Power'],
-                                                                    'target_level_percent'  => self::POST_DEFAULTS['Battery Cutoff % Limit']
-                                                                    ],
-                                                                    __FUNCTION__);
-                                $this->command('write', 'Battery Discharge Power', (int)(1000 * $this->battery['max_discharge_kw']), null, __FUNCTION__);
-                                break;
-                            }
             case 'CHARGE':
             case 'DISCHARGE': {
                                 if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
@@ -460,6 +438,28 @@ class GivEnergy extends Root
                                                                     ],
                                                                __FUNCTION__);
                                 $this->clear_slot($mode == 'CHARGE' ? 'DC Discharge' : 'AC Charge');  // clear other slot direction
+                                break;
+                            }
+            case 'ECO':     { // matches battery discharge power to net load: load - solar (i.e. zero export)
+                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
+                                    'CHARGE',
+                                    [
+                                        'start'                 => '00:00',
+                                        'stop'                  => '00:00',
+                                        'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Charge Power'],
+                                        'target_level_percent'  => self::POST_DEFAULTS['AC Charge Upper % Limit']
+                                    ],
+                                    __FUNCTION__);
+                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
+                                    'DISCHARGE',
+                                    [
+                                        'start'                 => '00:00',
+                                        'stop'                  => '00:00',
+                                        'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Discharge Power'],
+                                        'target_level_percent'  => self::POST_DEFAULTS['Battery Cutoff % Limit']
+                                    ],
+                                    __FUNCTION__);
+                                $this->command('write', 'Battery Discharge Power', (int)(1000 * $this->battery['max_discharge_kw']), null, __FUNCTION__);
                                 break;
                             }
             case 'IDLE':    {

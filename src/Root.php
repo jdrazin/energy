@@ -15,7 +15,8 @@ class Root
     protected const int     SECONDS_PER_HOUR = 3600,
                             SECONDS_PER_MINUTE = 60,
                             JSON_MAX_DEPTH = 10,
-                            LOG_MAX_CHARS = 255;
+                            LOG_MAX_CHARS = 255,
+                            CUBIC_SPLINE_MULTIPLE = 8;
     private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
     protected array         $apis = [], $config = [];
     protected               mysqli $mysqli;
@@ -447,5 +448,98 @@ class Root
         }
         $stmt->fetch();
         return $latest_value_datetime ?? $earliest_datetime;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function slots_make_cubic_splines(): void {
+        $sql = 'SELECT      `n`.`slot`,
+                            UNIX_TIMESTAMP(`n`.`start`)             AS `unix_timestamp`,
+                            ROUND(`n`.`load_house_kw`, 3)           AS `load_house_kw`,
+                            ROUND(`p`.`load_house_kw`, 3)           AS `previous_load_house_kw`,
+                            ROUND(`n`.`grid_kw`, 3)                 AS `grid_kw`,
+                            ROUND(`p`.`grid_kw`, 3)                 AS `previous_grid_kw`,
+                            ROUND(`n`.`solar_kw`, 3)                AS `solar_kw`,
+                            ROUND(`p`.`solar_kw`, 3)                AS `previous_solar_kw`,
+                            ROUND(`n`.`battery_level_kwh`, 3)       AS `battery_level_kwh`,
+                            ROUND(`p`.`battery_level_kwh`, 3)       AS `previous_battery_kwh`
+                  FROM      `slots` `n`
+                  LEFT JOIN (SELECT     `slot`,
+                                        `start`,
+                                        `load_house_kw`,
+                                        `grid_kw`,
+                                        `solar_kw`,
+                                        `battery_level_kwh`
+                                FROM    `slots`
+                                WHERE   `final`) `p` ON `p`.`slot`+48 = `n`.`slot`
+                  WHERE     `n`.`slot` >= 0 AND `n`.`final`
+                  ORDER BY  `n`.`slot`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_result($slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $slots = [];
+        while ($stmt->fetch()) {
+            $slots[$slot] = [$unix_timestamp,  $load_house_kw,  $previous_load_house_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh];
+        }
+        $number_slots = count($slots);
+        $number_slots_cubic_spline = $number_slots*self::CUBIC_SPLINE_MULTIPLE;
+        $cubic_spline = new CubicSpline($number_slots_cubic_spline);
+        $columns = ['unix_timestamp', 'load_house_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw', 'battery_level_kwh', 'previous_battery_level_kwh'];
+        foreach ($columns as $index => $column) {
+            $vector_cubic_splines = [];
+            foreach ($slots as $slot => $column_values) {
+                $vector_cubic_splines[$slot] = $column_values[$index];
+            }
+            if (!$index) { // generate time array
+                $t_min = $slots[0][0];
+                $t_max = $slots[$number_slots-1][0];
+                $t_duration = $t_max - $t_min;
+                for ($k=0; $k < $number_slots_cubic_spline; $k++) {
+                    $slots_cubic_splines[$k][$index] = (int) round($t_min + $t_duration * ($k / ($number_slots_cubic_spline-1)));
+                }
+            }
+            else {
+                $vector_cubic_splines = $cubic_spline->cubic_spline_y($vector_cubic_splines);
+                foreach ($vector_cubic_splines as $k => $v) {
+                    $slots_cubic_splines[$k][$index] = round($vector_cubic_splines[$k], 3);
+                }
+            }
+        }
+        $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `load_house_kw`,     `previous_load_house_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`, `battery_level_kwh`, `previous_battery_level_kwh`) 
+                                           VALUES (?,       ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?,                      ?,                       ?                              )
+                               ON DUPLICATE KEY UPDATE `unix_timestamp`                 = ?,
+                                                       `load_house_kw`                  = ?,
+                                                       `previous_load_house_kw`         = ?,
+                                                       `grid_kw`                        = ?,
+                                                       `previous_grid_kw`               = ?,
+                                                       `solar_kw`                       = ?,
+                                                       `previous_solar_kw`              = ?,
+                                                       `battery_level_kwh`              = ?,
+                                                       `previous_battery_level_kwh`     = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('iiddddddddidddddddd', $slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh,
+                $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh)) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        foreach ($slots_cubic_splines as $slot => $slots_cubic_spline) {
+            $unix_timestamp              = $slots_cubic_spline[0];
+            $load_house_kw               = $slots_cubic_spline[1];
+            $previous_load_house_kw      = $slots_cubic_spline[2];
+            $grid_kw                     = $slots_cubic_spline[3];
+            $previous_grid_kw            = $slots_cubic_spline[4];
+            $solar_kw                    = $slots_cubic_spline[5];
+            $previous_solar_kw           = $slots_cubic_spline[6];
+            $battery_level_kwh           = $slots_cubic_spline[7];
+            $previous_battery_level_kwh  = $slots_cubic_spline[8];
+            $stmt->execute();
+        }
+        $this->mysqli->commit();
     }
 }

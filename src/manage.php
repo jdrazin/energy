@@ -47,7 +47,7 @@ const PID_FILENAME                      = '/var/www/html/energy/manage.pid',
       INITIALISE_ON_EXCEPTION           = false,
       EMAIL_NOTIFICATION                = true,
       ARGS                              = ['CRON' => 1],
-      USE_STUB                          = false,
+      USE_STUB                          = true,
       DISABLE_COUNTDOWN                 = false,
       ENABLE_SLOT_COMMANDS              = false,
       ACTIVE_TARIFF_COMBINATION_ONLY    = true,
@@ -71,6 +71,7 @@ try {
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
         if (USE_STUB) {
+            (new Octopus())->slots_make_cubic_splines();
         //    (new GivEnergy())->reset_inverter();
         //    (new GivEnergy())->control(TEST_SLOT_COMMAND);
         }

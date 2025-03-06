@@ -8,29 +8,28 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class Octopus extends Root
 {
-    const int       CUBIC_SPLINE_MULTIPLE   = 8;
-    const string    URL_BASE_PRODUCTS       = 'https://api.octopus.energy/v1/products/',
-                    ELECTRICITY_TARIFFS     = 'electricity-tariffs/';
+    const string    URL_BASE_PRODUCTS = 'https://api.octopus.energy/v1/products/',
+                    ELECTRICITY_TARIFFS = 'electricity-tariffs/';
     const array     DIRECTIONS = [
-                                    'import' => [
-                                        'tariffs' => 'tariff_imports',
-                                        'rates' => 'tariff_rates_import'
-                                    ],
-                                    'export' => [
-                                        'tariffs' => 'tariff_exports',
-                                        'rates' => 'tariff_rates_export'
-                                    ]
-                                ],
-                    RATE_PERS = [
-                                    'KWH' => 'standard-unit-rates/',
-                                    'DAY' => 'standing-charges/',
-                                ],
-                    ENTITIES = [
-                                    'GRID_W'                    => ['grid_kw',                  1000.0],
-                                    'SOLAR_W'                   => ['solar_kw',                 1000.0],
-                                    'LOAD_HOUSE_W'              => ['load_house_kw',            1000.0],
-                                    'BATTERY_LEVEL_PERCENT'     => ['battery_level_percent',       1.0]
-                               ];
+        'import' => [
+            'tariffs' => 'tariff_imports',
+            'rates' => 'tariff_rates_import'
+        ],
+        'export' => [
+            'tariffs' => 'tariff_exports',
+            'rates' => 'tariff_rates_export'
+        ]
+    ],
+        RATE_PERS = [
+        'KWH' => 'standard-unit-rates/',
+        'DAY' => 'standing-charges/',
+    ],
+        ENTITIES = [
+        'GRID_W' => ['grid_kw', 1000.0],
+        'SOLAR_W' => ['solar_kw', 1000.0],
+        'LOAD_HOUSE_W' => ['load_house_kw', 1000.0],
+        'BATTERY_LEVEL_PERCENT' => ['battery_level_percent', 1.0]
+    ];
 
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api, $tariff_combinations;
@@ -42,7 +41,7 @@ class Octopus extends Root
     public function __construct()
     {
         parent::__construct();
-        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
+        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__, __CLASS__)];
         $this->tariffCombinationsActiveFirst();                                 // get tariff combinations of interest, starting with active combination
         $this->requestTariffs();                                                // get latest tariff data
     }
@@ -51,11 +50,12 @@ class Octopus extends Root
      * @throws Exception
      * @throws GuzzleException
      */
-    public function traverseTariffs($cron): void {
+    public function traverseTariffs($cron): void
+    {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
         if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
-            $db_slots  = new DbSlots();                                           // make day slots
-            $values    = new Values();
+            $db_slots = new DbSlots();                                           // make day slots
+            $values = new Values();
             $givenergy = new GivEnergy();
             // $givenergy->initialise();
             $givenergy->getData();                                                // grid, load_house, solar (yesterday, today) > `values`
@@ -75,7 +75,7 @@ class Octopus extends Root
                         // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
                         $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelkwh($db_slots);
                         $slot_command = (new EnergyCost($db_slots, $batteryLevelKwh))->minimise(); // minimise energy cost
-                        (new Root())->logDb('SLOT_COMMAND', $slot_command['message'],'NOTICE');
+                        (new Root())->logDb('SLOT_COMMAND', $slot_command['message'], 'NOTICE');
                         if ($active_tariff) {                                        // make battery command
                             if (ENABLE_SLOT_COMMANDS) {
                                 $givenergy->control($slot_command);                  // control battery for active combination on completion of countdown to next slot
@@ -86,8 +86,7 @@ class Octopus extends Root
                     }
                 }
             }
-        }
-        else {
+        } else {
             (new EnergyCost(null, null))->minimise();     // minimise energy cost
         }
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null, 'NOTICE');
@@ -249,8 +248,8 @@ class Octopus extends Root
             throw new Exception($message);
         }
         foreach ($db_slots->slots as $slot => $v) {
-            $start    = $v['start'];
-            $stop     = $v['stop'];
+            $start = $v['start'];
+            $stop = $v['stop'];
             $ratesPer = ['start' => $start, 'stop' => $stop];
             foreach (self::DIRECTIONS as $direction => $x) {
                 $tariff_table = self::DIRECTIONS[$direction]['rates'];
@@ -346,7 +345,8 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function makeDbSlotsLast24hrs($tariff_combination): void {
+    private function makeDbSlotsLast24hrs($tariff_combination): void
+    {
         $tariff_combination_id = $tariff_combination['id'];
         $sql = 'SELECT `slot`  - 48,
                        `start` - INTERVAL 24 HOUR,
@@ -365,9 +365,9 @@ class Octopus extends Root
         $slots = [];
         while ($stmt->fetch()) {
             $slots[$slot] = [
-                            'start' => $start,
-                            'stop'  => $stop
-                            ];
+                'start' => $start,
+                'stop' => $stop
+            ];
         }
         $sql = 'INSERT INTO `slots` (`slot`, `start`, `stop`)
                     SELECT `slot`  - 48,
@@ -389,7 +389,7 @@ class Octopus extends Root
         $values = new Values();
         foreach (self::ENTITIES as $entity => $properties) {
             foreach ($slots as $slot => $v) {       // returns averages for graphing purposes, about START times (i.e. slot_start_time - 15mins TO slot_start_time + 15mins
-                $slots[$slot][$properties[0]] = $values->average($entity, 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MIN/2)/$properties[1];
+                $slots[$slot][$properties[0]] = $values->average($entity, 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MIN / 2) / $properties[1];
             }
             $sql = 'UPDATE  `slots` 
                       SET   `' . $properties[0] . '` = ?
@@ -404,7 +404,7 @@ class Octopus extends Root
             }
             foreach ($slots as $slot => $v) {
                 if (!is_null($value = $v[$properties[0]])) {
-                     $stmt->execute();
+                    $stmt->execute();
                 }
             }
         }
@@ -467,98 +467,5 @@ class Octopus extends Root
         }
         $this->mysqli->commit();
     }
-
-    /**
-     * @throws Exception
-     */
-    private function slots_make_cubic_splines(): void
-    {
-        $sql = 'SELECT      `n`.`slot`,
-                            UNIX_TIMESTAMP(`n`.`start`)             AS `unix_timestamp`,
-                            ROUND(`n`.`load_house_kw`, 3)           AS `load_house_kw`,
-                            ROUND(`p`.`load_house_kw`, 3)           AS `previous_load_house_kw`,
-                            ROUND(`n`.`grid_kw`, 3)                 AS `grid_kw`,
-                            ROUND(`p`.`grid_kw`, 3)                 AS `previous_grid_kw`,
-                            ROUND(`n`.`solar_kw`, 3)                AS `solar_kw`,
-                            ROUND(`p`.`solar_kw`, 3)                AS `previous_solar_kw`,
-                            ROUND(`n`.`battery_level_kwh`, 3)       AS `battery_level_kwh`,
-                            ROUND(`p`.`battery_level_kwh`, 3)       AS `previous_battery_kwh`
-                  FROM      `slots` `n`
-                  LEFT JOIN (SELECT     `slot`,
-                                        `start`,
-                                        `load_house_kw`,
-                                        `grid_kw`,
-                                        `solar_kw`,
-                                        `battery_level_kwh`
-                                FROM    `slots`
-                                WHERE   `final`) `p` ON `p`.`slot`+48 = `n`.`slot`
-                  WHERE     `n`.`slot` >= 0 AND `n`.`final`
-                  ORDER BY  `n`.`slot`';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        $slots = [];
-        while ($stmt->fetch()) {
-            $slots[$slot] = [$unix_timestamp,  $load_house_kw,  $previous_load_house_kw, $grid_kw, $previous_grid_kw,   $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh];
-        }
-        $number_slots = count($slots);
-        $number_slots_cubic_spline = $number_slots*self::CUBIC_SPLINE_MULTIPLE;
-        $cubic_spline = new CubicSpline($number_slots_cubic_spline);
-        $columns = ['unix_timestamp', 'load_house_kw', 'previous_load_kw', 'grid_kw', 'previous_grid_kw', 'solar_kw', 'previous_solar_kw', 'battery_level_kwh', 'previous_battery_level_kwh'];
-        foreach ($columns as $index => $column) {
-            $vector_cubic_splines = [];
-            foreach ($slots as $slot => $column_values) {
-                $vector_cubic_splines[$slot] = $column_values[$index];
-            }
-            if (!$index) { // generate time array
-                $t_min = $slots[0][0];
-                $t_max = $slots[$number_slots-1][0];
-                $t_duration = $t_max - $t_min;
-                for ($k=0; $k < $number_slots_cubic_spline; $k++) {
-                    $slots_cubic_splines[$k][$index] = (int) round($t_min + $t_duration * ($k / ($number_slots_cubic_spline-1)));
-                }
-            }
-            else {
-                $vector_cubic_splines = $cubic_spline->cubic_spline_y($vector_cubic_splines);
-                foreach ($vector_cubic_splines as $k => $v) {
-                    $slots_cubic_splines[$k][$index] = round($vector_cubic_splines[$k], 3);
-                }
-            }
-        }
-        $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `load_house_kw`,     `previous_load_house_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`, `battery_level_kwh`, `previous_battery_level_kwh`) 
-                                           VALUES (?,       ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?,                      ?,                       ?                              )
-                               ON DUPLICATE KEY UPDATE `unix_timestamp`                 = ?,
-                                                       `load_house_kw`                  = ?,
-                                                       `previous_load_house_kw`         = ?,
-                                                       `grid_kw`                        = ?,
-                                                       `previous_grid_kw`               = ?,
-                                                       `solar_kw`                       = ?,
-                                                       `previous_solar_kw`              = ?,
-                                                       `battery_level_kwh`              = ?,
-                                                       `previous_battery_level_kwh`     = ?';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iiddddddddidddddddd', $slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh,
-                                                                            $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh)) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        foreach ($slots_cubic_splines as $slot => $slots_cubic_spline) {
-            $unix_timestamp              = $slots_cubic_spline[0];
-            $load_house_kw               = $slots_cubic_spline[1];
-            $previous_load_house_kw      = $slots_cubic_spline[2];
-            $grid_kw                     = $slots_cubic_spline[3];
-            $previous_grid_kw            = $slots_cubic_spline[4];
-            $solar_kw                    = $slots_cubic_spline[5];
-            $previous_solar_kw           = $slots_cubic_spline[6];
-            $battery_level_kwh           = $slots_cubic_spline[7];
-            $previous_battery_level_kwh  = $slots_cubic_spline[8];
-            $stmt->execute();
-        }
-        $this->mysqli->commit();
-    }
 }
+

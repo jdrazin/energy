@@ -610,7 +610,7 @@ class Root
                 'stop' => $stop
             ];
         }
-        $sql = 'INSERT INTO `slots` (`slot`, `start`, `stop`)
+        $sql = 'INSERT IGNORE INTO `slots` (`slot`, `start`, `stop`)
                     SELECT `slot`  - 48,
                            `start` - INTERVAL 24 HOUR,
                            `stop`  - INTERVAL 24 HOUR

@@ -17,7 +17,13 @@ class Root
                             JSON_MAX_DEPTH = 10,
                             LOG_MAX_CHARS = 255,
                             CUBIC_SPLINE_MULTIPLE = 8;
-    private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
+    private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'],
+                            ENTITIES = [
+                                            'GRID_W'                => ['grid_kw',                  1000.0],
+                                            'SOLAR_W'               => ['solar_kw',                 1000.0],
+                                            'LOAD_HOUSE_W'          => ['load_house_kw',            1000.0],
+                                            'BATTERY_LEVEL_PERCENT' => ['battery_level_percent',    1.0]
+                                        ];
     protected array         $apis = [], $config = [];
     protected               mysqli $mysqli;
     private const           int FORECAST_STALE_HOURS = 2;
@@ -539,6 +545,131 @@ class Root
             $battery_level_kwh           = $slots_cubic_spline[7];
             $previous_battery_level_kwh  = $slots_cubic_spline[8];
             $stmt->execute();
+        }
+        $this->mysqli->commit();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function makeDbSlotsLast24hrs($tariff_combination): void {
+        $tariff_combination_id = $tariff_combination['id'];
+        $sql = 'SELECT `slot`  - 48,
+                       `start` - INTERVAL 24 HOUR,
+                       `stop`  - INTERVAL 24 HOUR
+                  FROM `slots`
+                  WHERE `slot` >= 1 AND
+                         NOT `final`
+                  ORDER BY `slot`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_result($slot, $start, $stop) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $slots = [];
+        while ($stmt->fetch()) {
+            $slots[$slot] = [
+                'start' => $start,
+                'stop' => $stop
+            ];
+        }
+        $sql = 'INSERT INTO `slots` (`slot`, `start`, `stop`)
+                    SELECT `slot`  - 48,
+                           `start` - INTERVAL 24 HOUR,
+                           `stop`  - INTERVAL 24 HOUR
+                      FROM `slots`
+                      WHERE `slot` >= 1 AND
+                            `tariff_combination` = ? AND
+                             NOT `final`
+                      ORDER BY `slot`';
+        unset($stmt);
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('s', $tariff_combination_id) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $values = new Values();
+        foreach (self::ENTITIES as $entity => $properties) {
+            foreach ($slots as $slot => $v) {       // returns averages for graphing purposes, about START times (i.e. slot_start_time - 15mins TO slot_start_time + 15mins
+                $slots[$slot][$properties[0]] = $values->average($entity, 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MIN / 2) / $properties[1];
+            }
+            $sql = 'UPDATE  `slots` 
+                      SET   `' . $properties[0] . '` = ?
+                      WHERE `slot`            = ? AND
+                            NOT `final`';
+            unset($stmt);
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('di', $value, $slot)) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
+            }
+            foreach ($slots as $slot => $v) {
+                if (!is_null($value = $v[$properties[0]])) {
+                    $stmt->execute();
+                }
+            }
+        }
+        $this->mysqli->commit();
+        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_kw`, `mode`, `target_level_percent`, `abs_charge_power_w`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
+                       (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_kw`, `mode`, `target_level_percent`, `abs_charge_power_w`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
+                                    FROM `slots` `s`
+                                    WHERE NOT `final` AND
+                                              `tariff_combination` IN (0, ?))  
+                    ON DUPLICATE KEY UPDATE   `start`                     = `s`.`start`,
+                                              `stop`                      = `s`.`stop`,
+                                              `load_house_kw`             = `s`.`load_house_kw`, 
+                                              `grid_kw`                   = `s`.`grid_kw`,
+                                              `solar_kw`                  = `s`.`solar_kw`,
+                                              `mode`                      = `s`.`mode`,
+                                              `target_level_percent`      = `s`.`target_level_percent`,
+                                              `abs_charge_power_w`        = `s`.`abs_charge_power_w`, 
+                                              `battery_charge_kw`         = `s`.`battery_charge_kw`, 
+                                              `battery_level_kwh`         = `s`.`battery_level_kwh`,
+                                              `battery_level_percent`     = `s`.`battery_level_percent`,
+                                              `import_gbp_per_kwh`        = `s`.`import_gbp_per_kwh`, 
+                                              `export_gbp_per_kwh`        = `s`.`export_gbp_per_kwh`, 
+                                              `import_gbp_per_day`        = `s`.`import_gbp_per_day`, 
+                                              `export_gbp_per_day`        = `s`.`export_gbp_per_day`, 
+                                              `load_non_heating_kw`       = `s`.`load_non_heating_kw`, 
+                                              `load_heating_kw`           = `s`.`load_heating_kw`';
+        unset($stmt);
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $tariff_combination_id) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        if ($battery_capacity_kwh = $this->config['battery']['initial_raw_capacity_kwh']) {
+            $sql = 'UPDATE  `slots`
+                      SET   `battery_level_kwh` = ROUND(IFNULL(`battery_level_kwh`, ? * `battery_level_percent` /100.0),  1)
+                      WHERE `final` AND 
+                            `battery_level_percent` IS NOT NULL';
+            unset($stmt);
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('d', $battery_capacity_kwh) ||
+                !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
+            }
+            $sql = 'UPDATE  `slots`
+                      SET   `battery_level_percent` = ROUND(IFNULL(`battery_level_percent`, 100.0 * `battery_level_kwh` / ?), 1)
+                      WHERE `final` AND
+                            `battery_level_kwh` IS NOT NULL';
+            unset($stmt);
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('d', $battery_capacity_kwh) ||
+                !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
+            }
         }
         $this->mysqli->commit();
     }

@@ -71,7 +71,7 @@ try {
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
         if (USE_STUB) {
-            (new Octopus())->slots_make_cubic_splines();
+            (new Root())->slots_make_cubic_splines();
         //    (new GivEnergy())->reset_inverter();
         //    (new GivEnergy())->control(TEST_SLOT_COMMAND);
         }

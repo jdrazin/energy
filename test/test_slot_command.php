@@ -43,11 +43,11 @@ ini_set('mysql.connect_timeout','36000');
 
 const DISABLE_COUNTDOWN = true;
 const TEST_SLOT_COMMAND = [
-                            'start'                 => '17:30',
-                            'stop'                  => '18:00',
-                            'mode'                  => 'DISCHARGE',
-                            'abs_charge_power_w'    => 1900,
-                            'target_level_percent'  => 83
+                            'start'                 => '18:00',
+                            'stop'                  => '19:00',
+                            'mode'                  => 'ECO',
+                            'abs_charge_power_w'    => 6000,
+                            'target_level_percent'  => 67
                            ];
 
 $givenergy = new GivEnergy();

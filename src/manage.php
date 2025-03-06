@@ -41,15 +41,16 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const PID_FILENAME              = '/var/www/html/energy/manage.pid',
-      USE_PID_SEMAPHORE         = false,
-      BLOCK_CRON                = false,
-      INITIALISE_ON_EXCEPTION   = false,
-      EMAIL_NOTIFICATION        = true,
-      ARGS                      = ['CRON' => 1],
-      USE_STUB                  = false,
-      DISABLE_COUNTDOWN         = false,
-      ENABLE_SLOT_COMMANDS      = false,
+const PID_FILENAME                      = '/var/www/html/energy/manage.pid',
+      USE_PID_SEMAPHORE                 = false,
+      BLOCK_CRON                        = true,
+      INITIALISE_ON_EXCEPTION           = false,
+      EMAIL_NOTIFICATION                = true,
+      ARGS                              = ['CRON' => 1],
+      USE_STUB                          = false,
+      DISABLE_COUNTDOWN                 = false,
+      ENABLE_SLOT_COMMANDS              = false,
+      ACTIVE_TARIFF_COMBINATION_ONLY    = true,
       TEST_SLOT_COMMAND         = [
                                     'start'                 => '',
                                     'stop'                  => '',

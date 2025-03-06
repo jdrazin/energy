@@ -94,6 +94,9 @@ class Energy extends Root
         return json_encode($tariff_combinations, JSON_PRETTY_PRINT);
     }
 
+    /**
+     * @throws Exception
+     */
     public function slot_command(): bool|string {
         if (!$this->authenticate()) {
             return false;

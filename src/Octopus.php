@@ -75,8 +75,8 @@ class Octopus extends Root
                         // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
                         $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelkwh($db_slots);
                         $slot_command = (new EnergyCost($db_slots, $batteryLevelKwh))->minimise(); // minimise energy cost
-                        $this->logDb('SLOT_COMMAND', $slot_command['message'], 'NOTICE');
                         if ($active_tariff) {                                        // make battery command
+                            $this->logDb('SLOT_COMMAND', $slot_command['message'], 'NOTICE');
                             if (ENABLE_SLOT_COMMANDS) {
                                 $givenergy->control($slot_command);                  // control battery for active combination on completion of countdown to next slot
                             }

@@ -43,6 +43,7 @@ class Octopus extends Root
         parent::__construct();
         $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__, __CLASS__)];
         $this->requestTariffs();                                                // get latest tariff data
+        $this->tariffCombinationsActiveFirst();                                 // get tariff combinations of interest, starting with active combination
     }
 
     /**

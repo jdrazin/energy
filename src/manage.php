@@ -50,7 +50,7 @@ const PID_FILENAME                      = '/var/www/html/energy/manage.pid',
       USE_STUB                          = true,
       DISABLE_COUNTDOWN                 = false,
       ENABLE_SLOT_COMMANDS              = false,
-      ACTIVE_TARIFF_COMBINATION_ONLY    = true,
+      ACTIVE_TARIFF_COMBINATION_ONLY    = false,
       TEST_SLOT_COMMAND         = [
                                     'start'                 => '',
                                     'stop'                  => '',
@@ -71,9 +71,9 @@ try {
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
         if (USE_STUB) {
-            $root = (new Root());
-            $root->makeActiveTariffCombinationDbSlotsLast24hrs();
-            $root->slots_make_cubic_splines();
+            $octopus = (new Octopus());
+            $octopus->makeActiveTariffCombinationDbSlotsLast24hrs();
+            $octopus->slots_make_cubic_splines();
         //    (new GivEnergy())->reset_inverter();
         //    (new GivEnergy())->control(TEST_SLOT_COMMAND);
         }

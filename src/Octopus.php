@@ -36,7 +36,6 @@ class Octopus extends Root
     {
         parent::__construct();
         $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__, __CLASS__)];
-        $this->tariffCombinationsActiveFirst();                                 // get tariff combinations of interest, starting with active combination
         $this->requestTariffs();                                                // get latest tariff data
     }
 
@@ -119,40 +118,6 @@ class Octopus extends Root
                 $tariffs = json_decode($this->request($url_tariff_prefix . $endpoint), true)['results'];
                 $this->insert($tariffs_rates['rates'], $tariff_id, $rate_per, $tariffs);
             }
-        }
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function tariffCombinationsActiveFirst(): void
-    {
-        // select tariff combinations, active first
-        $sql = 'SELECT     `tc`.`id`,
-                            CONCAT(`ti`.`code`, \', \', `te`.`code`, IF(`tc`.`active` IS NULL, \'\', \' *ACTIVE*\')),
-                           `tc`.`import`,
-                           `tc`.`export`,
-                           `tc`.`active`
-                  FROM     `tariff_combinations` `tc`
-                  JOIN     `tariff_imports` `ti` ON `tc`.`import` = `ti`.`id`
-                  JOIN     `tariff_exports` `te` ON `tc`.`export` = `te`.`id`
-                  WHERE    `tc`.`status` = \'CURRENT\' AND 
-                            NOT `tc`.`ignore`
-                  ORDER BY `tc`.`active` DESC';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($id, $name, $import, $export, $active) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        $this->tariff_combinations = [];
-        while ($stmt->fetch()) {
-            $this->tariff_combinations[] = ['id' => $id,
-                'name' => $name,
-                'active' => $active,
-                'import' => $import,
-                'export' => $export];
         }
     }
 

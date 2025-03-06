@@ -62,6 +62,7 @@ class Root
                 ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH))))) {
                 throw new Exception('bad or missing config json: ' . $path);
             }
+            $this->tariffCombinationsActiveFirst();                                 // get tariff combinations of interest, starting with active combination
         }
     }
 
@@ -547,6 +548,40 @@ class Root
             $stmt->execute();
         }
         $this->mysqli->commit();
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function tariffCombinationsActiveFirst(): void
+    {
+        // select tariff combinations, active first
+        $sql = 'SELECT     `tc`.`id`,
+                            CONCAT(`ti`.`code`, \', \', `te`.`code`, IF(`tc`.`active` IS NULL, \'\', \' *ACTIVE*\')),
+                           `tc`.`import`,
+                           `tc`.`export`,
+                           `tc`.`active`
+                  FROM     `tariff_combinations` `tc`
+                  JOIN     `tariff_imports` `ti` ON `tc`.`import` = `ti`.`id`
+                  JOIN     `tariff_exports` `te` ON `tc`.`export` = `te`.`id`
+                  WHERE    `tc`.`status` = \'CURRENT\' AND 
+                            NOT `tc`.`ignore`
+                  ORDER BY `tc`.`active` DESC';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_result($id, $name, $import, $export, $active) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $this->tariff_combinations = [];
+        while ($stmt->fetch()) {
+            $this->tariff_combinations[] = ['id' => $id,
+                'name' => $name,
+                'active' => $active,
+                'import' => $import,
+                'export' => $export];
+        }
     }
 
     /**

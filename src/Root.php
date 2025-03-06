@@ -189,7 +189,6 @@ class Root
         $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('sss', $event, $message, $urgency);
         $stmt->execute();
-        $mysqli->close();
         unset($mysqli);
     }
 

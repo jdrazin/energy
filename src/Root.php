@@ -24,7 +24,7 @@ class Root
                                             'LOAD_HOUSE_W'          => ['load_house_kw',            1000.0],
                                             'BATTERY_LEVEL_PERCENT' => ['battery_level_percent',    1.0]
                                         ];
-    protected array         $apis = [], $config = [];
+    protected array         $apis = [], $config = [], $tariff_combinations = [];
     protected               mysqli $mysqli;
     private const           int FORECAST_STALE_HOURS = 2;
 
@@ -587,8 +587,8 @@ class Root
     /**
      * @throws Exception
      */
-    public function makeDbSlotsLast24hrs($tariff_combination): void {
-        $tariff_combination_id = $tariff_combination['id'];
+    public function makeActiveTariffCombinationDbSlotsLast24hrs(): void {
+        $tariff_combination_id = $this->tariff_combinations[0]['id'];
         $sql = 'SELECT `slot`  - 48,
                        `start` - INTERVAL 24 HOUR,
                        `stop`  - INTERVAL 24 HOUR

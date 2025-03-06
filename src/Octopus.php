@@ -26,7 +26,7 @@ class Octopus extends Root
     ];
 
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
-    private array $api, $tariff_combinations;
+    private array $api;
 
     /**
      * @throws Exception
@@ -73,7 +73,7 @@ class Octopus extends Root
                             if (ENABLE_SLOT_COMMANDS) {
                                 $givenergy->control($slot_command);                  // control battery for active combination on completion of countdown to next slot
                             }
-                            $this->makeDbSlotsLast24hrs($tariff_combination);        // make historic slots for last 24 hours
+                            $this->makeActiveTariffCombinationDbSlotsLast24hrs();    // make historic slots for last 24 hours
                             $this->slots_make_cubic_splines();                       // generate cubic splines
                         }
                     }

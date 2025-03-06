@@ -66,22 +66,23 @@ class Octopus extends Root
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
             foreach ($this->tariff_combinations as $tariff_combination) {
-                $active_tariff = $tariff_combination['active'];
-                if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
-                    $db_slots->makeDbSlotsNext24hrs($tariff_combination);        // make slots for this tariff combination
-                    $this->makeSlotRates($db_slots);                             // make tariffs
-                    $values->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
+                if (($active_tariff = $tariff_combination['active']) || !ACTIVE_TARIFF_COMBINATION_ONLY) {
+                    if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
+                        $db_slots->makeDbSlotsNext24hrs($tariff_combination);        // make slots for this tariff combination
+                        $this->makeSlotRates($db_slots);                             // make tariffs
+                        $values->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
 
-                    // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
-                    $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelkwh($db_slots);
-                    $slot_command = (new EnergyCost($db_slots, $batteryLevelKwh))->minimise(); // minimise energy cost
-                    (new Root())->logDb('SLOT_COMMAND', $slot_command['message'],'NOTICE');
-                    if ($active_tariff) {                                        // make battery command
-                        if (ENABLE_SLOT_COMMANDS) {
-                            $givenergy->control($slot_command);                  // control battery for active combination on completion of countdown to next slot
+                        // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
+                        $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelkwh($db_slots);
+                        $slot_command = (new EnergyCost($db_slots, $batteryLevelKwh))->minimise(); // minimise energy cost
+                        (new Root())->logDb('SLOT_COMMAND', $slot_command['message'],'NOTICE');
+                        if ($active_tariff) {                                        // make battery command
+                            if (ENABLE_SLOT_COMMANDS) {
+                                $givenergy->control($slot_command);                  // control battery for active combination on completion of countdown to next slot
+                            }
+                            $this->makeDbSlotsLast24hrs($tariff_combination);        // make historic slots for last 24 hours
+                            $this->slots_make_cubic_splines();                       // generate cubic splines
                         }
-                        $this->makeDbSlotsLast24hrs($tariff_combination);        // make historic slots for last 24 hours
-                        $this->slots_make_cubic_splines();                       // generate cubic splines
                     }
                 }
             }

@@ -368,6 +368,13 @@ class Octopus extends Root
                 }
             }
         }
+        $sql = 'DELETE FROM `slots_cubic_splines`';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->execute()) {
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    throw new Exception($message);
+            }
         $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `load_house_kw`,     `previous_load_house_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`, `battery_level_kwh`, `previous_battery_level_kwh`) 
                                            VALUES (?,       ?,                  ?,                  ?,                          ?,          ?,                 ?,          ?,                      ?,                       ?                              )
                                ON DUPLICATE KEY UPDATE `unix_timestamp`                 = ?,

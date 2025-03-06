@@ -41,73 +41,22 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const PID_FILENAME                      = '/var/www/html/energy/manage.pid',
-USE_PID_SEMAPHORE                 = true,
-BLOCK_CRON                        = false,
-INITIALISE_ON_EXCEPTION           = false,
-EMAIL_NOTIFICATION                = true,
-ARGS                              = ['CRON' => 1],
-USE_STUB                          = false,
-DISABLE_COUNTDOWN                 = false,
-ENABLE_SLOT_COMMANDS              = false,
-ACTIVE_TARIFF_COMBINATION_ONLY    = false,
-TEST_SLOT_COMMAND         = [
-    'start'                 => '',
-    'stop'                  => '',
-    'mode'                  => '',
-    'abs_charge_power_w'    => 3000,
-    'target_level_percent'  => 80
-];
+const DISABLE_COUNTDOWN = true;
+const TEST_SLOT_COMMAND = [
+                            'start'                 => '17:30',
+                            'stop'                  => '18:00',
+                            'mode'                  => 'DISCHARGE',
+                            'abs_charge_power_w'    => 1900,
+                            'target_level_percent'  => 83
+                           ];
 
+$givenergy = new GivEnergy();
+//$givenergy->reset_inverter();
 try {
-    if (USE_PID_SEMAPHORE) {
-        if (file_exists(PID_FILENAME)) {
-            echo 'Cannot start: semaphore exists';
-            exit(1);
-        }
-        else {
-            file_put_contents(PID_FILENAME, getmypid());
-        }
-    }
-    if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
-        if (USE_STUB) {
-            $octopus = (new Octopus());
-            $octopus->makeActiveTariffCombinationDbSlotsLast24hrs();
-            $octopus->slots_make_cubic_splines();
-            //    (new GivEnergy())->reset_inverter();
-            //    (new GivEnergy())->control(TEST_SLOT_COMMAND);
-        }
-        else {
-            (new Octopus())->traverseTariffs($cron);       // traverse all tariffs
-        }
-    }
-    if (USE_PID_SEMAPHORE) {
-        if (!unlink(PID_FILENAME)) {
-            throw new Exception('Cannot delete semaphore');
-        }
-    }
-    exit(0);
+    $givenergy->control(TEST_SLOT_COMMAND);
 }
-catch (exception $e) {
-    $message = $e->getMessage();
-    if (EMAIL_NOTIFICATION) {
-        (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
-            'html'      => false,
-            'bodyHTML'  => '',
-            'bodyAlt'   => $message]);
-    }
-    (new Root())->logDb('MESSAGE', $message, 'FATAL');
-    echo $message . PHP_EOL;
-    if (INITIALISE_ON_EXCEPTION) {
-        (new Root())->logDb('MESSAGE', 'Attempting to initialise ...', 'INFO');
-        (new GivEnergy())->reset_inverter();
-        (new Root())->logDb('MESSAGE', '... initialise done', 'INFO');
-    }
-    exit(1);
+catch (GuzzleException|Exception $e) {
+
 }
-catch (GuzzleException $e) {
-    $message = $e->getMessage();
-    (new Root())->logDb('MESSAGE', $message, 'FATAL');
-    echo $message . PHP_EOL;
-    exit(1);
-}
+exit(0);
+

@@ -11,7 +11,8 @@ class Values extends Root
 
     const int   SLOT_DISTANCE_MAX = 12,
                 TEMPERATURE_DISTANCE_MAX = 2,
-                HISTORY_DAY_LIMIT = 14;
+                HISTORY_DAY_LIMIT = 14,
+                LATEST_AVERAGE_DURATION_MINUTES = 15;
 
 
     const float MAX_POWER_W = 7500.0,
@@ -91,7 +92,7 @@ class Values extends Root
         $this->db_slots = $db_slots;
         $this->solarForecast();                                                                                                 // solar forecast
         $this->heatingEstimate();                                                                                               // estimate heating power for each slot based on historic performance
-        $this->estimateLoadNonHeating();                                                                                                    // calculate non_heating historic slots
+        $this->estimateLoadNonHeating();                                                                                        // calculate non_heating historic slots
         $this->totalLoad();                                                                                                     // total load
     }
 
@@ -102,8 +103,14 @@ class Values extends Root
         $powers_kw = [];
         foreach ($this->db_slots->slots as $slot => $v) {
             $start = $v['start'];
-            $stop = $v['stop'];
-            $powers_kw[$slot] = round($this->forecast_average_latest('SOLAR_W', $start, $stop) / 1000.0, 3);
+            $stop  = $v['stop'];
+            if ($slot == 0) {
+                $power_w = $this->average_latest('SOLAR_W', 'MEASURED', self::LATEST_AVERAGE_DURATION_MINUTES); // use latest
+            }
+            else {
+                $power_w = $this->forecast_average_latest('SOLAR_W', $start, $stop);
+            }
+            $powers_kw[$slot] = round($power_w / 1000.0, 3);
         }
         $this->updateSlotPowerskW($powers_kw, 'solar_kw');
     }
@@ -117,6 +124,25 @@ class Values extends Root
                          `datetime` BETWEEN (? + INTERVAL ? MINUTE) AND (? + INTERVAL ? MINUTE)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssisi', $entity, $type, $start, $offset_minutes, $stop, $offset_minutes) ||
+            !$stmt->bind_result($average) ||
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        return $average;
+    }
+
+    public function average_latest($entity, $type, $minutes): ?float
+    {
+        $sql = 'SELECT   AVG(`value`)
+                  FROM   `values`
+                  WHERE  `entity` = ? AND
+                         `type`   = ? AND
+                         `datetime` BETWEEN (NOW() - INTERVAL ? MINUTE) AND NOW()';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('ssi', $entity, $type, $start, $offset_minutes, $stop, $offset_minutes) ||
             !$stmt->bind_result($average) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {

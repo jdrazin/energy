@@ -36,7 +36,7 @@ class Supply extends Component
                 foreach ($bands_gbp_per_kwh as $band => $rate) {
                     $bands[] = $band;
                 }
-                for ($hour = 0; $hour < Energy::HOURS_PER_DAY; $hour++) {
+                for ($hour = 0; $hour < \Src\Energy::HOURS_PER_DAY; $hour++) {
                     $band = $band_hours[$hour];
                     $this->tariff[$direction][$hour] = ['band' => $band,
                         'gbp_per_kwh' => $factor * $bands_gbp_per_kwh[$band]];
@@ -52,7 +52,7 @@ class Supply extends Component
         $hour_bands = $tariff['hours'];
         $band = key($bands);
         $band_hours = [];
-        for ($hour = 0; $hour < Energy::HOURS_PER_DAY; $hour++) {
+        for ($hour = 0; $hour < \Src\Energy::HOURS_PER_DAY; $hour++) {
             if (isset($hour_bands[$hour])) {
                 $band = $hour_bands[$hour];
             }
@@ -63,7 +63,7 @@ class Supply extends Component
 
     public function update_bands($time): void
     { // return band for direction
-        $hour = (int)(Energy::HOURS_PER_DAY * $time->fraction_day);
+        $hour = (int)(\Src\Energy::HOURS_PER_DAY * $time->fraction_day);
         foreach (self::DIRECTIONS as $direction => $factor) {
             if (isset($this->tariff[$direction])) {
                 $this->current_bands[$direction] = $this->tariff[$direction][$hour]['band'];
@@ -75,7 +75,7 @@ class Supply extends Component
     {
         $time_values = $time->values();
         $hour_of_day = $time_values['HOUR_OF_DAY'];
-        $supply_kwh = (float)($energy_j / Energy::JOULES_PER_KWH);
+        $supply_kwh = (float)($energy_j / \Src\Energy::JOULES_PER_KWH);
         $inflation = (1.0 + $this->inflation_real_pa) ** (((float)$time->year) + $time->fraction_year);
         $rate_gbp_per_kwh = $this->tariff[$direction][$hour_of_day]['gbp_per_kwh'];
         $value_gbp = $supply_kwh * $inflation * $rate_gbp_per_kwh;

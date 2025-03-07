@@ -1,7 +1,10 @@
 <?php
 
 namespace Src;
+use DateInterval;
+use DateTime;
 use Energy;
+use Exception;
 
 class Time
 {
@@ -21,6 +24,8 @@ class Time
      * @throws Exception
      * @throws DateMalformedStringException
      * @throws DateMalformedIntervalStringException
+     * @throws \DateMalformedStringException
+     * @throws \DateMalformedIntervalStringException
      */
     public function __construct(string $time_start, int $project_duration_years, int $step_s, array $time_units)
     {
@@ -83,6 +88,7 @@ class Time
 
     /**
      * @throws Exception
+     * @throws \DateMalformedStringException
      */
     public function fraction_day(): void
     {
@@ -94,6 +100,7 @@ class Time
 
     /**
      * @throws Exception
+     * @throws \DateMalformedStringException
      */
     public function fraction_year(): void
     {
@@ -106,7 +113,7 @@ class Time
     public function values(): array
     {
         return [
-            'HOUR_OF_DAY' => (int)(Energy::HOURS_PER_DAY * $this->fraction_day),
+            'HOUR_OF_DAY' => (int)(\Src\Energy::HOURS_PER_DAY * $this->fraction_day),
             'MONTH_OF_YEAR' => (int)$this->time->format('F'),
             'DAY_OF_YEAR' => (int)$this->time->format('z'),
             'YEAR' => $this->year

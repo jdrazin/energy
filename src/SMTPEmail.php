@@ -22,7 +22,7 @@ class SMTPEmail extends Root
     public function email($content): void {
         $mail = new PHPMailer();
         try {
-            $mail->SMTPDebug    = SMTP::DEBUG_SERVER;                 // Enable verbose debug output
+        //    $mail->SMTPDebug    = SMTP::DEBUG_SERVER;                 // Enable verbose debug output
             $smtp_settings      = $this->apis['smtp'];
             $mail->isSMTP();                                          // Set mailer to use SMTP
             $mail->Host         = $smtp_settings['host'];             // Specify main and backup SMTP servers

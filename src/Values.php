@@ -18,8 +18,7 @@ class Values extends Root
     const float MAX_POWER_W = 7500.0,
         MIN_LIMIT_TEMPERATURE = 2.0,
         MIN_POWER_W = 100.0,
-        MAX_LIMIT_TEMPERATURE = 21.0,
-        HISTORY_POWER_LIMIT_W = 5000.0;
+        MAX_LIMIT_TEMPERATURE = 21.0;
 
     private array $power_w;
 
@@ -105,7 +104,7 @@ class Values extends Root
             $start = $v['start'];
             $stop  = $v['stop'];
             if ($slot == 0) {
-                $power_w = $this->average_latest('SOLAR_W', 'MEASURED', self::LATEST_AVERAGE_DURATION_MINUTES); // use latest
+                $power_w = $this->average_latest('SOLAR_W', 'MEASURED', self::LATEST_AVERAGE_DURATION_MINUTES); // use average over past 15 mins for first slot
             }
             else {
                 $power_w = $this->forecast_average_latest('SOLAR_W', $start, $stop);

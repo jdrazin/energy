@@ -44,20 +44,20 @@ ini_set('mysql.connect_timeout','36000');
 const PID_FILENAME                      = '/var/www/html/energy/manage.pid',
       USE_PID_SEMAPHORE                 = true,
       BLOCK_CRON                        = false,
-      INITIALISE_ON_EXCEPTION           = false,
-      EMAIL_NOTIFICATION                = true,
       ARGS                              = ['CRON' => 1],
-      USE_STUB                          = false,
+      INITIALISE_ON_EXCEPTION           = true,
+      EMAIL_NOTIFICATION                = true,
+      REPLACE_WITH_STUB                 = false,
       DISABLE_COUNTDOWN                 = false,
       ENABLE_SLOT_COMMANDS              = true,
       ACTIVE_TARIFF_COMBINATION_ONLY    = false,
-      TEST_SLOT_COMMAND         = [
-                                    'start'                 => '',
-                                    'stop'                  => '',
-                                    'mode'                  => '',
-                                    'abs_charge_power_w'    => 3000,
-                                    'target_level_percent'  => 80
-                                  ];
+      TEST_SLOT_COMMAND                 = [
+                                            'start'                 => '',
+                                            'stop'                  => '',
+                                            'mode'                  => '',
+                                            'abs_charge_power_w'    => 3000,
+                                            'target_level_percent'  => 80
+                                           ];
 
 try {
     if (USE_PID_SEMAPHORE) {
@@ -70,12 +70,10 @@ try {
         }
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
-        if (USE_STUB) {
+        if (REPLACE_WITH_STUB) {
             $octopus = (new Octopus());
             $octopus->makeActiveTariffCombinationDbSlotsLast24hrs();
             $octopus->slots_make_cubic_splines();
-        //    (new GivEnergy())->reset_inverter();
-        //    (new GivEnergy())->control(TEST_SLOT_COMMAND);
         }
         else {
            (new Octopus())->traverseTariffs($cron);       // traverse all tariffs

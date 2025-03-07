@@ -41,22 +41,9 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const USE_CRONTAB = false;
-const TEST_SLOT_COMMAND = [
-                            'start'                 => '08:58',
-                            'stop'                  => '09:00',
-                            'mode'                  => 'ECO',
-                            'abs_charge_power_w'    => 1000,
-                            'target_level_percent'  => 62
-                           ];
-
-$givenergy = new GivEnergy();
-//$givenergy->reset_inverter();
-try {
-    $givenergy->control(TEST_SLOT_COMMAND);
-}
-catch (GuzzleException|Exception $e) {
-
-}
+(new SMTPEmail())->email(['subject'     => 'EnergyController: Error',
+                            'html'      => false,
+                            'bodyHTML'  => '',
+                            'bodyAlt'   => 'This is a test']);
 exit(0);
 

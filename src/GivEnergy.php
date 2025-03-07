@@ -28,7 +28,7 @@ use GuzzleHttp\Exception\GuzzleException;
 class GivEnergy extends Root
 {
     private const int   RESPONSE_OK                             = 2,
-                        HOLD_TO_START_GUARD_PERIOD_SECONDS      = 30,
+                        HOLD_TO_START_GUARD_PERIOD_SECONDS      = 0,
                         MAX_HOLD_SECONDS                        = 600,
                         CHARGE_DISCHARGE_SLOT_START             = 1,
                         CHARGE_DISCHARGE_SLOT_STOP              = 10,

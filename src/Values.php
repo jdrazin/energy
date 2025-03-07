@@ -14,7 +14,6 @@ class Values extends Root
                 HISTORY_DAY_LIMIT = 14,
                 LATEST_AVERAGE_DURATION_MINUTES = 15;
 
-
     const float MAX_POWER_W = 7500.0,
                 MIN_LIMIT_TEMPERATURE = 2.0,
                 MIN_POWER_W = 100.0,

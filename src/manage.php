@@ -96,12 +96,13 @@ catch (exception $e) {
                                   'bodyHTML'  => '',
                                   'bodyAlt'   => $message]);
     }
-    (new Root())->logDb('MESSAGE', $message, 'FATAL');
+    $root = new Root();
+    $root->logDb('MESSAGE', $message, 'FATAL');
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
-        (new Root())->logDb('MESSAGE', 'Attempting to initialise ...', 'INFO');
+        $root->logDb('MESSAGE', 'Attempting to initialise ...', 'INFO');
         (new GivEnergy())->reset_inverter();
-        (new Root())->logDb('MESSAGE', '... initialise done', 'INFO');
+        $root->logDb('MESSAGE', '... initialise done', 'INFO');
     }
     exit(1);
 }

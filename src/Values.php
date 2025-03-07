@@ -16,9 +16,9 @@ class Values extends Root
 
 
     const float MAX_POWER_W = 7500.0,
-        MIN_LIMIT_TEMPERATURE = 2.0,
-        MIN_POWER_W = 100.0,
-        MAX_LIMIT_TEMPERATURE = 21.0;
+                MIN_LIMIT_TEMPERATURE = 2.0,
+                MIN_POWER_W = 100.0,
+                MAX_LIMIT_TEMPERATURE = 21.0;
 
     private array $power_w;
 

@@ -178,18 +178,11 @@ class Root
 
     public function logDb($event, $message, $urgency): void
     {
-        $mysql = $this->apis['MySQL'];
-        $mysqli = $this->mysqli = new mysqli($mysql['host'],
-            $mysql['user'],
-            $mysql['password'],
-            $mysql['database']);
-        $message = is_null($message) ? null : $this->ellipsis($message, self::LOG_MAX_CHARS);
-        $mysqli->autocommit(true);
         $sql = 'INSERT INTO `log` (`event`, `message`, `urgency`) VALUES (?, ?, ?)';
-        $stmt = $mysqli->prepare($sql);
+        $stmt = $this->mysqli->prepare($sql);
         $stmt->bind_param('sss', $event, $message, $urgency);
         $stmt->execute();
-        unset($mysqli);
+        $this->mysqli->commit();
     }
 
     /**

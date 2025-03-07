@@ -49,7 +49,7 @@ const PID_FILENAME                      = '/var/www/html/energy/manage.pid',
       EMAIL_NOTIFICATION                = true,
       REPLACE_WITH_STUB                 = false,
       ENABLE_SLOT_COMMANDS              = true,
-      ACTIVE_TARIFF_COMBINATION_ONLY    = false,
+      ACTIVE_TARIFF_COMBINATION_ONLY    = true,
       TEST_SLOT_COMMAND                 = [
                                             'start'                 => '',
                                             'stop'                  => '',
@@ -90,8 +90,8 @@ catch (exception $e) {
     if (EMAIL_NOTIFICATION) {
         (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
                                   'html'      => false,
-                                  'bodyHTML'  => '',
-                                  'bodyAlt'   => $message]);
+                                  'bodyHTML'  => $message,
+                                  'bodyAlt'   => strip_tags($message)]);
     }
     $root = new Root();
     $root->logDb('MESSAGE', $message, 'FATAL');

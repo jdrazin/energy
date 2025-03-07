@@ -412,7 +412,7 @@ class GivEnergy extends Root
         $abs_charge_power_w     = $slot_command['abs_charge_power_w']      ?? null;
         $target_level_percent   = $slot_command['target_level_percent']    ?? null;
         $context                = $slot_command['message']                 ?? 'no context';
-        if (!DISABLE_COUNTDOWN) {
+        if (USE_CRONTAB) {   // count down to exact slot start time when in crontab mode
             $countdown_seconds      = $this->countdown_to_start_seconds($start_datetime);
             (new Root())->logDb('BATTERY', $context . ": counting down $countdown_seconds seconds ...", 'NOTICE');
             (new Root())->logDb('BATTERY', 'sending commands ...', 'NOTICE');

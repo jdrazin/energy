@@ -43,12 +43,11 @@ ini_set('mysql.connect_timeout','36000');
 
 const PID_FILENAME                      = '/var/www/html/energy/manage.pid',
       USE_PID_SEMAPHORE                 = true,
-      BLOCK_CRON                        = false,
+      USE_CRONTAB                       = true,
       ARGS                              = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION           = true,
       EMAIL_NOTIFICATION                = true,
       REPLACE_WITH_STUB                 = false,
-      DISABLE_COUNTDOWN                 = false,
       ENABLE_SLOT_COMMANDS              = true,
       ACTIVE_TARIFF_COMBINATION_ONLY    = false,
       TEST_SLOT_COMMAND                 = [
@@ -69,7 +68,7 @@ try {
             file_put_contents(PID_FILENAME, getmypid());
         }
     }
-    if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !BLOCK_CRON) || !$cron) {
+    if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && USE_CRONTAB) || !$cron) {
         if (REPLACE_WITH_STUB) {
             $octopus = (new Octopus());
             $octopus->makeActiveTariffCombinationDbSlotsLast24hrs();

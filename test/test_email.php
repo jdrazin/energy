@@ -42,8 +42,8 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 (new SMTPEmail())->email(['subject'     => 'EnergyController: Error',
-                            'html'      => false,
-                            'bodyHTML'  => '',
-                            'bodyAlt'   => 'This is a test']);
+                          'html'      => false,
+                          'bodyHTML'  => '',
+                          'bodyAlt'   => 'This is a test']);
 exit(0);
 

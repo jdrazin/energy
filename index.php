@@ -44,7 +44,7 @@ $app->get('/control/slot_command', function (Request $request, Response $respons
     $response->getBody()->write($slot_command);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->post('/control/permute', function (Request $request, Response $response) {
+$app->post('/permute', function (Request $request, Response $response) {
     $config = json_decode((string) $request->getBody(), true);
     $energy = new Energy($config);
     $energy->permute();

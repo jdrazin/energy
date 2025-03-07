@@ -35,7 +35,9 @@ class GivEnergy extends Root
                         CONTROL_CHARGE_DISCHARGE_SLOT           = 1,   // slot number used for control
                         EV_POWER_ACTIVE_IMPORT                  = 13,  // Instantaneous active power imported by EV. (W or kW)
                         EV_POWER_ACTIVE_IMPORT_UNIT             = 5,   // kW
-                        EV_METER_ID                             = 0;   // meter id
+                        EV_METER_ID                             = 0,
+                        UPPER_SOC_LIMIT_PERCENT                 = 90,
+                        LOWER_SOC_LIMIT_PERCENT                 = 10;
     private const array ENTITIES_BATTERY_AIO = [
                                             'SOLAR_W'                => ['solar',       'power'],
                                             'GRID_W'                 => ['grid',        'power'],
@@ -56,15 +58,9 @@ class GivEnergy extends Root
                                             'Pause Battery' => 'Pause Charge & Discharge',
                                             ],
                         PRESET_CHARGE_DISCHARGE_BLOCKS = [
-                                            'CHARGE' => [   2 => [  'start'                 => '04:00',
-                                                                    'stop'                  => '07:00',
-                                                                    'target_level_percent'  => 95],
-                                                            3 => [  'start'                 => '13:00',
-                                                                    'stop'                  => '16:00',
-                                                                    'target_level_percent'  => 95],
-                                                            4 => [  'start'                 => '22:00',
-                                                                    'stop'                  => '00:00',
-                                                                    'target_level_percent'  => 95]],
+                                            'CHARGE' => [   2 => [  'start'                 => '02:00',
+                                                                    'stop'                  => '05:00',
+                                                                    'target_level_percent'  => self::UPPER_SOC_LIMIT_PERCENT]],
                                             'DISCHARGE' => []
                                         ],
                         INACTIVE_CHARGE_DISCHARGE_BLOCK = [
@@ -465,11 +461,11 @@ class GivEnergy extends Root
             case 'IDLE':    {
                                 $this->clear_slot('AC Charge');     // clear time slots
                                 $this->clear_slot('DC Discharge');
-                                //            $this->command( 'write', 'Pause Battery',           self::CONTROL_VALUES['Pause Battery']['Pause Charge & Discharge'], null, $context);
+                                $this->command( 'write', 'Enable Eco Mode', null, 0, $context);
                                 break;
                             }
             default: {
-                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Unknown direction: ' . $mode));
+                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Unknown control mode: ' . $mode));
             }
         }
     }
@@ -548,8 +544,10 @@ class GivEnergy extends Root
     private function clear_slot($type): void
     {
         $block_number = self::CONTROL_CHARGE_DISCHARGE_SLOT;
-        $this->command('write', "$type $block_number Start Time", null, '00:00', __FUNCTION__);
-        $this->command('write', "$type $block_number End Time", null, '00:00', __FUNCTION__);
+        $command_prefix = $type . ' ' . $block_number . ' ';
+        $this->command('write', $command_prefix . 'Start Time', null, '00:00', __FUNCTION__);
+        $this->command('write', $command_prefix . 'End Time', null, '00:00', __FUNCTION__);
+        $this->command('write', $command_prefix . ($type == 'AC Charge' ?  'Upper' : 'Lower') . ' SOC % Limit', ($type == 'AC Charge' ?  self::UPPER_SOC_LIMIT_PERCENT : self::LOWER_SOC_LIMIT_PERCENT), null, __FUNCTION__);
     }
 
     /**

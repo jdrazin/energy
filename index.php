@@ -44,11 +44,13 @@ $app->get('/control/slot_command', function (Request $request, Response $respons
     $response->getBody()->write($slot_command);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->post('/permute', function (Request $request, Response $response) {
-    $config = json_decode((string) $request->getBody(), true);
-    $energy = new Energy($config);
-    $energy->permute();
-    $response->getBody()->write("Hello!");
+$app->post('/projection', function (Request $request, Response $response) {
+    $config_json = (string) $request->getBody();
+    $config = json_decode($config_json, true);
+    $energy = new Energy(null);
+    $email = $config['email'];
+    $job_id = $energy->submitJob($config_json, $email);
+    $response->getBody()->write('Your job id=' . $job_id . '.  Will e-mail you at ' . $email);
     return $response;
 });
 $app->run();

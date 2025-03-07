@@ -13,7 +13,6 @@ class Energy extends Root
     public array $time_units                        = [ 'HOUR_OF_DAY'   => 24,
                                                         'MONTH_OF_YEAR' => 12,
                                                         'DAY_OF_YEAR'   => 366];
-    private $jobId;
 
     /**
      * @throws Exception
@@ -124,10 +123,20 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function permute(): void  {
+    public function job($config): int {
         echo 'processing ' . self::APIS_PATH . PHP_EOL;
-        $this->jobId = crc32(json_encode($this->config));
-        $this->deleteJob();
+        $job = crc32(json_encode($config));
+        $this->submitJob($job, $config);
+
+
+        return $job;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function permute(): void  {
+
         $config_permutations = new ParameterPermutations($this->config);
         $permutations = $config_permutations->permutations;
         foreach ($permutations as $key => $permutation) {
@@ -135,7 +144,6 @@ class Energy extends Root
             echo PHP_EOL . ($key+1) . ' of ' . count($permutations) . ' (' . $config_permuted['description'] . '): ';
             $this->simulate($config_permuted['config'], $this->config['time']['project_duration_years'], $permutation);
         }
-        echo PHP_EOL . 'done' . PHP_EOL;
    }
 
     private function parameters_permuted($config, $permutation, $variables): array {
@@ -151,11 +159,15 @@ class Energy extends Root
                 'description' => rtrim($description, ', ')];
     }
 
-    private function deleteJob(): void {
-        $sql = 'DELETE FROM `permutations`
-			       WHERE `job` = ?';
+    public function submitJob($config_json, $email): int {
+        $sql = 'INSERT INTO `jobs` (`job`, `request`, `email`)
+                            VALUES (?,     ?,         ?)
+                    ON DUPLICATE KEY UPDATE  `request`    = ?,
+                                             `response`   = NULL,
+                                             `submitted`  = NOW()';
+        $job = crc32($config_json);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $this->jobId) ||
+            !$stmt->bind_param('isss', $job, $config_json, $email, $config_json) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);

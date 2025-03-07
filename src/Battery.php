@@ -26,7 +26,7 @@ class Battery extends Component
             $this->max_charge_w = 1000.0 * $config['max_charge_kw'];
             $this->max_discharge_w = 1000.0 * $config['max_discharge_kw'];
             $this->store_j = 0.0;
-            $this->store_j_max = $this->initial_raw_capacity_kwh * Energy::JOULES_PER_KWH;
+            $this->store_j_max = $this->initial_raw_capacity_kwh * \Src\Energy::JOULES_PER_KWH;
             $this->charge_state = 0.0;
             $this->inverter = new Inverter($config['inverter'] ?? null, $time, $npv);
             $this->cycles = 0.0;
@@ -74,7 +74,7 @@ class Battery extends Component
         $this->cycles += 0.5 * abs($request_consumed_j) / $this->store_j_max;
         $this->capacity_kwh = max($this->initial_raw_capacity_kwh * (1.0 + (($this->reduced_capacity - 1.0) * ($this->cycles / $this->cycles_to_reduced_capacity))), 0.0);
         if ($this->capacity_kwh >= self::BATTERY_DEAD_KWH) {
-            $this->store_j_max = $this->capacity_kwh * Energy::JOULES_PER_KWH;
+            $this->store_j_max = $this->capacity_kwh * \Src\Energy::JOULES_PER_KWH;
             $this->charge_state = $this->store_j / $this->store_j_max;
         } else {
             $this->active = false;                                          // disable battery when capacity falls below minimum threshold

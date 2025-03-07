@@ -57,7 +57,6 @@ class Octopus extends Root
             $db_slots = new DbSlots();                                           // make day slots
             $values = new Values();
             $givenergy = new GivEnergy();
-            // $givenergy->initialise();
             $givenergy->getData();                                                // grid, load_house, solar (yesterday, today) > `values`
             (new EmonCms())->getData();                                           // home heating and temperature > `values`
             $values->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature

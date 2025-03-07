@@ -437,6 +437,7 @@ class GivEnergy extends Root
                                 break;
                             }
             case 'ECO':     { // matches battery discharge power to net load: load - solar (i.e. zero export)
+                                $this->command( 'write', 'Enable Eco Mode', null, 1, $context);
                                 $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
                                     'CHARGE',
                                     [
@@ -459,9 +460,9 @@ class GivEnergy extends Root
                                 break;
                             }
             case 'IDLE':    {
+                                $this->command( 'write', 'Enable Eco Mode', null, 0, $context);
                                 $this->clear_slot('AC Charge');     // clear time slots
                                 $this->clear_slot('DC Discharge');
-                                $this->command( 'write', 'Enable Eco Mode', null, 0, $context);
                                 break;
                             }
             default: {

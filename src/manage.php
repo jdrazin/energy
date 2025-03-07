@@ -49,7 +49,7 @@ const PID_FILENAME                      = '/var/www/html/energy/manage.pid',
       ARGS                              = ['CRON' => 1],
       USE_STUB                          = false,
       DISABLE_COUNTDOWN                 = false,
-      ENABLE_SLOT_COMMANDS              = false,
+      ENABLE_SLOT_COMMANDS              = true,
       ACTIVE_TARIFF_COMBINATION_ONLY    = false,
       TEST_SLOT_COMMAND         = [
                                     'start'                 => '',

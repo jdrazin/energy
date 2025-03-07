@@ -41,7 +41,7 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const DISABLE_COUNTDOWN = true;
+const USE_CRONTAB = false;
 const TEST_SLOT_COMMAND = [
                             'start'                 => '08:58',
                             'stop'                  => '09:00',

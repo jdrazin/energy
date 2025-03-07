@@ -142,7 +142,7 @@ class Values extends Root
                          `type`   = ? AND
                          `datetime` BETWEEN (NOW() - INTERVAL ? MINUTE) AND NOW()';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ssi', $entity, $type, $start, $offset_minutes, $stop, $offset_minutes) ||
+            !$stmt->bind_param('ssi', $entity, $type, $minutes) ||
             !$stmt->bind_result($average) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {

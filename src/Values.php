@@ -24,12 +24,15 @@ class Values extends Root
 
     private mixed $db_slots;
 
+    private float $solar_pv_inverter_power_threshold_w;
+
     /**
      * @throws Exception
      */
     public function __construct()
     {
         parent::__construct();
+        $this->solar_pv_inverter_power_threshold_w = (float) $this->config['solar_pv']['inverter']['power_threshold_w'];
     }
 
     /**

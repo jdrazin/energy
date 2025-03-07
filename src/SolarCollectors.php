@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Src;
 
 use Energy;
@@ -37,7 +36,7 @@ class SolarCollectors extends Component
             }
             $this->value_install_gbp = -$this->value($this->cost, 'install_gbp');
             $maintenance_pa_gbp = $this->value($this->cost, 'maintenance_pa_gbp');
-            $this->value_maintenance_per_timestep_gbp = -($maintenance_pa_gbp * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR));
+            $this->value_maintenance_per_timestep_gbp = -($maintenance_pa_gbp * $time->step_s / (\Src\Energy::DAYS_PER_YEAR * \Src\Energy::HOURS_PER_DAY * \Src\Energy::SECONDS_PER_HOUR));
 
             $this->collectors = [];
             $this->collectors_value_install_gbp = [];
@@ -93,7 +92,7 @@ class SolarCollectors extends Component
                     $collector_maintenance_base_pa_gbp = $this->value($cost, 'maintenance_pa_gbp');
                     $collector_maintenance_panels_pa_gbp = $cost_maintenance_per_panel_gbp * $this->panels_number[$key];
                     $collector_maintenance_pa_gbp = $collector_maintenance_base_pa_gbp + $collector_maintenance_panels_pa_gbp;
-                    $this->value_maintenance_per_timestep_gbp -= $collector_maintenance_pa_gbp * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+                    $this->value_maintenance_per_timestep_gbp -= $collector_maintenance_pa_gbp * $time->step_s / (\Src\Energy::DAYS_PER_YEAR * \Src\Energy::HOURS_PER_DAY * \Src\Energy::SECONDS_PER_HOUR);
 
                     $this->solar[$key] = new Solar($location, $area['orientation']);
                     $this->thermal[$key] = new ThermalInertia($initial_temperature,
@@ -122,7 +121,7 @@ class SolarCollectors extends Component
     public function update_output($transfer_j, $time): void
     {
         $time_values = $time->values();
-        $transfer_kwh = $transfer_j / Energy::JOULES_PER_KWH;
+        $transfer_kwh = $transfer_j / \Src\Energy::JOULES_PER_KWH;
         foreach ($time->units as $time_unit => $number_unit_values) {
             $this->output_kwh[$time_unit][$time_values[$time_unit]]['output_kwh'] += $transfer_kwh;
         }

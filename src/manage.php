@@ -97,9 +97,9 @@ catch (exception $e) {
     $root->logDb('MESSAGE', $message, 'FATAL');
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
-        $root->logDb('MESSAGE', 'Attempting to initialise ...', 'INFO');
+        $root->logDb('MESSAGE', 'Attempting to initialise ...', 'NOTICE');
         (new GivEnergy())->reset_inverter();
-        $root->logDb('MESSAGE', '... initialise done', 'INFO');
+        $root->logDb('MESSAGE', '... initialise done', 'NOTICE');
     }
     exit(1);
 }

@@ -112,7 +112,7 @@ class Values extends Root
             else {
                 $power_w = $this->forecast_average_latest('SOLAR_W', $start, $stop);
             }
-            $powers_kw[$slot] = round($power_w / 1000.0, 3);
+            $powers_kw[$slot] = round(min($power_w, $this->solar_pv_inverter_power_threshold_w) / 1000.0, 3);       // clip solar generation to maximum power
         }
         $this->updateSlotPowerskW($powers_kw, 'solar_kw');
     }

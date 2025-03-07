@@ -46,7 +46,7 @@ const PID_FILENAME                      = '/var/www/html/energy/manage.pid',
       USE_CRONTAB                       = true,
       ARGS                              = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION           = true,
-      EMAIL_NOTIFICATION                = true,
+      EMAIL_NOTIFICATION_ON_ERROR       = true,
       REPLACE_WITH_STUB                 = false,
       ENABLE_SLOT_COMMANDS              = true,
       ACTIVE_TARIFF_COMBINATION_ONLY    = true,
@@ -87,7 +87,7 @@ try {
 }
 catch (exception $e) {
     $message = $e->getMessage();
-    if (EMAIL_NOTIFICATION) {
+    if (EMAIL_NOTIFICATION_ON_ERROR) {
         (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
                                   'html'      => false,
                                   'bodyHTML'  => $message,

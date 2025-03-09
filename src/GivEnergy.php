@@ -36,8 +36,8 @@ class GivEnergy extends Root
                         EV_POWER_ACTIVE_IMPORT                  = 13,  // Instantaneous active power imported by EV. (W or kW)
                         EV_POWER_ACTIVE_IMPORT_UNIT             = 5,   // kW
                         EV_METER_ID                             = 0,
-                        UPPER_SOC_LIMIT_PERCENT                 = 90,
-                        LOWER_SOC_LIMIT_PERCENT                 = 10;
+                        UPPER_SOC_LIMIT_PERCENT                 = 95,
+                        LOWER_SOC_LIMIT_PERCENT                 = 5;
     private const array ENTITIES_BATTERY_AIO = [
                                             'SOLAR_W'                => ['solar',       'power'],
                                             'GRID_W'                 => ['grid',        'power'],
@@ -424,6 +424,14 @@ class GivEnergy extends Root
                                 if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
                                     throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
                                 }
+                                /*
+                                 * allow discharge to continue beyond reaching target to avoid satisfying load from grid at peak times
+                                 */
+                                $target_level_percent = ($mode == 'DISCHARGE') ? self::LOWER_SOC_LIMIT_PERCENT : $target_level_percent;
+                                /*
+                                 * stay inside operating range
+                                 */
+                                $target_level_percent = min(max(self::LOWER_SOC_LIMIT_PERCENT, $target_level_percent), self::UPPER_SOC_LIMIT_PERCENT);
                                 $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
                                                                     $mode,
                                                                     [

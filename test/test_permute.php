@@ -16,6 +16,10 @@ $config_json = file_get_contents(CONFIG_PATH);
 $config = json_decode($config_json, true);
 $energy = new Energy(null);
 $email = $config['email'];
-$job_id = $energy->submitJob($config_json, $email);
+try {
+    $job_id = $energy->submitJob($config_json, $email);
+} catch (\Exception $e) {
+
+}
 exit(0);
 

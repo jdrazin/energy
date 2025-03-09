@@ -44,13 +44,13 @@ $app->get('/control/slot_command', function (Request $request, Response $respons
     $response->getBody()->write($slot_command);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->post('/projection', function (Request $request, Response $response) {
+$app->post('/projections', function (Request $request, Response $response) {
     $config_json = (string) $request->getBody();
     $config = json_decode($config_json, true);
     $energy = new Energy(null);
     $email = $config['email'];
     $job_id = $energy->submitJob($config_json, $email);
-    $response->getBody()->write('Your job id=' . $job_id . '.  Will e-mail you at ' . $email);
+    $response->getBody()->write('Get your result at: https://www.drazin.net:8443/projections?job=' . $job_id . '. Will e-mail you when ready at ' . $email . '. Ciao!');
     return $response;
 });
 $app->run();

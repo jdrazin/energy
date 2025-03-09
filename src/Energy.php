@@ -159,13 +159,14 @@ class Energy extends Root
                 'description' => rtrim($description, ', ')];
     }
 
-    public function submitJob($config_json, $email): int {
-        $sql = 'INSERT INTO `jobs` (`job`, `request`, `email`)
+    public function submitJob($config_json, $email): int
+    {
+        $sql = 'INSERT INTO `jobs` (`id`,  `request`, `email`)
                             VALUES (?,     ?,         ?)
-                    ON DUPLICATE KEY UPDATE  `request`    = ?,
-                                             `response`   = NULL,
-                                             `submitted`  = NOW()';
-        $job = crc32($config_json);
+                    ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
+                                             `response`  = NULL,
+                                             `submitted` = NOW()';
+        $job = crc32($config_json . $email);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('isss', $job, $config_json, $email, $config_json) ||
             !$stmt->execute() ||
@@ -174,6 +175,7 @@ class Energy extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
+        return $job;
     }
     private function permutationId($permutation): int { // returns permutation id
         $battery       = $permutation['battery'];

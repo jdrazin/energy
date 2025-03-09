@@ -415,8 +415,8 @@ class GivEnergy extends Root
         if (USE_CRONTAB) {   // count down to exact slot start time when in crontab mode
             $countdown_seconds      = $this->countdown_to_start_seconds($start_datetime);
             (new Root())->logDb('BATTERY', $message . ": counting down $countdown_seconds seconds ...", 'NOTICE');
-            (new Root())->logDb('BATTERY', 'sending commands ...', 'NOTICE');
             sleep($countdown_seconds);
+            (new Root())->logDb('BATTERY', 'sending commands ...', 'NOTICE');
         }
         switch ($mode) {
             case 'CHARGE':

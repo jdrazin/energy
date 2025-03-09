@@ -50,7 +50,7 @@ $app->post('/projections', function (Request $request, Response $response) {
     $energy = new Energy(null);
     $email = $config['email'];
     $projection_id = $energy->submitProjection($config_json, $email);
-    $response->getBody()->write('Get your result at: https://www.drazin.net:8443/projections?projection=' . $projection_id . '. Will e-mail you when ready at ' . $email . '. Ciao!');
+    $response->getBody()->write('Get your result at: https://www.drazin.net:8443/projections?id=' . $projection_id . '. Will e-mail you when ready at ' . $email . '. Ciao!');
     return $response;
 });
 $app->run();

@@ -38,7 +38,7 @@ try {
 
         }
         else {
-           (new Energy(null))->processNextJob();
+           (new Energy(null))->processNextProjection();
         }
     }
     if (USE_PID_SEMAPHORE) {

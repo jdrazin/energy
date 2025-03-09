@@ -126,7 +126,7 @@ class Energy extends Root
     public function projection($config): int {
         echo 'processing ' . self::APIS_PATH . PHP_EOL;
         $projection = crc32(json_encode($config));
-        $this->submitJob($projection, $config);
+        $this->submitProjection($projection, $config);
 
 
         return $projection;
@@ -159,7 +159,7 @@ class Energy extends Root
                 'description' => rtrim($description, ', ')];
     }
 
-    public function submitJob($config_json, $email): int
+    public function submitProjection($config_json, $email): int
     {
         $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`)
                             VALUES (?,     ?,         ?)
@@ -178,7 +178,7 @@ class Energy extends Root
         return $projection;
     }
 
-    public function processNextJob(): int
+    public function processNextProjection(): int
     {
         $sql = 'SELECT `id`
                   FROM `projections` `j`

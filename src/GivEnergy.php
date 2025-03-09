@@ -411,10 +411,10 @@ class GivEnergy extends Root
         $mode                   = $slot_command['mode']                    ?? null;
         $abs_charge_power_w     = $slot_command['abs_charge_power_w']      ?? null;
         $target_level_percent   = $slot_command['target_level_percent']    ?? null;
-        $context                = $slot_command['message']                 ?? 'no context';
+        $message                = $slot_command['message']                 ?? 'no context';
         if (USE_CRONTAB) {   // count down to exact slot start time when in crontab mode
             $countdown_seconds      = $this->countdown_to_start_seconds($start_datetime);
-            (new Root())->logDb('BATTERY', $context . ": counting down $countdown_seconds seconds ...", 'NOTICE');
+            (new Root())->logDb('BATTERY', $message . ": counting down $countdown_seconds seconds ...", 'NOTICE');
             (new Root())->logDb('BATTERY', 'sending commands ...', 'NOTICE');
             sleep($countdown_seconds);
         }
@@ -445,7 +445,7 @@ class GivEnergy extends Root
                                 break;
                             }
             case 'ECO':     { // matches battery discharge power to net load: load - solar (i.e. zero export)
-                                $this->command( 'write', 'Enable Eco Mode', null, 1, $context);
+                                $this->command( 'write', 'Enable Eco Mode', null, 1, $message);
                                 $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
                                     'CHARGE',
                                     [
@@ -468,7 +468,7 @@ class GivEnergy extends Root
                                 break;
                             }
             case 'IDLE':    {
-                                $this->command( 'write', 'Enable Eco Mode', null, 0, $context);
+                                $this->command( 'write', 'Enable Eco Mode', null, 0, $message);
                                 $this->clear_slot('AC Charge');     // clear time slots
                                 $this->clear_slot('DC Discharge');
                                 break;

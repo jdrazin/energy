@@ -547,8 +547,8 @@ class EnergyCost extends Root
                 $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
                 $abs_charge_power_w = abs($charge_power_w);
                 $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
-                $message = '@' . round($abs_charge_power_w) . 'W to ' . $target_level_percent . '% between ' . $start . ' and ' . $stop;
-            } else {                                                                       // otherwise IDLE
+                $message = '@' . round($abs_charge_power_w) . 'W ' . ($mode == 'CHARGE' ? ' to ' . $target_level_percent . '% ': '') . 'between ' . $start . ' and ' . $stop;
+            } else {                                                                      // otherwise IDLE
                 $mode = 'IDLE';
                 $abs_charge_power_w = null;
                 $target_level_percent = null;

@@ -123,13 +123,13 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function job($config): int {
+    public function projection($config): int {
         echo 'processing ' . self::APIS_PATH . PHP_EOL;
-        $job = crc32(json_encode($config));
-        $this->submitJob($job, $config);
+        $projection = crc32(json_encode($config));
+        $this->submitJob($projection, $config);
 
 
-        return $job;
+        return $projection;
     }
 
     /**
@@ -161,42 +161,41 @@ class Energy extends Root
 
     public function submitJob($config_json, $email): int
     {
-        $sql = 'INSERT INTO `jobs` (`id`,  `request`, `email`)
+        $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`)
                             VALUES (?,     ?,         ?)
                     ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
                                              `response`  = NULL,
                                              `submitted` = NOW()';
-        $job = crc32($config_json . $email);
+        $projection = crc32($config_json . $email);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('isss', $job, $config_json, $email, $config_json) ||
+            !$stmt->bind_param('isss', $projection, $config_json, $email, $config_json) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        return $job;
+        return $projection;
     }
 
-    public function processNextJob($config_json, $email): int
+    public function processNextJob(): int
     {
         $sql = 'SELECT `id`
-                  FROM `jobs` `j`
+                  FROM `projections` `j`
                   INNER JOIN (SELECT MIN(`submitted`) AS `min_submitted`
-                                FROM `jobs`
+                                FROM `projections`
                                 WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
                   WHERE `j`.`status` = \'IN_QUEUE\'
                   LIMIT 0, 1';
-        $job = crc32($config_json . $email);
+        $projection = crc32($config_json . $email);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('isss', $job, $config_json, $email, $config_json) ||
-            !$stmt->execute() ||
-            !$this->mysqli->commit()) {
+            !$stmt->bind_result($id) ||
+            !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        return $job;
+        return $projection;
     }
     private function permutationId($permutation): int { // returns permutation id
         $battery       = $permutation['battery'];
@@ -204,10 +203,10 @@ class Energy extends Root
         $boiler        = $permutation['boiler'];
         $solar_pv      = $permutation['solar_pv'];
         $solar_thermal = $permutation['solar_thermal'];
-        $sql = 'INSERT INTO `permutations` (`job`, `start`, `stop`, `battery`, `heat_pump`, `boiler`, `solar_pv`, `solar_thermal`)
+        $sql = 'INSERT INTO `permutations` (`projection`, `start`, `stop`, `battery`, `heat_pump`, `boiler`, `solar_pv`, `solar_thermal`)
 			                        VALUES (?,     NOW(),   NULL,   ?,         ?,           ?,        ?,          ?              )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iiiiii', $this->jobId, $battery, $heat_pump, $boiler, $solar_pv, $solar_thermal) ||
+            !$stmt->bind_param('iiiiii', $this->projectionId, $battery, $heat_pump, $boiler, $solar_pv, $solar_thermal) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -221,8 +220,8 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    private function updatePermutation($permutation_parameters, $job, $results, $projection_duration_years): void { // add
-        $id                 = $job['newResultId'];
+    private function updatePermutation($permutation_parameters, $projection, $results, $projection_duration_years): void { // add
+        $id                 = $projection['newResultId'];
         $comment            = $this->config['comment'];
         $sum_gbp            = $results['npv_summary']['sum_gbp'];
         $parameters_json    = json_encode($permutation_parameters, JSON_PRETTY_PRINT);
@@ -452,7 +451,7 @@ class Energy extends Root
         }
         $result = ['newResultId' => $this->permutationId($permutation),
                    'permutation' => $permutation];
-        $this->updatePermutation($config, $result, $results, $time->year);  // end job
+        $this->updatePermutation($config, $result, $results, $time->year);  // end projection
     }
 
     function npv_summary($components): array {

@@ -17,7 +17,7 @@ $config = json_decode($config_json, true);
 $energy = new Energy(null);
 $email = $config['email'];
 try {
-    $job_id = $energy->submitJob($config_json, $email);
+    $projection_id = $energy->submitJob($config_json, $email);
 } catch (\Exception $e) {
 
 }

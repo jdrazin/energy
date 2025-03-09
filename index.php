@@ -49,8 +49,8 @@ $app->post('/projections', function (Request $request, Response $response) {
     $config = json_decode($config_json, true);
     $energy = new Energy(null);
     $email = $config['email'];
-    $job_id = $energy->submitJob($config_json, $email);
-    $response->getBody()->write('Get your result at: https://www.drazin.net:8443/projections?job=' . $job_id . '. Will e-mail you when ready at ' . $email . '. Ciao!');
+    $projection_id = $energy->submitJob($config_json, $email);
+    $response->getBody()->write('Get your result at: https://www.drazin.net:8443/projections?projection=' . $projection_id . '. Will e-mail you when ready at ' . $email . '. Ciao!');
     return $response;
 });
 $app->run();

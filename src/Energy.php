@@ -178,24 +178,38 @@ class Energy extends Root
         return $projection;
     }
 
-    public function processNextProjection(): int
+    public function processNextProjection(): void
     {
-        $sql = 'SELECT `id`
+        $sql = 'SELECT `j`.`id`,
+                       `j`.`request`,
+                       `j`.`email`
                   FROM `projections` `j`
                   INNER JOIN (SELECT MIN(`submitted`) AS `min_submitted`
                                 FROM `projections`
                                 WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
                   WHERE `j`.`status` = \'IN_QUEUE\'
                   LIMIT 0, 1';
-        $projection = crc32($config_json . $email);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($id) ||
-            !$stmt->execute()) {
+            !$stmt->bind_result($id, $request, $email) ||
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        return $projection;
+        unset($stmt);
+        $sql = 'UPDATE  `projections`
+                  SET   `status` = \'IN_PROGRESS\'
+                  WHERE `id` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $id) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+
     }
     private function permutationId($permutation): int { // returns permutation id
         $battery       = $permutation['battery'];

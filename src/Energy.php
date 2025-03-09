@@ -177,6 +177,27 @@ class Energy extends Root
         }
         return $job;
     }
+
+    public function processNextJob($config_json, $email): int
+    {
+        $sql = 'SELECT `id`
+                  FROM `jobs` `j`
+                  INNER JOIN (SELECT MIN(`submitted`) AS `min_submitted`
+                                FROM `jobs`
+                                WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
+                  WHERE `j`.`status` = \'IN_QUEUE\'
+                  LIMIT 0, 1';
+        $job = crc32($config_json . $email);
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('isss', $job, $config_json, $email, $config_json) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        return $job;
+    }
     private function permutationId($permutation): int { // returns permutation id
         $battery       = $permutation['battery'];
         $heat_pump     = $permutation['heat_pump'];

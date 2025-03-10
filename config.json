@@ -344,7 +344,7 @@
     "time": {
         "zone" : "GB",
         "start": "2025-01-01 00:00:00",
-        "project_duration_years": 20,
+        "project_duration_years": 5,
         "timestep_seconds": 216
     },
     "permute": [

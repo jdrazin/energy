@@ -248,30 +248,45 @@ class Energy extends Root
      * @throws Exception
      */
     public function get_projection($projection_id): bool|string {
-        $sql = 'SELECT      `duration_years`,
-                            `npv`,
-                            CONCAT(
-                                IF(`battery`,       \'SB,\',  \'\'), 
-                                IF(`heat_pump`,     \'HP,\',  \'\'), 
-                                IF(`boiler`,        \'BO,\',  \'\'), 
-                                IF(`heat_pump`,     \'HP,\',  \'\'), 
-                                IF(`solar_pv`,      \'PV\',   \'\'), 
-                                IF(`solar_thermal`, \'ST\',   \'\')
-                                ) AS `permutation`
-                    FROM      `permutations`
-                      WHERE     `projection` = ?
-                      ORDER BY  `duration_years`';
+        // get acronyms
+        $sql = 'SELECT DISTINCT `acronym`
+                   FROM         `permutations`
+                   WHERE        `projection` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
-            !$stmt->bind_result($duration_years, $npv, $permutation) ||
+            !$stmt->bind_result($acronym) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $projection = [];
+        $acronyms = [];
         while ($stmt->fetch()) {
-            $projection[$permutation][$duration_years] = $npv;
+            $acronyms[] = $acronym;
+        }
+        $sql = 'SELECT       `acronym`,
+                             `duration_years`,
+                             `npv`
+                   FROM      `permutations`
+                   WHERE     `projection` = ? AND
+                             `acronym` = ?
+                   ORDER BY  `duration_years`';
+        unset($stmt);
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('is', $projection_id, $acronym) ||
+            !$stmt->bind_result($acronym, $duration_years, $npv)) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $projection = [];
+        foreach ($acronyms as $acronym) {
+            $years = [];
+            $stmt->execute();
+            while ($stmt->fetch()) {
+                $years[$duration_years] = $npv;
+            }
+            $projection[$acronym] = $years;
         }
         return json_encode($projection, JSON_PRETTY_PRINT);
     }

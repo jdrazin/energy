@@ -204,13 +204,13 @@ class Energy extends Root
             $this->permute($projection_id, json_decode($request, true)); // process each permutation
             $this->projectionStatus($projection_id, 'COMPLETED');
             $this->mysqli->commit();
-            $message = 'Your result is ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '. Ciao!';
             if (filter_var($email, FILTER_VALIDATE_EMAIL) &&
-                (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
+                (new SMTPEmail())->email(['subject'   => 'Renewable Visions: your results are ready',
                                           'html'      => false,
-                                          'bodyHTML'  => $message,
+                                          'bodyHTML'  => ($message = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br><br>Ciao!<br>'),
                                           'bodyAlt'   => strip_tags($message)])) {
                 $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, 'NOTICE');
+                $this->projectionStatus($projection_id, 'NOTIFIED');
             }
             else {
                 $this->logDb('MESSAGE', 'Notification failed: ' . $email . 'of completed projection ' . $projection_id, 'WARNING');

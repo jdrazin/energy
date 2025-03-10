@@ -123,13 +123,13 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function permute($config): void  {
+    public function permute($projection_id, $config): void  {
         $config_permutations = new ParameterPermutations($config);
         $permutations = $config_permutations->permutations;
         foreach ($permutations as $key => $permutation) {
             $config_permuted = $this->parameters_permuted($this->config, $permutation, $config_permutations->variables);
             echo PHP_EOL . ($key+1) . ' of ' . count($permutations) . ' (' . $config_permuted['description'] . '): ';
-            $this->simulate($config_permuted['config'], $this->config['time']['project_duration_years'], $permutation);
+            $this->simulate($projection_id, $config_permuted['config'], $this->config['time']['project_duration_years'], $permutation);
         }
    }
 
@@ -152,6 +152,7 @@ class Energy extends Root
                             VALUES (?,     ?,         ?)
                     ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
                                              `response`  = NULL,
+                                             `status`    = \'IN_QUEUE\',
                                              `submitted` = NOW()';
         $projection = crc32($config_json . $email);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
@@ -180,23 +181,25 @@ class Energy extends Root
                   WHERE `j`.`status` = \'IN_QUEUE\'
                   LIMIT 0, 1';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($id, $request, $email) ||
+            !$stmt->bind_result($projection_id, $request, $email) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        if ($stmt->fetch()) {   // process next projection if exists
-            $this->projectionStatus($id, 'IN_PROGRESS');
-            $this->permute(json_decode($request, true)); // process each permutation
-            $this->projectionStatus($id, 'COMPLETED');
-            $this->mysqli->commit();
-            $this->projectionStatus($id, 'NOTIFIED');
-        }
+        $stmt->fetch();
         unset($stmt);
+        if ($request) {   // process next projection if exists
+    //        $this->projectionStatus($id, 'IN_PROGRESS');
+            $this->permute($projection_id, json_decode($request, true)); // process each permutation
+    //        $this->projectionStatus($id, 'COMPLETED');
+            $this->mysqli->commit();
+    //        $this->projectionStatus($id, 'NOTIFIED');
+        }
     }
 
     private function projectionStatus($id, $status): void {
+        $this->mysqli->commit();
         $sql = 'UPDATE  `projections`
                   SET   `status` = ?
                   WHERE `id` = ?';
@@ -210,7 +213,7 @@ class Energy extends Root
         }
     }
 
-    private function permutationId($permutation): int { // returns permutation id
+    private function permutationId($projection_id, $permutation): int { // returns permutation id
         $battery       = $permutation['battery'];
         $heat_pump     = $permutation['heat_pump'];
         $boiler        = $permutation['boiler'];
@@ -219,7 +222,7 @@ class Energy extends Root
         $sql = 'INSERT INTO `permutations` (`projection`, `start`, `stop`, `battery`, `heat_pump`, `boiler`, `solar_pv`, `solar_thermal`)
 			                        VALUES (?,     NOW(),   NULL,   ?,         ?,           ?,        ?,          ?              )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iiiiii', $this->projectionId, $battery, $heat_pump, $boiler, $solar_pv, $solar_thermal) ||
+            !$stmt->bind_param('iiiiii', $projection_id, $battery, $heat_pump, $boiler, $solar_pv, $solar_thermal) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -316,7 +319,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($config, $project_duration_years, $permutation): void {
+    function simulate($projection_id, $config, $project_duration_years, $permutation): void {
         $npv                            = $config['npv'];
         $time                           = new Time($config['time']['start'], $project_duration_years, $config['time']['timestep_seconds'], $this->time_units);
         $this->step_s                   = $time->step_s;
@@ -346,9 +349,8 @@ class Energy extends Root
                 $components_active[] = $component;
             }
         }
-        $this->mysqli->commit();
         $this->install($components_active, $time);                                                                                                                  // get install costs
-        $this->year_summary($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $permutation);             // summarise year 0
+        $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $permutation);             // summarise year 0
         $export_limit_j = 1000.0*$time->step_s*$supply_electric->export_limit_kw;
         while ($time->next_timestep()) {                                                                                                                            // timestep through years 0 ... N-1
             $this->value_maintenance($components_active, $time);                                                                                                    // add timestep component maintenance costs
@@ -443,7 +445,7 @@ class Energy extends Root
             $supply_boiler  ->transfer_consume_j($time, 'import',                                       $supply_boiler_j);                                  // import boiler fuel consumed
             $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
             if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
-                $this->year_summary($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation);  // summarise year at year end
+                $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation);  // summarise year at year end
             }
         }
     }
@@ -451,7 +453,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function year_summary($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation): void {
+    public function year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation): void {
         echo ($time->year ? ', ' : '') . $time->year;
         $supply_electric->sum($time);
         $supply_boiler->sum($time);
@@ -462,7 +464,7 @@ class Energy extends Root
             $kwh = $heatpump->kwh['YEAR'][$time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;
         }
-        $result = ['newResultId' => $this->permutationId($permutation),
+        $result = ['newResultId' => $this->permutationId($projection_id, $permutation),
                    'permutation' => $permutation];
         $this->updatePermutation($config, $result, $results, $time->year);  // end projection
     }

@@ -233,6 +233,37 @@ class Energy extends Root
         }
     }
 
+    /**
+     * @throws Exception
+     */
+    public function get_projection($projection_id): bool|string {
+        $sql = 'SELECT      `duration_years`,
+                            `npv`,
+                            CONCAT(
+                                IF(`battery`,       \'SB,\',  \'\'), 
+                                IF(`heat_pump`,     \'HP,\',  \'\'), 
+                                IF(`boiler`,        \'BO,\',  \'\'), 
+                                IF(`heat_pump`,     \'HP,\',  \'\'), 
+                                IF(`solar_pv`,      \'PV\',   \'\'), 
+                                IF(`solar_thermal`, \'ST\',   \'\')
+                                ) AS `permutation`
+                    FROM      `permutations`
+                      WHERE     `projection` = ?
+                      ORDER BY  `duration_years`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $projection_id) ||
+            !$stmt->bind_result($duration_years, $npv, $permutation) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $projection = [];
+        while ($stmt->fetch()) {
+            $projection[$permutation][$duration_years] = $npv;
+        }
+        return json_encode($projection, JSON_PRETTY_PRINT);
+    }
     private function permutationId($projection_id, $permutation): int { // returns permutation id
         $battery       = $permutation['battery'];
         $heat_pump     = $permutation['heat_pump'];

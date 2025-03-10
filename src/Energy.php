@@ -138,7 +138,7 @@ class Energy extends Root
         $permutations = $config_permutations->permutations;
         foreach ($permutations as $key => $permutation) {
             $config_permuted = $this->parameters_permuted($this->config, $permutation, $config_permutations->variables);
-            $permutation_acronym = self::COMPONENT_ACRONYMS[$config_permuted['description']];
+            $permutation_acronym = $config_permuted['description'];
             echo PHP_EOL . ($key+1) . ' of ' . count($permutations) . ' (' . $permutation_acronym . '): ';
             $this->simulate($projection_id, $config_permuted['config'], $this->config['time']['project_duration_years'], $permutation, $permutation_acronym);
         }
@@ -147,11 +147,11 @@ class Energy extends Root
 
     private function parameters_permuted($config, $permutation, $variables): array {
         $description = '';
-        foreach (ParameterPermutations::PERMUTATION_ELEMENTS as $element_name) {
-            $value = (bool) $permutation[$element_name];
-            $config[$element_name]['active'] = $value;
-            if ($value && in_array($element_name, $variables)) {
-                $description .= $element_name . ', ';
+        foreach (ParameterPermutations::PERMUTATION_ELEMENTS as $component_name) {
+            $value = (bool) $permutation[$component_name];
+            $config[$component_name]['active'] = $value;
+            if ($value && in_array($component_name, $variables)) {
+                $description .= self::COMPONENT_ACRONYMS[$component_name] . ', ';
             }
         }
         return ['config'  => $config,

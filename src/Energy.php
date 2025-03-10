@@ -154,8 +154,8 @@ class Energy extends Root
                 $description .= self::COMPONENT_ACRONYMS[$component_name] . ', ';
             }
         }
-        return ['config'  => $config,
-                'description' => rtrim($description, ', ')];
+        return ['config'      => $config,
+                'description' => (rtrim($description, ', ') ? : 'none')];
     }
 
     public function submitProjection($config_json, $email): int

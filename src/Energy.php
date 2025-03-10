@@ -131,7 +131,7 @@ class Energy extends Root
             echo PHP_EOL . ($key+1) . ' of ' . count($permutations) . ' (' . $config_permuted['description'] . '): ';
             $this->simulate($projection_id, $config_permuted['config'], $this->config['time']['project_duration_years'], $permutation);
         }
-        echo PHP_EOL . ' done' . PHP_EOL;
+        echo PHP_EOL . 'Done' . PHP_EOL;
    }
 
     private function parameters_permuted($config, $permutation, $variables): array {

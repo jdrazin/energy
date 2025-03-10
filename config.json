@@ -276,7 +276,6 @@
         },
         "cloud_cover_months": {
             "comment":   "UK (Bristol) relative cloud cover fractions and sun insolation factors by month",
-            "comment":   "https://open-meteo.com/en/docs/historical-weather-api",
             "fractions": [0.0425, 0.123, 0.204, 0.288, 0.371, 0.455, 0.538, 0.623, 0.707, 0.79, 0.874, 0.958],
             "factors":   [0.544,  0.554, 0.534, 0.58,  0.608, 0.585, 0.607, 0.608, 0.57, 0.533, 0.561, 0.57]
         },

@@ -205,7 +205,7 @@ class Energy extends Root
             $this->permute($projection_id, json_decode($request, true)); // process each permutation
             $this->projectionStatus($projection_id, 'COMPLETED');
             $this->mysqli->commit();
-            if (filter_var($email, FILTER_VALIDATE_EMAIL) &&
+            if ($email && filter_var($email, FILTER_VALIDATE_EMAIL) &&
                 (new SMTPEmail())->email(['subject'   => 'Renewable Visions: your results are ready',
                                           'html'      => false,
                                           'bodyHTML'  => ($message = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br><br>Ciao!<br>'),

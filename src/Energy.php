@@ -123,21 +123,8 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function projection($config): int {
-        echo 'processing ' . self::APIS_PATH . PHP_EOL;
-        $projection = crc32(json_encode($config));
-        $this->submitProjection($projection, $config);
-
-
-        return $projection;
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function permute(): void  {
-
-        $config_permutations = new ParameterPermutations($this->config);
+    public function permute($config): void  {
+        $config_permutations = new ParameterPermutations($config);
         $permutations = $config_permutations->permutations;
         foreach ($permutations as $key => $permutation) {
             $config_permuted = $this->parameters_permuted($this->config, $permutation, $config_permutations->variables);
@@ -178,6 +165,9 @@ class Energy extends Root
         return $projection;
     }
 
+    /**
+     * @throws Exception
+     */
     public function processNextProjection(): void
     {
         $sql = 'SELECT `j`.`id`,
@@ -191,26 +181,35 @@ class Energy extends Root
                   LIMIT 0, 1';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($id, $request, $email) ||
-            !$stmt->execute() ||
-            !$stmt->fetch()) {
+            !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
+        if ($stmt->fetch()) {   // process next projection if exists
+            $this->projectionStatus($id, 'IN_PROGRESS');
+            $this->permute(json_decode($request, true)); // process each permutation
+            $this->projectionStatus($id, 'COMPLETED');
+            $this->mysqli->commit();
+            $this->projectionStatus($id, 'NOTIFIED');
+        }
         unset($stmt);
+    }
+
+    private function projectionStatus($id, $status): void {
         $sql = 'UPDATE  `projections`
-                  SET   `status` = \'IN_PROGRESS\'
+                  SET   `status` = ?
                   WHERE `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $id) ||
+            !$stmt->bind_param('si', $status, $id) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-
     }
+
     private function permutationId($permutation): int { // returns permutation id
         $battery       = $permutation['battery'];
         $heat_pump     = $permutation['heat_pump'];

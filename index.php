@@ -44,6 +44,14 @@ $app->get('/control/slot_command', function (Request $request, Response $respons
     $response->getBody()->write($slot_command);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
+$app->get('/projection', function (Request $request, Response $response) {
+    $energy = new Energy(null);
+    if (($projection = $energy->get_projection((int) $_GET['id'])) === false) {
+        return $response->withStatus(401);
+    }
+    $response->getBody()->write($projection);
+    return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
+});
 $app->post('/projections', function (Request $request, Response $response) {
     $config_json = (string) $request->getBody();
     $config = json_decode($config_json, true);

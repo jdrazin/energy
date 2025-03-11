@@ -9,21 +9,16 @@ class Energy extends Root
     const   float DAYS_PER_YEAR                     = 365.25;
     const   int HOURS_PER_DAY                       = 24;
     const   int SECONDS_PER_HOUR                    = 3600;
-
-    const array COMPONENT_ACRONYMS = [
-                                                    ''                  =>  'none',
-                                                    'battery'           =>  'B',
-                                                    'boiler'            =>  'BO',
-                                                    'heat_pump'         =>  'HP',
-                                                    'solar_pv'          =>  'PV',
-                                                    'solar_thermal'     =>  'ST'
-                                            ];
-
+    const array COMPONENT_ACRONYMS                  = [''              => 'none',
+                                                       'battery'       => 'B',
+                                                       'boiler'        => 'BO',
+                                                       'heat_pump'     => 'HP',
+                                                       'solar_pv'      => 'PV',
+                                                       'solar_thermal' => 'ST'];
     public float $step_s;
-    public array $time_units                        = [ 'HOUR_OF_DAY'   => 24,
-                                                        'MONTH_OF_YEAR' => 12,
-                                                        'DAY_OF_YEAR'   => 366];
-
+    public array $time_units                        = ['HOUR_OF_DAY'   => 24,
+                                                       'MONTH_OF_YEAR' => 12,
+                                                       'DAY_OF_YEAR'   => 366];
     /**
      * @throws Exception
      */
@@ -180,23 +175,39 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function processNextProjection(): void
+    public function processNextProjection($id): void
     {
-        $sql = 'SELECT `j`.`id`,
-                       `j`.`request`,
-                       `j`.`email`
-                  FROM `projections` `j`
-                  INNER JOIN (SELECT MIN(`submitted`) AS `min_submitted`
-                                FROM `projections`
-                                WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
-                  WHERE `j`.`status` = \'IN_QUEUE\'
-                  LIMIT 0, 1';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($projection_id, $request, $email) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
+        if (is_null($id)) {
+            $sql = 'SELECT `j`.`id`,
+                           `j`.`request`,
+                           `j`.`email`
+                      FROM `projections` `j`
+                      INNER JOIN (SELECT MIN(`submitted`) AS `min_submitted`
+                                    FROM `projections`
+                                    WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
+                      WHERE `j`.`status` = \'IN_QUEUE\'
+                      LIMIT 0, 1';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_result($projection_id, $request, $email) ||
+                !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
+            }
+        }
+        else {
+            $sql = 'SELECT  `request`,
+                            `email`
+                      FROM  `projections`                     
+                      WHERE `id` = ?';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('i', $id) ||
+                !$stmt->bind_result($request, $email) ||
+                !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
+            }
         }
         $stmt->fetch();
         unset($stmt);
@@ -246,7 +257,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function get_text($projection_id): string {
+    public function get_text($projection_id): ?string {
         // get acronyms
         $sql = 'SELECT  `status`,
                         IFNULL(`message`, \'\'),
@@ -263,7 +274,6 @@ class Energy extends Root
             throw new Exception($message);
         }
         $stmt->fetch();
-
         switch($status) {
             case 'COMPLETED':
             case 'NOTIFIED': {
@@ -289,9 +299,9 @@ class Energy extends Root
             case 'IN_PROGRESS': {
                 return 'Projection in progress. Come back soon. Ciao!';
             }
+            default: null;
         }
     }
-
     /**
      * @throws Exception
      */

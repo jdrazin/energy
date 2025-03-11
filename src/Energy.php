@@ -175,9 +175,9 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function processNextProjection($id): void
+    public function processNextProjection($projection_id): void
     {
-        if (is_null($id)) {
+        if (is_null($projection_id)) {
             $sql = 'SELECT `j`.`id`,
                            `j`.`request`,
                            `j`.`email`

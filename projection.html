@@ -1,6 +1,5 @@
 <html>
 <head>
-    <meta http-equiv="refresh" content="30">
     <!--Load the AJAX API-->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">                                          // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
@@ -37,19 +36,16 @@
     }
     function drawChart(data) {
         var timeSeries = new google.visualization.DataTable(data);
-        timeSeries.addColumn('date',   'Time of day');
-        timeSeries.addColumn('number', 'NEXT house consumption (kw)');
-        timeSeries.addColumn('number', 'PREV house consumption (kw)');
-        timeSeries.addColumn('number', 'NEXT grid export power (kw)');
-        timeSeries.addColumn('number', 'PREV grid export power (kw)');
-        timeSeries.addColumn('number', 'NEXT solar generation (kw)');
-        timeSeries.addColumn('number', 'PREV solar generation (kw)');
-        timeSeries.addColumn('number', 'NEXT battery level (kwh)');
-        timeSeries.addColumn('number', 'PREV battery level (kwh)');
-        var row;
-        for (var item = 1; item < data.length; item++) {
-            row = data[item];
-            timeSeries.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]]);
+        for (var column = 0; column < data.length; column++) {
+            timeSeries.addColumn('number', data[column][0]);
+        }
+        var duration_years = data[0].length;
+        var row = [];
+        for (var year = 0; year <= duration_years; year++) {
+            for (var column = 0; column < data.length; column++) {
+                row[column] = data[column][year+1];
+            }
+            timeSeries.addRow(row);
         }
         var options = {
             title: projection,
@@ -58,35 +54,25 @@
             height: 800,
             backgroundColor: '#EEEEEE',
             series: {
-                0: { lineWidth: 5, targetAxisIndex: 0},  // total_load_kw
-                1: { lineWidth: 2, targetAxisIndex: 0},  // PREV total_load_kw
-                2: { lineWidth: 5, targetAxisIndex: 0},  // grid_kw
-                3: { lineWidth: 2, targetAxisIndex: 0},  // PREV grid_kw
-                4: { lineWidth: 5, targetAxisIndex: 0},  // solar_kw
-                5: { lineWidth: 2, targetAxisIndex: 0},  // PREV solar_kw
-                6: { lineWidth: 5, targetAxisIndex: 1},  // battery level
-                7: { lineWidth: 2, targetAxisIndex: 1},  // PREV battery level
+                0: { lineWidth: 3, targetAxisIndex: 0},  // total_load_kw
+                1: { lineWidth: 3, targetAxisIndex: 0},  // PREV total_load_kw
+                2: { lineWidth: 3, targetAxisIndex: 0},  // grid_kw
+                3: { lineWidth: 3, targetAxisIndex: 0},  // PREV grid_kw
+                4: { lineWidth: 3, targetAxisIndex: 0},  // solar_kw
+                5: { lineWidth: 3, targetAxisIndex: 0},  // PREV solar_kw
+                6: { lineWidth: 3, targetAxisIndex: 0},  // battery level
+                7: { lineWidth: 3, targetAxisIndex: 0},  // PREV battery level
             },
             vAxes: {
                 0: {title: 'Net present value (GBP 000s)' }
             },
-            colors: [
-                '#4fbba9',    // total_load_kw
-                '#4fbba9',    // PREV total_load_kw
-                '#e02f25',    // grid_kw
-                '#e02f25',    // PREV grid_kw
-                '#e49307',    // solar_kw
-                '#e49307',    // PREV solar_kw
-                '#000000',    // solar_kw
-                '#000000'     // PREV solar_kw
-            ],
             is3D: true,
             hAxis:	{
                 title: 'Project duration (years)',
                 titleTextStyle: { color: 'black', fontSize: 25, bold: true, italic: false},
                 textStyle : {fontSize: 20, bold: false},
-                format: 'HH:mm',
-                gridlines: {count: 24}
+
+                gridlines: {count: duration_years}
             },
             vAxis:	{
                 titleTextStyle: { color: 'black', fontSize: 25, bold: true, italic: false},

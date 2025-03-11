@@ -137,10 +137,10 @@ class Energy extends Root
         $config_permutations = new ParameterPermutations($config);
         $permutations = $config_permutations->permutations;
         foreach ($permutations as $key => $permutation) {
-            $config_permuted = $this->parameters_permuted($this->config, $permutation, $config_permutations->variables);
+            $config_permuted = $this->parameters_permuted($config, $permutation, $config_permutations->variables);
             $permutation_acronym = $config_permuted['description'];
             echo PHP_EOL . ($key+1) . ' of ' . count($permutations) . ' (' . $permutation_acronym . '): ';
-            $this->simulate($projection_id, $config_permuted['config'], $this->config['time']['project_duration_years'], $permutation, $permutation_acronym);
+            $this->simulate($projection_id, $config_permuted['config'], $config['time']['project_duration_years'], $permutation, $permutation_acronym);
         }
         echo PHP_EOL . 'Done' . PHP_EOL;
    }
@@ -338,7 +338,7 @@ class Energy extends Root
             $columns[] = $column;
         }
         $max_duration_years = count($column)-1;        // time is first column
-        $column   = [];
+        $column = [];
         $column[] = 'project_duration';
         for ($year = 0; $year < $max_duration_years; $year++) {
             $column[] = $year;

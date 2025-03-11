@@ -251,12 +251,13 @@ class Energy extends Root
         // get acronyms
         $sql = 'SELECT  `status`,
                         IFNULL(`message`, \'\'),
-                        `timestamp`
+                        `timestamp`,
+                        UNIX_TIMESTAMP(`submitted`)
                   FROM  `projections`
                   WHERE `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
-            !$stmt->bind_result($status, $message, $timestamp) ||
+            !$stmt->bind_result($status, $message, $timestamp, $submitted_unix_timestamp) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -272,10 +273,11 @@ class Energy extends Root
             case 'IN_QUEUE': {
                 $sql = 'SELECT  COUNT(`status`)
                           FROM  `projections`
-                          WHERE `submitted` < ? AND
+                          WHERE UNIX_TIMESTAMP(`submitted`) < ? AND
                                 `status` = \'IN_QUEUE\'';
+                unset($stmt);
                 if (!($stmt = $this->mysqli->prepare($sql)) ||
-                    !$stmt->bind_param('s', $submitted) ||
+                    !$stmt->bind_param('i', $submitted_unix_timestamp) ||
                     !$stmt->bind_result($count) ||
                     !$stmt->execute() ||
                     !$stmt->fetch()) {
@@ -283,7 +285,7 @@ class Energy extends Root
                     $this->logDb('MESSAGE', $message, 'ERROR');
                     throw new Exception($message);
                 }
-                return 'Projection is ' . $count . ' in queue, please come back later. Ciao!';
+                return 'Projection is ' . ($count ? : 'next') . ' in queue, please come back later. Ciao!';
             }
             case 'IN_PROGRESS': {
                 return 'Projection in progress. Come back soon. Ciao!';

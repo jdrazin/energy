@@ -9,7 +9,7 @@ class Energy extends Root
     const   float DAYS_PER_YEAR                     = 365.25;
     const   int HOURS_PER_DAY                       = 24;
     const   int SECONDS_PER_HOUR                    = 3600;
-    const array COMPONENT_ACRONYMS                  = [''              => 'none',
+    const   array COMPONENT_ACRONYMS                = [''              => 'none',
                                                        'battery'       => 'B',
                                                        'boiler'        => 'BO',
                                                        'heat_pump'     => 'HP',

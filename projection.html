@@ -3,10 +3,10 @@
     <meta http-equiv="refresh" content="30">
     <!--Load the AJAX API-->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">                                       // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
-    const SERVER       = 'https://www.drazin.net:8443/control/';
-    const token        = '?token=' + encodeURIComponent(getParameterByName('token'));
-    const slot_command = getText(SERVER + 'slot_command' + token);
+    <script type="text/javascript">                                          // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
+    const SERVER     = 'https://www.drazin.net:8444/projections/';            // Lenovo DRAZIN14 VM at 192.168.168.14
+    const id         = '?id=' + encodeURIComponent(getParameterByName('id'));
+    const projection = getText(SERVER + 'text' + id);
     google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
     google.charts.setOnLoadCallback(fetchTimeSeries);                       // Set a callback to run when the Google Visualization API is loaded
     function getText(url) {  // WARNING: synchronous
@@ -25,7 +25,7 @@
         return decodeURIComponent(results[2].replace(/\+/g, ' '));
     }
     function fetchTimeSeries() {
-        var url = SERVER + 'slots' + token;
+        var url = SERVER + 'slots' + id;
         fetch(url, { method: "GET"})
             .then(response => response.text()) // First get response as text
             .then(text => {
@@ -33,17 +33,6 @@
                 return JSON.parse(text);
             })
             .then(data => drawChart(data))
-            .catch(error => console.error('Error fetching data:', error));
-    }
-    function fetchTariffCombinations() {
-        var url = SERVER + 'tariff_combinations' + token;
-        fetch(url, { method: "GET"})
-            .then(response => response.text()) // first get response as text
-            .then(text => {
-                if (!text) throw new Error("Empty response from server");
-                return JSON.parse(text);
-            })
-            .then(data => drawTable(data))
             .catch(error => console.error('Error fetching data:', error));
     }
     function drawChart(data) {
@@ -63,7 +52,7 @@
             timeSeries.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]]);
         }
         var options = {
-            title: 'Previous and next 24 hrs [now: ' + slot_command + ']',
+            title: 'Previous and next 24 hrs [now: ' + projection + ']',
             titleTextStyle: { color: 'black', fontSize: 30, bold: true, italic: false},
             width: 1800,
             height: 800,
@@ -114,42 +103,9 @@
         var chart = new google.visualization.LineChart(document.getElementById('chart_time_series'));
         chart.draw(timeSeries, options);
     }
-    /*
-     * table: tariff combinations, see https://developers.google.com/chart/interactive/docs/gallery/table
-     */
-    google.charts.setOnLoadCallback(fetchTariffCombinations);
-
-    function drawTable(data) {
-        var tariffCombinations = new google.visualization.DataTable();
-        tariffCombinations.addColumn('datetime',    'Starting');
-        tariffCombinations.addColumn('string',      'Tariff combination [import, export]');
-        tariffCombinations.addColumn('string',      'Result');
-        tariffCombinations.addColumn('number',      'Grid: raw (GBP)');
-        tariffCombinations.addColumn('number',      'Grid: optimised (GBP)');
-        tariffCombinations.addColumn('number',      'Grid: saving (GBP)');
-        tariffCombinations.addColumn('number',      'Net saving (GBP)');
-        tariffCombinations.addColumn('number',      'Grid: saving (%)');
-        tariffCombinations.addColumn('number',      'Wear (%)');
-        var row;
-        for (var item = 1; item < data.length; item++) {
-            row = data[item];
-            tariffCombinations.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]]);
-        }
-        var table = new google.visualization.Table(document.getElementById('table_tariff_combinations'));
-        var options = {
-            showRowNumber: true,
-            page: 'enable',
-            pageSize: 6,
-            pagingButtons: 'both',
-            width: 1800,
-            height: 150 + (80 * data.length)
-        }
-        table.draw(tariffCombinations, options);
-    }
     </script>
 </head>
 <body>
 <div id="chart_time_series"></div>
-<div id="table_tariff_combinations"></div>
 </body>
 </html>

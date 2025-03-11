@@ -604,7 +604,7 @@ class Energy extends Root
         }
         $result = ['newResultId' => $this->permutationId($projection_id, $permutation, $permutation_acronym),
                    'permutation' => $permutation];
-        $this->updatePermutation($config, $result, $results, $time->year, $permutation_acronym);  // end projection
+        $this->updatePermutation($config, $result, $results, $time->year);  // end projection
     }
 
     function npv_summary($components): array {

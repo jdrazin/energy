@@ -313,13 +313,13 @@ class Energy extends Root
         while ($stmt->fetch()) {
             $acronyms[] = $acronym;
         }
-        $sql = 'SELECT       `acronym`,
-                             `duration_years`,
-                             `npv`
-                   FROM      `permutations`
-                   WHERE     `projection` = ? AND
-                             `acronym` = ?
-                   ORDER BY  `duration_years`';
+        $sql = 'SELECT      `acronym`,
+                            `duration_years`,
+                            `npv`
+                   FROM     `permutations`
+                   WHERE    `projection` = ? AND
+                            `acronym`    = ?
+                   ORDER BY `duration_years`';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('is', $projection_id, $acronym) ||
@@ -328,7 +328,7 @@ class Energy extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $projection = [];
+        $columns = [];
         foreach ($acronyms as $acronym) {
             $column = [];
             $column[] = $acronym;
@@ -336,6 +336,17 @@ class Energy extends Root
             while ($stmt->fetch()) {
                 $column[] = $npv;
             }
+            $columns[] = $column;
+        }
+        $max_duration_years = count($column)-1;        // time is first column
+        $column   = [];
+        $column[] = 'project_duration';
+        for ($year = 0; $year < $max_duration_years; $year++) {
+            $column[] = $year;
+        }
+        $projection = [];
+        $projection[] = $column;
+        foreach ($columns as $column) {
             $projection[] = $column;
         }
         return json_encode($projection, JSON_PRETTY_PRINT);

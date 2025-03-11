@@ -285,7 +285,7 @@ class Energy extends Root
                     $this->logDb('MESSAGE', $message, 'ERROR');
                     throw new Exception($message);
                 }
-                return 'Projection is ' . ($count ? : 'next') . ' in queue, please come back later. Ciao!';
+                return 'Projection is ' . ($count ? : 'next') . ' in queue. Please come back later. Ciao!';
             }
             case 'IN_PROGRESS': {
                 return 'Projection in progress. Come back soon. Ciao!';
@@ -330,12 +330,13 @@ class Energy extends Root
         }
         $projection = [];
         foreach ($acronyms as $acronym) {
-            $years = [];
+            $column = [];
+            $column[] = $acronym;
             $stmt->execute();
             while ($stmt->fetch()) {
-                $years[$duration_years] = $npv;
+                $column[] = $npv;
             }
-            $projection[$acronym] = $years;
+            $projection[] = $column;
         }
         return json_encode($projection, JSON_PRETTY_PRINT);
     }

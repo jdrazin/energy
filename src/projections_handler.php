@@ -18,9 +18,10 @@ const PID_FOLDER                        = '/var/www/html/energy/',
       ARGS                              = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION           = true,
       EMAIL_NOTIFICATION_ON_ERROR       = false,
-      REPLACE_WITH_STUB                 = false,
+      REPLACE_WITH_STUB                 = true,
       ENABLE_SLOT_COMMANDS              = true,
-      ACTIVE_TARIFF_COMBINATION_ONLY    = false;
+      ACTIVE_TARIFF_COMBINATION_ONLY    = false,
+      TEST_PROJECTION_ID                = 218396496;
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
@@ -35,10 +36,10 @@ try {
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && USE_CRONTAB) || !$cron) {
         if (REPLACE_WITH_STUB) {
-
+            (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
         }
         else {
-           (new Energy(null))->processNextProjection();
+           (new Energy(null))->processNextProjection(null);
         }
     }
     if (USE_PID_SEMAPHORE) {

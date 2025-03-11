@@ -315,7 +315,7 @@ class Energy extends Root
         }
         $sql = 'SELECT      `acronym`,
                             `duration_years`,
-                            `npv`
+                            ROUND(`npv`/1000.0, 3)
                    FROM     `permutations`
                    WHERE    `projection` = ? AND
                             `acronym`    = ?
@@ -334,7 +334,7 @@ class Energy extends Root
             $column[] = $acronym;
             $stmt->execute();
             while ($stmt->fetch()) {
-                $column[] = $npv;
+                $column[] = (float) $npv;
             }
             $columns[] = $column;
         }

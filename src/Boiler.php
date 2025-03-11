@@ -9,15 +9,14 @@ require_once __DIR__ . "/Energy.php";
 class Boiler extends Component
 {
 
-    public float $tariff_per_joule, $standing_gbp_per_day, $inflation_real_pa, $efficiency, $max_output_j,
-        $request_consumer_max_j;
+    public float $efficiency, $max_output_j;
 
-    function __construct($config, $time, $npv)
+    function __construct($component, $time, $npv)
     {
-        parent::__construct($config, $time, $npv);
+        parent::__construct($component, $time, $npv);
         if ($this->active) {
-            $this->max_output_j = ($config['output_kw'] * 1000 ?? 0.0) * $this->step_s;
-            $this->efficiency = $config['efficiency'] ?? 1.0;
+            $this->max_output_j = ($component['output_kw'] * 1000 ?? 0.0) * $this->step_s;
+            $this->efficiency = $component['efficiency'] ?? 1.0;
         }
     }
 

@@ -1,7 +1,7 @@
 <?php
 namespace Src;
 
-class Component extends Root
+class Component // extends Root
 {
     public float $step_s, $value_install_gbp, $value_maintenance_per_timestep_gbp;
     public string $name;
@@ -9,16 +9,16 @@ class Component extends Root
     public array $time_units;
     public Npv $npv;
 
-    public function __construct($config, $time, $npv) {
-        parent::__construct();
-        $this->name = $config['name'] ?? $this->strip_namespace(__NAMESPACE__,__CLASS__);
-        if ($this->active = $config['active'] ?? true) {
+    public function __construct($component, $time, $npv) {
+     //   parent::__construct();
+        $this->name = $component['name'] ?? $this->strip_namespace(__NAMESPACE__,__CLASS__);
+        if ($this->active = $component['active'] ?? true) {
             $this->time_units = $time->units;
             $this->npv = new Npv($npv);
             $this->step_s = $time->step_s;
-            $this->value_install_gbp = -$this->value($config, 'cost_install_gbp');
-            $value_maintenance_pa_gbp = -$this->value($config, 'cost_maintenance_pa_gbp');
-            $value_maintenance_pa_gbp -= $this->value($config, 'standing_gbp_per_day') * Energy::DAYS_PER_YEAR;
+            $this->value_install_gbp   = -$this->value($component, 'cost_install_gbp');
+            $value_maintenance_pa_gbp  = -$this->value($component, 'cost_maintenance_pa_gbp');
+            $value_maintenance_pa_gbp -= $this->value($component, 'standing_gbp_per_day') * Energy::DAYS_PER_YEAR;
             $this->value_maintenance_per_timestep_gbp = $value_maintenance_pa_gbp *
                 $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
         }

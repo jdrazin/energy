@@ -9,22 +9,22 @@ class Demand
 {
 
     public string $type;
-    public float $target_space_temperature_c, $consumption_rates_sum;
+    public float $consumption_rates_sum;
     public array $hour_demands_j;
 
-    public function __construct($config, $internal_room_c)
+    public function __construct($demands, $internal_room_c)
     {
         $this->hour_demands_j = [];
-        $hourly_consumption_weightings = $config['hourly_consumption_weightings'];
+        $hourly_consumption_weightings = $demands['hourly_consumption_weightings'];
 
-        if ($config['total_annual_kwh'] ?? false) {
-            $total_annual_kwh = (float)$config['total_annual_kwh'];
+        if ($demands['total_annual_kwh'] ?? false) {
+            $total_annual_kwh = (float)$demands['total_annual_kwh'];
         } else {
-            $total_annual_kwh = Energy::DAYS_PER_YEAR * ((float)($config['total_daily_kwh'] ?? 0.0));
+            $total_annual_kwh = Energy::DAYS_PER_YEAR * ((float)($demands['total_daily_kwh'] ?? 0.0));
         }
         $total_daily_kwh = $total_annual_kwh / Energy::DAYS_PER_YEAR;
 
-        switch ($this->type = $config['type']) {
+        switch ($this->type = $demands['type']) {
             case 'fixed':
             {
                 $this->consumption_rates_sum = 0.0;
@@ -41,7 +41,7 @@ class Demand
             case 'climate_heating':
             { // heating linearly proportional to positive difference between target temperature and phase adjusted climate temperature
                 $target_space_temperature_c = $internal_room_c;
-                $target_circadian_phase_lag_hours = $config['target_circadian_phase_lag_hours'];
+                $target_circadian_phase_lag_hours = $demands['target_circadian_phase_lag_hours'];
                 $energy_j_cumulative = 0.0;
                 for ($day = 0; $day < Energy::DAYS_PER_YEAR; $day++) {
                     $this->hour_demands_j[$day] = [];

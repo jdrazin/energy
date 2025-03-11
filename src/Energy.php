@@ -201,7 +201,7 @@ class Energy extends Root
                       FROM  `projections`                     
                       WHERE `id` = ?';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('i', $id) ||
+                !$stmt->bind_param('i', $projection_id) ||
                 !$stmt->bind_result($request, $email) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -386,21 +386,19 @@ class Energy extends Root
      */
     private function updatePermutation($permutation_parameters, $projection, $results, $projection_duration_years): void { // add
         $id                 = $projection['newResultId'];
-        $comment            = $this->config['comment'];
         $sum_gbp            = $results['npv_summary']['sum_gbp'];
         $parameters_json    = json_encode($permutation_parameters, JSON_PRETTY_PRINT);
         $results_json       = json_encode($results, JSON_PRETTY_PRINT);
         unset($this->stmt);
         $sql = 'UPDATE    `permutations`
-                    SET   `comment`        = ?,
-                          `duration_years` = ?,                    
+                    SET   `duration_years` = ?,                    
                           `npv`            = ROUND(?),
                           `config`         = ?,
                           `result`         = ?,
                           `stop`           = NOW()
                     WHERE `id`             = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('sidssi', $comment, $projection_duration_years, $sum_gbp, $parameters_json, $results_json, $id) ||
+            !$stmt->bind_param('idssi', $projection_duration_years, $sum_gbp, $parameters_json, $results_json, $id) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);

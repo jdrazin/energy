@@ -1,7 +1,6 @@
 <?php
 
 namespace Src;
-use Energy;
 
 require_once __DIR__ . '/Component.php';
 require_once __DIR__ . "/Energy.php";
@@ -15,20 +14,20 @@ class Battery extends Component
         $reduced_capacity, $capacity_kwh, $store_j_max, $max_discharge_w, $cycles, $charge_state;
     public Inverter $inverter;
 
-    public function __construct($config, $time, $npv)
+    public function __construct($component, $time, $npv)
     {
-        parent::__construct($config, $time, $npv);
+        parent::__construct($component, $time, $npv);
         if ($this->active) {
-            $this->efficiency = $config['inverter']['one_way_storage_efficiency'] ?? 1.0;
-            $this->initial_raw_capacity_kwh = $config['initial_raw_capacity_kwh'] ?? 0.0;
-            $this->cycles_to_reduced_capacity = $config['cycles_to_reduced_capacity'] ?? 1E9;
-            $this->reduced_capacity = $config['reduced_capacity'] ?? 1.0;
-            $this->max_charge_w = 1000.0 * $config['max_charge_kw'];
-            $this->max_discharge_w = 1000.0 * $config['max_discharge_kw'];
+            $this->efficiency = $component['inverter']['one_way_storage_efficiency'] ?? 1.0;
+            $this->initial_raw_capacity_kwh = $component['initial_raw_capacity_kwh'] ?? 0.0;
+            $this->cycles_to_reduced_capacity = $component['cycles_to_reduced_capacity'] ?? 1E9;
+            $this->reduced_capacity = $component['reduced_capacity'] ?? 1.0;
+            $this->max_charge_w = 1000.0 * $component['max_charge_kw'];
+            $this->max_discharge_w = 1000.0 * $component['max_discharge_kw'];
             $this->store_j = 0.0;
             $this->store_j_max = $this->initial_raw_capacity_kwh * \Src\Energy::JOULES_PER_KWH;
             $this->charge_state = 0.0;
-            $this->inverter = new Inverter($config['inverter'] ?? null, $time, $npv);
+            $this->inverter = new Inverter($component['inverter'] ?? null, $time, $npv);
             $this->cycles = 0.0;
         }
     }

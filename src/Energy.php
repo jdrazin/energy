@@ -247,6 +247,53 @@ class Energy extends Root
     /**
      * @throws Exception
      */
+    public function get_text($projection_id): string {
+        // get acronyms
+        $sql = 'SELECT  `status`,
+                        IFNULL(`message`, \'\'),
+                        `timestamp`
+                  FROM  `projections`
+                  WHERE `id` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $projection_id) ||
+            !$stmt->bind_result($status, $message, $timestamp) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $stmt->fetch();
+
+        switch($status) {
+            case 'COMPLETED':
+            case 'NOTIFIED': {
+                return 'Completed at ' . $timestamp . 'UTC' . ($message ? ': ' . $message : '');
+                }
+            case 'IN_QUEUE': {
+                $sql = 'SELECT  COUNT(`status`)
+                          FROM  `projections`
+                          WHERE `submitted` < ? AND
+                                `status` = \'IN_QUEUE\'';
+                if (!($stmt = $this->mysqli->prepare($sql)) ||
+                    !$stmt->bind_param('s', $submitted) ||
+                    !$stmt->bind_result($count) ||
+                    !$stmt->execute() ||
+                    !$stmt->fetch()) {
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    throw new Exception($message);
+                }
+                return 'Projection is ' . $count . ' in queue, please come back later. Ciao!';
+            }
+            case 'IN_PROGRESS': {
+                return 'Projection in progress. Come back soon. Ciao!';
+            }
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
     public function get_projection($projection_id): bool|string {
         // get acronyms
         $sql = 'SELECT DISTINCT `acronym`
@@ -290,6 +337,7 @@ class Energy extends Root
         }
         return json_encode($projection, JSON_PRETTY_PRINT);
     }
+
     private function permutationId($projection_id, $permutation, $permutation_acronym): int { // returns permutation id
         $battery       = $permutation['battery'];
         $heat_pump     = $permutation['heat_pump'];

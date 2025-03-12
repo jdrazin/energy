@@ -4,6 +4,7 @@ use Exception;
 
 class Energy extends Root
 {
+    const   bool DEBUG                              = true;
     const   int TEMPERATURE_INTERNAL_LIVING_CELSIUS = 20;
     const   float JOULES_PER_KWH                    = 1000.0 * 3600.0;
     const   float DAYS_PER_YEAR                     = 365.25;
@@ -591,7 +592,10 @@ class Energy extends Root
             $supply_boiler  ->transfer_consume_j($time, 'import',                                       $supply_boiler_j);                                  // import boiler fuel consumed
             $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
             if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
-                $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym);  // summarise year at year end
+                $results = $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym);  // summarise year at year end
+                if ($time->year == $max_project_duration_years) {
+                    echo var_export($results, true) . PHP_EOL;
+                }
             }
         }
     }
@@ -599,7 +603,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym): void {
+    public function year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym): array {
         echo ($time->year ? ', ' : '') . $time->year;
         $supply_electric->sum($time);
         $supply_boiler->sum($time);
@@ -612,7 +616,9 @@ class Energy extends Root
         }
         $result = ['newResultId' => $this->permutationId($projection_id, $permutation, $permutation_acronym),
                    'permutation' => $permutation];
+
         $this->updatePermutation($config, $result, $results, $time->year);  // end projection
+        return $results;
     }
 
     function npv_summary($components): array {

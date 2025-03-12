@@ -301,7 +301,7 @@ class Energy extends Root
                 return 'Projection is ' . ($count ? : 'next') . ' in queue. Please come back later. Ciao!';
             }
             case 'IN_PROGRESS': {
-                return 'Projection in progress. Come back soon. Ciao!';
+                return 'Projection in progress...';
             }
             default: null;
         }

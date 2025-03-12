@@ -135,7 +135,7 @@ class Energy extends Root
             $config_permuted = $this->parameters_permuted($config, $permutation, $config_permutations->variables);
             $permutation_acronym = $config_permuted['description'];
             echo PHP_EOL . ($key+1) . ' of ' . count($permutations) . ' (' . $permutation_acronym . '): ';
-            $this->simulate($projection_id, $config_permuted['config'], $config['time']['project_duration_years'], $permutation, $permutation_acronym);
+            $this->simulate($projection_id, $config_permuted['config'], $config['time']['max_project_duration_years'], $permutation, $permutation_acronym);
         }
         echo PHP_EOL . 'Done' . PHP_EOL;
    }
@@ -465,9 +465,9 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($projection_id, $config, $project_duration_years, $permutation, $permutation_acronym): void {
+    function simulate($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym): void {
         $npv                            = $config['npv'];
-        $time                           = new Time($config['time']['start'], $project_duration_years, $config['time']['timestep_seconds'], $this->time_units);
+        $time                           = new Time($config['time']['start'], $max_project_duration_years, $config['time']['timestep_seconds'], $this->time_units);
         $this->step_s                   = $time->step_s;
         $temperature_internal_room_c    = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
         $demand_space_heating_thermal   = new Demand($config['demands']['space_heating_thermal'],   $temperature_internal_room_c);

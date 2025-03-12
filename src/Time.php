@@ -27,18 +27,18 @@ class Time
      * @throws \DateMalformedStringException
      * @throws \DateMalformedIntervalStringException
      */
-    public function __construct(string $time_start, int $project_duration_years, int $step_s, array $time_units)
+    public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
     {
         $this->time_start = new DateTime($time_start);
         $this->time_end = clone $this->time_start;
-        $this->time_end->modify('+' . $project_duration_years . ' year');
+        $this->time_end->modify('+' . $max_project_duration_years . ' year');
         $this->timestep = new DateInterval('PT' . $step_s . 'S');
         $this->step_count = 1;
         $this->year = 0;
         $this->step_s = (float)$step_s;
         $this->time = new DateTime($time_start);
         $this->units = $time_units;
-        $this->units['YEAR'] = $project_duration_years + 1;
+        $this->units['YEAR'] = $max_project_duration_years + 1;
         $this->update();
         $this->year_end = true;
     }

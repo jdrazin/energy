@@ -18,10 +18,10 @@ const PID_FOLDER                        = '/var/www/html/energy/',
       ARGS                              = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION           = true,
       EMAIL_NOTIFICATION_ON_ERROR       = false,
-      REPLACE_WITH_STUB                 = false,
+      REPLACE_WITH_STUB                 = true,
       ENABLE_SLOT_COMMANDS              = true,
       ACTIVE_TARIFF_COMBINATION_ONLY    = false,
-      TEST_PROJECTION_ID                = 4072752626;
+      TEST_PROJECTION_ID                = 632291423;
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';

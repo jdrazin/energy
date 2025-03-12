@@ -153,16 +153,16 @@ class Energy extends Root
                 'description' => (rtrim($description, ', ') ? : 'none')];
     }
 
-    public function submitProjection($config_json, $email): int {
-        $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`)
-                            VALUES (?,     ?,         ?)
+    public function submitProjection($config_json, $email, $comment): int {
+        $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
+                                   VALUES (?,     ?,         ?,       ?)
                     ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
                                              `response`  = NULL,
                                              `status`    = \'IN_QUEUE\',
                                              `submitted` = NOW()';
         $projection = crc32($config_json . $email);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('isss', $projection, $config_json, $email, $config_json) ||
+            !$stmt->bind_param('issss', $projection, $config_json, $email, $comment, $config_json) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);

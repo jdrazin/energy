@@ -506,7 +506,7 @@ class Energy extends Root
             $supply_boiler_j   = 0.0;				                                                                                                                // export: +ve, import: -ve
             $temp_climate_c = (new Climate())->temperature_time($time);	                                                                                            // get average climate temperature for day of year, time of day
             // battery
-            if ($battery->active && ($supply_electric->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak, WARNING: transfer_consume_j() must be called EXACTLY ONCE per timestep
+            if ($battery->active && ($supply_electric->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak
                 $supply_electric_j -= $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate
             }
             // solar pv

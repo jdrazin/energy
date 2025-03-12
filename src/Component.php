@@ -1,7 +1,7 @@
 <?php
 namespace Src;
 
-class Component // extends Root
+class Component extends Root // extends Root
 {
     public float $step_s, $value_install_gbp, $value_maintenance_per_timestep_gbp;
     public string $name;

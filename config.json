@@ -235,12 +235,10 @@
             "import": {
                 "hours": {
                     "0": "standard",
-                    "4" : "off_peak",
-                    "7" : "standard",
-                   "13" : "off_peak",
-                   "16" : "peak",
-                   "19" : "standard",
-                   "22" : "off_peak"
+                    "2" : "off_peak",
+                    "5" : "standard",
+                    "16" : "peak",
+                    "19": "standard"
                 },
                 "bands_gbp_per_kwh": {
                     "off_peak": 0.1499,

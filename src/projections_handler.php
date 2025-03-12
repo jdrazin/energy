@@ -17,13 +17,10 @@ const     PID_FOLDER                        = '/var/www/html/energy/',
           JSON_PROJECTION_ID                = 0,
           TEST_PROJECTION_ID                = 2805511928,
           USE_PID_SEMAPHORE                 = true,
-          USE_CRONTAB                       = true,
+          USE_CRONTAB                       = false,
           ARGS                              = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION           = true,
           EMAIL_NOTIFICATION_ON_ERROR       = false,
-          REPLACE_WITH_STUB                 = true,
-          ENABLE_SLOT_COMMANDS              = true,
-          ACTIVE_TARIFF_COMBINATION_ONLY    = false,
           MODE                              = 'id';
 
 try {

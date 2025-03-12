@@ -58,7 +58,7 @@ class Battery extends Component
                     $this->store_j -= ($transferred / $this->efficiency);
                     $this->age($request_consumed_j);
                     return ['transfer' => $request_consumed_j,
-                        'consume' => 0.0];
+                            'consume'  => 0.0];
                 } else {
                     return ['transfer' => 0.0,                            // no discharge, battery is empty
                             'consume'  => 0.0];

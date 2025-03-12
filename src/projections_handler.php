@@ -15,7 +15,7 @@ ini_set('mysql.connect_timeout','36000');
 const     PID_FOLDER                        = '/var/www/html/energy/',
           CONFIG_JSON                       = 'config.json',
           JSON_PROJECTION_ID                = 0,
-          TEST_PROJECTION_ID                = 1051957325,
+          TEST_PROJECTION_ID                = 2805511928,
           USE_PID_SEMAPHORE                 = false,
           USE_CRONTAB                       = true,
           ARGS                              = ['CRON' => 1],

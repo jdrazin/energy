@@ -318,12 +318,12 @@ class Energy extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
             !$stmt->bind_result($max_duration_years, $row_count) ||
-            !$stmt->execute()) {
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-
         if ($max_duration_years && $row_count) {
             // get acronyms
             $sql = 'SELECT DISTINCT `acronym`

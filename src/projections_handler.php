@@ -40,6 +40,7 @@ try {
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && USE_CRONTAB) || !$cron) {
         switch (MODE) {
             case 'json': {
+                (new Energy(null))->deleteProjection(JSON_PROJECTION_ID);
                 $config_json = file_get_contents(PID_FOLDER . CONFIG_JSON);
                 (new Energy(null))->permute(JSON_PROJECTION_ID, json_decode($config_json, true));
                 break;

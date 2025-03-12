@@ -41,7 +41,7 @@
     "tariff": "oil",
     "output_kw" : 12.0,
     "efficiency": 0.85,
-    "cost_install_gbp": -8200.0,
+    "cost_install_gbp": 0.0,
     "cost_maintenance_pa_gbp": 250
   },
   "solar_pv": {
@@ -196,7 +196,7 @@
       "name" : "13.5kWh battery",
       "comment": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
       "active": true,
-      "initial_raw_capacity_kwh": 13.5,
+      "initial_raw_capacity_kwh": 0,
       "wear_cost_average_gbp_per_kwh": 0.03,
       "wear_constant_coefficient": 0.5,
       "wear_out_of_spec_coefficient" : 25.0,

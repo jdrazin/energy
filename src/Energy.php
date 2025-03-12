@@ -4,7 +4,6 @@ use Exception;
 
 class Energy extends Root
 {
-    const   bool DEBUG                              = true;
     const   int TEMPERATURE_INTERNAL_LIVING_CELSIUS = 20;
     const   float JOULES_PER_KWH                    = 1000.0 * 3600.0;
     const   float DAYS_PER_YEAR                     = 365.25;
@@ -512,8 +511,8 @@ class Energy extends Root
             $temp_climate_c = (new Climate())->temperature_time($time);	                                                                                            // get average climate temperature for day of year, time of day
             // battery
             if ($battery->active && ($supply_electric->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak
-                $battery_consumed_j = $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate until full
-                $supply_electric_j -= $battery_consumed_j;
+                $to_battery_j       = $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate until full
+                $supply_electric_j -= $to_battery_j;
             }
             // solar pv
             if ($solar_pv->active) {
@@ -584,12 +583,12 @@ class Energy extends Root
             $supply_electric_j                             -= $demand_electric_non_heating_j;			                    	                                    // satisfy electric non-heating demand
             if ($battery->active) {
                 if ($supply_electric->current_bands['export'] == 'peak') {                                                                                          // export peak time
-                    $battery_export_j                       = $battery->transfer_consume_j(1E9)['transfer'];                                        // discharge battery at max power until empty
-                    $supply_electric_j                     += $battery_export_j;
+                    $to_battery_j                           = $battery->transfer_consume_j(-1E9)['transfer'];                                        // discharge battery at max power until empty
+                    $supply_electric_j                     -= $to_battery_j;
                 }
                 elseif ($supply_electric->current_bands['export'] == 'standard') {                                                                                  // satisfy demand from battery when standard rate
-                    $battery_export_j                       = $battery->transfer_consume_j($supply_electric_j)['transfer'];
-                    $supply_electric_j                     -= $battery_export_j;
+                    $to_battery_j                           = $battery->transfer_consume_j($supply_electric_j)['transfer'];
+                    $supply_electric_j                     -= $to_battery_j;
                 }
             }
             if ($supply_electric_j > 0.0) {                                                                                                                         // export if surplus energy
@@ -600,9 +599,6 @@ class Energy extends Root
             $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
             if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
                 $results = $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym);  // summarise year at year end
-                if (self::DEBUG && ($time->year == $max_project_duration_years)) {
-                    echo var_export($results, true) . PHP_EOL;
-                }
             }
         }
     }

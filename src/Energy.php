@@ -587,8 +587,8 @@ class Energy extends Root
                     $battery_export_j                       = $battery->transfer_consume_j(1E9)['transfer'];                                        // discharge battery at max power until empty
                     $supply_electric_j                     += $battery_export_j;
                 }
-                else {                                      // off-peak, standard rate
-                    $battery_export_j                       = $battery->transfer_consume_j($supply_electric_j)['transfer'];                                         // satisfy demand
+                elseif ($supply_electric->current_bands['export'] == 'standard') {                                                                                  // satisfy demand from battery when standard rate
+                    $battery_export_j                       = $battery->transfer_consume_j($supply_electric_j)['transfer'];
                     $supply_electric_j                     -= $battery_export_j;
                 }
             }

@@ -21,7 +21,7 @@ const PID_FOLDER                        = '/var/www/html/energy/',
       REPLACE_WITH_STUB                 = true,
       ENABLE_SLOT_COMMANDS              = true,
       ACTIVE_TARIFF_COMBINATION_ONLY    = false,
-      TEST_PROJECTION_ID                = 218396496;
+      TEST_PROJECTION_ID                = 4072752626;
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';

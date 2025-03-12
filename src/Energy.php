@@ -604,7 +604,7 @@ class Energy extends Root
         $supply_electric->sum($time);
         $supply_boiler->sum($time);
         $consumption = self::consumption($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal);
-        $results['npv_summary'] = self::npv_summary($components_active);
+        $results['npv_summary'] = self::npv_summary($components_active); // $results['npv_summary']['components']['13.5kWh battery'] is unset after $time->year == 8
         $results['consumption'] = $consumption;
         if ($heatpump->active && $time->year) {
             $kwh = $heatpump->kwh['YEAR'][$time->year -1];

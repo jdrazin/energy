@@ -150,7 +150,7 @@
         }
     },
     "battery": {
-        "name" : "13.5kWh battery",
+        "name" : "GivEnergy AIO 13.5kWh",
         "comment": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
         "active": true,
         "initial_raw_capacity_kwh": 13.5,
@@ -161,9 +161,17 @@
         "cost_install_gbp": 10000.0,
         "max_charge_kw": 6.0,
         "max_discharge_kw": 6.0,
-        "cycles_to_reduced_capacity" : 5000,
-        "reduced_capacity" : 0.80,
         "cost_maintenance_pa_gbp": 0,
+        "wear" : {
+          "cost_average_gbp_per_kwh": 0.03,
+          "constant_coefficient": 0.5,
+          "out_of_spec_coefficient" : 25.0,
+          "out_of_spec_activation_energy_kwh" : 0.4
+        },
+        "projection": {
+           "cycles_to_reduced_capacity": 7500,
+           "reduced_capacity": 0.80
+        },
         "inverter": {
             "name": "inverter",
             "power_threshold_w": 20,

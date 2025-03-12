@@ -214,16 +214,7 @@ class Energy extends Root
         unset($stmt);
         if ($request) {   // process next projection if exists
             $this->projectionStatus($projection_id, 'IN_PROGRESS');
-            $sql = 'DELETE FROM `permutations`
-                      WHERE `projection` = ?';
-            if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('i', $projection_id) ||
-                !$stmt->execute() ||
-                !$this->mysqli->commit()) {
-                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
-                throw new Exception($message);
-            }
+            $this->deleteProjection($projection_id);
             $this->permute($projection_id, json_decode($request, true)); // process each permutation
             $this->projectionStatus($projection_id, 'COMPLETED');
             $this->mysqli->commit();
@@ -238,6 +229,19 @@ class Energy extends Root
             else {
                 $this->logDb('MESSAGE', 'Notification failed: ' . $email . 'of completed projection ' . $projection_id, 'WARNING');
             }
+        }
+    }
+
+    public function deleteProjection($projection_id): void  {
+        $sql = 'DELETE FROM `permutations`
+                      WHERE `projection` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $projection_id) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
         }
     }
 

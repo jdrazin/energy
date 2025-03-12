@@ -508,7 +508,8 @@ class Energy extends Root
             $temp_climate_c = (new Climate())->temperature_time($time);	                                                                                            // get average climate temperature for day of year, time of day
             // battery
             if ($battery->active && ($supply_electric->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak
-                $supply_electric_j -= $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate
+                $battery_consumed_j = $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate;
+                $supply_electric_j -= $battery_consumed_j;
             }
             // solar pv
             if ($solar_pv->active) {
@@ -579,7 +580,8 @@ class Energy extends Root
             $supply_electric_j                             -= $demand_electric_non_heating_j;			                    	                                    // satisfy electric non-heating demand
             if ($battery->active) {
                 if ($supply_electric->current_bands['export'] == 'peak') {                                                                                          // export peak time
-                    $supply_electric_j                     += $battery->transfer_consume_j(1E9)['transfer'];                                        // discharge battery as fast as possible
+                    $battery_transfer                       = $battery->transfer_consume_j(1E9)['transfer'];                                        // discharge battery as fast as possible
+                    $supply_electric_j                     += $battery_transfer;
                 }
                 else {                                                                                                                                              // off-peak:
                     $supply_electric_j                     -= $battery->transfer_consume_j($supply_electric_j)['transfer'];                                         // draw power from battery

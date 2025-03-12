@@ -587,13 +587,13 @@ class Energy extends Root
                     $battery_export_j                       = $battery->transfer_consume_j(1E9)['transfer'];                                        // discharge battery at max power until empty
                     $supply_electric_j                     += $battery_export_j;
                 }
-                else {                                      // off peak, standard rate
-                    $battery_export_j                       = $battery->transfer_consume_j($supply_electric_j)['transfer'];                                         // discharge from battery
+                else {                                      // off-peak, standard rate
+                    $battery_export_j                       = $battery->transfer_consume_j($supply_electric_j)['transfer'];                                         // satisfy demand
                     $supply_electric_j                     -= $battery_export_j;
                 }
             }
             if ($supply_electric_j > 0.0) {                                                                                                                         // export if surplus energy
-                $supply_electric_j = min($supply_electric_j, $export_limit_j);
+                $supply_electric_j = min($supply_electric_j, $export_limit_j);                                                                                      // cap to export limit
             }
             $supply_electric->transfer_consume_j($time, $supply_electric_j < 0.0 ? 'import' : 'export', $supply_electric_j);                                // import if supply -ve, export if +ve
             $supply_boiler  ->transfer_consume_j($time, 'import',                                       $supply_boiler_j);                                  // import boiler fuel consumed

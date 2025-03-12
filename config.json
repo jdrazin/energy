@@ -243,9 +243,9 @@
                    "22" : "off_peak"
                 },
                 "bands_gbp_per_kwh": {
-                    "off_peak": 0.1292,
-                    "standard" : 0.2635,
-                    "peak": 0.3953
+                    "off_peak": 0.1499,
+                    "standard" : 0.2498,
+                    "peak": 0.3497
                 },
               "limit_kw" : 24.0
             },

@@ -593,7 +593,7 @@ class Energy extends Root
             $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
             if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
                 $results = $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym);  // summarise year at year end
-                if ($time->year == $max_project_duration_years) {
+                if (self::DEBUG && ($time->year == $max_project_duration_years)) {
                     echo var_export($results, true) . PHP_EOL;
                 }
             }

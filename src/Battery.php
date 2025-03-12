@@ -8,7 +8,7 @@ require_once __DIR__ . "/Energy.php";
 class Battery extends Component
 {
 
-    const  BATTERY_DEAD_KWH = 1.0;
+    const           BATTERY_DEAD_KWH = 1.0;
 
     public float    $max_charge_w, $store_j, $efficiency, $initial_raw_capacity_kwh, $cycles_to_reduced_capacity,
                     $reduced_capacity, $capacity_kwh, $store_j_max, $max_discharge_w, $cycles, $charge_state;
@@ -26,7 +26,6 @@ class Battery extends Component
             $this->max_discharge_w              = 1000.0 * $component['max_discharge_kw'];
             $this->store_j                      = 0.0;
             $this->store_j_max                  = $this->initial_raw_capacity_kwh * Energy::JOULES_PER_KWH;
-            $this->charge_state                 = 0.0;
             $this->inverter                     = new Inverter($component['inverter'] ?? null, $time, $npv);
             $this->cycles                       = 0.0;
         }
@@ -73,6 +72,5 @@ class Battery extends Component
         $this->cycles += 0.5 * abs($request_consumed_j) / $this->store_j_max;
         $this->capacity_kwh = max($this->initial_raw_capacity_kwh * (1.0 + (($this->reduced_capacity - 1.0) * ($this->cycles / $this->cycles_to_reduced_capacity))), 0.0);
         $this->store_j_max = $this->capacity_kwh * Energy::JOULES_PER_KWH;
-        $this->charge_state = $this->store_j / $this->store_j_max;
     }
 }

@@ -196,7 +196,7 @@
       "name" : "13.5kWh battery",
       "comment": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
       "active": true,
-      "initial_raw_capacity_kwh": 0,
+      "initial_raw_capacity_kwh": 13.5,
       "wear_cost_average_gbp_per_kwh": 0.03,
       "wear_constant_coefficient": 0.5,
       "wear_out_of_spec_coefficient" : 25.0,

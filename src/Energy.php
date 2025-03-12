@@ -369,7 +369,7 @@ class Energy extends Root
             }
             $column = [];
             $column[] = 'project_duration';
-            for ($year = 0; $year < $max_duration_years; $year++) {
+            for ($year = 0; $year <= $max_duration_years; $year++) {
                 $column[] = $year;
             }
             $projection = [];

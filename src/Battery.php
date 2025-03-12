@@ -69,8 +69,10 @@ class Battery extends Component
 
     public function age($request_consumed_j): void                    // age battery
     {
-        $this->cycles += 0.5 * abs($request_consumed_j) / $this->store_j_max;
-        $this->capacity_kwh = max($this->initial_raw_capacity_kwh * (1.0 + (($this->reduced_capacity - 1.0) * ($this->cycles / $this->cycles_to_reduced_capacity))), 0.0);
-        $this->store_j_max = $this->capacity_kwh * Energy::JOULES_PER_KWH;
+        if ($this->store_j_max > 0.0) {
+            $this->cycles           += 0.5 * abs($request_consumed_j) / $this->store_j_max;
+            $this->capacity_kwh     = max($this->initial_raw_capacity_kwh * (1.0 + (($this->reduced_capacity - 1.0) * ($this->cycles / $this->cycles_to_reduced_capacity))), 0.0);
+            $this->store_j_max      = $this->capacity_kwh * Energy::JOULES_PER_KWH;
+        }
     }
 }

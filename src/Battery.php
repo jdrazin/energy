@@ -51,8 +51,8 @@ class Battery extends Component
                         'consume' => 0.0];
                 }
             } else {                      // discharge
-                $request_consumed_j = max($request_consumed_j, -$this->max_discharge_w * $this->step_s);
                 if ($this->store_j > 0.0) {
+                    $request_consumed_j = max($request_consumed_j, -$this->max_discharge_w * $this->step_s);
                     $transfer_inverter = $this->inverter->transfer_consume_j(-$request_consumed_j, true);
                     $transferred = $transfer_inverter['consume'];
                     $this->store_j -= ($transferred / $this->efficiency);
@@ -61,7 +61,7 @@ class Battery extends Component
                         'consume' => 0.0];
                 } else {
                     return ['transfer' => 0.0,                            // no discharge, battery is empty
-                        'consume' => 0.0];
+                            'consume'  => 0.0];
                 }
             }
         }

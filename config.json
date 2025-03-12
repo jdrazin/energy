@@ -346,6 +346,8 @@
       "timestep_seconds": 216
   },
   "permute": [
-    "battery"
+    "battery",
+    "solar_pv",
+    "heat_pump"
    ]
 }

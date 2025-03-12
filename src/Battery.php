@@ -10,25 +10,25 @@ class Battery extends Component
 
     const  BATTERY_DEAD_KWH = 1.0;
 
-    public float $max_charge_w, $store_j, $efficiency, $initial_raw_capacity_kwh, $cycles_to_reduced_capacity,
-        $reduced_capacity, $capacity_kwh, $store_j_max, $max_discharge_w, $cycles, $charge_state;
+    public float    $max_charge_w, $store_j, $efficiency, $initial_raw_capacity_kwh, $cycles_to_reduced_capacity,
+                    $reduced_capacity, $capacity_kwh, $store_j_max, $max_discharge_w, $cycles, $charge_state;
     public Inverter $inverter;
 
     public function __construct($component, $time, $npv)
     {
         parent::__construct($component, $time, $npv);
         if ($this->active) {
-            $this->efficiency = $component['inverter']['one_way_storage_efficiency'] ?? 1.0;
-            $this->initial_raw_capacity_kwh = $component['initial_raw_capacity_kwh'] ?? 0.0;
-            $this->cycles_to_reduced_capacity = $component['cycles_to_reduced_capacity'] ?? 1E9;
-            $this->reduced_capacity = $component['reduced_capacity'] ?? 1.0;
-            $this->max_charge_w = 1000.0 * $component['max_charge_kw'];
-            $this->max_discharge_w = 1000.0 * $component['max_discharge_kw'];
-            $this->store_j = 0.0;
-            $this->store_j_max = $this->initial_raw_capacity_kwh * \Src\Energy::JOULES_PER_KWH;
-            $this->charge_state = 0.0;
-            $this->inverter = new Inverter($component['inverter'] ?? null, $time, $npv);
-            $this->cycles = 0.0;
+            $this->efficiency                   = $component['inverter']['one_way_storage_efficiency'] ?? 1.0;
+            $this->initial_raw_capacity_kwh     = $component['initial_raw_capacity_kwh'] ?? 0.0;
+            $this->cycles_to_reduced_capacity   = $component['projection']['cycles_to_reduced_capacity'] ?? 1E9;
+            $this->reduced_capacity             = $component['projection']['reduced_capacity'] ?? 1.0;
+            $this->max_charge_w                 = 1000.0 * $component['max_charge_kw'];
+            $this->max_discharge_w              = 1000.0 * $component['max_discharge_kw'];
+            $this->store_j                      = 0.0;
+            $this->store_j_max                  = $this->initial_raw_capacity_kwh * Energy::JOULES_PER_KWH;
+            $this->charge_state                 = 0.0;
+            $this->inverter                     = new Inverter($component['inverter'] ?? null, $time, $npv);
+            $this->cycles                       = 0.0;
         }
     }
 
@@ -68,15 +68,11 @@ class Battery extends Component
         }
     }
 
-    public function age($request_consumed_j): void
-    {                       // age battery
+    public function age($request_consumed_j): void                    // age battery
+    {
         $this->cycles += 0.5 * abs($request_consumed_j) / $this->store_j_max;
         $this->capacity_kwh = max($this->initial_raw_capacity_kwh * (1.0 + (($this->reduced_capacity - 1.0) * ($this->cycles / $this->cycles_to_reduced_capacity))), 0.0);
-        if ($this->capacity_kwh >= self::BATTERY_DEAD_KWH) {
-            $this->store_j_max = $this->capacity_kwh * \Src\Energy::JOULES_PER_KWH;
-            $this->charge_state = $this->store_j / $this->store_j_max;
-        } else {
-            $this->active = false;                                          // disable battery when capacity falls below minimum threshold
-        }
+        $this->store_j_max = $this->capacity_kwh * Energy::JOULES_PER_KWH;
+        $this->charge_state = $this->store_j / $this->store_j_max;
     }
 }

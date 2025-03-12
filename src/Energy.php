@@ -266,12 +266,13 @@ class Energy extends Root
         $sql = 'SELECT  `status`,
                         IFNULL(`message`, \'\'),
                         `timestamp`,
-                        UNIX_TIMESTAMP(`submitted`)
+                        UNIX_TIMESTAMP(`submitted`),
+                        `comment`
                   FROM  `projections`
                   WHERE `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
-            !$stmt->bind_result($status, $message, $timestamp, $submitted_unix_timestamp) ||
+            !$stmt->bind_result($status, $message, $timestamp, $submitted_unix_timestamp, $comment) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -281,7 +282,7 @@ class Energy extends Root
         switch($status) {
             case 'COMPLETED':
             case 'NOTIFIED': {
-                return 'Completed at ' . $timestamp . 'UTC' . ($message ? ': ' . $message : '');
+                return $comment;
                 }
             case 'IN_QUEUE': {
                 $sql = 'SELECT  COUNT(`status`)

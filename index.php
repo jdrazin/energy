@@ -2,6 +2,9 @@
 declare(strict_types=1);
 namespace Src;
 require_once __DIR__ . '/vendor/autoload.php';
+
+use DateTime;
+use DateTimeInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
@@ -62,9 +65,11 @@ $app->get('/projections/projection', function (Request $request, Response $respo
 });
 $app->post('/projections', function (Request $request, Response $response) {
     $config_json = (string) $request->getBody();
-    $config = json_decode($config_json, true);
-    $energy = new Energy(null);
-    $email = $config['email'] ?? false;
+    $config  = json_decode($config_json, true);
+    $energy  = new Energy(null);
+    $email   = $config['email']   ?? false;
+    $comment = $config['comment'] ?? '';
+    $comment = ' (submitted ' . (new DateTime("now", new \DateTimeZone("UTC")))->format(DateTimeInterface::RFC850) . ')';
     $projection_id = $energy->submitProjection($config_json, $email);
     $response->getBody()->write(
                                     'Get your result at: https://www.drazin.net:8443/projection.html?id=' . $projection_id . '.' .

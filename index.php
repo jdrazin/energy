@@ -68,9 +68,8 @@ $app->post('/projections', function (Request $request, Response $response) {
     $config  = json_decode($config_json, true);
     $energy  = new Energy(null);
     $email   = $config['email']   ?? false;
-    $comment = $config['comment'] ?? '';
-    $comment = ' (submitted ' . (new DateTime("now", new \DateTimeZone("UTC")))->format(DateTimeInterface::RFC850) . ')';
-    $projection_id = $energy->submitProjection($config_json, $email);
+    $comment = ($config['comment'] ?? '') . ' (submitted ' . (new DateTime("now", new \DateTimeZone("UTC")))->format(DateTimeInterface::RFC850) . ')';
+    $projection_id = $energy->submitProjection($config_json, $email, $comment);
     $response->getBody()->write(
                                     'Get your result at: https://www.drazin.net:8443/projection.html?id=' . $projection_id . '.' .
                                     ($email ? ' Will e-mail you when ready at ' . $email . '.' : '') .

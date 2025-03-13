@@ -1,5 +1,5 @@
 {
-  "comment": "Church House - 29 Jan 2025",
+  "#": "Church House - 29 Jan 2025",
   "email": "",
   "heat_pump": {
     "name": "heatpump ASHP",
@@ -21,7 +21,7 @@
       "100": 0.95
     },
     "performance_factor" : 1.0,
-    "comment": "https://www.researchgate.net/figure/COP-of-the-air-to-water-heat-pump-with-different-load-side-inlet-temperatures-Based-on_fig1_326114264",
+    "#": "https://www.researchgate.net/figure/COP-of-the-air-to-water-heat-pump-with-different-load-side-inlet-temperatures-Based-on_fig1_326114264",
     "output_kw": 10.0,
     "thermal_sink": {
       "volume_m3": 0.001,
@@ -61,7 +61,7 @@
       "panels" : [
           {
               "panel" : "AIKO 455W",
-              "comment" : "AIK-A-MAH54-445-AB Gen 2 All Black",
+              "#" : "AIK-A-MAH54-445-AB Gen 2 All Black",
               "width_m": 1.134,
               "height_m": 1.722,
               "cost": {
@@ -83,7 +83,7 @@
       ],
       "inverter": {
           "name": "inverter",
-          "comment": "https://www.researchgate.net/figure/Efficiency-curve-of-various-solar-inverters_fig8_258220930",
+          "#": "https://www.researchgate.net/figure/Efficiency-curve-of-various-solar-inverters_fig8_258220930",
           "cost_install_gbp": 0,
           "power_threshold_kw": 11.0,
           "out_of_spec_activation_power_kw" : 0.4,
@@ -194,7 +194,7 @@
   },
   "battery": {
       "name" : "13.5kWh battery",
-      "comment": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
+      "#": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
       "active": true,
       "initial_raw_capacity_kwh": 13.5,
       "wear_cost_average_gbp_per_kwh": 0.03,
@@ -214,7 +214,7 @@
       }
   },
   "demands": {
-    "comment": "https://find-energy-certificate.service.gov.uk/energy-certificate/0665-2803-7016-9528-7435",
+    "#": "https://find-energy-certificate.service.gov.uk/energy-certificate/0665-2803-7016-9528-7435",
     "EPC": "D",
     "space_heating_thermal": {
       "type": "climate_heating",
@@ -305,7 +305,7 @@
               },
               "limit_kw": 8.0
           },
-          "comment": "https://agile.octopushome.net/historical-data",
+          "#": "https://agile.octopushome.net/historical-data",
           "inflation_real_pa": 0.0,
           "standing_gbp_per_day": 0.6127
       }
@@ -316,7 +316,7 @@
           "longitude_degrees": -1.242131
       },
       "cloud_cover_months": {
-          "comment":   "UK (Bristol) relative cloud cover fractions and sun insolation factors by month",
+          "#":   "UK (Bristol) relative cloud cover fractions and sun insolation factors by month",
           "fractions": [0.0425, 0.123, 0.204, 0.288, 0.371, 0.455, 0.538, 0.623, 0.707, 0.79, 0.874, 0.958],
           "factors":   [0.544,  0.554, 0.534, 0.58,  0.608, 0.585, 0.607, 0.608, 0.57, 0.533, 0.561, 0.57]
       },

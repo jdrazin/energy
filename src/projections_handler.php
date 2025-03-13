@@ -16,12 +16,12 @@ const     PID_FOLDER                        = '/var/www/html/energy/',
           CONFIG_JSON                       = 'config.json',
           JSON_PROJECTION_ID                = 0,
           TEST_PROJECTION_ID                = 2689834495,
-          USE_PID_SEMAPHORE                 = false,
-          USE_CRONTAB                       = false,
+          USE_PID_SEMAPHORE                 = true,
+          USE_CRONTAB                       = true,
           ARGS                              = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION           = true,
           EMAIL_NOTIFICATION_ON_ERROR       = false,
-          MODE                              = 'id';
+          MODE                              = 'cron';
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';

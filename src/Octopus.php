@@ -93,7 +93,6 @@ class Octopus extends Root
     }
 
     /**
-     * @throws GuzzleException
      * @throws Exception
      */
     public function requestTariffs(): void  // get tariffs for both directions
@@ -105,7 +104,7 @@ class Octopus extends Root
         foreach (self::DIRECTIONS as $tariffs_rates) {
             $this->getTariff($tariffs_rates);
         }
-        $this->request_result(__CLASS__, true);
+        $this->request_result(__CLASS__, true); // update timestamp for successful request
     }
 
     /**

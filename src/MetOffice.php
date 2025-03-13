@@ -28,10 +28,12 @@ class MetOffice extends Root
     public function forecast(): void
     {
         if ($this->skip_request(__NAMESPACE__, __CLASS__)) { // skip request if called recently
+            $this->request_result(__CLASS__, false); // update timestamp for failed request
             return;
         }
         $forecast = $this->getForecast();
         $this->insertPoints($forecast['features'][0]['properties']['timeSeries']);
+        $this->request_result(__CLASS__, true); // update timestamp for successful request
     }
 
     /**

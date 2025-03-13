@@ -234,7 +234,7 @@ class Energy extends Root
             if ($email && filter_var($email, FILTER_VALIDATE_EMAIL) &&
                 (new SMTPEmail())->email(['subject'   => 'Renewable Visions: your results are ready',
                                           'html'      => false,
-                                          'bodyHTML'  => ($message = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br><br>Ciao!<br>'),
+                                          'bodyHTML'  => ($message = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
                                           'bodyAlt'   => strip_tags($message)])) {
                 $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, 'NOTICE');
                 $this->projectionStatus($projection_id, 'NOTIFIED');
@@ -313,7 +313,7 @@ class Energy extends Root
                     $this->logDb('MESSAGE', $message, 'ERROR');
                     throw new Exception($message);
                 }
-                return 'Projection is ' . ($count ? : 'next') . ' in queue. Please come back later. Ciao!';
+                return 'Projection is ' . ($count ? : 'next') . ' in queue. Please come back later.';
             }
             case 'IN_PROGRESS': {
                 return 'Projection in progress ...';

@@ -129,7 +129,7 @@ class Octopus extends Root
                     $message = $e->getMessage();
                     (new Root())->logDb('MESSAGE', $message, 'WARNING');
                     echo $message . PHP_EOL;
-                    if ($this->requestIsStale(__NAMESPACE__, __CLASS__)) { // give if too long a period has elapsed since last successful request
+                    if ($this->requestIsStale(__NAMESPACE__, __CLASS__)) { // give up if too long since last successful request
                         throw new Exception($message);
                     }
                 }

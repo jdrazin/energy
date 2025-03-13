@@ -178,10 +178,12 @@ class GivEnergy extends Root
     {
         /*
         if ($this->skip_request($this->strip_namespace(__NAMESPACE__,__CLASS__))) { // skip request if called recently
+            $this->request_result(__CLASS__, false); // update timestamp for failed request
             return;
         }*/
         $this->getBattery();
         $this->getEVCharger();
+        // $this->request_result(__CLASS__, true); // update timestamp for successful request
     }
 
     /**

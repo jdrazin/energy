@@ -1,5 +1,5 @@
 {
-  "#": "Church House (HP, PV, IN)",
+  "#": "Church House (HP, B, PV)",
   "email": "",
   "heat_pump": {
     "name": "heatpump ASHP",
@@ -37,7 +37,7 @@
   },
   "boiler": {
     "name": "oil",
-    "active": false,
+    "active": true,
     "tariff": "oil",
     "output_kw" : 12.0,
     "efficiency": 0.85,
@@ -46,7 +46,7 @@
   },
   "solar_pv": {
     "name": "solar pv",
-    "active": false,
+    "active": true,
     "cost": {
       "install_gbp": {
         "install": 19000.0,
@@ -194,6 +194,7 @@
   },
   "insulation": {
     "#": "https://chatgpt.com/c/67d29ec9-7c64-800d-9c85-610421ab2d29",
+    "active": false,
     "cost_install_gbp": 30000,
     "space_heating_demand_reduction_percent" : 20
   },
@@ -207,8 +208,8 @@
     "max_discharge_kw": 6.0,
     "cost_maintenance_pa_gbp": 0,
     "projection" : {
-        "cycles_to_reduced_capacity": 7500,
-        "reduced_capacity_percent": 20
+      "cycles_to_reduced_capacity": 7500,
+      "reduced_capacity_percent": 20
     },
     "wear": {
       "cost_average_gbp_per_kwh": 0.03,

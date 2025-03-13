@@ -167,7 +167,13 @@ class Energy extends Root
                 'description' => (rtrim($description, ', ') ? : 'none')];
     }
 
-    public function submitProjection($config_json, $email, $comment): int {
+    /**
+     * @throws Exception
+     */
+    public function submitProjection($config_json, $email, $comment): bool|int {
+        if (!$this->authenticate()) {
+            return false;
+        }
         $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
                                    VALUES (?,     ?,         ?,       ?)
                     ON DUPLICATE KEY UPDATE  `request`   = ?,                                             

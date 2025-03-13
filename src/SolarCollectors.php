@@ -13,20 +13,18 @@ class SolarCollectors extends Component
         'tilt_degrees' => 35.0,
         'border_m' => 0.2];
 
-    public string $collector_name;
-    public array $cost, $area, $value_panels_gbp, $orientation_type, $azimuth_degrees, $panels_number, $power_max_w,
-        $tilt_degrees, $shading_factor, $unit_value_gbp, $unit_install_value_gbp, $efficiency,
-        $efficiency_temperature_reference_c, $efficiency_per_c, $efficiency_pa, $solar, $thermal, $inverter, $output_kwh,
-        $lifetime_years, $area_footprint, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
+    public array $cost, $area, $orientation_type, $azimuth_degrees, $panels_number, $power_max_w,
+        $tilt_degrees, $shading_factor, $efficiency, $efficiency_temperature_reference_c, $efficiency_per_c, $efficiency_pa, $solar, $thermal,
+        $inverter, $output_kwh, $lifetime_years, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
     private array $panels, $panels_area_m2;
 
-    public function __construct($config, $location, $initial_temperature, $time, $npv)
+    public function __construct($component, $location, $initial_temperature, $time, $npv)
     {
-        parent::__construct($config, $time, $npv);
-        if ($config['active']) {
-            $this->cost = $config['cost'] ?? [];
-            $this->area = $config['area'] ?? [];
-            $panels = $config['panels'] ?? [];
+        parent::__construct($component, $time, $npv);
+        if ($component['active']) {
+            $this->cost = $component['cost'] ?? [];
+            $this->area = $component['area'] ?? [];
+            $panels = $component['panels'] ?? [];
             $shading_factor = $this->area['shading_factor'] ?? 1.0;
             $this->panels = [];
             foreach ($panels as $panel) {
@@ -42,7 +40,7 @@ class SolarCollectors extends Component
             $this->collectors_value_install_gbp = [];
             $this->collectors_value_maintenance_per_timestep_gbp = [];
             $key = 0;
-            foreach ($config['collectors'] as $collector_name => $collector_parameters) {
+            foreach ($component['collectors'] as $collector_name => $collector_parameters) {
                 if ($collector_parameters && $collector_parameters['active'] ?? true) {
                     $this->collectors[$key] = $collector_name;
 
@@ -63,7 +61,7 @@ class SolarCollectors extends Component
                             exit(1);
                         }
                     } else {
-                        $panel = $config['panel'];
+                        $panel = $component['panel'];
                     }
                     $cost_per_panel_gbp = $panel['cost']['per_panel_gbp'] ?? 0.0;
                     $cost_maintenance_per_panel_gbp = $panel['cost']['maintenance_per_panel_pa_gbp'] ?? 0.0;

@@ -8,22 +8,22 @@ require_once __DIR__ . "/Energy.php";
 
 class ThermalTank extends Component
 {
-    const HEAT_CAPACITY_WATER_J_PER_M3_K = 4200000.0,
-        TEMPERATURE_MAX_OPERATING_CELSIUS = 65.0;
+    const   HEAT_CAPACITY_WATER_J_PER_M3_K = 4200000.0,
+            TEMPERATURE_MAX_OPERATING_CELSIUS = 65.0;
 
     public float $temperature_c, $capacity_c_per_joule, $one_way_storage_efficiency, $decay_rate_per_s, $charge_c_per_joule, $discharge_c_per_joule, $target_temperature_c, $immersion_w;
     public bool $heat_pump;
 
-    public function __construct($config, $heat_pump, $time, $npv)
+    public function __construct($component, $heat_pump, $time, $npv)
     {
-        parent::__construct($config, $time, $npv);
+        parent::__construct($component, $time, $npv);
         if ($this->active) {
-            $this->immersion_w = 1000.0 * ($config['immersion_w'] ?? 0.0);
-            $this->target_temperature_c = $config['target_temperature_c'] ?? 50.0;
-            $this->capacity_c_per_joule = 1.0 / ($config['volume_m3'] * self::HEAT_CAPACITY_WATER_J_PER_M3_K);
-            $this->decay_rate_per_s = isset($config['half_life_days']) ? log(2) / ($config['half_life_days'] * 24 * 3600) : 0.0;
-            $this->temperature_c = $config['initial_temp_celsius'] ?? (new Climate)->temperature_time($time);
-            $this->one_way_storage_efficiency = $config['one_way_storage_efficiency'] ?? 1.0;
+            $this->immersion_w = 1000.0 * ($component['immersion_w'] ?? 0.0);
+            $this->target_temperature_c = $component['target_temperature_c'] ?? 50.0;
+            $this->capacity_c_per_joule = 1.0 / ($component['volume_m3'] * self::HEAT_CAPACITY_WATER_J_PER_M3_K);
+            $this->decay_rate_per_s = isset($component['half_life_days']) ? log(2) / ($component['half_life_days'] * 24 * 3600) : 0.0;
+            $this->temperature_c = $component['initial_temp_celsius'] ?? (new Climate)->temperature_time($time);
+            $this->one_way_storage_efficiency = $component['one_way_storage_efficiency'] ?? 1.0;
             $this->charge_c_per_joule = $this->capacity_c_per_joule * $this->one_way_storage_efficiency;
             $this->discharge_c_per_joule = $this->capacity_c_per_joule;
             $this->heat_pump = $heat_pump;

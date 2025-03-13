@@ -12,15 +12,16 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const PID_FOLDER                        = '/var/www/html/energy/',
-      USE_PID_SEMAPHORE                 = false,
-      USE_CRONTAB                       = true,
-      ARGS                              = ['CRON' => 1],
-      INITIALISE_ON_EXCEPTION           = true,
-      EMAIL_NOTIFICATION_ON_ERROR       = true,
-      REPLACE_WITH_STUB                 = false,
-      ENABLE_SLOT_COMMANDS              = true,
-      ACTIVE_TARIFF_COMBINATION_ONLY    = false;
+const     PID_FOLDER                        = '/var/www/html/energy/',
+          CONFIG_JSON                       = 'config.json',
+          JSON_PROJECTION_ID                = 0,
+          TEST_PROJECTION_ID                = 2689834495,
+          USE_PID_SEMAPHORE                 = true,
+          USE_CRONTAB                       = true,
+          ARGS                              = ['CRON' => 1],
+          INITIALISE_ON_EXCEPTION           = true,
+          EMAIL_NOTIFICATION_ON_ERROR       = false,
+          MODE                              = 'cron';
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
@@ -34,11 +35,24 @@ try {
         }
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && USE_CRONTAB) || !$cron) {
-        if (REPLACE_WITH_STUB) {
+        switch (MODE) {
+            case 'json': {
+                (new Energy(null))->deleteProjection(JSON_PROJECTION_ID);
+                $config_json = file_get_contents(PID_FOLDER . CONFIG_JSON);
+                (new Energy(null))->permute(JSON_PROJECTION_ID, json_decode($config_json, true));
+                break;
+            }
+            case 'id': {
+                (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
+                break;
+            }
+            case 'cron': {
+                (new Energy(null))->processNextProjection(null);
+                break;
+            }
+            default: {
 
-        }
-        else {
-           (new Energy(null))->processNextProjection();
+            }
         }
     }
     if (USE_PID_SEMAPHORE) {

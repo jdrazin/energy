@@ -1,0 +1,107 @@
+<html>
+<head>
+    <meta http-equiv="refresh" content="30">
+    <!--Load the AJAX API-->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">                                          // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
+    const SERVER     = 'https://www.drazin.net:8444/projections/';            // Lenovo DRAZIN14 VM at 192.168.168.14
+    const id         = '?id=' + encodeURIComponent(getParameterByName('id'));
+    const projection = getText(SERVER + 'text' + id);
+    google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
+    google.charts.setOnLoadCallback(fetchTimeSeries);                       // Set a callback to run when the Google Visualization API is loaded
+    function getText(url) {  // WARNING: synchronous
+        var request = new XMLHttpRequest();
+        request.open('GET', url, false);
+        request.send(null);
+        if (request.status !== 200) throw new Error(request.statusText);
+        return request.responseText;
+    }
+    function getParameterByName(name, url = window.location.href) {
+        name = name.replace(/[\[\]]/g, '\\$&');
+        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
+    function fetchTimeSeries() {
+        var url = SERVER + 'projection' + id;
+        fetch(url, { method: "GET"})
+            .then(response => response.text()) // First get response as text
+            .then(text => {
+                if (!text) throw new Error("Empty response from server");
+                return JSON.parse(text);
+            })
+            .then(data => drawChart(data))
+            .catch(error => console.error('Error fetching data:', error));
+    }
+    function drawChart(data) {
+        var timeSeries = new google.visualization.DataTable(data);
+        for (var column = 0; column < data.length; column++) {
+            timeSeries.addColumn('number', data[column][0]);
+        }
+        var duration_years = data[0].length;
+        var row = [];
+        for (var year = 0; year <= duration_years; year++) {
+            for (var column = 0; column < data.length; column++) {
+                row[column] = data[column][year+1];
+            }
+            timeSeries.addRow(row);
+        }
+        var options = {
+            title: projection,
+            titleTextStyle: { color: 'black', fontSize: 30, bold: true, italic: false},
+            width: 1800,
+            height: 800,
+            backgroundColor: '#EEEEEE',
+            series: {
+                0: { lineWidth: 3, targetAxisIndex: 0},  // total_load_kw
+                1: { lineWidth: 3, targetAxisIndex: 0},  // PREV total_load_kw
+                2: { lineWidth: 3, targetAxisIndex: 0},  // grid_kw
+                3: { lineWidth: 3, targetAxisIndex: 0},  // PREV grid_kw
+                4: { lineWidth: 3, targetAxisIndex: 0},  // solar_kw
+                5: { lineWidth: 3, targetAxisIndex: 0},  // PREV solar_kw
+                6: { lineWidth: 3, targetAxisIndex: 0},  // battery level
+                7: { lineWidth: 3, targetAxisIndex: 0},  // PREV battery level
+            },
+            vAxes: {
+                0: {title: 'Net present value (GBP 000s)' }
+            },
+            colors: [
+                '#000000',
+                '#3366cc',
+                '#dc3912',
+                '#ff9900',
+                '#109618',
+                '#990099',
+                '#0099c6',
+                '#dd4477'
+            ],
+            is3D: true,
+            hAxis:	{
+                title: 'Project duration (years)',
+                titleTextStyle: { color: 'black', fontSize: 25, bold: true, italic: false},
+                textStyle : {fontSize: 20, bold: false},
+
+                gridlines: {count: duration_years}
+            },
+            vAxis:	{
+                titleTextStyle: { color: 'black', fontSize: 25, bold: true, italic: false},
+                textStyle : {fontSize: 20, bold: false},
+                gridlines: {color: 'none'},
+                minValue: 0
+            },
+        };
+        /*
+         * Google Line Chart curve fitting is rubbish, so consider cubic splines for future
+         * see Python scipy/numpy library: https://pythonnumericalmethods.studentorg.berkeley.edu/notebooks/chapter17.03-Cubic-Spline-Interpolation.html
+         */
+        var chart = new google.visualization.LineChart(document.getElementById('chart_time_series'));
+        chart.draw(timeSeries, options);
+    }
+    </script>
+</head>
+<body>
+<div id="chart_time_series"></div>
+</body>
+</html>

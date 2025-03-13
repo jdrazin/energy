@@ -9,10 +9,29 @@ class Energy extends Root
     const   float DAYS_PER_YEAR                     = 365.25;
     const   int HOURS_PER_DAY                       = 24;
     const   int SECONDS_PER_HOUR                    = 3600;
+    const   array COMPONENT_ACRONYMS                = [''              => 'none',
+                                                       'battery'       => 'B',
+                                                       'boiler'        => 'BO',
+                                                       'heat_pump'     => 'HP',
+                                                       'insulation'    => 'IN',
+                                                       'solar_pv'      => 'PV',
+                                                       'solar_thermal' => 'ST'],
+                    PROJECTION_EMPTY                = [
+                                                            [
+                                                                "project_duration",
+                                                                0,
+                                                                25
+                                                            ],
+                                                            [
+                                                                "none",
+                                                                0.0,
+                                                                0.0
+                                                            ]
+                                                       ];
     public float $step_s;
-    public array $time_units                        = [ 'HOUR_OF_DAY'   => 24,
-                                                        'MONTH_OF_YEAR' => 12,
-                                                        'DAY_OF_YEAR'   => 366];
+    public array $time_units                        = ['HOUR_OF_DAY'   => 24,
+                                                       'MONTH_OF_YEAR' => 12,
+                                                       'DAY_OF_YEAR'   => 366];
 
     /**
      * @throws Exception
@@ -123,104 +142,282 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function projection($config): int {
-        echo 'processing ' . self::APIS_PATH . PHP_EOL;
-        $projection = crc32(json_encode($config));
-        $this->submitProjection($projection, $config);
+    public function permute($projection_id, $config): void  {
+        $config_permutations = new ParameterPermutations($config);
+        $permutations = $config_permutations->permutations;
+        foreach ($permutations as $key => $permutation) {
+            $config_permuted = $this->parameters_permuted($config, $permutation, $config_permutations->variables);
+            $permutation_acronym = $config_permuted['description'];
+            echo PHP_EOL . ($key+1) . ' of ' . count($permutations) . ' (' . $permutation_acronym . '): ';
+            $this->simulate($projection_id, $config_permuted['config'], $config['time']['max_project_duration_years'], $permutation, $permutation_acronym);
+        }
+        echo PHP_EOL . 'Done' . PHP_EOL;
+   }
 
+    private function parameters_permuted($config, $permutation, $variables): array {
+        $description = '';
+        foreach (ParameterPermutations::PERMUTATION_ELEMENTS as $component_name) {
+            $value = (bool) $permutation[$component_name];
+            $config[$component_name]['active'] = $value;
+            if ($value && in_array($component_name, $variables)) {
+                $description .= self::COMPONENT_ACRONYMS[$component_name] . ', ';
+            }
+        }
+        return ['config'      => $config,
+                'description' => (rtrim($description, ', ') ? : 'none')];
+    }
 
+    /**
+     * @throws Exception
+     */
+    public function submitProjection($config_json, $email, $comment): bool|int {
+        if (!$this->authenticate()) {
+            return false;
+        }
+        $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
+                                   VALUES (?,     ?,         ?,       ?)
+                    ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
+                                             `response`  = NULL,
+                                             `status`    = \'IN_QUEUE\',
+                                             `submitted` = NOW()';
+        $projection = crc32($config_json . $email);
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('issss', $projection, $config_json, $email, $comment, $config_json) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
         return $projection;
     }
 
     /**
      * @throws Exception
      */
-    public function permute(): void  {
-
-        $config_permutations = new ParameterPermutations($this->config);
-        $permutations = $config_permutations->permutations;
-        foreach ($permutations as $key => $permutation) {
-            $config_permuted = $this->parameters_permuted($this->config, $permutation, $config_permutations->variables);
-            echo PHP_EOL . ($key+1) . ' of ' . count($permutations) . ' (' . $config_permuted['description'] . '): ';
-            $this->simulate($config_permuted['config'], $this->config['time']['project_duration_years'], $permutation);
-        }
-   }
-
-    private function parameters_permuted($config, $permutation, $variables): array {
-        $description = '';
-        foreach (ParameterPermutations::PERMUTATION_ELEMENTS as $element_name) {
-            $value = (bool) $permutation[$element_name];
-            $config[$element_name]['active'] = $value;
-            if ($value && in_array($element_name, $variables)) {
-                $description .= $element_name . ', ';
+    public function processNextProjection($projection_id): void
+    {
+        if (is_null($projection_id)) {
+            $sql = 'SELECT `j`.`id`,
+                           `j`.`request`,
+                           `j`.`email`
+                      FROM `projections` `j`
+                      INNER JOIN (SELECT MIN(`submitted`) AS `min_submitted`
+                                    FROM `projections`
+                                    WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
+                      WHERE `j`.`status` = \'IN_QUEUE\'
+                      LIMIT 0, 1';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_result($projection_id, $request, $email) ||
+                !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
             }
         }
-        return ['config'  => $config,
-                'description' => rtrim($description, ', ')];
+        else {
+            $sql = 'SELECT  `request`,
+                            `email`
+                      FROM  `projections`                     
+                      WHERE `id` = ?';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('i', $projection_id) ||
+                !$stmt->bind_result($request, $email) ||
+                !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
+            }
+        }
+        $stmt->fetch();
+        unset($stmt);
+        if ($request) {   // process next projection if exists
+            $this->projectionStatus($projection_id, 'IN_PROGRESS');
+            $this->deleteProjection($projection_id);
+            $this->permute($projection_id, json_decode($request, true)); // process each permutation
+            $this->projectionStatus($projection_id, 'COMPLETED');
+            $this->mysqli->commit();
+            if ($email && filter_var($email, FILTER_VALIDATE_EMAIL) &&
+                (new SMTPEmail())->email(['subject'   => 'Renewable Visions: your results are ready',
+                                          'html'      => false,
+                                          'bodyHTML'  => ($message = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
+                                          'bodyAlt'   => strip_tags($message)])) {
+                $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, 'NOTICE');
+                $this->projectionStatus($projection_id, 'NOTIFIED');
+            }
+            else {
+                $this->logDb('MESSAGE', 'Notification failed: ' . $email . 'of completed projection ' . $projection_id, 'WARNING');
+            }
+        }
     }
 
-    public function submitProjection($config_json, $email): int
-    {
-        $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`)
-                            VALUES (?,     ?,         ?)
-                    ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
-                                             `response`  = NULL,
-                                             `submitted` = NOW()';
-        $projection = crc32($config_json . $email);
+    public function deleteProjection($projection_id): void  {
+        $sql = 'DELETE FROM `permutations`
+                      WHERE `projection` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('isss', $projection, $config_json, $email, $config_json) ||
+            !$stmt->bind_param('i', $projection_id) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        return $projection;
     }
 
-    public function processNextProjection(): void
-    {
-        $sql = 'SELECT `j`.`id`,
-                       `j`.`request`,
-                       `j`.`email`
-                  FROM `projections` `j`
-                  INNER JOIN (SELECT MIN(`submitted`) AS `min_submitted`
-                                FROM `projections`
-                                WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
-                  WHERE `j`.`status` = \'IN_QUEUE\'
-                  LIMIT 0, 1';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($id, $request, $email) ||
-            !$stmt->execute() ||
-            !$stmt->fetch()) {
-            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        unset($stmt);
+    private function projectionStatus($id, $status): void {
+        $this->mysqli->commit();
         $sql = 'UPDATE  `projections`
-                  SET   `status` = \'IN_PROGRESS\'
+                  SET   `status` = ?
                   WHERE `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $id) ||
-            !$stmt->execute() ||
-            !$this->mysqli->commit()) {
+            !$stmt->bind_param('si', $status, $id) ||
+            !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-
     }
-    private function permutationId($permutation): int { // returns permutation id
+
+    /**
+     * @throws Exception
+     */
+    public function get_text($projection_id): ?string {
+        // get acronyms
+        $sql = 'SELECT  `status`,
+                        `timestamp`,
+                        UNIX_TIMESTAMP(`submitted`),
+                        `comment`
+                  FROM  `projections`
+                  WHERE `id` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $projection_id) ||
+            !$stmt->bind_result($status, $timestamp, $submitted_unix_timestamp, $comment) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $stmt->fetch();
+        switch($status) {
+            case 'COMPLETED':
+            case 'NOTIFIED': {
+                return $comment;
+                }
+            case 'IN_QUEUE': {
+                $sql = 'SELECT  COUNT(`status`)
+                          FROM  `projections`
+                          WHERE UNIX_TIMESTAMP(`submitted`) < ? AND
+                                `status` = \'IN_QUEUE\'';
+                unset($stmt);
+                if (!($stmt = $this->mysqli->prepare($sql)) ||
+                    !$stmt->bind_param('i', $submitted_unix_timestamp) ||
+                    !$stmt->bind_result($count) ||
+                    !$stmt->execute() ||
+                    !$stmt->fetch()) {
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    throw new Exception($message);
+                }
+                return 'Projection is ' . ($count ? : 'next') . ' in queue. Please come back later.';
+            }
+            case 'IN_PROGRESS': {
+                return 'Projection in progress ...';
+            }
+            default: {
+                return 'Projection not found';
+            }
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function get_projection($projection_id): bool|string {
+        // get max duration
+        $sql = 'SELECT  MAX(`duration_years`),  
+                        COUNT(`duration_years`)
+                  FROM  `permutations`
+                  WHERE `projection` =  ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $projection_id) ||
+            !$stmt->bind_result($max_duration_years, $row_count) ||
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        if ($max_duration_years && $row_count) {
+            // get acronyms
+            $sql = 'SELECT DISTINCT `acronym`
+                   FROM         `permutations`
+                   WHERE        `projection` = ?';
+            unset($stmt);
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('i', $projection_id) ||
+                !$stmt->bind_result($acronym) ||
+                !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
+            }
+            $acronyms = [];
+            while ($stmt->fetch()) {
+                $acronyms[] = $acronym;
+            }
+            $sql = 'SELECT      `acronym`,
+                                `duration_years`,
+                                ROUND(`npv`/1000.0, 3)
+                       FROM     `permutations`
+                       WHERE    `projection` = ? AND
+                                `acronym`    = ?
+                       ORDER BY `duration_years`';
+            unset($stmt);
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('is', $projection_id, $acronym) ||
+                !$stmt->bind_result($acronym, $duration_years, $npv)) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, 'ERROR');
+                throw new Exception($message);
+            }
+            $columns = [];
+            foreach ($acronyms as $acronym) {
+                $column = [];
+                $column[] = $acronym;
+                $stmt->execute();
+                while ($stmt->fetch()) {
+                    $column[] = (float) $npv;
+                }
+                $columns[] = $column;
+            }
+            $column = [];
+            $column[] = 'project_duration';
+            for ($year = 0; $year <= $max_duration_years; $year++) {
+                $column[] = $year;
+            }
+            $projection = [];
+            $projection[] = $column;
+            foreach ($columns as $column) {
+                $projection[] = $column;
+            }
+        }
+        else {
+            $projection = self::PROJECTION_EMPTY;
+        }
+        return json_encode($projection, JSON_PRETTY_PRINT);
+    }
+
+    private function permutationId($projection_id, $permutation, $permutation_acronym): int { // returns permutation id
         $battery       = $permutation['battery'];
         $heat_pump     = $permutation['heat_pump'];
+        $insulation    = $permutation['insulation'];
         $boiler        = $permutation['boiler'];
         $solar_pv      = $permutation['solar_pv'];
         $solar_thermal = $permutation['solar_thermal'];
-        $sql = 'INSERT INTO `permutations` (`projection`, `start`, `stop`, `battery`, `heat_pump`, `boiler`, `solar_pv`, `solar_thermal`)
-			                        VALUES (?,     NOW(),   NULL,   ?,         ?,           ?,        ?,          ?              )';
+        $sql = 'INSERT INTO `permutations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
+			                        VALUES (?,            ?,              ?,         ?,       ?,            ?,        ?,          ?,               NOW(),   NULL  )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iiiiii', $this->projectionId, $battery, $heat_pump, $boiler, $solar_pv, $solar_thermal) ||
+            !$stmt->bind_param('isiiiiii', $projection_id, $permutation_acronym, $battery, $heat_pump, $insulation, $boiler, $solar_pv, $solar_thermal) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -236,21 +433,19 @@ class Energy extends Root
      */
     private function updatePermutation($permutation_parameters, $projection, $results, $projection_duration_years): void { // add
         $id                 = $projection['newResultId'];
-        $comment            = $this->config['comment'];
         $sum_gbp            = $results['npv_summary']['sum_gbp'];
         $parameters_json    = json_encode($permutation_parameters, JSON_PRETTY_PRINT);
         $results_json       = json_encode($results, JSON_PRETTY_PRINT);
         unset($this->stmt);
         $sql = 'UPDATE    `permutations`
-                    SET   `comment`        = ?,
-                          `duration_years` = ?,                    
+                    SET   `duration_years` = ?,                    
                           `npv`            = ROUND(?),
                           `config`         = ?,
                           `result`         = ?,
                           `stop`           = NOW()
                     WHERE `id`             = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('sidssi', $comment, $projection_duration_years, $sum_gbp, $parameters_json, $results_json, $id) ||
+            !$stmt->bind_param('idssi', $projection_duration_years, $sum_gbp, $parameters_json, $results_json, $id) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -317,9 +512,9 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($config, $project_duration_years, $permutation): void {
+    function simulate($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym): void {
         $npv                            = $config['npv'];
-        $time                           = new Time($config['time']['start'], $project_duration_years, $config['time']['timestep_seconds'], $this->time_units);
+        $time                           = new Time($config['time']['start'], $max_project_duration_years, $config['time']['timestep_seconds'], $this->time_units);
         $this->step_s                   = $time->step_s;
         $temperature_internal_room_c    = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
         $demand_space_heating_thermal   = new Demand($config['demands']['space_heating_thermal'],   $temperature_internal_room_c);
@@ -333,6 +528,7 @@ class Energy extends Root
         $battery                        = new Battery($config['battery'],                                                $time, $npv);
         $hotwater_tank                  = new ThermalTank($config['storage_hot_water'], false,                  $time, $npv);
         $heatpump                       = new HeatPump($config['heat_pump'],                                             $time, $npv);
+        $insulation                     = new Insulation($config['insulation'],                                          $time, $npv);
         $components = [	$supply_electric,
                         $supply_boiler,
                         $boiler,
@@ -340,16 +536,16 @@ class Energy extends Root
                         $solar_thermal,
                         $battery,
                         $hotwater_tank,
-                        $heatpump];
+                        $heatpump,
+                        $insulation];
         $components_active = [];
         foreach ($components as $component) {
             if ($component->active) {
                 $components_active[] = $component;
             }
         }
-        $this->mysqli->commit();
         $this->install($components_active, $time);                                                                                                                  // get install costs
-        $this->year_summary($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $permutation);             // summarise year 0
+        $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $permutation, $permutation_acronym);             // summarise year 0
         $export_limit_j = 1000.0*$time->step_s*$supply_electric->export_limit_kw;
         while ($time->next_timestep()) {                                                                                                                            // timestep through years 0 ... N-1
             $this->value_maintenance($components_active, $time);                                                                                                    // add timestep component maintenance costs
@@ -359,8 +555,9 @@ class Energy extends Root
             $supply_boiler_j   = 0.0;				                                                                                                                // export: +ve, import: -ve
             $temp_climate_c = (new Climate())->temperature_time($time);	                                                                                            // get average climate temperature for day of year, time of day
             // battery
-            if ($battery->active && ($supply_electric->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak, WARNING: transfer_consume_j() must be called EXACTLY ONCE per timestep
-                $supply_electric_j -= $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate
+            if ($battery->active && ($supply_electric->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak
+                $to_battery_j       = $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate until full
+                $supply_electric_j -= $to_battery_j;
             }
             // solar pv
             if ($solar_pv->active) {
@@ -368,7 +565,7 @@ class Energy extends Root
                 $supply_electric_j += $solar_pv_j;				                                                                                                    // start electric balance: surplus (+), deficit (-)
             }
             // satisfy hot water demand
-            $demand_thermal_hotwater_j          = $demand_hotwater_thermal->demand_j($time);                                                                        // hot water energy demand
+            $demand_thermal_hotwater_j                 = $demand_hotwater_thermal->demand_j($time);                                                                 // hot water energy demand
             if ($demand_thermal_hotwater_j > 0.0) {
                 $hotwater_tank_transfer_consume_j      = $hotwater_tank->transfer_consume_j(-$demand_thermal_hotwater_j, $temperature_internal_room_c);             // try to satisfy demand from hotwater tank;
                 $demand_thermal_hotwater_j            += $hotwater_tank_transfer_consume_j['transfer'];
@@ -405,7 +602,7 @@ class Energy extends Root
                 }
             }
             // satisfy space heating-cooling demand
-            $demand_thermal_space_heating_j = $demand_space_heating_thermal->demand_j($time);                                                                       // get space heating energy demand
+            $demand_thermal_space_heating_j                     = $demand_space_heating_thermal->demand_j($time)*$insulation->space_heating_demand_factor;          // get space heating energy demand
             if ($heatpump->active) {                                                                                                                                // use heatpump if available
                 if ($demand_thermal_space_heating_j >= 0.0     && $heatpump->heat) {                                                                                // heating
                     $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j, $temperature_internal_room_c - $temp_climate_c, $time);
@@ -431,20 +628,22 @@ class Energy extends Root
             $supply_electric_j                             -= $demand_electric_non_heating_j;			                    	                                    // satisfy electric non-heating demand
             if ($battery->active) {
                 if ($supply_electric->current_bands['export'] == 'peak') {                                                                                          // export peak time
-                    $supply_electric_j                     += $battery->transfer_consume_j(1E9)['transfer'];                                        // discharge battery as fast as possible
+                    $to_battery_j                           = $battery->transfer_consume_j(-1E9)['transfer'];                                        // discharge battery at max power until empty
+                    $supply_electric_j                     -= $to_battery_j;
                 }
-                else {                                                                                                                                              // off-peak:
-                    $supply_electric_j                     -= $battery->transfer_consume_j($supply_electric_j)['transfer'];                                         // draw power from battery
+                elseif ($supply_electric->current_bands['export'] == 'standard') {                                                                                  // satisfy demand from battery when standard rate
+                    $to_battery_j                           = $battery->transfer_consume_j($supply_electric_j)['transfer'];
+                    $supply_electric_j                     -= $to_battery_j;
                 }
             }
             if ($supply_electric_j > 0.0) {                                                                                                                         // export if surplus energy
-                $supply_electric_j = min($supply_electric_j, $export_limit_j);
+                $supply_electric_j = min($supply_electric_j, $export_limit_j);                                                                                      // cap to export limit
             }
             $supply_electric->transfer_consume_j($time, $supply_electric_j < 0.0 ? 'import' : 'export', $supply_electric_j);                                // import if supply -ve, export if +ve
             $supply_boiler  ->transfer_consume_j($time, 'import',                                       $supply_boiler_j);                                  // import boiler fuel consumed
             $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
             if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
-                $this->year_summary($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation);  // summarise year at year end
+                $results = $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym);  // summarise year at year end
             }
         }
     }
@@ -452,20 +651,22 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function year_summary($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation): void {
+    public function year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym): array {
         echo ($time->year ? ', ' : '') . $time->year;
         $supply_electric->sum($time);
         $supply_boiler->sum($time);
         $consumption = self::consumption($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal);
-        $results['npv_summary'] = self::npv_summary($components_active);
+        $results['npv_summary'] = self::npv_summary($components_active); // $results['npv_summary']['components']['13.5kWh battery'] is unset after $time->year == 8
         $results['consumption'] = $consumption;
         if ($heatpump->active && $time->year) {
             $kwh = $heatpump->kwh['YEAR'][$time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;
         }
-        $result = ['newResultId' => $this->permutationId($permutation),
+        $result = ['newResultId' => $this->permutationId($projection_id, $permutation, $permutation_acronym),
                    'permutation' => $permutation];
+
         $this->updatePermutation($config, $result, $results, $time->year);  // end projection
+        return $results;
     }
 
     function npv_summary($components): array {

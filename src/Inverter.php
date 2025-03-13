@@ -6,12 +6,12 @@ class Inverter extends Component
 {
     public float $one_way_storage_efficiency, $power_threshold_w;
 
-    public function __construct($config, $time, $npv)
+    public function __construct($component, $time, $npv)
     {
-        parent::__construct($config, $time, $npv);
+        parent::__construct($component, $time, $npv);
         if ($this->active) {
-            $this->one_way_storage_efficiency = $config['one_way_storage_efficiency'] ?? 1.0;
-            $this->power_threshold_w = $config['power_threshold_w'] ?? 0.0;
+            $this->one_way_storage_efficiency = $component['one_way_storage_efficiency'] ?? 1.0;
+            $this->power_threshold_w = $component['power_threshold_w'] ?? 0.0;
         }
     }
 

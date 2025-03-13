@@ -19,7 +19,7 @@ class SMTPEmail extends Root
     {
         parent::__construct();
     }
-    public function email($content): void {
+    public function email($content): bool {
         $mail = new PHPMailer();
         try {
         //    $mail->SMTPDebug    = SMTP::DEBUG_SERVER;                 // Enable verbose debug output
@@ -38,10 +38,12 @@ class SMTPEmail extends Root
             $mail->Body     = $content['bodyHTML']  ?? 'No HTML body';
             $mail->AltBody  = $content['bodyAlt']   ?? 'No alt body';
             $mail->send();
-            echo 'Message has been sent';
+            echo 'Email sent';
+            return true;
     }
     catch (Exception $e) {
-        echo 'Message could not be sent. Mailer Error: ' . $mail->ErrorInfo;
+        echo 'Email could not be sent. Mailer Error: ' . $mail->ErrorInfo;
+        return false;
         }
     }
 }

@@ -3,7 +3,7 @@
 namespace Src;
 class ParameterPermutations
 {
-    const PERMUTATION_ELEMENTS = ['battery', 'heat_pump', 'boiler', 'solar_pv', 'solar_thermal'];
+    const PERMUTATION_ELEMENTS = ['battery', 'heat_pump', 'boiler', 'solar_pv', 'solar_thermal', 'insulation'];
 
     public int $elements_count, $msb;
     public array $permutations, $fixed, $variables;

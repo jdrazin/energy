@@ -284,7 +284,6 @@ class Energy extends Root
     public function get_text($projection_id): ?string {
         // get acronyms
         $sql = 'SELECT  `status`,
-                        IFNULL(`message`, \'\'),
                         `timestamp`,
                         UNIX_TIMESTAMP(`submitted`),
                         `comment`
@@ -292,7 +291,7 @@ class Energy extends Root
                   WHERE `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
-            !$stmt->bind_result($status, $message, $timestamp, $submitted_unix_timestamp, $comment) ||
+            !$stmt->bind_result($status, $timestamp, $submitted_unix_timestamp, $comment) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');

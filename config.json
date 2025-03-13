@@ -209,9 +209,11 @@
     "cost_install_gbp": 5000.0,
     "max_charge_kw": 6.0,
     "max_discharge_kw": 6.0,
-    "cycles_to_reduced_capacity" : 5000,
-    "reduced_capacity" : 0.80,
     "cost_maintenance_pa_gbp": 0,
+    "projection" : {
+        "cycles_to_reduced_capacity": 7500,
+        "reduced_capacity_percent": 20
+    },
     "inverter": {
       "name": "inverter",
       "power_threshold_w": 20,

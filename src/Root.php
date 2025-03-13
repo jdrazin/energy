@@ -329,12 +329,11 @@ class Root
     /**
      * @throws Exception
      */
-    public function skip_request($namespace, $class): bool
-    { // returns whether to skip request to prevent throttling
+    public function skip_request($namespace, $class): bool { // returns whether to skip request to prevent throttling
         $class = $this->strip_namespace($namespace, $class);
         $sql = 'SELECT NOW() < `last_successful_request` + INTERVAL `min_minutes_since_last` MINUTE
-                    FROM `requests`
-                    WHERE `host` = ?';
+                    FROM    `requests`
+                    WHERE   `host` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('s', $class) ||
             !$stmt->bind_result($skip_request) ||
@@ -344,11 +343,25 @@ class Root
             throw new Exception($message);
         }
         $stmt->fetch();
-        unset($stmt);
-        $this->request_result($class, $skip_request = $skip_request ?? false);
-        return $skip_request;
+        return is_null($skip_request) ? true : $skip_request;
     }
 
+    protected function requestIsStale($namespace, $class): bool {// returns whether to requests are stale (i.e. cannot proceed)
+        $class = $this->strip_namespace($namespace, $class);
+        $sql = 'SELECT NOW() > `last_successful_request` + INTERVAL `max_minutes_since_last` MINUTE
+                    FROM    `requests`
+                    WHERE   `host` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('s', $class) ||
+            !$stmt->bind_result($request_is_stale) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $stmt->fetch();
+        return $request_is_stale;
+    }
 
     /**
      * @throws Exception
@@ -442,6 +455,4 @@ class Root
         $stmt->fetch();
         return $latest_value_datetime ?? $earliest_datetime;
     }
-
-
 }

@@ -99,11 +99,13 @@ class Octopus extends Root
     public function requestTariffs(): void  // get tariffs for both directions
     {
         if ($this->skip_request(__NAMESPACE__, __CLASS__)) {  // skip request if called recently
+            $this->request_result(__CLASS__, false);
             return;
         }
         foreach (self::DIRECTIONS as $tariffs_rates) {
             $this->getTariff($tariffs_rates);
         }
+        $this->request_result(__CLASS__, true);
     }
 
     /**

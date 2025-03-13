@@ -18,7 +18,7 @@ class Battery extends Component
             $this->efficiency                   = $component['inverter']['one_way_storage_efficiency'] ?? 1.0;
             $this->initial_raw_capacity_kwh     = $component['initial_raw_capacity_kwh'] ?? 0.0;
             $this->cycles_to_reduced_capacity   = $component['projection']['cycles_to_reduced_capacity'] ?? 1E9;
-            $this->reduced_capacity             = $component['projection']['reduced_capacity'] ?? 1.0;
+            $this->reduced_capacity             = 1.0 - (($component['projection']['reduced_capacity_percent'] ?? 0)/100.0);
             $this->max_charge_w                 = 1000.0 * $component['max_charge_kw'];
             $this->max_discharge_w              = 1000.0 * $component['max_discharge_kw'];
             $this->store_j                      = 0.0;

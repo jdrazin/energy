@@ -71,7 +71,7 @@ $app->post('/projections', function (Request $request, Response $response) {
     $email   = $config['email']   ?? false;
     $comment = ($config[Root::COMMENT_STRING] ?? '') . ' (' . (new DateTime("now", new DateTimeZone("UTC")))->format(DateTimeInterface::RFC850) . ')';
     $projection_id = $energy->submitProjection($config_json, $email, $comment);
-    $response->getBody()->write('Get your result at: https://www.drazin.net:8444/projection.html?id=' . $projection_id . '.' .
+    $response->getBody()->write('Get your result at: https://www.drazin.net:8444/projection.html?id=' . $projection_id . ' ' .
                                  ($email ? ' Will e-mail you when ready at ' . $email . '.' : ''));
     return $response;
 });

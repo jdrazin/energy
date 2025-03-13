@@ -392,13 +392,14 @@ class Energy extends Root
     private function permutationId($projection_id, $permutation, $permutation_acronym): int { // returns permutation id
         $battery       = $permutation['battery'];
         $heat_pump     = $permutation['heat_pump'];
+        $insulation    = $permutation['insulation'];
         $boiler        = $permutation['boiler'];
         $solar_pv      = $permutation['solar_pv'];
         $solar_thermal = $permutation['solar_thermal'];
-        $sql = 'INSERT INTO `permutations` (`projection`, `acronym`, `battery`, `heat_pump`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
-			                        VALUES (?,            ?,              ?,         ?,           ?,        ?,          ?,               NOW(),   NULL  )';
+        $sql = 'INSERT INTO `permutations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
+			                        VALUES (?,            ?,              ?,         ?,       ?,            ?,        ?,          ?,               NOW(),   NULL  )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('isiiiii', $projection_id, $permutation_acronym, $battery, $heat_pump, $boiler, $solar_pv, $solar_thermal) ||
+            !$stmt->bind_param('isiiiiii', $projection_id, $permutation_acronym, $battery, $heat_pump, $insulation, $boiler, $solar_pv, $solar_thermal) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');

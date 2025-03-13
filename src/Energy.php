@@ -305,9 +305,12 @@ class Energy extends Root
             case 'IN_PROGRESS': {
                 return 'Projection in progress ...';
             }
-            default: null;
+            default: {
+                return null;
+            }
         }
     }
+
     /**
      * @throws Exception
      */
@@ -506,6 +509,7 @@ class Energy extends Root
         $battery                        = new Battery($config['battery'],                                                $time, $npv);
         $hotwater_tank                  = new ThermalTank($config['storage_hot_water'], false,                  $time, $npv);
         $heatpump                       = new HeatPump($config['heat_pump'],                                             $time, $npv);
+        $insulation                     = new Insulation($config['insulation'],                                          $time, $npv);
         $components = [	$supply_electric,
                         $supply_boiler,
                         $boiler,
@@ -513,7 +517,8 @@ class Energy extends Root
                         $solar_thermal,
                         $battery,
                         $hotwater_tank,
-                        $heatpump];
+                        $heatpump,
+                        $insulation];
         $components_active = [];
         foreach ($components as $component) {
             if ($component->active) {
@@ -541,7 +546,7 @@ class Energy extends Root
                 $supply_electric_j += $solar_pv_j;				                                                                                                    // start electric balance: surplus (+), deficit (-)
             }
             // satisfy hot water demand
-            $demand_thermal_hotwater_j          = $demand_hotwater_thermal->demand_j($time);                                                                        // hot water energy demand
+            $demand_thermal_hotwater_j                 = $demand_hotwater_thermal->demand_j($time);                                                                 // hot water energy demand
             if ($demand_thermal_hotwater_j > 0.0) {
                 $hotwater_tank_transfer_consume_j      = $hotwater_tank->transfer_consume_j(-$demand_thermal_hotwater_j, $temperature_internal_room_c);             // try to satisfy demand from hotwater tank;
                 $demand_thermal_hotwater_j            += $hotwater_tank_transfer_consume_j['transfer'];
@@ -578,7 +583,7 @@ class Energy extends Root
                 }
             }
             // satisfy space heating-cooling demand
-            $demand_thermal_space_heating_j = $demand_space_heating_thermal->demand_j($time);                                                                       // get space heating energy demand
+            $demand_thermal_space_heating_j                     = $demand_space_heating_thermal->demand_j($time)*$insulation->space_heating_demand_factor;          // get space heating energy demand
             if ($heatpump->active) {                                                                                                                                // use heatpump if available
                 if ($demand_thermal_space_heating_j >= 0.0     && $heatpump->heat) {                                                                                // heating
                     $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j, $temperature_internal_room_c - $temp_climate_c, $time);

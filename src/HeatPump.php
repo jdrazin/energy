@@ -1,20 +1,13 @@
 <?php
-
 namespace Src;
 
-use Energy;
 
-require_once __DIR__ . '/Component.php';
-require_once __DIR__ . "/Energy.php";
-require_once __DIR__ . "/ThermalTank.php";
 
 class HeatPump extends Component
 {
 
-    public float $power_background_w, $power_max_w, $heat, $cool, $max_output_j, $performance_factor, $energy_background_step_j;
+    public float $heat, $cool, $max_output_j, $performance_factor, $energy_background_step_j;
     public array $cops, $kwh;
-
-    public ThermalTank $thermal_sink;
 
     public function __construct($component, $time, $npv)
     {
@@ -88,8 +81,8 @@ class HeatPump extends Component
     {
         $time_values = $time->values();
         $kwh = [];
-        $kwh['transfer_kwh'] = $transfer_consume_j['transfer'] / \Src\Energy::JOULES_PER_KWH;
-        $kwh['consume_kwh'] = $transfer_consume_j['consume'] / \Src\Energy::JOULES_PER_KWH;
+        $kwh['transfer_kwh'] = $transfer_consume_j['transfer'] / Energy::JOULES_PER_KWH;
+        $kwh['consume_kwh'] = $transfer_consume_j['consume'] / Energy::JOULES_PER_KWH;
         foreach ($this->time_units as $time_unit => $number_unit_values) {
             $time_value = $time_values[$time_unit];
             $t = $this->kwh[$time_unit][$time_value];

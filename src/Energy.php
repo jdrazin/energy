@@ -15,11 +15,24 @@ class Energy extends Root
                                                        'heat_pump'     => 'HP',
                                                        'insulation'    => 'IN',
                                                        'solar_pv'      => 'PV',
-                                                       'solar_thermal' => 'ST'];
+                                                       'solar_thermal' => 'ST'],
+                    PROJECTION_EMPTY                = [
+                                                            [
+                                                                "project_duration",
+                                                                0,
+                                                                25
+                                                            ],
+                                                            [
+                                                                "none",
+                                                                0.0,
+                                                                0.0
+                                                            ]
+                                                       ];
     public float $step_s;
     public array $time_units                        = ['HOUR_OF_DAY'   => 24,
                                                        'MONTH_OF_YEAR' => 12,
                                                        'DAY_OF_YEAR'   => 366];
+
     /**
      * @throws Exception
      */
@@ -306,7 +319,7 @@ class Energy extends Root
                 return 'Projection in progress ...';
             }
             default: {
-                return null;
+                return 'Projection not found';
             }
         }
     }
@@ -384,7 +397,7 @@ class Energy extends Root
             }
         }
         else {
-            $projection = [];
+            $projection = self::PROJECTION_EMPTY;
         }
         return json_encode($projection, JSON_PRETTY_PRINT);
     }

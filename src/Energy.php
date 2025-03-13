@@ -13,6 +13,7 @@ class Energy extends Root
                                                        'battery'       => 'B',
                                                        'boiler'        => 'BO',
                                                        'heat_pump'     => 'HP',
+                                                       'insulation'    => 'IN',
                                                        'solar_pv'      => 'PV',
                                                        'solar_thermal' => 'ST'];
     public float $step_s;

@@ -30,6 +30,7 @@ class Octopus extends Root
                                     'LOAD_HOUSE_W'          => ['load_house_kw',            1000.0],
                                     'BATTERY_LEVEL_PERCENT' => ['battery_level_percent',    1.0]
                                 ];
+    const int       TARIFF_EXPIRATION_DAYS = 7;
 
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api;
@@ -106,7 +107,6 @@ class Octopus extends Root
     }
 
     /**
-     * @throws GuzzleException
      * @throws Exception
      */
     private function getTariff($tariffs_rates): void
@@ -121,16 +121,21 @@ class Octopus extends Root
                 self::ELECTRICITY_TARIFFS .
                 $energy_type_prefix . '-' . $energy_type_postfix . '-' . $tariff_code . '-' . $region_code . '/';
             foreach (self::RATE_PERS as $rate_per => $endpoint) {
-                $tariffs = json_decode($this->request($url_tariff_prefix . $endpoint), true)['results'];
-                $this->insert($tariffs_rates['rates'], $tariff_id, $rate_per, $tariffs);
+                try {
+                    $tariffs = json_decode($this->request($url_tariff_prefix . $endpoint), true)['results'];
+                    $this->insert($tariffs_rates['rates'], $tariff_id, $rate_per, $tariffs);
+                }
+                catch (GuzzleException $e) {
+                    $message = $e->getMessage();
+                    (new Root())->logDb('MESSAGE', $message, 'WARNING');
+                    echo $message . PHP_EOL;
+                    if ($this->requestIsStale(__NAMESPACE__, __CLASS__)) { // give if too long a period has elapsed since last successful request
+                        throw new Exception($message);
+                    }
+                }
             }
         }
     }
-
-    /**
-     * @throws GuzzleException
-     * @throws Exception
-     */
 
     /**
      * @throws Exception
@@ -140,7 +145,8 @@ class Octopus extends Root
         // insert rates
         $sql = 'INSERT INTO `' . $rates_table . '` (`tariff`, `start`, `stop`, `rate`, `per`) 
                                             VALUES (?,         ?,       ?,      ?,      ?)
-                    ON DUPLICATE KEY UPDATE `rate` = ?';
+                    ON DUPLICATE KEY UPDATE `rate`      = ?,
+                                            `timestamp` = NOW()';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('issdsd', $tariff_id, $start, $stop, $rate, $per, $rate)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

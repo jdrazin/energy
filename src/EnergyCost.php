@@ -22,7 +22,7 @@ class EnergyCost extends Root
 
     // setup parameters
     protected float $batteryCapacityKwh,
-                    $batteryRoundTripStorageEfficiency,
+                    $batteryOneWayEfficiency,
                     $batteryWearCostAverageGbpPerKwh,
                     $batteryWearConstantCoefficient,
                     $batteryWearOutOfSpecCoefficient,
@@ -68,10 +68,9 @@ class EnergyCost extends Root
                                           'export_gbp_per_day'    => []
             ];
         }
-        $inverter_power_efficiency = $this->config['battery']['inverter']['power_efficiency'];
         $this->problem              = [
                                         'batteryCapacityKwh'                        => $this->config['battery']['initial_raw_capacity_kwh'],
-                                        'batteryRoundTripStorageEfficiency'         => $inverter_power_efficiency*$inverter_power_efficiency,              // square up inverter power efficiency to obtain round trip (ignores internal resistance losses)
+                                        'batteryOneWayEfficiency'                   => sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0),
                                         'batteryWearCostAverageGbpPerKwh'           => $this->config['battery']['wear']['cost_average_gbp_per_kwh'],
                                         'batteryWearConstantCoefficient'            => $this->config['battery']['wear']['constant_coefficient'],
                                         'batteryWearOutOfSpecCoefficient'           => $this->config['battery']['wear']['out_of_spec_coefficient'],
@@ -207,7 +206,7 @@ class EnergyCost extends Root
         //
         $command = self::PYTHON_SCRIPT_COMMAND . ' ';
         $command .= $this->parameter_name_value('batteryCapacityKwh');
-        $command .= $this->parameter_name_value('batteryRoundTripStorageEfficiency');
+        $command .= $this->parameter_name_value('batteryOneWayEfficiency');
         $command .= $this->parameter_name_value('batteryWearCostAverageGbpPerKwh');
         $command .= $this->parameter_name_value('batteryWearConstantCoefficient');
         $command .= $this->parameter_name_value('batteryWearOutOfSpecCoefficient');
@@ -257,7 +256,7 @@ class EnergyCost extends Root
         $this->strip();
         $this->batteryCapacityKwh                       = (float) $this->strip();
         $this->strip();
-        $this->batteryRoundTripStorageEfficiency        = (float) $this->strip();
+        $this->batteryOneWayEfficiency                  = (float) $this->strip();
         $this->strip();
         $this->batteryWearCostAverageGbpPerKwh          = (float) $this->strip();
         $this->strip();
@@ -344,7 +343,12 @@ class EnergyCost extends Root
             // battery
             $battery_charge_kwh  = -$energy_grid_kwh - $total_load_kwh;
             $battery_charge_kw   = -$grid_power_slot_kw - $total_load_kw;
-            $battery_level_kwh  += $battery_charge_kwh * $this->batteryRoundTripStorageEfficiency;
+            if ($battery_charge_kwh > 0.0) {
+               $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayEfficiency;
+            }
+            else {
+               $battery_level_kwh += $battery_charge_kwh / $this->batteryOneWayEfficiency;
+            }
 
             // operational and out of spec wear
             $cost_energy_wear_out_of_spec += $this->wearOutOfSpecCost(  $battery_level_kwh,

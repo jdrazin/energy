@@ -98,7 +98,7 @@ def wear_out_of_spec_cost(x, x_min, x_max, wear_cost_average, constant_coefficie
 index =  2
 batteryCapacityKwh                      = float(sys.argv[index])
 index += 2
-batteryRoundTripStorageEfficiency          = float(sys.argv[index])
+batteryOneWayEfficiency                 = float(sys.argv[index])
 index += 2
 batteryWearCostAverageGbpPerKwh         = float(sys.argv[index])
 index += 2

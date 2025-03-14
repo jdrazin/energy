@@ -16,9 +16,8 @@ ini_set('mysql.connect_timeout','36000');
 try {
     $slivers = new Slivers();
     $sliver = $slivers->finalSlotZeroParameters();
-
-    // get instantaneous net load and battery level
     $givenergy = new GivEnergy();
+    $battery_now = $givenergy->batteryNow();
 
 }
 catch (Exception $e) {

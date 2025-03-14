@@ -343,6 +343,19 @@ class GivEnergy extends Root
         $this->mysqli->commit();
     }
 
+    public function batteryNow(): array {
+        $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/system-data/latest';
+        $headers = [
+            'Authorization' => 'Bearer ' . $this->api['api_token'],
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ];
+        $client = new Client();
+        $response = $client->get($url, ['headers' => $headers]);
+        $data = json_decode((string)$response->getBody(), true);
+        return $data['data']['battery'];
+    }
+
     /**
      * @throws GuzzleException
      * @throws Exception
@@ -353,16 +366,7 @@ class GivEnergy extends Root
         // return effective battery level and capacity for input to optimiser
         //
         $initial_raw_capacity_kwh = $this->config['battery']['initial_raw_capacity_kwh'];
-        $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/system-data/latest';
-        $headers = [
-            'Authorization' => 'Bearer ' . $this->api['api_token'],
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ];
-        $client = new Client();
-        $response = $client->get($url, ['headers' => $headers]);
-        $data = json_decode((string)$response->getBody(), true);
-        $battery = $data['data']['battery'];
+        $battery = $this->batteryNow();
         $stored_now_kwh = (((float)$battery['percent']) / 100.0) * $initial_raw_capacity_kwh;
         $battery_power_now_w = ((float)$battery['power']);
         $timestamp_now = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot

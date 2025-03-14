@@ -50,7 +50,10 @@ def day_cost(grid_kws):
         # battery
         battery_charge_kwh   = -energy_grid_kwh - total_load_kwh
         battery_charge_kw    = -grid_power_slot_kw - total_load_kw
-        battery_level_kwh   += battery_charge_kwh * batteryRoundTripStorageEfficiency
+        if battery_charge_kw > 0.0:
+            battery_level_kwh += battery_charge_kwh * batteryOneWayEfficiency
+        else:
+            battery_level_kwh += battery_charge_kwh / batteryOneWayEfficiency
 
         # operational and out of spec wear
         cost_energy_wear_out_of_spec += wear_out_of_spec_cost(  battery_level_kwh,

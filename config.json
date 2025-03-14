@@ -1,5 +1,5 @@
 {
-  "#": "Church House (HP, B, PV)",
+  "#": "Church House (HP, PV, IN)",
   "email": "",
   "heat_pump": {
     "name": "heatpump ASHP",
@@ -37,7 +37,7 @@
   },
   "boiler": {
     "name": "oil",
-    "active": true,
+    "active": false,
     "tariff": "oil",
     "output_kw" : 12.0,
     "efficiency": 0.85,
@@ -46,7 +46,7 @@
   },
   "solar_pv": {
     "name": "solar pv",
-    "active": true,
+    "active": false,
     "cost": {
       "install_gbp": {
         "install": 19000.0,
@@ -87,7 +87,7 @@
       "cost_install_gbp": 0,
       "power_threshold_kw": 11.0,
       "out_of_spec_activation_power_kw" : 0.4,
-      "one_way_storage_efficiency": 0.96
+      "power_efficiency": 0.96
     },
     "collectors": {
       "main house, south": {
@@ -194,7 +194,6 @@
   },
   "insulation": {
     "#": "https://chatgpt.com/c/67d29ec9-7c64-800d-9c85-610421ab2d29",
-    "active": false,
     "cost_install_gbp": 30000,
     "space_heating_demand_reduction_percent" : 20
   },
@@ -207,6 +206,7 @@
     "max_charge_kw": 6.0,
     "max_discharge_kw": 6.0,
     "cost_maintenance_pa_gbp": 0,
+    "round_trip_efficiency_percent": 93,
     "projection" : {
       "cycles_to_reduced_capacity": 7500,
       "reduced_capacity_percent": 20
@@ -216,11 +216,6 @@
       "constant_coefficient": 0.5,
       "out_of_spec_coefficient" : 25.0,
       "out_of_spec_activation_energy_kwh" : 0.4
-    },
-    "inverter": {
-      "name": "inverter",
-      "power_threshold_w": 20,
-      "one_way_storage_efficiency": 0.964
     }
   },
   "demands": {

@@ -206,6 +206,7 @@
     "max_charge_kw": 6.0,
     "max_discharge_kw": 6.0,
     "cost_maintenance_pa_gbp": 0,
+    "round_trip_efficiency_percent": 93,
     "projection" : {
         "cycles_to_reduced_capacity": 7500,
         "reduced_capacity_percent": 20
@@ -215,11 +216,6 @@
       "constant_coefficient": 0.5,
       "out_of_spec_coefficient" : 25.0,
       "out_of_spec_activation_energy_kwh" : 0.4
-    },
-    "inverter": {
-      "name": "inverter",
-      "power_threshold_w": 20,
-      "power_efficiency": 0.964
     }
   },
   "demands": {

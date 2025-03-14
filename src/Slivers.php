@@ -15,7 +15,9 @@ class Slivers extends Root
                         `st`.`stop`,
                         `st`.`mode`,
                         `st`.`abs_charge_power_w`,
-                        `st`.`target_level_percent`
+                        `st`.`target_level_percent`,
+                        `st`.`import_gbp_per_kwh`,
+                        `st`.`export_gbp_per_kwh`
                    FROM `slots` `st`
                    INNER JOIN `tariff_combinations` `tc` ON `tc`.`id` = `st`.`tariff_combination`
                    WHERE `st`.`slot` = 0 AND
@@ -23,7 +25,7 @@ class Slivers extends Root
                          `tc`.`active` AND 
                          NOW() BETWEEN `st`.`start` AND `st`.`stop`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($start, $stop, $mode, $abs_charge_power_w, $target_level_percent) ||
+            !$stmt->bind_result($start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -37,6 +39,8 @@ class Slivers extends Root
                 'stop'                  =>  $stop,
                 'mode'                  =>  $mode,
                 'abs_charge_power_w'    =>  $abs_charge_power_w,
-                'target_level_percent'  =>  $target_level_percent];
+                'target_level_percent'  =>  $target_level_percent,
+                'import_gbp_per_kwh'    =>  $import_gbp_per_kwh,
+                'export_gbp_per_kwh'    =>  $export_gbp_per_kwh];
     }
 }

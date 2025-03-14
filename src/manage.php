@@ -43,9 +43,9 @@ ini_set('mysql.connect_timeout','36000');
 
 const PID_FOLDER                        = '/var/www/html/energy/',
       USE_PID_SEMAPHORE                 = true,
-      USE_CRONTAB                       = false,
+      USE_CRONTAB                       = true,
       ARGS                              = ['CRON' => 1],
-      INITIALISE_ON_EXCEPTION           = false,
+      INITIALISE_ON_EXCEPTION           = true,
       EMAIL_NOTIFICATION_ON_ERROR       = true,
       REPLACE_WITH_STUB                 = false,
       ENABLE_SLOT_COMMANDS              = true,

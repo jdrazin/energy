@@ -87,7 +87,7 @@
       "cost_install_gbp": 0,
       "power_threshold_kw": 11.0,
       "out_of_spec_activation_power_kw" : 0.4,
-      "one_way_storage_efficiency": 0.96
+      "power_efficiency": 0.96
     },
     "collectors": {
       "main house, south": {
@@ -219,7 +219,7 @@
     "inverter": {
       "name": "inverter",
       "power_threshold_w": 20,
-      "one_way_storage_efficiency": 0.964
+      "power_efficiency": 0.964
     }
   },
   "demands": {

@@ -4,13 +4,13 @@ require_once __DIR__ . '/Component.php';
 
 class Inverter extends Component
 {
-    public float $one_way_storage_efficiency, $power_threshold_w;
+    public float $power_efficiency, $power_threshold_w;
 
     public function __construct($component, $time, $npv)
     {
         parent::__construct($component, $time, $npv);
         if ($this->active) {
-            $this->one_way_storage_efficiency = $component['one_way_storage_efficiency'] ?? 1.0;
+            $this->power_efficiency = $component['power_efficiency'] ?? 1.0;
             $this->power_threshold_w = $component['power_threshold_w'] ?? 0.0;
         }
     }
@@ -26,9 +26,9 @@ class Inverter extends Component
             $energy_threshold_j = $this->power_threshold_w * $this->step_s;
             if ($net_request) {
                 $transferred = $request_consumed_j;
-                $consumed = ($request_consumed_j / $this->one_way_storage_efficiency);
+                $consumed = ($request_consumed_j / $this->power_efficiency);
             } else {
-                $transferred = max(($request_consumed_j * $this->one_way_storage_efficiency) - $energy_threshold_j, 0.0);
+                $transferred = max(($request_consumed_j * $this->power_efficiency) - $energy_threshold_j, 0.0);
                 $consumed = max($transferred, 0.0);
             }
             return ['transfer' => $transferred,

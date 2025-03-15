@@ -64,11 +64,13 @@ class Sliver extends Root
         $energy_cost            = new EnergyCost(null, null);
         $energy_cost->makeNormalisationEnergyCoefficient();
         $energy_cost->makeNormalisationPowerCoefficient();
-        $slot_target_parameters = $this->slotTargetParameters();             // get slot target parameters
-        $battery                = $givenergy->latest();      // get battery data
-        $battery_level_percent  = $battery['battery']['percent'];
-        $battery_level_kwh      = $battery_level_percent*$energy_cost->batteryCapacityKwh/100.0;
-        $net_load_kw            = ($battery['consumption']-$battery['solar']['power'])/1000.0;
+        $slot_target_parameters =  $this->slotTargetParameters();             // get slot target parameters
+        $battery                =  $givenergy->latest();      // get battery data
+        $battery_level_percent  =  $battery['battery']['percent'];
+        $battery_level_kwh      =  $battery_level_percent*$energy_cost->batteryCapacityKwh/100.0;
+        $house_load_kw          =  $battery['consumption']/1000.0;
+        $solar_kw               =  $battery['solar']['power']/1000.0;
+        $net_load_kw            =  $house_load_kw-$solar_kw;
         $charge_min_kw          = -$givenergy->battery['max_discharge_kw'];
         $charge_max_kw          =  $givenergy->battery['max_charge_kw'];
         $charge_increment_kw    = ($charge_max_kw - $charge_min_kw)/self::CHARGE_POWER_LEVELS;
@@ -90,6 +92,16 @@ class Sliver extends Root
                 $optimum_cost_per_hour    = $cost_per_hour;
             }
             $charge_kw += $charge_increment_kw;
+        }
+        $sql = 'INSERT INTO `slivers`  (`charge_w`, `level_percent`, `slot_mode`, `slot_abs_charge_power_w`, `slot_target_level_percent`, `house_load_kw`, `solar_kw`) 
+                                VALUES ($charge_kw,  $level_percent,  $slot_mode,  $slot_abs_charge_power_w,   $slot_target_level_percent, $house_load_kw,  $solar_kw)';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('disdidd', $charge_kw,  $level_percent,  $slot_mode,  $slot_abs_charge_power_w,   $slot_target_level_percent, $house_load_kw,  $solar_kw) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
         }
         return round(1000.0 * $optimum_charge_kw);
     }

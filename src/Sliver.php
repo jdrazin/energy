@@ -94,7 +94,7 @@ class Sliver extends Root
             $charge_kw += $charge_increment_kw;
         }
         $sql = 'INSERT INTO `slivers`  (`charge_w`, `level_percent`, `slot_mode`, `slot_abs_charge_power_w`, `slot_target_level_percent`, `house_load_kw`, `solar_kw`) 
-                                VALUES ($charge_kw,  $level_percent,  $slot_mode,  $slot_abs_charge_power_w,   $slot_target_level_percent, $house_load_kw,  $solar_kw)';
+                                VALUES ($charge_kw,  $level_percent, $slot_mode,  $slot_abs_charge_power_w,  $slot_target_level_percent,  $house_load_kw,  $solar_kw)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('disdidd', $charge_kw,  $level_percent,  $slot_mode,  $slot_abs_charge_power_w,   $slot_target_level_percent, $house_load_kw,  $solar_kw) ||
             !$stmt->execute() ||

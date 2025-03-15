@@ -45,7 +45,7 @@ def day_cost(grid_kws):
                                                                 0.0,
                                                                 batteryWearOutOfSpecCoefficient,
                                                                 batteryWearOutOfSpecActivationEnergyKwh,
-                                                                normalisation_power_coefficient) * slotDurationHour
+                                                                normalisation_power_coefficient) * abs(energy_grid_kwh)
 
         # battery
         battery_charge_kwh   = -energy_grid_kwh - total_load_kwh
@@ -63,7 +63,7 @@ def day_cost(grid_kws):
                                                                 batteryWearConstantCoefficient,
                                                                 batteryWearOutOfSpecCoefficient,
                                                                 batteryWearOutOfSpecActivationEnergyKwh,
-                                                                normalisation_energy_coefficient) * slotDurationHour
+                                                                normalisation_energy_coefficient) * abs(battery_charge_kwh)
 
         # out of current spec
         cost_power_out_of_spec += wear_out_of_spec_cost(       battery_charge_kw,
@@ -73,7 +73,7 @@ def day_cost(grid_kws):
                                                                 0.0,
                                                                 batteryWearOutOfSpecCoefficient,
                                                                 batteryWearOutOfSpecActivationEnergyKwh,
-                                                                normalisation_power_coefficient) * slotDurationHour
+                                                                normalisation_power_coefficient) * abs(battery_charge_kwh)
 
         cost_energy_average_per_kwh_acc += 0.5 * (tariff_import_per_kwh + tariff_export_per_kwh) # accumulate average energy cost
         slot_count += 1

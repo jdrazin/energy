@@ -420,38 +420,39 @@ class EnergyCost extends Root
     public function costWearOutOfSpecGbp($grid_power_slot_kw, $battery_charge_kw, $battery_level_kwh, $duration_hour): float {
         $energy_grid_kwh    = $grid_power_slot_kw * $duration_hour;
         $battery_charge_kwh = $battery_charge_kw * $duration_hour;
-        return $this->wearOutOfSpecCostGpbPerKwh(   $grid_power_slot_kw,
-                                                    -$this->importLimitKw,
-                                                    $this->exportLimitKw,
-                                                    $this->batteryWearCostAverageGbpPerKwh/$this->slotDurationHour,
-                                                    0.0,
-                                                    $this->batteryWearOutOfSpecCoefficient,
-                                                    $this->batteryWearOutOfSpecActivationEnergyKwh,
-                                                    $this->normalisationPowerCoefficient)*abs($energy_grid_kwh) +
-                $this->wearOutOfSpecCostGpbPerKwh(  $battery_level_kwh,
-                                                    0.0,
-                                                    $this->batteryCapacityKwh,
-                                                    $this->batteryWearCostAverageGbpPerKwh,
-                                                    $this->batteryWearConstantCoefficient,
-                                                    $this->batteryWearOutOfSpecCoefficient,
-                                                    $this->batteryWearOutOfSpecActivationEnergyKwh,
-                                                    $this->normalisationEnergyCoefficient)*abs($battery_charge_kwh)+
-                $this->wearOutOfSpecCostGpbPerKwh( $battery_charge_kw,
-                                                    -$this->batteryMaxDischargeKw,
-                                                    $this->batteryMaxChargeKw,
-                                                    $this->batteryWearCostAverageGbpPerKwh/$this->slotDurationHour,
-                                                    0.0,
-                                                    $this->batteryWearOutOfSpecCoefficient,
-                                                    $this->batteryWearOutOfSpecActivationEnergyKwh,
-                                                    $this->normalisationEnergyCoefficient)*abs($battery_charge_kwh);
+        $cost_grid_out_of_spec          = $this->wearOutOfSpecCostGpbPerKwh(    $grid_power_slot_kw,
+                                                                               -$this->importLimitKw,
+                                                                                $this->exportLimitKw,
+                                                                                $this->batteryWearCostAverageGbpPerKwh/$duration_hour,
+                                                                                0.0,
+                                                                                $this->batteryWearOutOfSpecCoefficient,
+                                                                                $this->batteryWearOutOfSpecActivationEnergyKwh,
+                                                                                $this->normalisationPowerCoefficient)*abs($energy_grid_kwh);
+        $cost_energy_wear_out_of_spec   = $this->wearOutOfSpecCostGpbPerKwh(    $battery_level_kwh,
+                                                                                0.0,
+                                                                                $this->batteryCapacityKwh,
+                                                                                $this->batteryWearCostAverageGbpPerKwh,
+                                                                                $this->batteryWearConstantCoefficient,
+                                                                                $this->batteryWearOutOfSpecCoefficient,
+                                                                                $this->batteryWearOutOfSpecActivationEnergyKwh,
+                                                                                $this->normalisationEnergyCoefficient)*abs($battery_charge_kwh);
+        $cost_power_out_of_spec          =  $this->wearOutOfSpecCostGpbPerKwh( $battery_charge_kw,
+                                                                               -$this->batteryMaxDischargeKw,
+                                                                                $this->batteryMaxChargeKw,
+                                                                                $this->batteryWearCostAverageGbpPerKwh/$duration_hour,
+                                                                                0.0,
+                                                                                $this->batteryWearOutOfSpecCoefficient,
+                                                                                $this->batteryWearOutOfSpecActivationEnergyKwh,
+                                                                                $this->normalisationEnergyCoefficient)*abs($battery_charge_kwh);
+        return $cost_grid_out_of_spec + $cost_energy_wear_out_of_spec + $cost_power_out_of_spec;
     }
 
-    private function makeNormalisationEnergyCoefficient(): void
+    public function makeNormalisationEnergyCoefficient(): void
     {
         $this->normalisationEnergyCoefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+(24.0*$this->batteryWearOutOfSpecCoefficient*$this->batteryWearOutOfSpecActivationEnergyKwh/$this->batteryCapacityKwh));
     }
 
-    private function makeNormalisationPowerCoefficient(): void
+    public function makeNormalisationPowerCoefficient(): void
     {
         $this->normalisationPowerCoefficient = 12.0/(1.0+(24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient/($this->batteryMaxDischargeKw+$this->batteryMaxChargeKw)));
     }

@@ -21,7 +21,7 @@ class EnergyCost extends Root
                                                       ];
 
     // setup parameters
-    protected float $batteryCapacityKwh,
+    public    float $batteryCapacityKwh,
                     $batteryOneWayEfficiency,
                     $batteryWearCostAverageGbpPerKwh,
                     $batteryWearConstantCoefficient,

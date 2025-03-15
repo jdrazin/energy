@@ -95,7 +95,7 @@ class GivEnergy extends Root
                                           13,                                                               // instantaneous active power imported by EV. (W or kW)
                                         ];
 
-    private array $api, $battery, $inverterControlSettings;
+    public array $api, $battery, $inverterControlSettings;
 
     /**
      * @throws Exception
@@ -362,7 +362,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function batteryLevelkwh($db_slots): float
+    public function batteryLevelSlotBeginExtrapolateKwh($db_slots): float
     {
         //
         // return effective battery level and capacity for input to optimiser

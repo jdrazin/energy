@@ -30,14 +30,11 @@ class Octopus extends Root
                                     'LOAD_HOUSE_W'          => ['load_house_kw',            1000.0],
                                     'BATTERY_LEVEL_PERCENT' => ['battery_level_percent',    1.0]
                                 ];
-    const int       TARIFF_EXPIRATION_DAYS = 7;
-
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api;
 
     /**
      * @throws Exception
-     * @throws GuzzleException
      */
     public function __construct()
     {
@@ -73,8 +70,8 @@ class Octopus extends Root
                         $values->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
 
                         // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
-                        $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelkwh($db_slots);
-                        $slot_command = (new EnergyCost($db_slots, $batteryLevelKwh))->minimise(); // minimise energy cost
+                        $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($db_slots);
+                        $slot_command = (new EnergyCost($batteryLevelKwh, $db_slots))->minimise(); // minimise energy cost
                         if ($active_tariff) {                                        // make battery command
                             $this->logDb('SLOT_COMMAND', $slot_command['message'], 'NOTICE');
                             if (ENABLE_SLOT_COMMANDS) {

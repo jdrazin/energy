@@ -24,17 +24,23 @@ try {
     $givenergy              = new GivEnergy();
     $energy_cost            = new EnergyCost(null, null);
     $slot_target_parameters = $slivers->slotTargetParameters();             // get slot target parameters
-    $data                   = $givenergy->latest();                         // get battery data
-    $battery_level_kwh      = $data['battery']['percent']*$energy_cost->batteryCapacityKwh/100.0;
+    $battery                = $givenergy->latest()['data']['battery'];      // get battery data
+    $battery_level_kwh      = $battery['percent']*$energy_cost->batteryCapacityKwh/100.0;
+    $net_load_kw            = ($battery['consumption']-$battery['solar']['power'])/1000.0;
     $charge_power_min_kw    = -$givenergy->battery['max_discharge_kw'];
     $charge_power_max_kw    =  $givenergy->battery['max_charge_kw'];
-    for ($charge_level = 0; $charge_level <= CHARGE_POWER_LEVELS; $charge_level++) {
-        $battery_charge_kw = $charge_power_min_kw + ($charge_power_max_kw - $charge_power_min_kw) * $charge_level/CHARGE_POWER_LEVELS;
-        $cost_wear_per_charge_kwh = $energy_cost->costWearOutOfSpecGbp($grid_power_slot_kw, $battery_charge_kw, $battery_level_kwh, SLIVER_DURATION_MINUTES / 60.0);
+    $charge_power_increment_kw = ($charge_power_max_kw - $charge_power_min_kw)/CHARGE_POWER_LEVELS;
+    $levels = [];
+    $duration_hour = SLIVER_DURATION_MINUTES / 60.0;
+    for ($charge_power_kw = $charge_power_min_kw; $charge_power_min_kw <= $charge_power_max_kw; $charge_power_kw += $charge_power_increment_kw) {
+        $grid_power_kw            = $net_load_kw + $charge_power_kw;
+        $grid_cost_per_kwh        = $grid_power_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'];
+        $cost_wear_per_charge_kwh = $energy_cost->costWearOutOfSpecGbp($grid_power_kw, $charge_power_kw, $battery_level_kwh, $duration_hour);
+        $levels[] = [];
     }
-    $wear_cost_per_kwh = // get wear charge cost per kwh for battery
 
-    $net_load_w = $battery['consumption']-$battery['solar']['power'];
+
+
 
 
 }

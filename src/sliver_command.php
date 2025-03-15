@@ -50,7 +50,8 @@ try {
         }
         $charge_power_kw += $charge_power_increment_kw;
     }
-    $c = $optimum_charge_power_kw;
+    $optimum_grid_power_kw = $net_load_kw + $optimum_charge_power_kw;
+    $a = 0;
 }
 catch (Exception $e) {
     echo $e->getMessage();

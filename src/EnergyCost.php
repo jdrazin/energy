@@ -48,51 +48,53 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    public function __construct($db_slots, $batteryInitialKwh)
+    public function __construct($batteryLevelInitialKwh, $db_slots)
     {
-        parent::__construct();
-        $this->slotDurationHour     = (float)(DbSlots::SLOT_DURATION_MIN / 60);
-        $this->number_slots         = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
-        if (!self::DEBUG_MINIMISER) {
-            $this->batteryEnergyInitialKwh  = $batteryInitialKwh;
-            $this->db_slots                 = $db_slots;
-            $this->tariff_combination       = $this->db_slots->tariff_combination;
-            $loadImportExports              = $this->loadImportExport();
-        }
-        else {
-            $loadImportExports          = [
-                                          'load_house_kws'        => [],
-                                          'import_gbp_per_kwhs'   => [],
-                                          'export_gbp_per_kwhs'   => [],
-                                          'import_gbp_per_day'    => [],
-                                          'export_gbp_per_day'    => []
-            ];
-        }
-        $this->problem              = [
-                                        'batteryCapacityKwh'                        => $this->config['battery']['initial_raw_capacity_kwh'],
-                                        'batteryOneWayEfficiency'                   => sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0),
-                                        'batteryWearCostAverageGbpPerKwh'           => $this->config['battery']['wear']['cost_average_gbp_per_kwh'],
-                                        'batteryWearConstantCoefficient'            => $this->config['battery']['wear']['constant_coefficient'],
-                                        'batteryWearOutOfSpecCoefficient'           => $this->config['battery']['wear']['out_of_spec_coefficient'],
-                                        'batteryWearOutOfSpecActivationEnergyKwh'   => $this->config['battery']['wear']['out_of_spec_activation_energy_kwh'],
-                                        'batteryMaxChargeKw'                        => $this->config['battery']['max_charge_kw'],
-                                        'batteryMaxDischargeKw'                     => $this->config['battery']['max_discharge_kw'],
-                                        'importLimitKw'                             => $this->config['energy']['electric']['import']['limit_kw'],
-                                        'exportLimitKw'                             => $this->config['energy']['electric']['export']['limit_kw'],
-                                        'batteryEnergyInitialKwh'                   => $batteryInitialKwh,
-                                        'slotDurationHour'                          => $this->slotDurationHour,
-                                        'number_slots'                              => $this->number_slots,
-                                        'import_gbp_per_day'                        => $loadImportExports['import_gbp_per_day'],
-                                        'export_gbp_per_day'                        => $loadImportExports['export_gbp_per_day'],
-                                        'import_gbp_per_kwhs'                       => $loadImportExports['import_gbp_per_kwhs'],
-                                        'export_gbp_per_kwhs'                       => $loadImportExports['export_gbp_per_kwhs'],
-                                        'load_house_kws'                            => $loadImportExports['load_house_kws'],
-                                      ];
-        if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
-            !file_put_contents(self::JSON_PROBLEM, $json_problem)) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
-            $this->logDb('MESSAGE', $message, 'FATAL');
-            throw new Exception($message);
+        if (!is_null($batteryLevelInitialKwh) && !is_null($db_slots)) {
+            parent::__construct();
+            $this->slotDurationHour     = (float)(DbSlots::SLOT_DURATION_MIN / 60);
+            $this->number_slots         = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
+            if (!self::DEBUG_MINIMISER) {
+                $this->batteryEnergyInitialKwh  = $batteryLevelInitialKwh;
+                $this->db_slots                 = $db_slots;
+                $this->tariff_combination       = $this->db_slots->tariff_combination;
+                $loadImportExports              = $this->loadImportExport();
+            }
+            else {
+                $loadImportExports          = [
+                                              'load_house_kws'        => [],
+                                              'import_gbp_per_kwhs'   => [],
+                                              'export_gbp_per_kwhs'   => [],
+                                              'import_gbp_per_day'    => [],
+                                              'export_gbp_per_day'    => []
+                ];
+            }
+            $this->problem              = [
+                                            'batteryCapacityKwh'                        => $this->config['battery']['initial_raw_capacity_kwh'],
+                                            'batteryOneWayEfficiency'                   => sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0),
+                                            'batteryWearCostAverageGbpPerKwh'           => $this->config['battery']['wear']['cost_average_gbp_per_kwh'],
+                                            'batteryWearConstantCoefficient'            => $this->config['battery']['wear']['constant_coefficient'],
+                                            'batteryWearOutOfSpecCoefficient'           => $this->config['battery']['wear']['out_of_spec_coefficient'],
+                                            'batteryWearOutOfSpecActivationEnergyKwh'   => $this->config['battery']['wear']['out_of_spec_activation_energy_kwh'],
+                                            'batteryMaxChargeKw'                        => $this->config['battery']['max_charge_kw'],
+                                            'batteryMaxDischargeKw'                     => $this->config['battery']['max_discharge_kw'],
+                                            'importLimitKw'                             => $this->config['energy']['electric']['import']['limit_kw'],
+                                            'exportLimitKw'                             => $this->config['energy']['electric']['export']['limit_kw'],
+                                            'batteryEnergyInitialKwh'                   => $batteryLevelInitialKwh,
+                                            'slotDurationHour'                          => $this->slotDurationHour,
+                                            'number_slots'                              => $this->number_slots,
+                                            'import_gbp_per_day'                        => $loadImportExports['import_gbp_per_day'],
+                                            'export_gbp_per_day'                        => $loadImportExports['export_gbp_per_day'],
+                                            'import_gbp_per_kwhs'                       => $loadImportExports['import_gbp_per_kwhs'],
+                                            'export_gbp_per_kwhs'                       => $loadImportExports['export_gbp_per_kwhs'],
+                                            'load_house_kws'                            => $loadImportExports['load_house_kws'],
+                                          ];
+            if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
+                !file_put_contents(self::JSON_PROBLEM, $json_problem)) {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
+                $this->logDb('MESSAGE', $message, 'FATAL');
+                throw new Exception($message);
+            }
         }
     }
 
@@ -302,16 +304,16 @@ class EnergyCost extends Root
          * calculate cost components: does not include standing costs
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
-        $battery_level_kwh = $this->batteryEnergyInitialKwh;      // initial battery level
-        $normalisation_energy_coefficient = 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+(24.0*$this->batteryWearOutOfSpecCoefficient        *$this->batteryWearOutOfSpecActivationEnergyKwh/$this->batteryCapacityKwh));
-        $normalisation_power_coefficient = 12.0/(1.0+                                             (24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient        /($this->batteryMaxDischargeKw+$this->batteryMaxChargeKw)));
-        $cost_grid_import               = 0.0;
-        $cost_grid_export               = 0.0;
-        $cost_grid_out_of_spec          = 0.0;
-        $cost_energy_wear_out_of_spec   = 0.0;
-        $cost_power_out_of_spec         = 0.0;
-        $import_kwh                     = 0.0;
-        $export_kwh                     = 0.0;
+        $battery_level_kwh = $this->batteryEnergyInitialKwh;          // battery level at beginning of day
+        $normalisation_energy_coefficient = $this->normalisationEnergyCoefficient();
+        $normalisation_power_coefficient  = $this->normalisationPowerCoefficient();
+        $cost_grid_import                 = 0.0;
+        $cost_grid_export                 = 0.0;
+        $cost_grid_out_of_spec            = 0.0;
+        $cost_energy_wear_out_of_spec     = 0.0;
+        $cost_power_out_of_spec           = 0.0;
+        $import_kwh                       = 0.0;
+        $export_kwh                      = 0.0;
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $grid_power_slot_kw = $grid_kws[$slot_count];
 
@@ -341,8 +343,8 @@ class EnergyCost extends Root
                                                                             $normalisation_power_coefficient)*abs($energy_grid_kwh);
 
             // battery
-            $battery_charge_kwh  = -$energy_grid_kwh - $total_load_kwh;
-            $battery_charge_kw   = -$grid_power_slot_kw - $total_load_kw;
+            $battery_charge_kwh = -$energy_grid_kwh - $total_load_kwh;
+            $battery_charge_kw  = -$grid_power_slot_kw - $total_load_kw;
             if ($battery_charge_kwh > 0.0) {
                $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayEfficiency;
             }
@@ -384,8 +386,7 @@ class EnergyCost extends Root
                     'export_kwh'    => $export_kwh
         ];
     }
-
-    private function wearOutOfSpecCostGpbPerKwh($x, $x_min, $x_max, $wear_cost_average, $constant_coefficient, $out_of_spec_coefficient, $activation, $normalisation_coefficient): float {
+    public function wearOutOfSpecCostGpbPerKwh($x, $x_min, $x_max, $wear_cost_average, $constant_coefficient, $out_of_spec_coefficient, $activation, $normalisation_coefficient): float {
         $X  = ((($x - $x_min) / ($x_max - $x_min)) - 0.5);
         $X2 = $X * $X;
         $t1 = $constant_coefficient;
@@ -399,6 +400,14 @@ class EnergyCost extends Root
         $t3 = $out_of_spec_coefficient*exp($exponent);
         $wear_out_of_spec_cost = $normalisation_coefficient*$wear_cost_average*($t1+$t2+$t3);
         return $wear_out_of_spec_cost;
+    }
+
+    private function normalisationEnergyCoefficient(): float {
+        return 12.0/(1.0+(11.0*$this->batteryWearConstantCoefficient)+(24.0*$this->batteryWearOutOfSpecCoefficient*$this->batteryWearOutOfSpecActivationEnergyKwh/$this->batteryCapacityKwh));
+    }
+
+    private function normalisationPowerCoefficient(): float {
+        return 12.0/(1.0+(24.0*$this->batteryWearOutOfSpecActivationEnergyKwh*$this->batteryWearOutOfSpecCoefficient/($this->batteryMaxDischargeKw+$this->batteryMaxChargeKw)));
     }
 
     /**

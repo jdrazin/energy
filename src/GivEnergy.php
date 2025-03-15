@@ -343,7 +343,10 @@ class GivEnergy extends Root
         $this->mysqli->commit();
     }
 
-    public function batteryNow(): array {
+    /**
+     * @throws GuzzleException
+     */
+    public function latest(): array { // get latest battery data
         $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/system-data/latest';
         $headers = [
             'Authorization' => 'Bearer ' . $this->api['api_token'],
@@ -352,8 +355,7 @@ class GivEnergy extends Root
         ];
         $client = new Client();
         $response = $client->get($url, ['headers' => $headers]);
-        $data = json_decode((string)$response->getBody(), true);
-        return $data['data']['battery'];
+        return json_decode((string)$response->getBody(), true)['data'];
     }
 
     /**
@@ -366,7 +368,7 @@ class GivEnergy extends Root
         // return effective battery level and capacity for input to optimiser
         //
         $initial_raw_capacity_kwh = $this->config['battery']['initial_raw_capacity_kwh'];
-        $battery = $this->batteryNow();
+        $battery = $this->latest()['battery'];
         $stored_now_kwh = (((float)$battery['percent']) / 100.0) * $initial_raw_capacity_kwh;
         $battery_power_now_w = ((float)$battery['power']);
         $timestamp_now = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot

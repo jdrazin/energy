@@ -17,11 +17,12 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 try {
-    $slivers = new Sliver();
+    $slivers   = new Sliver();
     $givenergy = new GivEnergy();
-    $slot_target_parameters = $slivers->slotTargetParameters();        // get slither target parameters
-    $battery_now = $givenergy->batteryNow();                         // get current battery charge state
-    // get instantaneous net_load = house_load - solar_generation
+    $slot_target_parameters = $slivers->slotTargetParameters();  // get slot target parameters
+    $battery_data = $givenergy->latest();                        // get battery data
+    $net_load_w = $battery_data['consumption']-$battery_data['solar']['power'];
+
 
 }
 catch (Exception $e) {

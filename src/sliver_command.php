@@ -7,8 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 require_once __DIR__ . '/../vendor/autoload.php';
 
 /*
- * "slither" is single battery charging control command, sent multiple times during each time slot.
- *
+ * "slither" is single battery charging control command, sent multiple times during each time slot
  */
 error_reporting(E_ALL);
 set_time_limit(36000);

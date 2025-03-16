@@ -35,7 +35,7 @@ class EnergyCost extends Root
                     $batteryEnergyInitialKwh,
                     $importLimitKw,
                     $exportLimitKw,
-                    $batteryEnergyNormalisationCoefficient, 
+                    $energyNormalisationCoefficient,
                     $powerNormalisationCoefficient;
 
     private array   $problem,
@@ -332,7 +332,7 @@ class EnergyCost extends Root
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;          // battery level at beginning of day
-        $this->makebatteryEnergyNormalisationCoefficient();
+        $this->makeEnergyNormalisationCoefficient();
         $this->makepowerNormalisationCoefficient();
         $cost_grid_import                     = 0.0;
         $cost_grid_export                     = 0.0;
@@ -377,7 +377,7 @@ class EnergyCost extends Root
                                                                          $this->wearConstantCoefficient,
                                                                          $this->energyExponentialCoefficient,
                                                                          $this->energyActivationKwh,
-                                                                         $this->batteryEnergyNormalisationCoefficient)*abs($battery_charge_kwh);
+                                                                         $this->energyNormalisationCoefficient)*abs($battery_charge_kwh);
 
             // battery charge/discharge power out of spec
             $cost_power_out_of_spec         += $this->wearPerKwh(       $battery_charge_kw,
@@ -440,7 +440,7 @@ class EnergyCost extends Root
                                                                 $this->wearConstantCoefficient,
                                                                 $this->energyExponentialCoefficient,
                                                                 $this->energyActivationKwh,
-                                                                $this->batteryEnergyNormalisationCoefficient)*abs($battery_charge_kwh);
+                                                                $this->energyNormalisationCoefficient)*abs($battery_charge_kwh);
         $cost_power_out_of_spec         =  $this->wearPerKwh(   $charge_kw,
                                                                -$this->batteryMaxDischargeKw,
                                                                 $this->batteryMaxChargeKw,
@@ -461,9 +461,9 @@ class EnergyCost extends Root
         return $wear_gbp;
     }
 
-    public function makebatteryEnergyNormalisationCoefficient(): void
+    public function makeEnergyNormalisationCoefficient(): void
     {
-        $this->batteryEnergyNormalisationCoefficient = 12.0/(1.0+(11.0*$this->wearConstantCoefficient)+(24.0*$this->energyExponentialCoefficient*$this->energyActivationKwh/$this->batteryCapacityKwh));
+        $this->energyNormalisationCoefficient = 12.0/(1.0+(11.0*$this->wearConstantCoefficient)+(24.0*$this->energyExponentialCoefficient*$this->energyActivationKwh/$this->batteryCapacityKwh));
     }
 
     public function makepowerNormalisationCoefficient(): void

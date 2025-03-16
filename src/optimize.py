@@ -27,7 +27,7 @@ def day_cost(grid_kws):
         tariff_import_per_kwh = tariffImportPerKwhs[slot_count]
         tariff_export_per_kwh = tariffExportPerKwhs[slot_count]
         energy_grid_kwh       = grid_power_slot_kw * slotDurationHour
-        total_load_kwh              = total_load_kw * slotDurationHour
+        total_load_kwh        = total_load_kw * slotDurationHour
         #
         # grid
         if energy_grid_kwh > 0.0:

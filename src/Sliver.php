@@ -107,8 +107,9 @@ class Sliver extends Root
         }
         $sql = 'INSERT INTO `slivers`  (`charge_kw`,    `level_percent`,    `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`,    `house_load_kw`,    `solar_kw`) 
                                 VALUES (?,              ?,                  ?,              ?,                          ?,                              ?,                  ?)';
+        $optimum_charge_kw = round($optimum_charge_kw, 3);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('disdidd', $charge_kw,$battery_level_percent, $slot_mode, $slot_abs_charge_power_w, $slot_target_level_percent, $house_load_kw, $solar_kw) ||
+            !$stmt->bind_param('disdidd', $optimum_charge_kw,$battery_level_percent, $slot_mode, $slot_abs_charge_power_w, $slot_target_level_percent, $house_load_kw, $solar_kw) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');

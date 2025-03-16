@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 def day_cost_gbp(grid_kws):
     cost_energy_average_per_kwh_acc  = 0.0                           # accumulator for calculating average energy cost
     battery_level_kwh                = batteryEnergyInitialKwh       # initial battery level
-    energyNormalisationExponentialCoefficient = 12.0 / (1.0 + (11.0 * batteryWearOutOfSpecConstantCoefficient) + (24.0 * batteryEnergyExponentialCoefficient      * batteryEnergyActivationKwh  /  batteryCapacityKwh                                ))
+    energyNormalisationExponentialCoefficient = 12.0 / (1.0 + (11.0 * wearConstantCoefficient) + (24.0 * energyExponentialCoefficient      * energyActivationKwh  /  batteryCapacityKwh                                ))
     powerExponentialCoefficient  = 12.0 / (1.0                                                                 + (24.0 * powerExponentialCoefficient * powerActivationKw                        / (batteryMaxDischargeRateKw + batteryMaxChargeRateKw)))
     cost_grid_import                 = 0.0
     cost_grid_export                 = 0.0
@@ -48,17 +48,17 @@ def day_cost_gbp(grid_kws):
         cost_energy_wear            += wear_per_kwh        (   battery_level_kwh,
                                                                 0.0,
                                                                 batteryCapacityKwh,
-                                                                batteryWearOutOfSpecCostAverageGbpPerKwh,
-                                                                batteryWearOutOfSpecConstantCoefficient,
-                                                                batteryEnergyExponentialCoefficient,
-                                                                batteryEnergyActivationKwh,
+                                                                wearCostAverageGbpPerKwh,
+                                                                wearConstantCoefficient,
+                                                                energyExponentialCoefficient,
+                                                                energyActivationKwh,
                                                                 energyNormalisationExponentialCoefficient) * abs(battery_charge_kwh)
 
         # battery charge/discharge power out of spec
         cost_power_out_of_spec      += wear_per_kwh(           battery_charge_kw,
                                                               -batteryMaxDischargeRateKw,
                                                                batteryMaxChargeRateKw,
-                                                               batteryWearOutOfSpecCostAverageGbpPerKwh,
+                                                               wearCostAverageGbpPerKwh,
                                                                0.0,
                                                                powerExponentialCoefficient,
                                                                powerActivationKw,
@@ -69,7 +69,7 @@ def day_cost_gbp(grid_kws):
         cost_grid_out_of_spec       += wear_per_kwh(            grid_power_slot_kw,
                                                                -importLimitKw,
                                                                 exportLimitKw,
-                                                                batteryWearOutOfSpecCostAverageGbpPerKwh,
+                                                                wearCostAverageGbpPerKwh,
                                                                 0.0,
                                                                 powerExponentialCoefficient,
                                                                 powerActivationKw,
@@ -100,13 +100,13 @@ batteryCapacityKwh                          = float(sys.argv[index])
 index += 2
 batteryOneWayEfficiency                     = float(sys.argv[index])
 index += 2
-batteryWearOutOfSpecCostAverageGbpPerKwh    = float(sys.argv[index])
+wearCostAverageGbpPerKwh    = float(sys.argv[index])
 index += 2
-batteryWearOutOfSpecConstantCoefficient     = float(sys.argv[index])
+wearConstantCoefficient     = float(sys.argv[index])
 index += 2
-batteryEnergyExponentialCoefficient         = float(sys.argv[index])
+energyExponentialCoefficient         = float(sys.argv[index])
 index += 2
-batteryEnergyActivationKwh                  = float(sys.argv[index])
+energyActivationKwh                  = float(sys.argv[index])
 index += 2
 powerExponentialCoefficient          = float(sys.argv[index])
 index += 2

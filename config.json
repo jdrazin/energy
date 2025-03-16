@@ -211,7 +211,7 @@
       "cycles_to_reduced_capacity": 7500,
       "reduced_capacity_percent": 20
     },
-    "wear_out_of_spec": {
+    "wear": {
       "cost_average_gbp_per_kwh": 0.03,
       "constant_coefficient": 0.5,
       "energy_exponential_coefficient" : 25.0,

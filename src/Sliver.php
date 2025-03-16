@@ -105,9 +105,9 @@ class Sliver extends Root
                                 'cost_wear_gbp_per_hour' => $cost_wear_gbp_per_hour,
                                 'cost'                   => $cost_per_hour];
         }
-        $sql = 'INSERT INTO `slivers`  (`charge_kw`,    `level_percent`,    `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`,    `house_load_kw`,    `solar_kw`) 
-                                VALUES (?,              ?,                  ?,              ?,                          ?,                              ?,                  ?)';
-        $optimum_charge_kw = round($optimum_charge_kw, 3);
+        $sql = 'INSERT INTO `slivers`  (`optimum_charge_kw`, `level_percent`,    `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`,    `house_load_kw`,    `solar_kw`) 
+                                VALUES (?,                   ?,                  ?,              ?,                          ?,                              ?,                  ?)';
+        $optimum_charge_kw = round($optimum_charge_kw, 4);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('disdidd', $optimum_charge_kw,$battery_level_percent, $slot_mode, $slot_abs_charge_power_w, $slot_target_level_percent, $house_load_kw, $solar_kw) ||
             !$stmt->execute()) {

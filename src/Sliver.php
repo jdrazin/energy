@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\GuzzleException;
 class Sliver extends Root
 {
     const int   SLIVER_DURATION_MINUTES = 1,
+                SLIVER_DB_MAX_AGE_DAY   = 7,
                 CHARGE_POWER_LEVELS     = 100;
 
     public function __construct()
@@ -82,17 +83,17 @@ class Sliver extends Root
         $optimum_cost_per_hour      = null;
         $optimum_charge_kw          = null;
         for ($level = 0; $level <= self::CHARGE_POWER_LEVELS; $level++) {
-            $grid_power_kw                      = $net_load_kw + $charge_kw;
-            $cost_grid_per_hour                 = ($grid_power_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'])*$charge_kw;
-            $cost_wear_out_of_spec_gbp_per_hour = $energy_cost->costWearOutOfSpecGbp($grid_power_kw, $charge_kw, $battery_level_kwh, $duration_hour)*$charge_kw/$duration_hour;
+            $grid_power_kw                      = - ($net_load_kw + $charge_kw);
+            $cost_grid_per_hour                 = - ($grid_power_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'])*$grid_power_kw;
+            $cost_wear_out_of_spec_gbp_per_hour = $energy_cost->costWearOutOfSpecGbp($grid_power_kw, $charge_kw, $battery_level_kwh, $duration_hour)*abs($charge_kw)/$duration_hour;
             $cost_per_hour                      = $cost_grid_per_hour + $cost_wear_out_of_spec_gbp_per_hour;
             if (is_null($optimum_cost_per_hour)) {
-                $optimum_charge_kw = $charge_kw;
-                $optimum_cost_per_hour    = $cost_per_hour;
+                $optimum_charge_kw     = $charge_kw;
+                $optimum_cost_per_hour = $cost_per_hour;
             }
             if ($cost_per_hour < $optimum_cost_per_hour) {
-                $optimum_charge_kw = $charge_kw;
-                $optimum_cost_per_hour    = $cost_per_hour;
+                $optimum_charge_kw      = $charge_kw;
+                $optimum_cost_per_hour  = $cost_per_hour;
             }
             $charge_kw += $charge_increment_kw;
         }
@@ -100,12 +101,20 @@ class Sliver extends Root
                                 VALUES (?,              ?,                  ?,              ?,                          ?,                              ?,                  ?)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('disdidd', $charge_kw,$battery_level_percent, $slot_mode, $slot_abs_charge_power_w, $slot_target_level_percent, $house_load_kw, $solar_kw) ||
-            !$stmt->execute() ||
-            !$this->mysqli->commit()) {
+            !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
+        $sql = 'DELETE FROM `slivers`
+                    WHERE `timestamp` + INTERVAL ' . self::SLIVER_DB_MAX_AGE_DAY . ' DAY < NOW()';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $this->mysqli->commit();
         return round(1000.0 * $optimum_charge_kw);
     }
 }

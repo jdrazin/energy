@@ -42,13 +42,13 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const PID_FOLDER                        = '/var/www/html/energy/',
-      USE_PID_SEMAPHORE                 = true,
+      USE_PID_SEMAPHORE                 = false,
       USE_CRONTAB                       = false,
       ARGS                              = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION           = true,
       EMAIL_NOTIFICATION_ON_ERROR       = true,
       REPLACE_WITH_STUB                 = false,
-      ENABLE_SLOT_COMMANDS              = true,
+      ENABLE_SLOT_COMMANDS              = false,
       ACTIVE_TARIFF_COMBINATION_ONLY    = false,
       TEST_SLOT_COMMAND                 = [
                                             'start'                 => '',

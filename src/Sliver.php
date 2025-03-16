@@ -86,7 +86,8 @@ class Sliver extends Root
         for ($level = 0; $level <= self::CHARGE_POWER_LEVELS; $level++) {
             $grid_power_kw          = - ($net_load_kw + $charge_kw);
             $cost_grid_per_hour     = - ($grid_power_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'])*$grid_power_kw;
-            $cost_wear_gbp_per_hour = $energy_cost->wearGbp($grid_power_kw, $charge_kw, $battery_level_kwh, $duration_hour)/$duration_hour;
+            $wear_gbp               = $energy_cost->wearGbp($grid_power_kw, $charge_kw, $battery_level_kwh, $duration_hour);
+            $cost_wear_gbp_per_hour = ($wear_gbp['battery_energy'] + $wear_gbp['battery_power'] + $wear_gbp['grid_power'])/$duration_hour;
             $cost_per_hour          = $cost_grid_per_hour + $cost_wear_gbp_per_hour;
             if (is_null($optimum_cost_per_hour)) {
                 $optimum_level         = $level;

@@ -74,26 +74,26 @@ class EnergyCost extends Root
                 ];
             }
             $this->problem              = [
-                                            'batteryCapacityKwh'                        => $this->config['battery']['initial_raw_capacity_kwh'],
-                                            'batteryOneWayEfficiency'                   => sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0),
-                                            'wearCostAverageGbpPerKwh'  => $this->config['battery']['wear']['cost_average_gbp_per_kwh'],
-                                            'wearConstantCoefficient'   => $this->config['battery']['wear']['constant_coefficient'],
-                                            'energyExponentialCoefficient'       => $this->config['battery']['wear']['energy_exponential_coefficient'],
-                                            'energyActivationKwh'                => $this->config['battery']['wear']['energy_activation_kwh'],
-                                            'powerExponentialCoefficient'               => $this->config['battery']['wear']['power_exponential_coefficient'],
-                                            'powerActivationKw'                         => $this->config['battery']['wear']['power_activation_kw'],
-                                            'batteryMaxChargeKw'                        => $this->config['battery']['max_charge_kw'],
-                                            'batteryMaxDischargeKw'                     => $this->config['battery']['max_discharge_kw'],
-                                            'importLimitKw'                             => $this->config['energy']['electric']['import']['limit_kw'],
-                                            'exportLimitKw'                             => $this->config['energy']['electric']['export']['limit_kw'],
-                                            'batteryEnergyInitialKwh'                   => $batteryLevelInitialKwh,
-                                            'slotDurationHour'                          => $this->slotDurationHour,
-                                            'number_slots'                              => $this->number_slots,
-                                            'import_gbp_per_day'                        => $loadImportExports['import_gbp_per_day'],
-                                            'export_gbp_per_day'                        => $loadImportExports['export_gbp_per_day'],
-                                            'import_gbp_per_kwhs'                       => $loadImportExports['import_gbp_per_kwhs'],
-                                            'export_gbp_per_kwhs'                       => $loadImportExports['export_gbp_per_kwhs'],
-                                            'load_house_kws'                            => $loadImportExports['load_house_kws'],
+                                            'batteryCapacityKwh'           => $this->config['battery']['initial_raw_capacity_kwh'],
+                                            'batteryOneWayEfficiency'      => sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0),
+                                            'wearCostAverageGbpPerKwh'     => $this->config['battery']['wear']['cost_average_gbp_per_kwh'],
+                                            'wearConstantCoefficient'      => $this->config['battery']['wear']['constant_coefficient'],
+                                            'energyExponentialCoefficient' => $this->config['battery']['wear']['energy_exponential_coefficient'],
+                                            'energyActivationKwh'          => $this->config['battery']['wear']['energy_activation_kwh'],
+                                            'powerExponentialCoefficient'  => $this->config['battery']['wear']['power_exponential_coefficient'],
+                                            'powerActivationKw'            => $this->config['battery']['wear']['power_activation_kw'],
+                                            'batteryMaxChargeKw'           => $this->config['battery']['max_charge_kw'],
+                                            'batteryMaxDischargeKw'        => $this->config['battery']['max_discharge_kw'],
+                                            'importLimitKw'                => $this->config['energy']['electric']['import']['limit_kw'],
+                                            'exportLimitKw'                => $this->config['energy']['electric']['export']['limit_kw'],
+                                            'batteryEnergyInitialKwh'      => $batteryLevelInitialKwh,
+                                            'slotDurationHour'             => $this->slotDurationHour,
+                                            'number_slots'                 => $this->number_slots,
+                                            'import_gbp_per_day'           => $loadImportExports['import_gbp_per_day'],
+                                            'export_gbp_per_day'           => $loadImportExports['export_gbp_per_day'],
+                                            'import_gbp_per_kwhs'          => $loadImportExports['import_gbp_per_kwhs'],
+                                            'export_gbp_per_kwhs'          => $loadImportExports['export_gbp_per_kwhs'],
+                                            'load_house_kws'               => $loadImportExports['load_house_kws'],
                                           ];
             if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
                 !file_put_contents(self::JSON_PROBLEM, $json_problem)) {
@@ -105,10 +105,10 @@ class EnergyCost extends Root
         else { // instantiate from config
             $this->batteryCapacityKwh                       = (float) $this->config['battery']['initial_raw_capacity_kwh'];
             $this->batteryOneWayEfficiency                  = sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0);
-            $this->wearCostAverageGbpPerKwh = (float) $this->config['battery']['wear']['cost_average_gbp_per_kwh'];
-            $this->wearConstantCoefficient  = (float) $this->config['battery']['wear']['constant_coefficient'];
-            $this->energyExponentialCoefficient      = (float) $this->config['battery']['wear']['energy_exponential_coefficient'];
-            $this->energyActivationKwh               = (float) $this->config['battery']['wear']['energy_activation_kwh'];
+            $this->wearCostAverageGbpPerKwh                 = (float) $this->config['battery']['wear']['cost_average_gbp_per_kwh'];
+            $this->wearConstantCoefficient                  = (float) $this->config['battery']['wear']['constant_coefficient'];
+            $this->energyExponentialCoefficient             = (float) $this->config['battery']['wear']['energy_exponential_coefficient'];
+            $this->energyActivationKwh                      = (float) $this->config['battery']['wear']['energy_activation_kwh'];
             $this->powerExponentialCoefficient              = (float) $this->config['battery']['wear']['power_exponential_coefficient'];
             $this->powerActivationKw                        = (float) $this->config['battery']['wear']['power_activation_kw'];
             $this->batteryMaxChargeKw                       = (float) $this->config['battery']['max_charge_kw'];

@@ -63,7 +63,7 @@ class Sliver extends Root
     public function optimum_charge_w(): int {
         $givenergy                  = new GivEnergy();
         $energy_cost                = new EnergyCost(null, null);
-        $energy_cost->makebatteryEnergyNormalisationCoefficient();
+        $energy_cost->makeEnergyNormalisationCoefficient();
         $energy_cost->makepowerNormalisationCoefficient();
         $slot_target_parameters     =  $this->slotTargetParameters();             // get slot target parameters
         $slot_mode                  = $slot_target_parameters['mode'];

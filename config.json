@@ -212,12 +212,12 @@
       "reduced_capacity_percent": 20
     },
     "wear": {
-      "cost_average_gbp_per_kwh": 0.03,
-      "constant_coefficient": 0.5,
-      "energy_exponential_coefficient" : 25.0,
-      "energy_activation_kwh" : 0.4,
-      "power_exponential_coefficient" : 25.0,
-      "power_activation_kw" : 0.1
+      "cost_average_gbp_per_kwh"        : 0.03,
+      "constant_coefficient"            : 0.5,
+      "energy_exponential_coefficient"  : 25.0,
+      "energy_activation_kwh"           : 0.4,
+      "power_exponential_coefficient"   : 25.0,
+      "power_activation_kw"             : 0.1
     }
   },
   "demands": {

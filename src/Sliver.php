@@ -99,11 +99,11 @@ class Sliver extends Root
                 $optimum_charge_kw      = $charge_kw;
             }
             $charge_kw += $charge_increment_kw;
-            $levels[$level] = [ 'grid_power_kw'                         => $grid_power_kw,
-                                'charge_kw'                             => $charge_kw,
-                                'cost_grid_per_hour'                    => $cost_grid_per_hour,
-                                'cost_wear_gbp_per_hour'    => $cost_wear_gbp_per_hour,
-                                'cost'                                  => $cost_per_hour];
+            $levels[$level] = [ 'grid_power_kw'          => $grid_power_kw,
+                                'charge_kw'              => $charge_kw,
+                                'cost_grid_per_hour'     => $cost_grid_per_hour,
+                                'cost_wear_gbp_per_hour' => $cost_wear_gbp_per_hour,
+                                'cost'                   => $cost_per_hour];
         }
         $sql = 'INSERT INTO `slivers`  (`charge_kw`,    `level_percent`,    `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`,    `house_load_kw`,    `solar_kw`) 
                                 VALUES (?,              ?,                  ?,              ?,                          ?,                              ?,                  ?)';

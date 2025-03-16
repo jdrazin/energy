@@ -20,7 +20,7 @@ const   PID_FOLDER                          = '/var/www/html/energy/',
         USE_CRONTAB                         = false,
         ARGS                                = ['CRON' => 1],
         INITIALISE_ON_EXCEPTION             = false,
-        EMAIL_NOTIFICATION_ON_ERROR         = true,
+        EMAIL_NOTIFICATION_ON_ERROR         = false,
         ENABLE_SLOT_COMMANDS                = false,
         ACTIVE_TARIFF_COMBINATION_ONLY      = false;
 

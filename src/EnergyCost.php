@@ -333,7 +333,7 @@ class EnergyCost extends Root
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;          // battery level at beginning of day
         $this->makeEnergyNormalisationCoefficient();
-        $this->makepowerNormalisationCoefficient();
+        $this->makePowerNormalisationCoefficient();
         $cost_grid_import                     = 0.0;
         $cost_grid_export                     = 0.0;
         $cost_grid_out_of_spec                = 0.0;
@@ -466,7 +466,7 @@ class EnergyCost extends Root
         $this->energyNormalisationCoefficient = 12.0/(1.0+(11.0*$this->wearConstantCoefficient)+(24.0*$this->energyExponentialCoefficient*$this->energyActivationKwh/$this->batteryCapacityKwh));
     }
 
-    public function makepowerNormalisationCoefficient(): void
+    public function makePowerNormalisationCoefficient(): void
     {
         $this->powerNormalisationCoefficient = 12.0/(1.0+(24.0*$this->powerActivationKw*$this->powerExponentialCoefficient/($this->batteryMaxDischargeKw+$this->batteryMaxChargeKw)));
     }

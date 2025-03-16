@@ -283,13 +283,13 @@ class EnergyCost extends Root
         $this->strip();
         $this->batteryOneWayEfficiency                  = (float) $this->strip();
         $this->strip();
-        $this->wearCostAverageGbpPerKwh = (float) $this->strip();
+        $this->wearCostAverageGbpPerKwh                 = (float) $this->strip();
         $this->strip();
-        $this->wearConstantCoefficient  = (float) $this->strip();
+        $this->wearConstantCoefficient                  = (float) $this->strip();
         $this->strip();
-        $this->energyExponentialCoefficient      = (float) $this->strip();
+        $this->energyExponentialCoefficient             = (float) $this->strip();
         $this->strip();
-        $this->energyActivationKwh               = (float) $this->strip();
+        $this->energyActivationKwh                      = (float) $this->strip();
         $this->strip();
         $this->powerExponentialCoefficient              = (float) $this->strip();
         $this->strip();

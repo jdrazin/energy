@@ -1,8 +1,8 @@
 {
     "batteryCapacityKwh": 13.5,
     "batteryOneWayEfficiency": 0.9643650760992956,
-    "batteryWearCostAverageGbpPerKwh": 0.03,
-    "batteryWearConstantCoefficient": 0.5,
+    "batteryWearOutOfSpecCostAverageGbpPerKwh": 0.03,
+    "batteryWearOutOfSpecConstantCoefficient": 0.5,
     "batteryWearOutOfSpecCoefficient": 25,
     "batteryWearOutOfSpecActivationEnergyKwh": 0.4,
     "batteryMaxChargeKw": 6,

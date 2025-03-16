@@ -37,16 +37,6 @@ def day_cost(grid_kws):
             import_kwh       += -energy_grid_kwh
             cost_grid_import -= tariff_import_per_kwh * energy_grid_kwh
 
-        # grid out of spec import / export limit
-        cost_grid_out_of_spec += wear_out_of_spec_cost_gbp_per_kwh( grid_power_slot_kw,
-                                                                   -importLimitKw,
-                                                                    exportLimitKw,
-                                                                    batteryWearOutOfSpecCostAverageGbpPerKwh/slotDurationHour,
-                                                                    0.0,
-                                                                    batteryOutOfSpecCoefficient,
-                                                                    batteryOutOfSpecActivationEnergyKwh,
-                                                                    normalisation_power_coefficient) * abs(energy_grid_kwh)
-
         # battery
         battery_charge_kwh   = -energy_grid_kwh - total_load_kwh
         battery_charge_kw    = -grid_power_slot_kw - total_load_kw
@@ -65,15 +55,25 @@ def day_cost(grid_kws):
                                                                             batteryWearActivationEnergyKwh,
                                                                             normalisation_energy_coefficient) * abs(battery_charge_kwh)
 
+        # grid out of spec import / export limit
+        cost_grid_out_of_spec += wear_out_of_spec_cost_gbp_per_kwh(         grid_power_slot_kw,
+                                                                           -importLimitKw,
+                                                                            exportLimitKw,
+                                                                            batteryWearOutOfSpecCostAverageGbpPerKwh/slotDurationHour,
+                                                                            0.0,
+                                                                            batteryOutOfSpecCoefficient,
+                                                                            batteryOutOfSpecActivationEnergyKwh,
+                                                                            normalisation_power_coefficient) * abs(energy_grid_kwh)
+
         # out of current spec
-        cost_power_out_of_spec += wear_out_of_spec_cost_gbp_per_kwh(   battery_charge_kw,
-                                                                      -batteryMaxDischargeRateKw,
-                                                                       batteryMaxChargeRateKw,
-                                                                       batteryWearOutOfSpecCostAverageGbpPerKwh / slotDurationHour,
-                                                                       0.0,
-                                                                       batteryOutOfSpecCoefficient,
-                                                                       batteryOutOfSpecActivationEnergyKwh,
-                                                                       normalisation_power_coefficient) * abs(battery_charge_kwh)
+        cost_power_out_of_spec += wear_out_of_spec_cost_gbp_per_kwh(       battery_charge_kw,
+                                                                          -batteryMaxDischargeRateKw,
+                                                                           batteryMaxChargeRateKw,
+                                                                           batteryWearOutOfSpecCostAverageGbpPerKwh / slotDurationHour,
+                                                                           0.0,
+                                                                           batteryOutOfSpecCoefficient,
+                                                                           batteryOutOfSpecActivationEnergyKwh,
+                                                                           normalisation_power_coefficient) * abs(battery_charge_kwh)
 
         cost_energy_average_per_kwh_acc += 0.5 * (tariff_import_per_kwh + tariff_export_per_kwh) # accumulate average energy cost
         slot_count += 1

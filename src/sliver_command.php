@@ -19,7 +19,7 @@ const   PID_FOLDER                          = '/var/www/html/energy/',
         USE_PID_SEMAPHORE                   = false,
         USE_CRONTAB                         = false,
         ARGS                                = ['CRON' => 1],
-        INITIALISE_ON_EXCEPTION             = true,
+        INITIALISE_ON_EXCEPTION             = false,
         EMAIL_NOTIFICATION_ON_ERROR         = true,
         ENABLE_SLOT_COMMANDS                = false,
         ACTIVE_TARIFF_COMBINATION_ONLY      = false;
@@ -44,10 +44,28 @@ try {
         }
     }
 }
-catch (Exception $e) {
-    echo $e->getMessage();
+catch (exception $e) {
+    $message = $e->getMessage();
+    if (EMAIL_NOTIFICATION_ON_ERROR) {
+        (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
+            'html'      => false,
+            'bodyHTML'  => $message,
+            'bodyAlt'   => strip_tags($message)]);
+    }
+    $root = new Root();
+    $root->logDb('MESSAGE', $message, 'FATAL');
+    echo $message . PHP_EOL;
+    if (INITIALISE_ON_EXCEPTION) {
+        $root->logDb('MESSAGE', 'Attempting to initialise ...', 'NOTICE');
+        (new GivEnergy())->reset_inverter();
+        $root->logDb('MESSAGE', '... initialise done', 'NOTICE');
+    }
     exit(1);
-} catch (GuzzleException $e) {
 }
-exit(0);
+catch (GuzzleException $e) {
+    $message = $e->getMessage();
+    (new Root())->logDb('MESSAGE', $message, 'FATAL');
+    echo $message . PHP_EOL;
+    exit(1);
+}
 

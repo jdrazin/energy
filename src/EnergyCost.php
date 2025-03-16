@@ -287,13 +287,13 @@ class EnergyCost extends Root
         $this->strip();
         $this->batteryWearOutOfSpecConstantCoefficient  = (float) $this->strip();
         $this->strip();
-        $this->batteryEnergyExponentialCoefficient                   = (float) $this->strip();
+        $this->batteryEnergyExponentialCoefficient      = (float) $this->strip();
         $this->strip();
-        $this->batteryEnergyActivationKwh           = (float) $this->strip();
+        $this->batteryEnergyActivationKwh               = (float) $this->strip();
         $this->strip();
         $this->powerExponentialCoefficient              = (float) $this->strip();
         $this->strip();
-        $this->powerActivationKw      = (float) $this->strip();
+        $this->powerActivationKw                        = (float) $this->strip();
         $this->strip();
         $this->batteryMaxChargeKw                       = (float) $this->strip();
         $this->strip();
@@ -311,17 +311,17 @@ class EnergyCost extends Root
         $this->strip();
         $import_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $import_gbp_per_kws[]               = (float) $this->strip();
+            $import_gbp_per_kws[]                       = (float) $this->strip();
         }
         $this->strip();
         $export_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $export_gbp_per_kws[]               = (float) $this->strip();
+            $export_gbp_per_kws[]                       = (float) $this->strip();
         }
         $this->strip();
         $total_load_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $total_load_kws[]                   = (float) $this->strip();
+            $total_load_kws[]                           = (float) $this->strip();
         }
         return $this->dayCostGbp($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws);
     }

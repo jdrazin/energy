@@ -65,7 +65,7 @@ class EnergyCost extends Root
                 $loadImportExports              = $this->loadImportExport();
             }
             else {
-                $loadImportExports          = [
+                $loadImportExports      = [
                                               'load_house_kws'        => [],
                                               'import_gbp_per_kwhs'   => [],
                                               'export_gbp_per_kwhs'   => [],

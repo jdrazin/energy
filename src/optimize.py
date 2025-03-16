@@ -10,8 +10,8 @@ from scipy.optimize import minimize
 def day_cost(grid_kws):
     cost_energy_average_per_kwh_acc  = 0.0                           # accumulator for calculating average energy cost
     battery_level_kwh                = batteryEnergyInitialKwh       # initial battery level
-    normalisation_energy_coefficient = 12.0 / (1.0 + (11.0 * batteryWearOutOfSpecConstantCoefficient) + (24.0 * batteryWearOutOfSpecCoefficient * batteryWearOutOfSpecActivationEnergyKwh / batteryCapacityKwh))
-    normalisation_power_coefficient  = 12.0 / (1.0 + (24.0 * batteryWearOutOfSpecActivationEnergyKwh * batteryWearOutOfSpecCoefficient / (batteryMaxDischargeRateKw + batteryMaxChargeRateKw)))
+    normalisation_energy_coefficient = 12.0 / (1.0 + (11.0 * batteryWearOutOfSpecConstantCoefficient) + (24.0 * batteryWearCoefficient      * batteryWearActivationEnergyKwh      /  batteryCapacityKwh                                ))
+    normalisation_power_coefficient  = 12.0 / (1.0                                                    + (24.0 * batteryOutOfSpecCoefficient * batteryOutOfSpecActivationEnergyKwh / (batteryMaxDischargeRateKw + batteryMaxChargeRateKw)))
     cost_grid_import                 = 0.0
     cost_grid_export                 = 0.0
     cost_grid_out_of_spec            = 0.0
@@ -51,7 +51,7 @@ def day_cost(grid_kws):
                                                                             batteryCapacityKwh,
                                                                             batteryWearOutOfSpecCostAverageGbpPerKwh,
                                                                             batteryWearOutOfSpecConstantCoefficient,
-                                                                            batteryWearSpecCoefficient,
+                                                                            batteryWearCoefficient,
                                                                             batteryWearActivationEnergyKwh,
                                                                             normalisation_energy_coefficient) * abs(battery_charge_kwh)
 

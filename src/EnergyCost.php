@@ -440,7 +440,6 @@ class EnergyCost extends Root
                                                                                 $this->batteryWearCoefficient,
                                                                                 $this->batteryWearActivationEnergyKwh,
                                                                                 $this->normalisationEnergyCoefficient)*abs($battery_charge_kwh);
-
         $cost_grid_out_of_spec          = $this->wearOutOfSpecCostGpbPerKwh(    $grid_kw,
                                                                                -$this->importLimitKw,
                                                                                 $this->exportLimitKw,
@@ -449,7 +448,6 @@ class EnergyCost extends Root
                                                                                 $this->batteryOutOfSpecCoefficient,
                                                                                 $this->batteryOutOfSpecActivationEnergyKwh,
                                                                                 $this->normalisationPowerCoefficient)*abs($energy_grid_kwh);
-
         $cost_power_out_of_spec         =  $this->wearOutOfSpecCostGpbPerKwh(   $charge_kw,
                                                                                -$this->batteryMaxDischargeKw,
                                                                                 $this->batteryMaxChargeKw,

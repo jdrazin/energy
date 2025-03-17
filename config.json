@@ -203,8 +203,8 @@
     "active": true,
     "initial_raw_capacity_kwh": 13.5,
     "cost_install_gbp": 5000.0,
-    "max_charge_kw": 6.0,
-    "max_discharge_kw": 6.0,
+    "max_charge_kw": 8.0,
+    "max_discharge_kw": 8.0,
     "cost_maintenance_pa_gbp": 0,
     "round_trip_efficiency_percent": 93,
     "projection" : {
@@ -310,7 +310,7 @@
           "standard" : 0.1332,
           "peak": 0.266
         },
-        "limit_kw": 8.0
+        "limit_kw": 8.5
       },
       "#": "https://agile.octopushome.net/historical-data",
       "inflation_real_pa": 0.0,

@@ -120,16 +120,30 @@ class EnergyCost extends Root
         else { // instantiate from config
             $this->batteryCapacityKwh                       = (float) $this->config['battery']['initial_raw_capacity_kwh'];
             $this->batteryOneWayEfficiency                  = sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0);
-            $this->batteryWearEnergyCostAverageGbpPerKwh    = (float) $this->config['battery']['wear']['cost_average_gbp_per_kwh'];
-            $this->batteryWearEnergyConstantCoefficient     = (float) $this->config['battery']['wear']['constant_coefficient'];
-            $this->batteryWearEnergyExponentialCoefficient  = (float) $this->config['battery']['wear']['energy_exponential_coefficient'];
-            $this->batteryWearEnergyActivationKwh           = (float) $this->config['battery']['wear']['energy_activation_kwh'];
+
+            $this->batteryWearEnergyCostAverageGbpPerKwh    = (float) $this->config['battery']['wear']['energy']['cost_average_gbp_per_kwh'];
+            $this->batteryWearEnergyConstantCoefficient     = (float) $this->config['battery']['wear']['energy']['constant_coefficient'];
+            $this->batteryWearEnergyExponentialCoefficient  = (float) $this->config['battery']['wear']['energy']['exponential_coefficient'];
+            $this->batteryWearEnergyActivationKwh           = (float) $this->config['battery']['wear']['energy']['activation_kwh'];
+
+            $this->batteryWearPowerCostAverageGbpPerKwh     = (float) $this->config['battery']['wear']['power']['cost_average_gbp_per_kwh'];
+            $this->batteryWearPowerConstantCoefficient      = (float) $this->config['battery']['wear']['power']['constant_coefficient'];
+            $this->batteryWearPowerExponentialCoefficient   = (float) $this->config['battery']['wear']['power']['exponential_coefficient'];
+            $this->batteryWearPowerActivationKw             = (float) $this->config['battery']['wear']['power']['activation_kw'];
+
             $this->batteryWearPowerExponentialCoefficient   = (float) $this->config['battery']['wear']['power_exponential_coefficient'];
             $this->powerActivationKw                        = (float) $this->config['battery']['wear']['power_activation_kw'];
+
             $this->batteryMaxChargeKw                       = (float) $this->config['battery']['max_charge_kw'];
             $this->batteryMaxDischargeKw                    = (float) $this->config['battery']['max_discharge_kw'];
+
             $this->importLimitKw                            = (float) $this->config['energy']['grid']['import']['limit_kw'];
             $this->exportLimitKw                            = (float) $this->config['energy']['grid']['export']['limit_kw'];
+
+            $this->gridWearPowerCostAverageGbpPerKwh        = (float) $this->config['grid']['wear']['power']['cost_average_gbp_per_kwh'];
+            $this->gridWearPowerConstantCoefficient         = (float) $this->config['grid']['wear']['power']['constant_coefficient'];
+            $this->gridWearPowerExponentialCoefficient      = (float) $this->config['grid']['wear']['power']['exponential_coefficient'];
+            $this->gridWearPowerActivationKw                = (float) $this->config['grid']['wear']['power']['activation_kw'];
             $this->batteryEnergyInitialKwh                  = (float) $batteryLevelInitialKwh;
         }
         $this->makeNormalisationCoefficients();

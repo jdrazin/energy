@@ -475,7 +475,7 @@ class Energy extends Root
                 'value_gbp' => $supply_boiler->value_gbp ['YEAR'][$year]
             ];
             $consumption['year'] = [
-                'electric' => $this->round_consumption($electric),
+                'grid' => $this->round_consumption($electric),
                 'boiler'   => $this->round_consumption($boiler)
             ];
         }
@@ -520,7 +520,7 @@ class Energy extends Root
         $demand_space_heating_thermal   = new Demand($config['demands']['space_heating_thermal'],   $temperature_internal_room_c);
         $demand_hotwater_thermal        = new Demand($config['demands']['hot_water_thermal'],       null);
         $demand_non_heating_electric    = new Demand($config['demands']['non_heating_electric'],     null);
-        $supply_electric                = new Supply($config['energy']['electric'],                                      $time, $npv);
+        $supply_electric                = new Supply($config['energy']['grid'],                                      $time, $npv);
         $supply_boiler                  = new Supply($config['energy'][$config['boiler']['tariff']],                     $time, $npv);
         $boiler                         = new Boiler($config['boiler'],                                                  $time, $npv);
         $solar_pv                       = new SolarCollectors($config['solar_pv'],      $config['location'], 0.0,    $time, $npv);

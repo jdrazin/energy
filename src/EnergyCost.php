@@ -401,7 +401,6 @@ class EnergyCost extends Root
             else {
                $battery_level_kwh += $battery_charge_kwh / $this->batteryOneWayEfficiency;
             }
-
             // operational and out of spec wear
             $cost_energy_wear               += $this->wearPerKwh(       $battery_level_kwh,
                                                                         0.0,
@@ -411,7 +410,6 @@ class EnergyCost extends Root
                                                                          $this->batteryWearEnergyExponentialCoefficient,
                                                                          $this->batteryWearEnergyActivationKwh,
                                                                          $this->batteryWearEnergyNormalisationCoefficient)*abs($battery_charge_kwh);
-
             // battery charge/discharge power out of spec
             $cost_power_out_of_spec         += $this->wearPerKwh(       $battery_charge_kw,
                                                                        -$this->batteryMaxDischargeKw,
@@ -421,7 +419,6 @@ class EnergyCost extends Root
                                                                         $this->batteryWearPowerExponentialCoefficient,
                                                                         $this->batteryWearPowerActivationKw,
                                                                         $this->batteryWearPowerNormalisationCoefficient)*abs($battery_charge_kwh);
-
             // grid power out of spec
             $cost_grid_out_of_spec          += $this->wearPerKwh(       $grid_power_slot_kw,
                                                                        -$this->importLimitKw,
@@ -431,7 +428,6 @@ class EnergyCost extends Root
                                                                         $this->gridWearPowerExponentialCoefficient,
                                                                         $this->gridWearPowerActivationKw,
                                                                         $this->gridWearPowerNormalisationCoefficient)*abs($energy_grid_kwh);
-
             $cost_energy_average_per_kwh_acc += 0.5 * ($tariff_import_per_kwh + $tariff_export_per_kwh);    // accumulate average energy cost
         }
         $cost_energy_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots);
@@ -478,39 +474,39 @@ class EnergyCost extends Root
                 'battery_power' =>  $this->wearPerKwh(      $charge_kw,
                                                            -$this->batteryMaxDischargeKw,
                                                             $this->batteryMaxChargeKw,
-                                                            $this->batteryWearEnergyCostAverageGbpPerKwh/$duration_hour,
-                                                            0.0,
+                                                            $this->batteryWearPowerCostAverageGbpPerKwh,
+                                                            $this->batteryWearPowerConstantCoefficient,
                                                             $this->batteryWearPowerExponentialCoefficient,
-                                                            $this->powerActivationKw,
-                                                            $this->powerNormalisationCoefficient)*abs($battery_charge_kwh)/$duration_hour,
+                                                            $this->batteryWearPowerActivationKw,
+                                                            $this->batteryWearPowerNormalisationCoefficient)*abs($battery_charge_kwh)/$duration_hour,
                 'grid_power'     =>  $this->wearPerKwh(     $grid_kw,
                                                            -$this->importLimitKw,
                                                             $this->exportLimitKw,
-                                                            $this->batteryWearEnergyCostAverageGbpPerKwh/$duration_hour,
-                                                            0.0,
-                                                            $this->batteryWearPowerExponentialCoefficient,
-                                                            $this->powerActivationKw,
-                                                            $this->powerNormalisationCoefficient)*abs($energy_grid_kwh)/$duration_hour
+                                                            $this->gridWearPowerCostAverageGbpPerKwh,
+                                                            $this->gridWearPowerConstantCoefficient,
+                                                            $this->gridWearPowerExponentialCoefficient,
+                                                            $this->gridWearPowerActivationKw,
+                                                            $this->gridWearPowerNormalisationCoefficient)*abs($energy_grid_kwh)/$duration_hour
                 ];
     }
 
     public function makeNormalisationCoefficients(): void
     {
         $this->batteryWearEnergyNormalisationCoefficient    = $this->normalisationCoefficient(  $this->batteryWearEnergyConstantCoefficient,
-                                                                                            $this->batteryWearEnergyExponentialCoefficient,
-                                                                                            $this->batteryWearEnergyActivationKwh,
-                                                                                            0.0,
-                                                                                            $this->batteryCapacityKwh);
+                                                                                                $this->batteryWearEnergyExponentialCoefficient,
+                                                                                                $this->batteryWearEnergyActivationKwh,
+                                                                                                0.0,
+                                                                                                $this->batteryCapacityKwh);
         $this->batteryWearPowerNormalisationCoefficient     = $this->normalisationCoefficient(  $this->batteryWearPowerConstantCoefficient,
-                                                                                            $this->batteryWearPowerExponentialCoefficient,
-                                                                                            $this->batteryWearPowerActivationKw,
-                                                                                           -$this->batteryMaxDischargeKw,
-                                                                                            $this->batteryMaxChargeKw);
+                                                                                                $this->batteryWearPowerExponentialCoefficient,
+                                                                                                $this->batteryWearPowerActivationKw,
+                                                                                               -$this->batteryMaxDischargeKw,
+                                                                                                $this->batteryMaxChargeKw);
         $this->gridWearPowerNormalisationCoefficient        = $this->normalisationCoefficient(  $this->gridWearPowerConstantCoefficient,
-                                                                                            $this->gridWearPowerExponentialCoefficient,
-                                                                                            $this->gridWearPowerActivationKw,
-                                                                                           -$this->gridMaxDischargeKw,
-                                                                                            $this->gridMaxChargeKw);
+                                                                                                $this->gridWearPowerExponentialCoefficient,
+                                                                                                $this->gridWearPowerActivationKw,
+                                                                                               -$this->importLimitKw,
+                                                                                                $this->exportLimitKw);
     }
     public function normalisationCoefficient($constant_coefficient, $exponential_coefficient, $activation, $x_min, $x_max): float
     {

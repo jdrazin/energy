@@ -7,11 +7,24 @@ import json
 from scipy.optimize import minimize
 
 # define energy cost
-def day_cost_gbp(grid_kws):
+def dayCostGbp(grid_kws):
     cost_energy_average_per_kwh_acc  = 0.0                           # accumulator for calculating average energy cost
     battery_level_kwh                = batteryEnergyInitialKwh       # initial battery level
-    energyNormalisationCoefficient = 12.0 / (1.0 + (11.0 * batteryWearEnergyConstantCoefficient) + (24.0 * batteryWearEnergyExponentialCoefficient * batteryWearEnergyActivationKwh  /  batteryCapacityKwh                                ))
-    powerNormalisationCoefficient  = 12.0 / (1.0                                    + (24.0 * batteryWearPowerExponentialCoefficient  * powerActivationKw    / (batteryMaxDischargeRateKw + batteryMaxChargeRateKw)))
+    batteryEnergyNormalisationCoefficient = normalisationCoefficient(   batteryWearEnergyConstantCoefficient,
+                                                                        batteryWearEnergyExponentialCoefficient,
+                                                                        batteryWearEnergyActivationKwh,
+                                                                        0.0,
+                                                                        batteryCapacityKwh)
+    batteryPowerNormalisationCoefficient  = normalisationCoefficient(   batteryWearPowerConstantCoefficient,
+                                                                        batteryWearPowerExponentialCoefficient,
+                                                                        batteryWearPowerActivationKw,
+                                                                       -batteryMaxDischargeKw,
+                                                                        batteryMaxChargeKw)
+    gridPowerNormalisationCoefficient     = normalisationCoefficient(   gridWearPowerConstantCoefficient,
+                                                                        gridWearPowerExponentialCoefficient,
+                                                                        gridWearPowerActivationKw,
+                                                                       -importLimitKw,
+                                                                        exportLimitKw)
     cost_grid_import                 = 0.0
     cost_grid_export                 = 0.0
     cost_grid_out_of_spec            = 0.0
@@ -45,43 +58,43 @@ def day_cost_gbp(grid_kws):
             battery_level_kwh += battery_charge_kwh / batteryOneWayEfficiency
 
         # operational and out of spec wear
-        cost_energy_wear            += wear_per_kwh        (   battery_level_kwh,
-                                                               0.0,
-                                                               batteryCapacityKwh,
-                                                               batteryWearEnergyCostAverageGbpPerKwh,
-                                                               batteryWearEnergyConstantCoefficient,
-                                                               batteryWearEnergyExponentialCoefficient,
-                                                               batteryWearEnergyActivationKwh,
-                                                               energyNormalisationCoefficient) * abs(battery_charge_kwh)
+        cost_energy_wear            += wearPerKwh        ( battery_level_kwh,
+                                                           0.0,
+                                                           batteryCapacityKwh,
+                                                           batteryWearEnergyCostAverageGbpPerKwh,
+                                                           batteryWearEnergyConstantCoefficient,
+                                                           batteryWearEnergyExponentialCoefficient,
+                                                           batteryWearEnergyActivationKwh,
+                                                           batteryEnergyNormalisationCoefficient) * abs(battery_charge_kwh)
 
         # battery charge/discharge power out of spec
-        cost_power_out_of_spec      += wear_per_kwh(           battery_charge_kw,
-                                                              -batteryMaxDischargeRateKw,
-                                                               batteryMaxChargeRateKw,
-                                                               batteryWearPowerCostAverageGbpPerKwh,
-                                                               batteryWearPowerConstantCoefficient,
-                                                               batteryWearPowerExponentialCoefficient,
-                                                               batteryWearPowerActivationKw,
-                                                               powerNormalisationCoefficient) * abs(battery_charge_kwh)
-
+        cost_power_out_of_spec      += wearPerKwh       (  battery_charge_kw,
+                                                          -batteryMaxDischargeRateKw,
+                                                           batteryMaxChargeRateKw,
+                                                           batteryWearPowerCostAverageGbpPerKwh,
+                                                           batteryWearPowerConstantCoefficient,
+                                                           batteryWearPowerExponentialCoefficient,
+                                                           batteryWearPowerActivationKw,
+                                                           batteryPowerNormalisationCoefficient) * abs(battery_charge_kwh)
 
         # grid power out of spec
-        cost_grid_out_of_spec       += wear_per_kwh(            grid_power_slot_kw,
-                                                               -importLimitKw,
-                                                                exportLimitKw,
-                                                                batteryWearEnergyCostAverageGbpPerKwh,
-                                                                0.0,
-                                                                batteryWearPowerExponentialCoefficient,
-                                                                powerActivationKw,
-                                                                powerNormalisationCoefficient) * abs(energy_grid_kwh)
+        cost_grid_out_of_spec       += wearPerKwh       (  grid_power_slot_kw,
+                                                          -importLimitKw,
+                                                           exportLimitKw,
+                                                           batteryWearPowerCostAverageGbpPerKwh,
+                                                           batteryWearPowerConstantCoefficient,
+                                                           batteryWearPowerExponentialCoefficient,
+                                                           batteryWearPowerActivationKw,
+                                                           gridPowerNormalisationCoefficient) * abs(energy_grid_kwh)
 
         cost_energy_average_per_kwh_acc += 0.5 * (tariff_import_per_kwh + tariff_export_per_kwh) # accumulate average energy cost
         slot_count += 1
     cost_level_change = (batteryEnergyInitialKwh - battery_level_kwh) * cost_energy_average_per_kwh_acc / number_slots
-    return cost_grid_import + cost_grid_export + cost_grid_out_of_spec + cost_energy_wear + cost_power_out_of_spec + cost_level_change
+    day_cost_gbp = cost_grid_import + cost_grid_export + cost_grid_out_of_spec + cost_energy_wear + cost_power_out_of_spec + cost_level_change
+    return day_cost_gbp
 
 # define wear function
-def wear_per_kwh(x, x_min, x_max, wear_cost_average, constant_coefficient, exponential_coefficient, activation, normalisation_coefficient):
+def wearPerKwh(x, x_min, x_max, wear_cost_average, constant_coefficient, exponential_coefficient, activation, normalisation_coefficient):
     X = (((x - x_min) / (x_max - x_min)) - 0.5)
     X2 = X * X
     t1 = constant_coefficient
@@ -91,8 +104,12 @@ def wear_per_kwh(x, x_min, x_max, wear_cost_average, constant_coefficient, expon
     else:
         exponent = (x - x_max) / activation
     t3 = exponential_coefficient * math.exp(exponent)
-    wear = normalisation_coefficient * wear_cost_average * (t1+t2+t3)
-    return wear
+    wear_per_kwh = normalisation_coefficient * wear_cost_average * (t1+t2+t3)
+    return wear_per_kwh
+
+def normalisationCoefficient(constant_coefficient, exponential_coefficient, activation, x_min, x_max):
+    normalisation_coefficient = 12.0/(1.0+(11.0*constant_coefficient)+(24.0*exponential_coefficient*activation/(x_max - x_min)))
+    return normalisation_coefficient
 
 # constants
 index =  2
@@ -181,10 +198,10 @@ epoch = time.asctime(obj)
 start_time = time.time()
 
 # get cost
-cost = day_cost_gbp(gridSlotKwhs)
+cost = dayCostGbp(gridSlotKwhs)
 
 # optimise
-result    = minimize(day_cost_gbp, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-14, 'maxiter': 2000000})
+result    = minimize(dayCostGbp, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-14, 'maxiter': 2000000})
 elapsed_s = time.time() - start_time
 
 # output result as json

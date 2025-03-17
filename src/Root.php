@@ -19,7 +19,7 @@ class Root
                             LOG_MAX_CHARS = 255,
                             CUBIC_SPLINE_MULTIPLE = 8;
     private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
-    protected array         $apis = [], $config = [], $tariff_combinations = [];
+    public array            $apis = [], $config = [], $tariff_combinations = [];
     protected               mysqli $mysqli;
     private const           int FORECAST_STALE_HOURS = 2;
 

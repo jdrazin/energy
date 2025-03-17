@@ -117,6 +117,8 @@ class EnergyCost extends Root
             $this->exportLimitKw                            = (float) $this->config['energy']['electric']['export']['limit_kw'];
             $this->batteryEnergyInitialKwh                  = (float) $batteryLevelInitialKwh;
         }
+        $this->makeEnergyNormalisationCoefficient();
+        $this->makePowerNormalisationCoefficient();
     }
 
     /**
@@ -332,12 +334,10 @@ class EnergyCost extends Root
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;          // battery level at beginning of day
-        $this->makeEnergyNormalisationCoefficient();
-        $this->makePowerNormalisationCoefficient();
         $cost_grid_import                     = 0.0;
         $cost_grid_export                     = 0.0;
         $cost_grid_out_of_spec                = 0.0;
-        $cost_energy_wear         = 0.0;
+        $cost_energy_wear                     = 0.0;
         $cost_power_out_of_spec               = 0.0;
         $import_kwh                           = 0.0;
         $export_kwh                           = 0.0;

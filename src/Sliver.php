@@ -88,11 +88,12 @@ class Sliver extends Root
             $wear_gbp_per_hour              = $energy_cost->wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour);
             $cost_total_wear_gbp_per_hour   = ($wear_gbp_per_hour['battery_energy'] + $wear_gbp_per_hour['battery_power'] + $wear_gbp_per_hour['grid_power']);
             $total_cost_per_hour            = $cost_grid_per_hour + $cost_total_wear_gbp_per_hour;
-            $datum = ['grid_kw'              => $grid_kw,
-                      'charge_kw'            => $charge_kw,
-                      'cost_grid_per_hour'   => $cost_grid_per_hour,
-                      'wear_gbp_per_hour'    => $wear_gbp_per_hour,
-                      'total_cost_per_hour'  => $total_cost_per_hour,];
+            $datum = ['grid_kw'             => $grid_kw,
+                      'charge_kw'           => $charge_kw,
+                      'battery_level_kwh'   => $battery_level_kwh,
+                      'cost_grid_per_hour'  => $cost_grid_per_hour,
+                      'wear_gbp_per_hour'   => $wear_gbp_per_hour,
+                      'total_cost_per_hour' => $total_cost_per_hour,];
             if (!$optimum || ($total_cost_per_hour < $optimum['total_cost_per_hour'])) {
                 $optimum = $datum;
             }

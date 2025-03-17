@@ -17,7 +17,6 @@ class DbSlots extends Root
     public function __construct()
     {
         parent::__construct();
-        /*
         $sql = 'DELETE FROM `slots` WHERE NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
@@ -25,7 +24,6 @@ class DbSlots extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        */
         $slot_time = $this->dayFirstSlotStart();
         $half_slot_duration_min = self::SLOT_DURATION_MIN / 2;
         $slot_time->modify(-2 * self::SLOT_DURATION_MIN . ' minute');     // back up two slots to beginning of last slot

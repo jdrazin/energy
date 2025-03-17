@@ -131,8 +131,8 @@ class EnergyCost extends Root
             $this->batteryWearPowerExponentialCoefficient   = (float) $this->config['battery']['wear']['power']['exponential_coefficient'];
             $this->batteryWearPowerActivationKw             = (float) $this->config['battery']['wear']['power']['activation_kw'];
 
-            $this->batteryWearPowerExponentialCoefficient   = (float) $this->config['battery']['wear']['power_exponential_coefficient'];
-            $this->powerActivationKw                        = (float) $this->config['battery']['wear']['power_activation_kw'];
+            $this->batteryWearPowerExponentialCoefficient   = (float) $this->config['battery']['wear']['power']['exponential_coefficient'];
+            $this->powerActivationKw                        = (float) $this->config['battery']['wear']['power']['activation_kw'];
 
             $this->batteryMaxChargeKw                       = (float) $this->config['battery']['max_charge_kw'];
             $this->batteryMaxDischargeKw                    = (float) $this->config['battery']['max_discharge_kw'];
@@ -140,10 +140,10 @@ class EnergyCost extends Root
             $this->importLimitKw                            = (float) $this->config['energy']['grid']['import']['limit_kw'];
             $this->exportLimitKw                            = (float) $this->config['energy']['grid']['export']['limit_kw'];
 
-            $this->gridWearPowerCostAverageGbpPerKwh        = (float) $this->config['grid']['wear']['power']['cost_average_gbp_per_kwh'];
-            $this->gridWearPowerConstantCoefficient         = (float) $this->config['grid']['wear']['power']['constant_coefficient'];
-            $this->gridWearPowerExponentialCoefficient      = (float) $this->config['grid']['wear']['power']['exponential_coefficient'];
-            $this->gridWearPowerActivationKw                = (float) $this->config['grid']['wear']['power']['activation_kw'];
+            $this->gridWearPowerCostAverageGbpPerKwh        = (float) $this->config['energy']['grid']['wear']['power']['cost_average_gbp_per_kwh'];
+            $this->gridWearPowerConstantCoefficient         = (float) $this->config['energy']['grid']['wear']['power']['constant_coefficient'];
+            $this->gridWearPowerExponentialCoefficient      = (float) $this->config['energy']['grid']['wear']['power']['exponential_coefficient'];
+            $this->gridWearPowerActivationKw                = (float) $this->config['energy']['grid']['wear']['power']['activation_kw'];
             $this->batteryEnergyInitialKwh                  = (float) $batteryLevelInitialKwh;
         }
         $this->makeNormalisationCoefficients();
@@ -524,7 +524,7 @@ class EnergyCost extends Root
     }
     public function normalisationCoefficient($constant_coefficient, $exponential_coefficient, $activation, $x_min, $x_max): float
     {
-        return $this->powerNormalisationCoefficient = 12.0/(1.0+(11.0*$constant_coefficient)+(24.0*$exponential_coefficient*$activation/($x_max - $x_min)));
+        return 12.0/(1.0+(11.0*$constant_coefficient)+(24.0*$exponential_coefficient*$activation/($x_max - $x_min)));
     }
 
     /**

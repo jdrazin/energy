@@ -27,7 +27,14 @@ class EnergyCost extends Root
                     $batteryWearEnergyConstantCoefficient,
                     $batteryWearEnergyExponentialCoefficient,
                     $batteryWearEnergyActivationKwh,
+                    $batteryWearPowerCostAverageGbpPerKwh,
+                    $batteryWearPowerConstantCoefficient,
                     $batteryWearPowerExponentialCoefficient,
+                    $batteryWearPowerActivationKw,
+                    $electricWearPowerCostAverageGbpPerKwh,
+                    $electricWearPowerConstantCoefficient,
+                    $electricWearPowerExponentialCoefficient,
+                    $electricWearPowerActivationKw,
                     $powerActivationKw,
                     $batteryMaxChargeKw,
                     $batteryMaxDischargeKw,
@@ -83,16 +90,16 @@ class EnergyCost extends Root
                                             'batteryWearPowerCostAverageGbpPerKwh'      => $this->config['battery']['wear']['power'] ['cost_average_gbp_per_kwh'],
                                             'batteryWearPowerConstantCoefficient'       => $this->config['battery']['wear']['power'] ['constant_coefficient'],
                                             'batteryWearPowerExponentialCoefficient'    => $this->config['battery']['wear']['power'] ['power_exponential_coefficient'],
-                                            'batteryWearPowerActivationKwh'             => $this->config['battery']['wear']['power'] ['activation_kwh'],
+                                            'batteryWearPowerActivationKw'              => $this->config['battery']['wear']['power'] ['activation_kw'],
                                             'powerActivationKw'                         => $this->config['battery']['wear']['power_activation_kw'],
                                             'batteryMaxChargeKw'                        => $this->config['battery']['max_charge_kw'],
                                             'batteryMaxDischargeKw'                     => $this->config['battery']['max_discharge_kw'],
                                             'importLimitKw'                             => $this->config['energy']['electric']['import']['limit_kw'],
                                             'exportLimitKw'                             => $this->config['energy']['electric']['export']['limit_kw'],
-                                            'electricWearPowerCostAverageGbpPerKwh'     => $this->config['electric']['wear']['power'] ['cost_average_gbp_per_kwh'],
-                                            'electricWearPowerConstantCoefficient'      => $this->config['electric']['wear']['power'] ['constant_coefficient'],
-                                            'electricWearPowerExponentialCoefficient'   => $this->config['electric']['wear']['power'] ['power_exponential_coefficient'],
-                                            'electricWearPowerActivationKwh'            => $this->config['electric']['wear']['power'] ['activation_kwh'],
+                                            'electricWearPowerCostAverageGbpPerKwh'     => $this->config['electric']['wear']['power']['cost_average_gbp_per_kw'],
+                                            'electricWearPowerConstantCoefficient'      => $this->config['electric']['wear']['power']['constant_coefficient'],
+                                            'electricWearPowerExponentialCoefficient'   => $this->config['electric']['wear']['power']['power_exponential_coefficient'],
+                                            'electricWearPowerActivationKw'             => $this->config['electric']['wear']['power']['activation_kw'],
                                             'batteryEnergyInitialKwh'                   => $batteryLevelInitialKwh,
                                             'slotDurationHour'                          => $this->slotDurationHour,
                                             'number_slots'                              => $this->number_slots,
@@ -243,12 +250,19 @@ class EnergyCost extends Root
         $command .= $this->parameter_name_value('batteryWearEnergyConstantCoefficient');
         $command .= $this->parameter_name_value('batteryWearEnergyExponentialCoefficient');
         $command .= $this->parameter_name_value('batteryWearEnergyActivationKwh');
+        $command .= $this->parameter_name_value('batteryWearPowerCostAverageGbpPerKwh');
+        $command .= $this->parameter_name_value('batteryWearPowerConstantCoefficient');
         $command .= $this->parameter_name_value('batteryWearPowerExponentialCoefficient');
+        $command .= $this->parameter_name_value('batteryWearPowerActivationKwh');
         $command .= $this->parameter_name_value('powerActivationKw');
         $command .= $this->parameter_name_value('batteryMaxChargeKw');
         $command .= $this->parameter_name_value('batteryMaxDischargeKw');
         $command .= $this->parameter_name_value('importLimitKw');
         $command .= $this->parameter_name_value('exportLimitKw');
+        $command .= $this->parameter_name_value('electricWearPowerCostAverageGbpPerKwh');
+        $command .= $this->parameter_name_value('electricWearPowerConstantCoefficient');
+        $command .= $this->parameter_name_value('electricWearPowerExponentialCoefficient');
+        $command .= $this->parameter_name_value('electricWearPowerActivationKwh');
         $command .= $this->parameter_name_value('batteryEnergyInitialKwh');
         $command .= $this->parameter_name_value('slotDurationHour');
         $command .= $this->parameter_name_value('number_slots');
@@ -292,17 +306,21 @@ class EnergyCost extends Root
         $this->strip();
         $this->batteryOneWayEfficiency                  = (float) $this->strip();
         $this->strip();
-        $this->batteryWearEnergyCostAverageGbpPerKwh                 = (float) $this->strip();
+        $this->batteryWearEnergyCostAverageGbpPerKwh    = (float) $this->strip();
         $this->strip();
-        $this->batteryWearEnergyConstantCoefficient                  = (float) $this->strip();
+        $this->batteryWearEnergyConstantCoefficient     = (float) $this->strip();
         $this->strip();
-        $this->batteryWearEnergyExponentialCoefficient             = (float) $this->strip();
+        $this->batteryWearEnergyExponentialCoefficient  = (float) $this->strip();
         $this->strip();
-        $this->batteryWearEnergyActivationKwh                      = (float) $this->strip();
+        $this->batteryWearEnergyActivationKwh           = (float) $this->strip();
         $this->strip();
-        $this->batteryWearPowerExponentialCoefficient              = (float) $this->strip();
+        $this->batteryWearPowerCostAverageGbpPerKwh     = (float) $this->strip();
         $this->strip();
-        $this->powerActivationKw                        = (float) $this->strip();
+        $this->batteryWearPowerConstantCoefficient      = (float) $this->strip();
+        $this->strip();
+        $this->batteryWearPowerExponentialCoefficient   = (float) $this->strip();
+        $this->strip();
+        $this->batteryWearPowerActivationKw             = (float) $this->strip();
         $this->strip();
         $this->batteryMaxChargeKw                       = (float) $this->strip();
         $this->strip();
@@ -311,6 +329,14 @@ class EnergyCost extends Root
         $this->importLimitKw                            = (float) $this->strip();
         $this->strip();
         $this->exportLimitKw                            = (float) $this->strip();
+        $this->strip();
+        $this->electricWearPowerCostAverageGbpPerKwh    = (float) $this->strip();
+        $this->strip();
+        $this->electricWearPowerConstantCoefficient     = (float) $this->strip();
+        $this->strip();
+        $this->electricWearPowerExponentialCoefficient  = (float) $this->strip();
+        $this->strip();
+        $this->electricWearPowerActivationKw            = (float) $this->strip();
         $this->strip();
         $this->batteryEnergyInitialKwh                  = (float) $this->strip();
         $this->strip();

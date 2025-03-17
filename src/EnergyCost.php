@@ -522,8 +522,7 @@ class EnergyCost extends Root
                                                                                                -$this->importLimitKw,
                                                                                                 $this->exportLimitKw);
     }
-    public function normalisationCoefficient($constant_coefficient, $exponential_coefficient, $activation, $x_min, $x_max): float
-    {
+    public function normalisationCoefficient($constant_coefficient, $exponential_coefficient, $activation, $x_min, $x_max): float {
         return 12.0/(1.0+(11.0*$constant_coefficient)+(24.0*$exponential_coefficient*$activation/($x_max - $x_min)));
     }
 

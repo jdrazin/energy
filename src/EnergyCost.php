@@ -430,7 +430,7 @@ class EnergyCost extends Root
         return $wear;
     }
 
-    public function wearGbp($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour): array {
+    public function wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour): array {
         $energy_grid_kwh    = $grid_kw * $duration_hour;
         $battery_charge_kwh = $charge_kw * $duration_hour;
         return [
@@ -441,7 +441,7 @@ class EnergyCost extends Root
                                                             $this->wearConstantCoefficient,
                                                             $this->energyExponentialCoefficient,
                                                             $this->energyActivationKwh,
-                                                            $this->energyNormalisationCoefficient)*abs($battery_charge_kwh),
+                                                            $this->energyNormalisationCoefficient)*abs($battery_charge_kwh)/$duration_hour,
                 'battery_power' =>  $this->wearPerKwh(      $charge_kw,
                                                            -$this->batteryMaxDischargeKw,
                                                             $this->batteryMaxChargeKw,
@@ -449,7 +449,7 @@ class EnergyCost extends Root
                                                             0.0,
                                                             $this->powerExponentialCoefficient,
                                                             $this->powerActivationKw,
-                                                            $this->powerNormalisationCoefficient)*abs($battery_charge_kwh),
+                                                            $this->powerNormalisationCoefficient)*abs($battery_charge_kwh)/$duration_hour,
                 'grid_power'     =>  $this->wearPerKwh(     $grid_kw,
                                                            -$this->importLimitKw,
                                                             $this->exportLimitKw,
@@ -457,7 +457,7 @@ class EnergyCost extends Root
                                                             0.0,
                                                             $this->powerExponentialCoefficient,
                                                             $this->powerActivationKw,
-                                                            $this->powerNormalisationCoefficient)*abs($energy_grid_kwh)
+                                                            $this->powerNormalisationCoefficient)*abs($energy_grid_kwh)/$duration_hour
                 ];
     }
 

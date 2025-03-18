@@ -490,7 +490,7 @@ class EnergyCost extends Root
                                              $this->batteryWearPowerExponentialCoefficient,
                                              $this->batteryWearPowerActivationKw,
                                              $this->batteryWearPowerNormalisationCoefficient)*abs($battery_charge_kwh)/$duration_hour;
-        $grid_power = $this->wearPerKwh(     $grid_kw,
+        $grid_power    = $this->wearPerKwh(  $grid_kw,
                                             -$this->importLimitKw,
                                              $this->exportLimitKw,
                                              $this->gridWearPowerCostAverageGbpPerKwh,

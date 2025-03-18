@@ -61,12 +61,12 @@ class Sliver extends Root
      * @throws Exception
      */
     public function optimum_charge_w(): int {
-        $givenergy                      = new GivEnergy();
-        $energy_cost                    = new EnergyCost(null, null);
+        $givenergy                      =  new GivEnergy();
+        $energy_cost                    =  new EnergyCost(null, null);
         $slot_target_parameters         =  $this->slotTargetParameters();             // get slot target parameters
-        $slot_mode                      = $slot_target_parameters['mode'];
-        $slot_abs_charge_power_w        = $slot_target_parameters['abs_charge_power_w'];
-        $slot_target_level_percent      = $slot_target_parameters['target_level_percent'];
+        $slot_mode                      =  $slot_target_parameters['mode'];
+        $slot_abs_charge_power_w        =  $slot_target_parameters['abs_charge_power_w'];
+        $slot_target_level_percent      =  $slot_target_parameters['target_level_percent'];
         $battery                        =  $givenergy->latest();      // get battery data
         $battery_level_percent          =  $battery['battery']['percent'];
         $battery_level_kwh              =  $battery_level_percent*$energy_cost->batteryCapacityKwh/100.0;
@@ -76,10 +76,11 @@ class Sliver extends Root
         $charge_min_kw                  = -$givenergy->battery['max_discharge_kw'];
         $charge_max_kw                  =  $givenergy->battery['max_charge_kw'];
         $charge_increment_kw            = ($charge_max_kw - $charge_min_kw)/self::CHARGE_POWER_LEVELS;
-        $duration_hour                  = self::SLIVER_DURATION_MINUTES / 60.0;
-        $charge_kw                      = $charge_min_kw;
-        $data                           = [];
-        $optimum                        = [];
+        $duration_hour                  =  self::SLIVER_DURATION_MINUTES / 60.0;
+        $charge_kw                      =  $charge_min_kw;
+        $data                           =  [];
+        $optimum                        =  [];
+        $energy_cost->makeNormalisationCoefficients();
         for ($level = 0; $level <= self::CHARGE_POWER_LEVELS; $level++) {
             $grid_kw                        = - ($net_load_kw + $charge_kw);
             $cost_grid_per_hour             = - ($grid_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'])*$grid_kw;
@@ -118,9 +119,5 @@ class Sliver extends Root
         }
         $this->mysqli->commit();
         return round(1000.0 * $optimum_charge_kw);
-    }
-
-    private function optimumChargeW(): float {
-
     }
 }

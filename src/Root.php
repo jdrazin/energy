@@ -44,20 +44,23 @@ class Root
             throw new Exception('bad or missing config json: ' . $path);
         }
         else {
-            $mysql = $this->apis['MySQL'];
-            if (!(($this->mysqli = new mysqli($mysql['host'],
-                    $mysql['user'],
-                    $mysql['password'],
-                    $mysql['database'])) &&
-                $this->mysqli->autocommit(false))) {
-                throw new Exception('bad mysql database');
-            }
-            // load config if not override
-            if (!($this->config ?? false) && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&
+            $this->mysqli = $this->mysqli();                                                                        // get database handle
+            if (!($this->config ?? false) && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&    // load config if not override
                 ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH))))) {
                 throw new Exception('bad or missing config json: ' . $path);
             }
         }
+    }
+    public function mysqli(): mysqli {
+        $mysql = $this->apis['MySQL'];
+        if (!(($mysqli = new mysqli($mysql['host'],
+                                    $mysql['user'],
+                                    $mysql['password'],
+                                    $mysql['database'])) &&
+            $mysqli->autocommit(false))) {
+            throw new Exception('bad mysql database');
+        }
+        return $mysqli;
     }
 
     /**
@@ -177,13 +180,20 @@ class Root
         return $string;
     }
 
+    /**
+     * @throws Exception
+     */
     public function logDb($event, $message, $urgency): void
+    /*
+     * make db handle and log message
+     */
     {
-        $sql = 'INSERT INTO `log` (`event`, `message`, `urgency`) VALUES (?, ?, ?)';
-        $stmt = $this->mysqli->prepare($sql);
+        $sql    = 'INSERT INTO `log` (`event`, `message`, `urgency`) VALUES (?, ?, ?)';
+        $mysqli = $this->mysqli();
+        $stmt   = $mysqli->prepare($sql);
         $stmt->bind_param('sss', $event, $message, $urgency);
         $stmt->execute();
-        $this->mysqli->commit();
+        $mysqli->commit();
     }
 
     /**

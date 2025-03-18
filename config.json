@@ -315,7 +315,7 @@
           "standard": 0.1332,
           "peak": 0.266
         },
-        "limit_kw": 8.0
+        "limit_kw": 8.5
       },
       "#": "https://agile.octopushome.net/historical-data",
       "inflation_real_pa": 0.0,

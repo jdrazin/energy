@@ -34,7 +34,7 @@ try {
         }
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && USE_CRONTAB) || !$cron) {
-        echo (new Sliver())->optimum_charge_w();
+        echo (new Sliver())->charge_w();
     }
     if (USE_PID_SEMAPHORE) {
         if (!unlink($pid_filename)) {

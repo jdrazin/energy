@@ -495,7 +495,7 @@ class Octopus extends Root
             }
             $sql = 'UPDATE  `slots` 
                       SET   `' . $properties[0] . '` = ?
-                      WHERE `slot`            = ? AND
+                      WHERE `slot`                  = ? AND
                             NOT `final`';
             unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||

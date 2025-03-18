@@ -16,7 +16,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const   PID_FOLDER                          = '/var/www/html/energy/',
-        USE_PID_SEMAPHORE                   = true,
+        USE_PID_SEMAPHORE                   = false,
         USE_CRONTAB                         = true,
         ARGS                                = ['CRON' => 1],
         INITIALISE_ON_EXCEPTION             = false,

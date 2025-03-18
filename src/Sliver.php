@@ -79,7 +79,7 @@ class Sliver extends Root
         $duration_hour                  =  self::SLIVER_DURATION_MINUTES / 60.0;
         $charge_kw                      =  $charge_min_kw;
         $data                           =  [];
-        $optimum                        =  [];
+        $optimum_total_cost_per_hour    =  null;
         $energy_cost->makeNormalisationCoefficients();
         for ($level = 0; $level <= self::CHARGE_POWER_LEVELS; $level++) {
             $grid_kw                        = -($net_load_kw + $charge_kw);
@@ -88,24 +88,40 @@ class Sliver extends Root
             $wear_gbp_per_hour              =  $energy_cost->wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour);
             $cost_total_wear_gbp_per_hour   =  ($wear_gbp_per_hour['battery_energy'] + $wear_gbp_per_hour['battery_power'] + $wear_gbp_per_hour['grid_power']);
             $total_cost_per_hour            =  $cost_grid_per_hour + $cost_total_wear_gbp_per_hour;
-            $datum = ['grid_kw'                 => $grid_kw,
-                      'grid_tariff_gbp_per_kwh' => $grid_tariff_gbp_per_kwh,
-                      'charge_kw'               => $charge_kw,
-                      'battery_level_kwh'       => $battery_level_kwh,
-                      'cost_grid_per_hour'      => $cost_grid_per_hour,
-                      'wear_gbp_per_hour'       => $wear_gbp_per_hour,
-                      'total_cost_per_hour'     => $total_cost_per_hour,];
-            if (!$optimum || ($total_cost_per_hour < $optimum['total_cost_per_hour'])) {
-                $optimum = $datum;
+            $data[$level] = [ 'grid_kw'                 => $grid_kw,
+                              'grid_tariff_gbp_per_kwh' => $grid_tariff_gbp_per_kwh,
+                              'charge_kw'               => $charge_kw,
+                              'battery_level_kwh'       => $battery_level_kwh,
+                              'cost_grid_per_hour'      => $cost_grid_per_hour,
+                              'wear_gbp_per_hour'       => $wear_gbp_per_hour,
+                              'total_cost_per_hour'     => $total_cost_per_hour];
+            if (is_null($optimum_total_cost_per_hour) || ($total_cost_per_hour < $optimum_total_cost_per_hour)) {
+                $optimum_total_cost_per_hour = $total_cost_per_hour;
+                $optimum_level               = $level;
             }
             $charge_kw += $charge_increment_kw;
-            $data[$level] = $datum;
         }
         $sql = 'INSERT INTO `slivers`  (`optimum_charge_kw`, `level_percent`,    `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`,    `house_load_kw`,    `solar_kw`) 
                                 VALUES (?,                   ?,                  ?,              ?,                          ?,                              ?,                  ?)';
-        $optimum_charge_kw = round($optimum['charge_kw'], 4);
+        $optimum_charge_kw = round($data[$optimum_level]['charge_kw'], 4);
+        switch ($slot_mode) {
+            case 'CHARGE': {
+                $charge_kw = (($optimum_charge_kw > 0.0) && ($battery_level_percent < $slot_target_level_percent)) ? (int) round(1000.0*$optimum_charge_kw) : 0;
+                break;
+            }
+            case 'DISCHARGE': {
+                $charge_kw = (($optimum_charge_kw < 0.0) && ($battery_level_percent > $slot_target_level_percent)) ? (int) round(1000.0*$optimum_charge_kw) : 0;
+                break;
+
+            }
+            case 'ECO':
+            case 'IDLE': {
+                $charge_kw = 0;
+                break;
+            }
+        }
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('disdidd', $optimum_charge_kw,$battery_level_percent, $slot_mode, $slot_abs_charge_power_w, $slot_target_level_percent, $house_load_kw, $solar_kw) ||
+            !$stmt->bind_param('disdidd', $charge_kw,$battery_level_percent, $slot_mode, $slot_abs_charge_power_w, $slot_target_level_percent, $house_load_kw, $solar_kw) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');

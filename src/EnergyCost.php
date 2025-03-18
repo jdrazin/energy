@@ -221,7 +221,7 @@ class EnergyCost extends Root
                                 `battery_charge_kw`,
                                 `battery_level_kwh`,
                                 `import_gbp_per_kwh`,
-                                `export_gbp_per_kwh``
+                                `export_gbp_per_kwh`
                     FROM        `slots`
                     WHERE       `slot` = 0 AND
                                 `tariff_combination` = ? AND

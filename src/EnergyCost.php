@@ -219,14 +219,16 @@ class EnergyCost extends Root
                                 `stop`,
                                 `grid_kw`,
                                 `battery_charge_kw`,
-                                `battery_level_kwh`
+                                `battery_level_kwh`,
+                                `import_gbp_per_kwh`,
+                                `export_gbp_per_kwh``
                     FROM        `slots`
                     WHERE       `slot` = 0 AND
                                 `tariff_combination` = ? AND
                                 NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($id, $start, $stop, $grid_kw, $battery_charge_kw, $battery_level_kwh) ||
+            !$stmt->bind_result($id, $start, $stop, $grid_kw, $battery_charge_kw, $battery_level_kwh, $import_gbp_per_kwh, $export_gbp_per_kwh) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -261,6 +263,8 @@ class EnergyCost extends Root
             'mode'                  => $mode,
             'abs_charge_power_w'    => $abs_charge_power_w,
             'target_level_percent'  => $target_level_percent,
+            'import_gbp_per_kwh'    => $import_gbp_per_kwh,
+            'export_gbp_per_kwh'    => $export_gbp_per_kwh,
             'message'               => $mode . $message
         ];
     }

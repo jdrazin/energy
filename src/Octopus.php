@@ -92,13 +92,13 @@ class Octopus extends Root
     private function log($slot_command): void {
         $sql = 'INSERT INTO `slot_commands` (`start`, `stop`, `mode`, `abs_charge_power_w`, `target_level_percent`) 
                                      VALUES (?,       ?,       ?,      ?,                 ?)
-                           ON DUPLICATE KEY UPDATE `mode`                  = ?,
+                           ON DUPLICATE KEY UPDATE `mode`                 = ?,
                                                    `abs_charge_power_w`   = ?, 
                                                    `target_level_percent` = ?';
         $start                 = $slot_command['start'];
         $stop                  = $slot_command['stop'];
         $mode                  = $slot_command['mode'];
-        $abs_charge_power_w    = $slot_command['ans_charge_power_w'];
+        $abs_charge_power_w    = $slot_command['abs_charge_power_w'];
         $target_level_percent  = $slot_command['target_level_percent'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssiisii', $start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $mode, $abs_charge_power_w, $target_level_percent) ||

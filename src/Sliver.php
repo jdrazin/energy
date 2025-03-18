@@ -26,12 +26,10 @@ class Sliver extends Root
                         `target_level_percent`,
                         `import_gbp_per_kwh`,
                         `export_gbp_per_kwh`
-                   FROM  `slot_commands`
-                   WHERE `st`.`final` AND
-                         `tc`.`active` AND 
-                         NOW() BETWEEN `st`.`start` AND `st`.`stop`';
+                   FROM `slot_commands`
+                   WHERE NOW() BETWEEN `start` AND `stop`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($slot, $start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh) ||
+            !$stmt->bind_result($start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -41,12 +39,7 @@ class Sliver extends Root
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No slot data');
             throw new Exception($message);
         }
-        if ($slot) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Data slot not 0: ' . $slot);
-            $this->logDb('MESSAGE', $message, 'WARNING');
-        }
-        return ['slot'                  =>  $slot,
-                'start'                 =>  $start,
+        return ['start'                 =>  $start,
                 'stop'                  =>  $stop,
                 'mode'                  =>  $mode,
                 'abs_charge_power_w'    =>  $abs_charge_power_w,

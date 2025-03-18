@@ -17,7 +17,7 @@
     "gridWearPowerConstantCoefficient": 0,
     "gridWearPowerExponentialCoefficient": 25,
     "gridWearPowerActivationKw": 0.1,
-    "batteryEnergyInitialKwh": 9.956104999999999,
+    "batteryEnergyInitialKwh": 9.677521111111112,
     "slotDurationHour": 0.5,
     "number_slots": 48,
     "import_gbp_per_day": 0.427696,
@@ -170,6 +170,6 @@
         1.54052,
         1.36474,
         1.53758,
-        2.00959
+        1.97568
     ]
 }

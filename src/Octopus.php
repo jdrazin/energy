@@ -73,10 +73,8 @@ class Octopus extends Root
                         $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($db_slots);
                         $slot_command = (new EnergyCost($batteryLevelKwh, $db_slots))->minimise(); // minimise energy cost
                         if ($active_tariff) {                                        // make battery command
-                            $this->logDb('SLOT_COMMAND', $slot_command['message'], 'NOTICE');
-                            if (ENABLE_SLOT_COMMANDS) {
-                                $givenergy->control($slot_command);                  // control battery for active combination on completion of countdown to next slot
-                            }
+                            $this->log($slot_command);
+
                             $this->makeActiveTariffCombinationDbSlotsLast24hrs();    // make historic slots for last 24 hours
                             $this->slots_make_cubic_splines();                       // generate cubic splines
                         }
@@ -87,6 +85,27 @@ class Octopus extends Root
             (new EnergyCost(null, null))->minimise();     // minimise energy cost
         }
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null, 'NOTICE');
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function log($slot_command): void {
+        $sql = 'INSERT IGNORE INTO `slot_commands` (`start`, `stop`, `mode`, `abs_charge_power_w`, `target_level_percent`) 
+                                     VALUES (?,       ?,       ?,      ?,                 ?)';
+        $start                 = $slot_command['start'];
+        $stop                  = $slot_command['stop'];
+        $mode                  = $slot_command['mode'];
+        $abs_charge_power_w    = $slot_command['ans_charge_power_w'];
+        $target_level_percent  = $slot_command['target_level_percent'];
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('sssii', $start, $stop, $mode, $abs_charge_power_w, $target_level_percent) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
     }
 
     /**

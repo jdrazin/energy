@@ -8,7 +8,7 @@ class Sliver extends Root
     const int   SLIVER_DURATION_MINUTES = 1,
                 SLIVER_DB_MAX_AGE_DAY   = 7,
                 CHARGE_POWER_LEVELS     = 100;
-    const float ABS_MIN_CHARGE_KW       = 0.001;
+    const bool  ENABLE_SLIVER_COMMAND   = false;
 
     public function __construct()
     {
@@ -103,7 +103,7 @@ class Sliver extends Root
             }
             $charge_kw += $charge_increment_kw;
         }
-        $sql = 'INSERT INTO `slivers`  (`charge_w`, `level_percent`, `cost_total_gbp_per_hour`, `cost_grid_gbp_per_hour`, `cost_wear_gbp_per_hour`, `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`, `house_load_kw`, `solar_kw`) 
+        $sql = 'INSERT INTO `sliver_commands`  (`charge_w`, `level_percent`, `cost_total_gbp_per_hour`, `cost_grid_gbp_per_hour`, `cost_wear_gbp_per_hour`, `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`, `house_load_kw`, `solar_kw`) 
                                 VALUES (?,           ?,               ?,                    ?,                  ?,                   ?,              ?,                          ?,                           ?,               ?          )';
         $optimum                      = $data[$optimum_level];
         $optimum_charge_kw            = $optimum['charge_kw'];
@@ -133,7 +133,7 @@ class Sliver extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $sql = 'DELETE FROM `slivers`
+        $sql = 'DELETE FROM `sliver_commands`
                     WHERE `timestamp` + INTERVAL ' . self::SLIVER_DB_MAX_AGE_DAY . ' DAY < NOW()';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
@@ -142,6 +142,10 @@ class Sliver extends Root
             throw new Exception($message);
         }
         $this->mysqli->commit();
+        /*
+        if (self::ENABLE_SLIVER_COMMAND) {
+            $givenergy->control($slot_command);                  // control battery for active combination on completion of countdown to next slot
+        } */
         return round(1000.0 * $charge_kw);
     }
 }

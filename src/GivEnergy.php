@@ -404,7 +404,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function control($slot_command): void {
+    public function control($sliver_command): void {
         /*
          * all slots except 1 must be manually disabled in app or web portal
          *
@@ -413,19 +413,13 @@ class GivEnergy extends Root
         if ($this->propertyRead('presetChargeDischargeBlocksSet', 'int')) {
             $this->clear_preset_charge_discharge_blocks();
         }
-        $start_datetime         = $slot_command['start_datetime']          ?? null;
-        $start                  = $slot_command['start']                   ?? null;
-        $stop                   = $slot_command['stop']                    ?? null;
-        $mode                   = $slot_command['mode']                    ?? null;
-        $abs_charge_power_w     = $slot_command['abs_charge_power_w']      ?? null;
-        $target_level_percent   = $slot_command['target_level_percent']    ?? null;
-        $message                = $slot_command['message']                 ?? 'no context';
-        if (USE_CRONTAB) {   // count down to exact slot start time when in crontab mode
-            $countdown_seconds      = $this->countdown_to_start_seconds($start_datetime);
-            (new Root())->logDb('BATTERY', $message . ": counting down $countdown_seconds seconds ...", 'NOTICE');
-            sleep($countdown_seconds);
-            (new Root())->logDb('BATTERY', 'sending commands ...', 'NOTICE');
-        }
+        $start_datetime         = $sliver_command['start_datetime']          ?? null;
+        $start                  = $sliver_command['start']                   ?? null;
+        $stop                   = $sliver_command['stop']                    ?? null;
+        $mode                   = $sliver_command['mode']                    ?? null;
+        $abs_charge_power_w     = $sliver_command['abs_charge_power_w']      ?? null;
+        $target_level_percent   = $sliver_command['target_level_percent']    ?? null;
+        $message                = $sliver_command['message']                 ?? 'no context';
         switch ($mode) {
             case 'CHARGE':
             case 'DISCHARGE': {
@@ -485,26 +479,6 @@ class GivEnergy extends Root
                 throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Unknown control mode: ' . $mode));
             }
         }
-    }
-
-    /**
-     * @throws DateMalformedStringException
-     */
-    private function countdown_to_start_seconds($start_datetime): int
-    {
-        if (!($now = new DateTime())) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'bad clock'));
-        } elseif (($countdown_seconds = $now->diff(new DateTime($start_datetime))->s +
-                60 * ($now->diff(new DateTime($start_datetime))->i +
-                    60 * ($now->diff(new DateTime($start_datetime))->h +
-                        24 * ($now->diff(new DateTime($start_datetime))->days)))
-                - self::HOLD_TO_START_GUARD_PERIOD_SECONDS) < 0
-        ) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "too close to or after start $start_datetime"));
-        } elseif ($countdown_seconds > self::MAX_HOLD_SECONDS) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "countdown ($countdown_seconds) is too large"));
-        }
-        return $countdown_seconds;
     }
 
     /**
@@ -590,8 +564,8 @@ class GivEnergy extends Root
         $id = $this->inverterControlSettings[$setting];
         $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action;
         $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'];
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'];
         $client = new Client();
         switch ($action) {
             case 'write':

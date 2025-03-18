@@ -101,22 +101,22 @@ class Sliver extends Root
             }
             $charge_kw += $charge_increment_kw;
         }
-        $sql = 'INSERT INTO `slivers`  (`optimum_charge_kw`, `level_percent`,    `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`,    `house_load_kw`,    `solar_kw`) 
-                                VALUES (?,                   ?,                  ?,              ?,                          ?,                              ?,                  ?)';
+        $sql = 'INSERT INTO `slivers`  (`charge_kw`, `level_percent`,    `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`,    `house_load_kw`,    `solar_kw`) 
+                                VALUES (?,           ?,                  ?,              ?,                          ?,                              ?,                  ?)';
         $optimum_charge_kw = round($data[$optimum_level]['charge_kw'], 4);
         switch ($slot_mode) {
             case 'CHARGE': {
-                $charge_kw = (($optimum_charge_kw > 0.0) && ($battery_level_percent < $slot_target_level_percent)) ? (int) round(1000.0*$optimum_charge_kw) : 0;
+                $charge_kw = (($optimum_charge_kw > 0.0) && ($battery_level_percent < $slot_target_level_percent)) ? round($optimum_charge_kw, 3) : 0.0;
                 break;
             }
             case 'DISCHARGE': {
-                $charge_kw = (($optimum_charge_kw < 0.0) && ($battery_level_percent > $slot_target_level_percent)) ? (int) round(1000.0*$optimum_charge_kw) : 0;
+                $charge_kw = (($optimum_charge_kw < 0.0) && ($battery_level_percent > $slot_target_level_percent)) ? round($optimum_charge_kw, 3) : 0.0;
                 break;
 
             }
             case 'ECO':
             case 'IDLE': {
-                $charge_kw = 0;
+                $charge_kw = 0.0;
                 break;
             }
         }
@@ -136,6 +136,6 @@ class Sliver extends Root
             throw new Exception($message);
         }
         $this->mysqli->commit();
-        return round(1000.0 * $optimum_charge_kw);
+        return round(1000.0 * $charge_kw);
     }
 }

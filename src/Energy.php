@@ -119,11 +119,10 @@ class Energy extends Root
         if (!$this->authenticate()) {
             return false;
         }
-        $sql = 'SELECT CONCAT(`message`, \' (\', `timestamp`, \' UTC)\')
-                      FROM `log`
-                      WHERE `id` = (SELECT MAX(`id`)
-                                      FROM `log`
-                                      WHERE `event` = \'SLOT_COMMAND\')';
+        $sql = 'SELECT  `message`
+                  FROM  `slot_commands`
+                  WHERE `id` = (SELECT MAX(`id`)
+                                  FROM `slot_commands`)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($slot_command) ||
             !$stmt->execute()) {

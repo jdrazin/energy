@@ -90,18 +90,20 @@ class Octopus extends Root
      * @throws Exception
      */
     private function log($slot_command): void {
-        $sql = 'INSERT INTO `slot_commands` (`start`, `stop`, `mode`, `abs_charge_power_w`, `target_level_percent`) 
-                                     VALUES (?,       ?,       ?,      ?,                 ?)
+        $sql = 'INSERT INTO `slot_commands` (`start`, `stop`, `mode`, `abs_charge_power_w`, `target_level_percent`, `message`) 
+                                     VALUES (?,       ?,       ?,      ?,                   ?,                      ?        )
                            ON DUPLICATE KEY UPDATE `mode`                 = ?,
                                                    `abs_charge_power_w`   = ?, 
-                                                   `target_level_percent` = ?';
+                                                   `target_level_percent` = ?,
+                                                   `message`              = ?';
         $start                 = $slot_command['start'];
         $stop                  = $slot_command['stop'];
         $mode                  = $slot_command['mode'];
         $abs_charge_power_w    = $slot_command['abs_charge_power_w'];
         $target_level_percent  = $slot_command['target_level_percent'];
+        $message               = $slot_command['message'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('sssiisii', $start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $mode, $abs_charge_power_w, $target_level_percent) ||
+            !$stmt->bind_param('sssiissiis', $start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $message, $mode, $abs_charge_power_w, $target_level_percent, $message) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

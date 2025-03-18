@@ -413,7 +413,6 @@ class GivEnergy extends Root
         if ($this->propertyRead('presetChargeDischargeBlocksSet', 'int')) {
             $this->clear_preset_charge_discharge_blocks();
         }
-        $start_datetime         = $sliver_command['start_datetime']          ?? null;
         $start                  = $sliver_command['start']                   ?? null;
         $stop                   = $sliver_command['stop']                    ?? null;
         $mode                   = $sliver_command['mode']                    ?? null;

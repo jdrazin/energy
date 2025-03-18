@@ -19,16 +19,14 @@ class Sliver extends Root
      * @throws Exception
      */
     public function slotTargetParameters(): array {
-        $sql = 'SELECT  `st`.`slot`,
-                        `st`.`start`,
-                        `st`.`stop`,
-                        `st`.`mode`,
-                        `st`.`abs_charge_power_w`,
-                        `st`.`target_level_percent`,
-                        `st`.`import_gbp_per_kwh`,
-                        `st`.`export_gbp_per_kwh`
-                   FROM `slots` `st`
-                   INNER JOIN `tariff_combinations` `tc` ON `tc`.`id` = `st`.`tariff_combination`
+        $sql = 'SELECT  `start`,
+                        `stop`,
+                        `mode`,
+                        `abs_charge_power_w`,
+                        `target_level_percent`,
+                        `import_gbp_per_kwh`,
+                        `export_gbp_per_kwh`
+                   FROM  `slot_commands`
                    WHERE `st`.`final` AND
                          `tc`.`active` AND 
                          NOW() BETWEEN `st`.`start` AND `st`.`stop`';

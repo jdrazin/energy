@@ -6,7 +6,6 @@ use Exception;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG_MINIMISER = false;
     const float     THRESHOLD_POWER_W = 100.0;
 
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
@@ -150,7 +149,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    public function minimise(): ?array // returns optimum battery charge level for next slot
+    public function minimise(): array // returns optimum battery charge level for next slot
     {
         //
         // see https://scipy-lectures.org/advanced/mathematical_optimization/#knowing-your-problem
@@ -200,13 +199,12 @@ class EnergyCost extends Root
             foreach ($this->total_load_kws as $k => $v) {
                 echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->total_load_kws[$k], 3) . ', ' . round($optimumGridKws[$k], 3) . PHP_EOL;
             }
-            return null;
         }
         else {
             $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
-            $this->slotCommands();
             $this->insertSlotNextDayCostEstimates();
-            return $this->slotCommands[0];
+            $slot_command = $this->slotCommand();                                     // make slot command
+            return $slot_command;
         }
     }
 
@@ -638,84 +636,56 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function slotCommands(): void {
+    private function slotCommand(): array {
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'SELECT          `id`,
-                                `start` AS `start_datetime`,  
-                                DATE_FORMAT(`start`, \'%H:%i\') AS `start`,
-                                DATE_FORMAT(`stop`, \'%H:%i\') AS `stop`,
+                                `start`,
+                                `stop`,
                                 `grid_kw`,
                                 `battery_charge_kw`,
                                 `battery_level_kwh`
                     FROM        `slots`
-                    WHERE       `tariff_combination` = ? AND
-                                NOT `final`
-                    ORDER BY    `slot`';
+                    WHERE       `slot` = 0 AND
+                                `tariff_combination` = ? AND
+                                NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
             !$stmt->bind_result($id, $start_datetime, $start, $stop, $grid_kw, $battery_charge_kw, $battery_level_kwh) ||
-            !$stmt->execute()) {
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
         $this->slotCommands = [];
-        while ($stmt->fetch()) {
-            $grid_w = (int)(1000.0 * $grid_kw);
-            if ($battery_charge_kw > 0.0) {  // CHARGE
-                $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
-            } else {                           // DISCHARGE
-                $charge_power_w = (int) round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
-            }
-            if (abs($grid_w) < self::THRESHOLD_POWER_W) {                                 // ECO if no appreciable import/export
-                $mode = 'ECO';
-                $abs_charge_power_w = null;
-                $target_level_percent = null;
-                $message = ' between ' . $start . ' and ' . $stop;
-            } elseif (abs($charge_power_w) > self::THRESHOLD_POWER_W) {                   // CHARGE, DISCHARGE when above threshold charge power
-                $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
-                $abs_charge_power_w = abs($charge_power_w);
-                $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
-                $message = '@' . round($abs_charge_power_w) . 'W ' . ($mode == 'CHARGE' ? ' to ' . $target_level_percent . '% ': '') . 'between ' . $start . ' and ' . $stop;
-            } else {                                                                      // otherwise IDLE
-                $mode = 'IDLE';
-                $abs_charge_power_w = null;
-                $target_level_percent = null;
-                $message = '';
-            }
-            $this->slotCommands[] = [
-                                        'id'                    => $id,
-                                        'start_datetime'        => $start_datetime,
-                                        'start'                 => $start,
-                                        'stop'                  => $stop,
-                                        'mode'                  => $mode,
-                                        'abs_charge_power_w'    => $abs_charge_power_w,
-                                        'target_level_percent'  => $target_level_percent,
-                                        'message'               => $mode . $message
-                                    ];
+        $grid_w = (int) (1000.0 * $grid_kw);
+        $message = '';
+        if ($battery_charge_kw > 0.0) {  // CHARGE
+            $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
+        } else {                           // DISCHARGE
+            $charge_power_w = (int) round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
         }
-        unset($stmt);
-        // update slots with command parameteres
-        $sql = 'UPDATE      `slots`
-                   SET      `mode`                 = ?,
-                            `abs_charge_power_w`   = ?,
-                            `target_level_percent` = ?
-                   WHERE    `tariff_combination`   = ? AND
-                            `slot`                 = ? AND
-                            NOT `final`';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('sdiii', $mode, $abs_charge_power_w, $target_level_percent, $tariff_combination_id, $slot)) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
+        if (abs($grid_w) < self::THRESHOLD_POWER_W) {                                 // ECO if no appreciable import/export
+            $mode = 'ECO';
+            $abs_charge_power_w = null;
+            $target_level_percent = null;
+        } elseif (abs($charge_power_w) > self::THRESHOLD_POWER_W) {                   // CHARGE, DISCHARGE when above threshold charge power
+            $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
+            $abs_charge_power_w = abs($charge_power_w);
+            $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
+        } else {                                                                      // otherwise IDLE
+            $mode = 'IDLE';
+            $abs_charge_power_w = null;
+            $target_level_percent = null;
         }
-        foreach ($this->slotCommands as $slot => $slot_command) {
-            $mode                 = $slot_command['mode'];
-            $abs_charge_power_w   = $slot_command['abs_charge_power_w'];
-            $target_level_percent = $slot_command['target_level_percent'];
-            $stmt->execute();
-        }
-        $this->mysqli->commit();
+        return [
+                'start'                 => $start,
+                'stop'                  => $stop,
+                'mode'                  => $mode,
+                'abs_charge_power_w'    => $abs_charge_power_w,
+                'target_level_percent'  => $target_level_percent,
+                'message'               => $mode . $message
+                ];
     }
 
     /**

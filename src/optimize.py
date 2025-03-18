@@ -201,7 +201,7 @@ start_time = time.time()
 cost = dayCostGbp(gridSlotKwhs)
 
 # optimise
-result    = minimize(dayCostGbp, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-14, 'maxiter': 2000000})
+result    = minimize(dayCostGbp, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-9, 'maxiter': 2000000})
 elapsed_s = time.time() - start_time
 
 # output result as json

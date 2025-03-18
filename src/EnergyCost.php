@@ -189,23 +189,80 @@ class EnergyCost extends Root
         // calculate optimised cost elements using CLI command
         $this->costs['optimised'] = $this->costCLI($command, $optimumGridKws = $result['optimumGridKws']);
         $standing_costs_gbp_per_day = $this->problem['import_gbp_per_day'] + $this->problem['export_gbp_per_day'];
-        echo 'Php    raw cost:            '  . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-        echo 'Python optimised cost:      '  . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-        echo 'Php    optimised cost:      '  . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-        echo 'Php    optimised grid_cost: '  . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+        echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+        echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+        echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+        echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
         if (self::DEBUG_MINIMISER) {
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
             foreach ($this->total_load_kws as $k => $v) {
                 echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->total_load_kws[$k], 3) . ', ' . round($optimumGridKws[$k], 3) . PHP_EOL;
             }
+            return [];
         }
         else {
-            $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
-            $this->insertSlotNextDayCostEstimates();
             $slot_command = $this->slotCommand();                                     // make slot command
+            $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
+            $this->insertSlotNextDayCostEstimates($slot_command['id']);
             return $slot_command;
         }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function slotCommand(): array {
+        $tariff_combination_id = $this->tariff_combination['id'];
+        $sql = 'SELECT          `id`,
+                                `start`,
+                                `stop`,
+                                `grid_kw`,
+                                `battery_charge_kw`,
+                                `battery_level_kwh`
+                    FROM        `slots`
+                    WHERE       `slot` = 0 AND
+                                `tariff_combination` = ? AND
+                                NOT `final`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $tariff_combination_id) ||
+            !$stmt->bind_result($id, $start, $stop, $grid_kw, $battery_charge_kw, $battery_level_kwh) ||
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        $this->slotCommands = [];
+        $grid_w = (int) (1000.0 * $grid_kw);
+        $message = '';
+        if ($battery_charge_kw > 0.0) {  // CHARGE
+            $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
+        } else {                           // DISCHARGE
+            $charge_power_w = (int) round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
+        }
+        if (abs($grid_w) < self::THRESHOLD_POWER_W) {                                 // ECO if no appreciable import/export
+            $mode = 'ECO';
+            $abs_charge_power_w = null;
+            $target_level_percent = null;
+        } elseif (abs($charge_power_w) > self::THRESHOLD_POWER_W) {                   // CHARGE, DISCHARGE when above threshold charge power
+            $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
+            $abs_charge_power_w = abs($charge_power_w);
+            $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
+        } else {                                                                      // otherwise IDLE
+            $mode = 'IDLE';
+            $abs_charge_power_w = null;
+            $target_level_percent = null;
+        }
+        return [
+            'id'                    => $id,
+            'start'                 => $start,
+            'stop'                  => $stop,
+            'mode'                  => $mode,
+            'abs_charge_power_w'    => $abs_charge_power_w,
+            'target_level_percent'  => $target_level_percent,
+            'message'               => $mode . $message
+        ];
     }
 
     private function optimisation_result($result): void {
@@ -636,64 +693,8 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function slotCommand(): array {
-        $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'SELECT          `id`,
-                                `start`,
-                                `stop`,
-                                `grid_kw`,
-                                `battery_charge_kw`,
-                                `battery_level_kwh`
-                    FROM        `slots`
-                    WHERE       `slot` = 0 AND
-                                `tariff_combination` = ? AND
-                                NOT `final`';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($id, $start_datetime, $start, $stop, $grid_kw, $battery_charge_kw, $battery_level_kwh) ||
-            !$stmt->execute() ||
-            !$stmt->fetch()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
-            throw new Exception($message);
-        }
-        $this->slotCommands = [];
-        $grid_w = (int) (1000.0 * $grid_kw);
-        $message = '';
-        if ($battery_charge_kw > 0.0) {  // CHARGE
-            $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
-        } else {                           // DISCHARGE
-            $charge_power_w = (int) round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
-        }
-        if (abs($grid_w) < self::THRESHOLD_POWER_W) {                                 // ECO if no appreciable import/export
-            $mode = 'ECO';
-            $abs_charge_power_w = null;
-            $target_level_percent = null;
-        } elseif (abs($charge_power_w) > self::THRESHOLD_POWER_W) {                   // CHARGE, DISCHARGE when above threshold charge power
-            $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
-            $abs_charge_power_w = abs($charge_power_w);
-            $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
-        } else {                                                                      // otherwise IDLE
-            $mode = 'IDLE';
-            $abs_charge_power_w = null;
-            $target_level_percent = null;
-        }
-        return [
-                'start'                 => $start,
-                'stop'                  => $stop,
-                'mode'                  => $mode,
-                'abs_charge_power_w'    => $abs_charge_power_w,
-                'target_level_percent'  => $target_level_percent,
-                'message'               => $mode . $message
-                ];
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function insertSlotNextDayCostEstimates(): void
+    private function insertSlotNextDayCostEstimates($slot): void
     {
-        $slot                   = $this->slotCommands[0]['id'];
         $standing               = ($this->problem['import_gbp_per_day'] ?? 0.0) + ($this->problem['export_gbp_per_day'] ?? 0.0);
         $raw                    = $this->costs['raw'];
         $raw_import             = round($raw['cost_import'], 3);

@@ -46,16 +46,10 @@ const PID_FOLDER                        = '/var/www/html/energy/',
       USE_CRONTAB                       = true,
       ARGS                              = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION           = true,
-      EMAIL_NOTIFICATION_ON_ERROR       = true,
+      EMAIL_NOTIFICATION_ON_ERROR       = false,
       REPLACE_WITH_STUB                 = false,
-      ACTIVE_TARIFF_COMBINATION_ONLY    = true,
-      TEST_SLOT_COMMAND                 = [
-                                            'start'                 => '',
-                                            'stop'                  => '',
-                                            'mode'                  => '',
-                                            'abs_charge_power_w'    => 3000,
-                                            'target_level_percent'  => 80
-                                           ];
+      ACTIVE_TARIFF_COMBINATION_ONLY    = true;
+
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
     if (USE_PID_SEMAPHORE) {

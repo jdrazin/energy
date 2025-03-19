@@ -41,14 +41,14 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const PID_FOLDER                        = '/var/www/html/energy/',
-      USE_PID_SEMAPHORE                 = true,
-      USE_CRONTAB                       = true,
-      ARGS                              = ['CRON' => 1],
-      INITIALISE_ON_EXCEPTION           = true,
-      EMAIL_NOTIFICATION_ON_ERROR       = false,
-      REPLACE_WITH_STUB                 = false,
-      ACTIVE_TARIFF_COMBINATION_ONLY    = true;
+const PID_FOLDER                     = '/var/www/html/energy/',
+      USE_PID_SEMAPHORE              = true,
+      USE_CRONTAB                    = true,
+      ARGS                           = ['CRON' => 1],
+      INITIALISE_ON_EXCEPTION        = true,
+      EMAIL_NOTIFICATION_ON_ERROR    = false,
+      REPLACE_WITH_STUB              = false,
+      ACTIVE_TARIFF_COMBINATION_ONLY = true;
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';

@@ -45,7 +45,7 @@ const PID_FOLDER                     = '/var/www/html/energy/',
       USE_PID_SEMAPHORE              = true,
       USE_CRONTAB                    = true,
       ARGS                           = ['CRON' => 1],
-      INITIALISE_ON_EXCEPTION        = true,
+      INITIALISE_ON_EXCEPTION        = false,
       EMAIL_NOTIFICATION_ON_ERROR    = false,
       REPLACE_WITH_STUB              = false,
       ACTIVE_TARIFF_COMBINATION_ONLY = true;

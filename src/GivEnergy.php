@@ -86,6 +86,7 @@ class GivEnergy extends Root
                                             'Pause Battery Start Time'                  => '00:00',         // Pause battery start time (does not reset, no default)
                                             'Pause Battery End Time'                    => '00:00',         // Pause battery end time (does not reset, no default)
                                             'Force Off Grid'                            => 0,               // Isolate from grid (does not reset, no default)
+                                            'Real-Time Control'                         => 1,               // High frequency write commands (i.e. 1 sliver minute)
                                         ],
                         EV_METER_IDS = [
                                           0                                                                 // single meter id=0

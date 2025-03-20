@@ -42,7 +42,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const PID_FOLDER                     = '/var/www/html/energy/',
-      USE_PID_SEMAPHORE              = true,
+      USE_PID_SEMAPHORE              = false,
       USE_CRONTAB                    = false,
       ARGS                           = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION        = false,
@@ -88,7 +88,7 @@ catch (exception $e) {
                                   'bodyAlt'   => strip_tags($message)]);
     }
     $root = new Root();
-    $root->logDb('MESSAGE', $message, 'FATAL');
+    $root->logDb('MESSAGE', $message,  null, 'FATAL');
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
         $root->logDb('MESSAGE', 'Attempting to initialise ...', 'NOTICE');
@@ -99,7 +99,7 @@ catch (exception $e) {
 }
 catch (GuzzleException $e) {
     $message = $e->getMessage();
-    (new Root())->logDb('MESSAGE', $message, 'FATAL');
+    (new Root())->logDb('MESSAGE', $message, null, 'FATAL');
     echo $message . PHP_EOL;
     exit(1);
 }

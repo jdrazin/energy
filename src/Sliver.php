@@ -118,6 +118,7 @@ class Sliver extends Root
                 break;
             }
         }
+        $charge_power_w = round(1000.0 * $charge_kw);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('didddsdidd', $charge_kw,$battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $cost_total_wear_gbp_per_hour, $slot_mode, $slot_abs_charge_power_w, $slot_target_level_percent, $house_load_kw, $solar_kw) ||
             !$stmt->execute()) {
@@ -134,10 +135,14 @@ class Sliver extends Root
             throw new Exception($message);
         }
         $this->mysqli->commit();
-        /*
-        if (self::ENABLE_sliver_solution) {
-            $givenergy->control($slot_solution);                  // control battery for active combination on completion of countdown to next slot
-        } */
-        return round(1000.0 * $charge_kw);
+        if (ENABLE_SLIVER_COMMAND) {                        // control battery for active combination on completion of countdown to next slot
+                $givenergy->control([
+                                        'mode'                  => $slot_mode,
+                                        'start'                 => $slot_target_parameters['start'],
+                                        'stop'                  => $slot_target_parameters['stop'],
+                                        'abs_charge_power_w'    => abs($charge_power_w)
+                                    ]);
+            }
+        return $charge_power_w;
     }
 }

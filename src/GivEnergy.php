@@ -86,7 +86,7 @@ class GivEnergy extends Root
                                             'Pause Battery Start Time'                  => '00:00',         // Pause battery start time (does not reset, no default)
                                             'Pause Battery End Time'                    => '00:00',         // Pause battery end time (does not reset, no default)
                                             'Force Off Grid'                            => 0,               // Isolate from grid (does not reset, no default)
-                                            'Real-Time Control'                         => 1,               // High frequency write commands (i.e. 1 sliver minute)
+                                            'Real-Time Control'                         => 1,               // High write command frequency (i.e. 1 sliver minute)
                                         ],
                         EV_METER_IDS = [
                                           0                                                                 // single meter id=0
@@ -425,7 +425,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function control($sliver_solution): void {
+    public function control($command): void {
         /*
          * all slots except 1 must be manually disabled in app or web portal
          *
@@ -434,12 +434,12 @@ class GivEnergy extends Root
         if ($this->propertyRead('presetChargeDischargeBlocksSet', 'int')) {
             $this->clear_preset_charge_discharge_blocks();
         }
-        $start                  = $sliver_solution['start']                   ?? null;
-        $stop                   = $sliver_solution['stop']                    ?? null;
-        $mode                   = $sliver_solution['mode']                    ?? null;
-        $abs_charge_power_w     = $sliver_solution['abs_charge_power_w']      ?? null;
-        $target_level_percent   = $sliver_solution['target_level_percent']    ?? null;
-        $message                = $sliver_solution['message']                 ?? 'no context';
+        $mode                   = $command['mode']                    ?? null;
+        $start                  = $command['start']                   ?? null;
+        $stop                   = $command['stop']                    ?? null;
+        $abs_charge_power_w     = $command['abs_charge_power_w']      ?? null;
+        $target_level_percent   = $command['target_level_percent']    ?? null;
+        $message                = $command['message']                 ?? 'no context';
         switch ($mode) {
             case 'CHARGE':
             case 'DISCHARGE': {

@@ -40,12 +40,12 @@ $app->get('/control/tariff_combinations', function (Request $request, Response $
     $response->getBody()->write($tariff_combinations);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->get('/control/slot_command', function (Request $request, Response $response) {
+$app->get('/control/slot_solution', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($slot_command = $energy->slot_command()) === false) {
+    if (($slot_solution = $energy->slot_solution()) === false) {
         return $response->withStatus(401);
     }
-    $response->getBody()->write($slot_command);
+    $response->getBody()->write($slot_solution);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->get('/projections/text', function (Request $request, Response $response) {

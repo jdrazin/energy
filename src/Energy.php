@@ -115,16 +115,16 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function slot_command(): bool|string {
+    public function slot_solution(): bool|string {
         if (!$this->authenticate()) {
             return false;
         }
         $sql = 'SELECT  CONCAT(`message`, \' (\' , `timestamp`, \' UTC)\')
-                  FROM  `slot_commands`
+                  FROM  `slot_solutions`
                   WHERE `id` = (SELECT MAX(`id`)
-                                  FROM `slot_commands`)';
+                                  FROM `slot_solutions`)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($slot_command) ||
+            !$stmt->bind_result($slot_solution) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, 'ERROR');
@@ -134,7 +134,7 @@ class Energy extends Root
             return false;
         }
         else {
-            return $slot_command;
+            return $slot_solution;
         }
     }
 

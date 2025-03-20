@@ -26,7 +26,7 @@ class Sliver extends Root
                         `target_level_percent`,
                         `import_gbp_per_kwh`,
                         `export_gbp_per_kwh`
-                   FROM `slot_commands`
+                   FROM `slot_solutions`
                    WHERE NOW() BETWEEN `start` AND `stop`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh) ||
@@ -95,7 +95,7 @@ class Sliver extends Root
             }
             $charge_kw += $charge_increment_kw;
         }
-        $sql = 'INSERT INTO `sliver_commands`  (`charge_w`, `level_percent`, `cost_total_gbp_per_hour`, `cost_grid_gbp_per_hour`, `cost_wear_gbp_per_hour`, `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`, `house_load_kw`, `solar_kw`) 
+        $sql = 'INSERT INTO `sliver_solutions`  (`charge_w`, `level_percent`, `cost_total_gbp_per_hour`, `cost_grid_gbp_per_hour`, `cost_wear_gbp_per_hour`, `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`, `house_load_kw`, `solar_kw`) 
                                 VALUES (?,           ?,               ?,                    ?,                  ?,                   ?,              ?,                          ?,                           ?,               ?          )';
         $optimum                      = $data[$optimum_level];
         $optimum_charge_kw            = $optimum['charge_kw'];
@@ -125,7 +125,7 @@ class Sliver extends Root
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
-        $sql = 'DELETE FROM `sliver_commands`
+        $sql = 'DELETE FROM `sliver_solutions`
                     WHERE `timestamp` + INTERVAL ' . self::SLIVER_DB_MAX_AGE_DAY . ' DAY < NOW()';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
@@ -135,8 +135,8 @@ class Sliver extends Root
         }
         $this->mysqli->commit();
         /*
-        if (self::ENABLE_SLIVER_COMMAND) {
-            $givenergy->control($slot_command);                  // control battery for active combination on completion of countdown to next slot
+        if (self::ENABLE_sliver_solution) {
+            $givenergy->control($slot_solution);                  // control battery for active combination on completion of countdown to next slot
         } */
         return round(1000.0 * $charge_kw);
     }

@@ -424,7 +424,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function control($sliver_command): void {
+    public function control($sliver_solution): void {
         /*
          * all slots except 1 must be manually disabled in app or web portal
          *
@@ -433,12 +433,12 @@ class GivEnergy extends Root
         if ($this->propertyRead('presetChargeDischargeBlocksSet', 'int')) {
             $this->clear_preset_charge_discharge_blocks();
         }
-        $start                  = $sliver_command['start']                   ?? null;
-        $stop                   = $sliver_command['stop']                    ?? null;
-        $mode                   = $sliver_command['mode']                    ?? null;
-        $abs_charge_power_w     = $sliver_command['abs_charge_power_w']      ?? null;
-        $target_level_percent   = $sliver_command['target_level_percent']    ?? null;
-        $message                = $sliver_command['message']                 ?? 'no context';
+        $start                  = $sliver_solution['start']                   ?? null;
+        $stop                   = $sliver_solution['stop']                    ?? null;
+        $mode                   = $sliver_solution['mode']                    ?? null;
+        $abs_charge_power_w     = $sliver_solution['abs_charge_power_w']      ?? null;
+        $target_level_percent   = $sliver_solution['target_level_percent']    ?? null;
+        $message                = $sliver_solution['message']                 ?? 'no context';
         switch ($mode) {
             case 'CHARGE':
             case 'DISCHARGE': {

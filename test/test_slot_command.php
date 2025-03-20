@@ -42,7 +42,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const USE_CRONTAB = false;
-const TEST_SLOT_COMMAND = [
+const TEST_slot_solution = [
                             'start'                 => '08:58',
                             'stop'                  => '09:00',
                             'mode'                  => 'ECO',
@@ -53,7 +53,7 @@ const TEST_SLOT_COMMAND = [
 $givenergy = new GivEnergy();
 //$givenergy->reset_inverter();
 try {
-    $givenergy->control(TEST_SLOT_COMMAND);
+    $givenergy->control(TEST_slot_solution);
 }
 catch (GuzzleException|Exception $e) {
 

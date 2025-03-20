@@ -71,9 +71,9 @@ class Octopus extends Root
 
                         // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
                         $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($db_slots);
-                        $slot_command = (new EnergyCost($batteryLevelKwh, $db_slots))->minimise(); // minimise energy cost
+                        $slot_solution = (new EnergyCost($batteryLevelKwh, $db_slots))->minimise(); // minimise energy cost
                         if ($active_tariff) {                                        // make battery command
-                            $this->log($slot_command);                               // log slot command
+                            $this->log($slot_solution);                               // log slot command
                             $this->makeActiveTariffCombinationDbSlotsLast24hrs();    // make historic slots for last 24 hours
                             $this->slots_make_cubic_splines();                       // generate cubic splines
                         }
@@ -89,8 +89,8 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function log($slot_command): void {
-        $sql = 'INSERT INTO `slot_commands` (`start`, `stop`, `mode`, `abs_charge_power_w`, `target_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `message`) 
+    private function log($slot_solution): void {
+        $sql = 'INSERT INTO `slot_solutions` (`start`, `stop`, `mode`, `abs_charge_power_w`, `target_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `message`) 
                                      VALUES (?,       ?,       ?,      ?,                   ?,                      ?,                    ?,                    ?        )
                            ON DUPLICATE KEY UPDATE `mode`                 = ?,
                                                    `abs_charge_power_w`   = ?, 
@@ -98,14 +98,14 @@ class Octopus extends Root
                                                    `import_gbp_per_kwh`   = ?,
                                                    `export_gbp_per_kwh`   = ?,
                                                    `message`              = ?';
-        $start                 = $slot_command['start'];
-        $stop                  = $slot_command['stop'];
-        $mode                  = $slot_command['mode'];
-        $abs_charge_power_w    = $slot_command['abs_charge_power_w'];
-        $target_level_percent  = $slot_command['target_level_percent'];
-        $import_gbp_per_kwh    = $slot_command['import_gbp_per_kwh'];
-        $export_gbp_per_kwh    = $slot_command['export_gbp_per_kwh'];
-        $message               = $slot_command['message'];
+        $start                 = $slot_solution['start'];
+        $stop                  = $slot_solution['stop'];
+        $mode                  = $slot_solution['mode'];
+        $abs_charge_power_w    = $slot_solution['abs_charge_power_w'];
+        $target_level_percent  = $slot_solution['target_level_percent'];
+        $import_gbp_per_kwh    = $slot_solution['import_gbp_per_kwh'];
+        $export_gbp_per_kwh    = $slot_solution['export_gbp_per_kwh'];
+        $message               = $slot_solution['message'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssiiddssiidds', $start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh, $message,
                                                                                $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh, $message) ||

@@ -112,7 +112,7 @@ class Octopus extends Root
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
     }
@@ -176,7 +176,7 @@ class Octopus extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('issdsd', $tariff_id, $start, $stop, $rate, $per, $rate)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         foreach ($tariffs as $tariff) {
@@ -241,7 +241,7 @@ class Octopus extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ddddii', $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day, $slot, $tariff_combination_id)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         foreach ($db_slots->slots as $slot => $v) {
@@ -287,7 +287,7 @@ class Octopus extends Root
                     !$stmt->bind_result($rate) ||
                     !$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
                     throw new Exception($message);
                 }
                 break;
@@ -304,7 +304,7 @@ class Octopus extends Root
                     !$stmt->bind_result($rate) ||
                     !$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
                     throw new Exception($message);
                 }
                 break;
@@ -329,7 +329,7 @@ class Octopus extends Root
             !$stmt->bind_result($id, $tariff_code) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $tariff_codes = [];
@@ -368,7 +368,7 @@ class Octopus extends Root
             !$stmt->bind_result($slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $slots = [];
@@ -403,7 +403,7 @@ class Octopus extends Root
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
                     throw new Exception($message);
             }
         $sql = 'INSERT INTO `slots_cubic_splines` (`slot`,  `unix_timestamp`,   `load_house_kw`,     `previous_load_house_kw`,    `grid_kw`, `previous_grid_kw`, `solar_kw`, `previous_solar_kw`, `battery_level_kwh`, `previous_battery_level_kwh`) 
@@ -421,7 +421,7 @@ class Octopus extends Root
             !$stmt->bind_param('iiddddddddidddddddd', $slot, $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh,
                 $unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         foreach ($slots_cubic_splines as $slot => $slots_cubic_spline) {
@@ -460,7 +460,7 @@ class Octopus extends Root
             !$stmt->bind_result($id, $name, $import, $export, $active) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $this->tariff_combinations = [];
@@ -489,7 +489,7 @@ class Octopus extends Root
             !$stmt->bind_result($slot, $start, $stop) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $slots = [];
@@ -513,7 +513,7 @@ class Octopus extends Root
             !$stmt->bind_param('s', $tariff_combination_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $values = new Values();
@@ -529,7 +529,7 @@ class Octopus extends Root
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('di', $value, $slot)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
             foreach ($slots as $slot => $v) {
@@ -563,7 +563,7 @@ class Octopus extends Root
             !$stmt->bind_param('i', $tariff_combination_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         if ($battery_capacity_kwh = $this->config['battery']['initial_raw_capacity_kwh']) {
@@ -576,7 +576,7 @@ class Octopus extends Root
                 !$stmt->bind_param('d', $battery_capacity_kwh) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
             $sql = 'UPDATE  `slots`
@@ -588,7 +588,7 @@ class Octopus extends Root
                 !$stmt->bind_param('d', $battery_capacity_kwh) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
         }

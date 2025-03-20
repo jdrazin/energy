@@ -21,7 +21,7 @@ class DbSlots extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $slot_time = $this->dayFirstSlotStart();
@@ -71,7 +71,7 @@ class DbSlots extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('iisss', $tariff_combination_id, $slot, $start, $stop, $slot)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         foreach ($this->slots as $slot => $v) {
@@ -115,7 +115,7 @@ class DbSlots extends Root
             !$stmt->bind_result($id, $key, $start, $stop, $mid) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $slots = [];

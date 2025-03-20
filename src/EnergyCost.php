@@ -111,7 +111,7 @@ class EnergyCost extends Root
             if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
                 !file_put_contents(self::JSON_PROBLEM, $json_problem)) {
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
-                $this->logDb('MESSAGE', $message, 'FATAL');
+                $this->logDb('MESSAGE', $message, null, 'FATAL');
                 throw new Exception($message);
             }
         }
@@ -175,13 +175,13 @@ class EnergyCost extends Root
         $result = json_decode($output, true);                           // decode JSON output from Python
         if (!($result['success'] ?? false)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
-            $this->logDb('MESSAGE', $message, 'FATAL');
+            $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
         }
         if (!$command ||
             !file_put_contents(self::OPTIMISATION_LOG, $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
-            $this->logDb('MESSAGE', $message, 'FATAL');
+            $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
         }
         $this->optimisation_result($result);                                       // save optimiser performance parameters
@@ -232,7 +232,7 @@ class EnergyCost extends Root
             !$stmt->execute() ||
             !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $this->slotCommands = [];
@@ -280,7 +280,7 @@ class EnergyCost extends Root
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
     }
@@ -608,7 +608,7 @@ class EnergyCost extends Root
             !$stmt->bind_result($load_house_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $load_house_kw = [];
@@ -649,7 +649,7 @@ class EnergyCost extends Root
             !$stmt->bind_param('dddii', $optimum_grid_kw, $battery_charge_kw, $battery_level_kwh, $slot, $tariff_combination_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $battery_level_kwh = $this->batteryEnergyInitialKwh;
@@ -676,7 +676,7 @@ class EnergyCost extends Root
             !$stmt->bind_result($total_load_kw) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $total_load_kws = [];
@@ -718,7 +718,7 @@ class EnergyCost extends Root
             !$stmt->bind_param('iidddddddddd', $slot, $tariff_combination_id, $standing, $raw_import, $raw_export, $raw_import_kwh, $raw_export_kwh, $optimised_import, $optimised_export, $optimised_wear, $optimised_import_kwh, $optimised_export_kwh) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $this->mysqli->commit();

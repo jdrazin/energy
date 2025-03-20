@@ -282,7 +282,7 @@ class GivEnergy extends Root
             !($latest_ev_measurement = end($latest_ev_data))                              ||
             is_null($power_w = $this->power_w([0 => ($latest_ev_measurement['measurements'][0] ?? [])]))) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No latest EV data');
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
 
@@ -301,7 +301,7 @@ class GivEnergy extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssdd', $entity, $type, $datetime, $power_w, $power_w)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         foreach (self::ENTITIES_BATTERY_AIO as $entity => $label) {
@@ -310,7 +310,7 @@ class GivEnergy extends Root
                 $datetime = rtrim($point['time'], 'Z');
                 if (!$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
                     throw new Exception($message);
                 }
             }
@@ -331,7 +331,7 @@ class GivEnergy extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssdd', $entity, $type, $datetime, $power_w, $power_w)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         foreach ($points as $point) {
@@ -341,7 +341,7 @@ class GivEnergy extends Root
                 if (is_null($power_w = $this->power_w($measurements)) ||
                     !$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
                     throw new Exception($message);
                 }
             }
@@ -396,7 +396,7 @@ class GivEnergy extends Root
         $time_duration_s = $timestamp_start - $timestamp_now;
         if ($time_duration_s < 0 && !self::DEBUG_MINIMISER) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'time to start must be positive: ' . $time_duration_s);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         return $stored_now_kwh -($battery_power_now_w * ((float)$time_duration_s) / Energy::JOULES_PER_KWH);
@@ -635,7 +635,7 @@ class GivEnergy extends Root
             !$stmt->bind_param('sssss', $device, $action, $setting, $value, $context) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $this->mysqli->commit();

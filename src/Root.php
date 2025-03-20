@@ -88,7 +88,7 @@ class Root
             !$stmt->execute()                                                                                                                      ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
     }
@@ -104,7 +104,7 @@ class Root
             !$stmt->bind_result($value_float, $value_string, $value_int) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $stmt->fetch();
@@ -137,7 +137,7 @@ class Root
             !$stmt->bind_result($exists) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $basic_auth = $stmt->fetch() && $exists;
@@ -183,15 +183,15 @@ class Root
     /**
      * @throws Exception
      */
-    public function logDb($event, $message, $urgency): void
+    public function logDb($event, $message, $text, $urgency): void
     /*
      * make db handle and log message
      */
     {
-        $sql    = 'INSERT INTO `log` (`event`, `message`, `urgency`) VALUES (?, ?, ?)';
+        $sql    = 'INSERT INTO `log` (`event`, `message`, `text`, `urgency`) VALUES (?, ?, ?, ?)';
         $mysqli = $this->mysqli();
         $stmt   = $mysqli->prepare($sql);
-        $stmt->bind_param('sss', $event, $message, $urgency);
+        $stmt->bind_param('ssss', $event, $message, $text, $urgency);
         $stmt->execute();
         $mysqli->commit();
     }
@@ -204,7 +204,7 @@ class Root
         $points = [];
         if (!($points_in_range = $this->pointsInRange($entity, $type, $start, $stop))) {  // get points between start and stop) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__ . ", $entity, $type, $start, $stop", __LINE__, 'no data');
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $datetime_start = new DateTime($start);
@@ -272,7 +272,7 @@ class Root
             return $points[0]['power_w'];
         } else {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'no points');
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
     }
@@ -294,7 +294,7 @@ class Root
             !$stmt->bind_result($datetime, $power_w) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $points_in_range = [];
@@ -328,7 +328,7 @@ class Root
             !$stmt->bind_result($datetime_nearest, $power_w) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $stmt->fetch();
@@ -349,7 +349,7 @@ class Root
             !$stmt->bind_result($skip_request) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $stmt->fetch();
@@ -366,7 +366,7 @@ class Root
             !$stmt->bind_result($request_is_stale) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $stmt->fetch();
@@ -386,7 +386,7 @@ class Root
             !$stmt->bind_param('is', $skip_request, $class) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $this->mysqli->commit();
@@ -412,7 +412,7 @@ class Root
             !$stmt->execute() ||
             !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         if (is_null($value)) {
@@ -435,7 +435,7 @@ class Root
             !$stmt->execute() ||
             !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         if (is_null($value)) {
@@ -459,7 +459,7 @@ class Root
             !$stmt->bind_result($latest_value_datetime) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $stmt->fetch();

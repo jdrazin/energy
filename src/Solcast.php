@@ -115,7 +115,7 @@ class Solcast extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sdssds', $type, $power, $datetime, $forecast, $power, $forecast)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         foreach ($powers as $power) {
@@ -143,7 +143,7 @@ class Solcast extends Root
             !$stmt->bind_result($latest_actual_datime) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $latest_date_exists = $stmt->fetch();
@@ -157,7 +157,7 @@ class Solcast extends Root
                 !$stmt->bind_param('s', $latest_actual_datime) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
         }

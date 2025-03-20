@@ -39,7 +39,7 @@ class CubicSpline extends Root
         $output_json = shell_exec($command);               // execute Python command and capture output
         if (($y_array = json_decode($output_json, true)['y'] ?? false) === false) {
            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad cubic spline');
-           $this->logDb('MESSAGE', $message, 'ERROR');
+           $this->logDb('MESSAGE', $message, null, 'ERROR');
            throw new Exception($message);
         }
         return $y_array;

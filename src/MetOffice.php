@@ -64,7 +64,7 @@ class MetOffice extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssdd', $entity, $type, $datetime, $value, $value)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $entity = 'TEMPERATURE_EXTERNAL_C';
@@ -74,7 +74,7 @@ class MetOffice extends Root
             $value = (float)$point['screenTemperature'];
             if (!$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
         }

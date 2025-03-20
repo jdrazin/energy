@@ -65,7 +65,7 @@ class Energy extends Root
             !$stmt->bind_result($unix_timestamp, $load_house_kw, $previous_load_house_kw, $grid_kw, $previous_grid_kw, $solar_kw, $previous_solar_kw, $battery_level_kwh, $previous_battery_level_kwh) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $slots_cubic_splines = [];
@@ -101,7 +101,7 @@ class Energy extends Root
             !$stmt->bind_result($start, $result, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $tariff_combinations = [];
@@ -127,7 +127,7 @@ class Energy extends Root
             !$stmt->bind_result($slot_solution) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         if (!$stmt->fetch()) {
@@ -185,7 +185,7 @@ class Energy extends Root
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         return $projection;
@@ -210,7 +210,7 @@ class Energy extends Root
                 !$stmt->bind_result($projection_id, $request, $email) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
         }
@@ -224,7 +224,7 @@ class Energy extends Root
                 !$stmt->bind_result($request, $email) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
         }
@@ -241,11 +241,11 @@ class Energy extends Root
                                           'html'      => false,
                                           'bodyHTML'  => ($message = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
                                           'bodyAlt'   => strip_tags($message)])) {
-                $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, 'NOTICE');
+                $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, null, 'NOTICE');
                 $this->projectionStatus($projection_id, 'NOTIFIED');
             }
             else {
-                $this->logDb('MESSAGE', 'Notification failed: ' . $email . 'of completed projection ' . $projection_id, 'WARNING');
+                $this->logDb('MESSAGE', 'Notification failed: ' . $email . 'of completed projection ' . $projection_id, null, 'WARNING');
             }
         }
     }
@@ -258,7 +258,7 @@ class Energy extends Root
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
     }
@@ -272,7 +272,7 @@ class Energy extends Root
             !$stmt->bind_param('si', $status, $id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
     }
@@ -293,7 +293,7 @@ class Energy extends Root
             !$stmt->bind_result($status, $timestamp, $submitted_unix_timestamp, $comment) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $stmt->fetch();
@@ -314,7 +314,7 @@ class Energy extends Root
                     !$stmt->execute() ||
                     !$stmt->fetch()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
                     throw new Exception($message);
                 }
                 return 'Projection is ' . ($count ? : 'next') . ' in queue. Please come back later.';
@@ -343,7 +343,7 @@ class Energy extends Root
             !$stmt->execute() ||
             !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         if ($max_duration_years && $row_count) {
@@ -357,7 +357,7 @@ class Energy extends Root
                 !$stmt->bind_result($acronym) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
             $acronyms = [];
@@ -376,7 +376,7 @@ class Energy extends Root
                 !$stmt->bind_param('is', $projection_id, $acronym) ||
                 !$stmt->bind_result($acronym, $duration_years, $npv)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
             $columns = [];
@@ -419,7 +419,7 @@ class Energy extends Root
             !$stmt->bind_param('isiiiiii', $projection_id, $permutation_acronym, $battery, $heat_pump, $insulation, $boiler, $solar_pv, $solar_thermal) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $id = $this->mysqli->insert_id;
@@ -448,7 +448,7 @@ class Energy extends Root
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
     }

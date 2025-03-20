@@ -61,7 +61,7 @@ class EmonCms extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssdd', $entity, $type, $mid, $power_w, $power_w)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $entities = [
@@ -79,7 +79,7 @@ class EmonCms extends Root
                     $mid = $slot['mid'];
                     if (!$stmt->execute()) {
                         $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                        $this->logDb('MESSAGE', $message, 'ERROR');
+                        $this->logDb('MESSAGE', $message, null, 'ERROR');
                         throw new Exception($message);
                     }
                 }
@@ -99,7 +99,7 @@ class EmonCms extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssdd', $entity, $type, $mid, $temperature_c, $temperature_c)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, 'ERROR');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $entity = 'TEMPERATURE_EXTERNAL_C';
@@ -114,7 +114,7 @@ class EmonCms extends Root
             $mid = $slot['mid'];
             if (!$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, 'ERROR');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
         }

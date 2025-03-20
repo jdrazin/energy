@@ -28,8 +28,6 @@ use GuzzleHttp\Exception\GuzzleException;
 class GivEnergy extends Root
 {
     private const int   RESPONSE_OK                             = 2,
-                        HOLD_TO_START_GUARD_PERIOD_SECONDS      = 0,
-                        MAX_HOLD_SECONDS                        = 600,
                         CHARGE_DISCHARGE_SLOT_START             = 1,
                         CHARGE_DISCHARGE_SLOT_STOP              = 10,
                         CONTROL_CHARGE_DISCHARGE_SLOT           = 1,   // slot number used for control
@@ -37,7 +35,8 @@ class GivEnergy extends Root
                         EV_POWER_ACTIVE_IMPORT_UNIT             = 5,   // kW
                         EV_METER_ID                             = 0,
                         UPPER_SOC_LIMIT_PERCENT                 = 95,
-                        LOWER_SOC_LIMIT_PERCENT                 = 5;
+                        LOWER_SOC_LIMIT_PERCENT                 = 5,
+                        EV_TIME_WINDOW_MINUTES  = 5;
     private const array ENTITIES_BATTERY_AIO = [
                                             'SOLAR_W'                => ['solar',       'power'],
                                             'GRID_W'                 => ['grid',        'power'],
@@ -270,6 +269,26 @@ class GivEnergy extends Root
     }
 
     /**
+     * @throws DateMalformedStringException
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function evLatestPowerW(): float
+    {
+        $time              =  new DateTime();
+        $time_now          =  $time->format(Root::MYSQL_FORMAT_DATETIME);
+        $time_window_start =  $time->modify('-' . self::EV_TIME_WINDOW_MINUTES . ' minute')->format(Root::MYSQL_FORMAT_DATETIME);
+        if (!($latest_ev_data         =  $this->getEVChargerData($time_window_start, $time_now)) ||
+            !($latest_ev_measurements = end($latest_ev_data))                              ||
+            is_null($power_w = $this->power_w($latest_ev_measurements))) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No latest EV data');
+            $this->logDb('MESSAGE', $message, 'ERROR');
+            throw new Exception($message);
+        }
+        return $power_w;
+    }
+
+    /**
      * @throws Exception
      */
     private function insertPointsBattery($points): void
@@ -318,23 +337,30 @@ class GivEnergy extends Root
             if ($point['meter_id'] == self::EV_METER_ID) {
                 $datetime = $point['timestamp'];
                 $measurements = $point['measurements'];
-                foreach ($measurements as $measurement) {
-                    $measurand = $measurement['measurand'];
-                    $unit = $measurement['unit'];
-                    if ($measurand == self::EV_POWER_ACTIVE_IMPORT &&
-                        $unit == self::EV_POWER_ACTIVE_IMPORT_UNIT) {
-                        $power_w = 1000.0 * (float)$measurement['value'];
-                        if (!$stmt->execute()) {
-                            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                            $this->logDb('MESSAGE', $message, 'ERROR');
-                            throw new Exception($message);
-                        }
-                        break;
-                    }
+                if (is_null($power_w = $this->power_w($measurements)) ||
+                    !$stmt->execute()) {
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $message, 'ERROR');
+                    throw new Exception($message);
                 }
             }
         }
         $this->mysqli->commit();
+    }
+
+    private function power_w($data): ?float {
+        $power_w = null;
+        $measurements = $data['measurements'];
+        foreach ($measurements as $measurement) {
+            $measurand = $measurement['measurand'];
+            $unit = $measurement['unit'];
+            if ($measurand == self::EV_POWER_ACTIVE_IMPORT &&
+                $unit == self::EV_POWER_ACTIVE_IMPORT_UNIT) {
+                $power_w = 1000.0 * (float)$measurement['value'];
+                break;
+            }
+        }
+        return $power_w;
     }
 
     /**

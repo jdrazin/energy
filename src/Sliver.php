@@ -1,5 +1,6 @@
 <?php
 namespace Src;
+use DateTime;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -8,7 +9,6 @@ class Sliver extends Root
     const int   SLIVER_DURATION_MINUTES = 1,
                 SLIVER_DB_MAX_AGE_DAY   = 7,
                 CHARGE_POWER_LEVELS     = 100;
-    const bool  ENABLE_SLIVER_COMMAND   = false;
 
     public function __construct()
     {
@@ -59,12 +59,13 @@ class Sliver extends Root
         $slot_mode                      =  $slot_target_parameters['mode'];
         $slot_abs_charge_power_w        =  $slot_target_parameters['abs_charge_power_w'];
         $slot_target_level_percent      =  $slot_target_parameters['target_level_percent'];
-        $battery                        =  $givenergy->latest();      // get battery data
+        $battery                        =  $givenergy->latest();                                // get battery data
+        $ev_load_kw                     =  $givenergy->evLatestPowerW()/1000.0;                 // ev load
         $battery_level_percent          =  $battery['battery']['percent'];
         $battery_level_kwh              =  $battery_level_percent*$energy_cost->batteryCapacityKwh/100.0;
         $house_load_kw                  =  $battery['consumption']/1000.0;
         $solar_kw                       =  $battery['solar']['power']/1000.0;
-        $net_load_kw                    =  $house_load_kw-$solar_kw;
+        $net_load_kw                    =  $house_load_kw+$ev_load_kw-$solar_kw;
         $charge_min_kw                  = -$givenergy->battery['max_discharge_kw'];
         $charge_max_kw                  =  $givenergy->battery['max_charge_kw'];
         $charge_increment_kw            = ($charge_max_kw - $charge_min_kw)/self::CHARGE_POWER_LEVELS;

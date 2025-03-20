@@ -156,7 +156,7 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
-        (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'], 'NOTICE');
+        (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
         if (self::DEBUG_MINIMISER) {  // use debug JSON and make slot arrays as necessary
            $this->problem           = $this->makeSlotsArrays(json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
            $this->total_load_kws    = $this->problem['total_load_kws'];          // get total load from problem
@@ -174,8 +174,9 @@ class EnergyCost extends Root
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
         if (!($result['success'] ?? false)) {
+            $text = $command . PHP_EOL . $output . PHP_EOL;
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
-            $this->logDb('MESSAGE', $message, null, 'FATAL');
+            $this->logDb('MESSAGE', $message, $text, 'FATAL');
             throw new Exception($message);
         }
         if (!$command ||
@@ -202,7 +203,7 @@ class EnergyCost extends Root
             return [];
         }
         else {
-            $slot_solution = $this->slotCommand();                                     // make slot command
+            $slot_solution = $this->slotSolution();                                   // make slot solution
             $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
             $this->insertSlotNextDayCostEstimates($slot_solution['id']);
             return $slot_solution;
@@ -212,7 +213,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function slotCommand(): array {
+    private function slotSolution(): array {
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'SELECT          `id`,
                                 `start`,

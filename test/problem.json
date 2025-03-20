@@ -17,15 +17,13 @@
     "gridWearPowerConstantCoefficient": 0,
     "gridWearPowerExponentialCoefficient": 25,
     "gridWearPowerActivationKw": 0.1,
-    "batteryEnergyInitialKwh": 13.490462222222222,
+    "batteryEnergyInitialKwh": 13.4751325,
     "slotDurationHour": 0.5,
     "number_slots": 48,
     "import_gbp_per_day": 0.427696,
     "export_gbp_per_day": 0,
     "import_gbp_per_kwhs": [
         0.249784,
-        0.249784,
-        0.249784,
         0.349698,
         0.349698,
         0.349698,
@@ -52,6 +50,8 @@
         0.149871,
         0.149871,
         0.149871,
+        0.249784,
+        0.249784,
         0.249784,
         0.249784,
         0.249784,
@@ -73,8 +73,6 @@
         0.249784
     ],
     "export_gbp_per_kwhs": [
-        0.0864,
-        0.0911,
         0.0901,
         0.1683,
         0.1836,
@@ -120,11 +118,11 @@
         0.0883,
         0.0864,
         0.0864,
-        0.0883
+        0.0883,
+        0.0864,
+        0.0911
     ],
     "load_house_kws": [
-        2.1714,
-        2.15871,
         0.665595,
         1.39425,
         0.64676,
@@ -170,6 +168,8 @@
         1.97188,
         1.11676,
         1.26482,
-        0.807397
+        0.792344,
+        1.75648,
+        0.916501
     ]
 }

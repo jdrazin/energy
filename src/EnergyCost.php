@@ -270,6 +270,9 @@ class EnergyCost extends Root
         ];
     }
 
+    /**
+     * @throws Exception
+     */
     private function optimisation_result($result): void {
         $sql = 'UPDATE  `tariff_combinations` 
                   SET   `result` = ?

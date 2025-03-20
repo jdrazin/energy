@@ -21,7 +21,7 @@ const   PID_FOLDER                          = '/var/www/html/energy/',
         ARGS                                = ['CRON' => 1],
         INITIALISE_ON_EXCEPTION             = false,
         EMAIL_NOTIFICATION_ON_ERROR         = false,
-        ENABLE_SLIVER_COMMAND               = true;
+        ENABLE_SLIVER_COMMAND               = false;
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';

@@ -279,12 +279,13 @@ class GivEnergy extends Root
         $time_now          =  $time->format(Root::MYSQL_FORMAT_DATETIME);
         $time_window_start =  $time->modify('-' . self::EV_TIME_WINDOW_MINUTES . ' minute')->format(Root::MYSQL_FORMAT_DATETIME);
         if (!($latest_ev_data         =  $this->getEVChargerData($time_window_start, $time_now)) ||
-            !($latest_ev_measurements = end($latest_ev_data))                              ||
-            is_null($power_w = $this->power_w($latest_ev_measurements))) {
+            !($latest_ev_measurement = end($latest_ev_data))                              ||
+            is_null($power_w = $this->power_w([0 => ($latest_ev_measurement['measurements'][0] ?? [])]))) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No latest EV data');
             $this->logDb('MESSAGE', $message, 'ERROR');
             throw new Exception($message);
         }
+
         return $power_w;
     }
 
@@ -348,9 +349,8 @@ class GivEnergy extends Root
         $this->mysqli->commit();
     }
 
-    private function power_w($data): ?float {
+    private function power_w($measurements): ?float {
         $power_w = null;
-        $measurements = $data['measurements'];
         foreach ($measurements as $measurement) {
             $measurand = $measurement['measurand'];
             $unit = $measurement['unit'];

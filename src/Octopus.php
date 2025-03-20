@@ -50,7 +50,7 @@ class Octopus extends Root
      */
     public function traverseTariffs($cron): void
     {
-        (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', null, 'NOTICE');
+        (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', '', null, 'NOTICE');
         if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
             $db_slots = new DbSlots();                                           // make day slots
             $values = new Values();
@@ -83,7 +83,7 @@ class Octopus extends Root
         } else {
             (new EnergyCost(null, null))->minimise();     // minimise energy cost
         }
-        (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null, 'NOTICE');
+        (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null,  null,'NOTICE');
     }
 
     /**

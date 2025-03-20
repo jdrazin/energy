@@ -173,8 +173,8 @@ class EnergyCost extends Root
         $this->costs['raw'] = $this->costCLI($command = $this->command(), $grid_kws);
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
+        $text   = $command . PHP_EOL . $output . PHP_EOL;
         if (!($result['success'] ?? false)) {
-            $text = $command . PHP_EOL . $output . PHP_EOL;
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
             $this->logDb('MESSAGE', $message, $text, 'FATAL');
             throw new Exception($message);

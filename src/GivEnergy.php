@@ -631,7 +631,7 @@ class GivEnergy extends Root
                                 VALUES (?,        ?,        ?,         ?,       ?)';
         $device = 'BATTERY';
         $action = strtoupper($action);
-        $value = (string)$value;
+        $value  = (string) $value;
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sssss', $device, $action, $setting, $value, $context) ||
             !$stmt->execute()) {

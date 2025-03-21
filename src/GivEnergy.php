@@ -569,8 +569,8 @@ class GivEnergy extends Root
     {
         switch ($action = strtolower(trim($action))) {
             case 'read':                // read setting value into `settings` table
-            case 'write':
-            {             // write setting to device, then read to `settings` table
+            case 'write':               // write setting to device, then read to `settings` table
+            {
                 break;
             }
             default:

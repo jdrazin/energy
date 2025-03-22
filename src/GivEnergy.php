@@ -581,6 +581,11 @@ class GivEnergy extends Root
         if (!isset($this->inverterControlSettings[$setting])) {
             throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No command with name: ' . $setting));
         }
+
+        //
+
+
+
         $id = $this->inverterControlSettings[$setting];
         $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action;
         $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
@@ -588,7 +593,7 @@ class GivEnergy extends Root
                     'Accept' => 'application/json'];
         $client = new Client();
         switch ($action) {
-            case 'write':
+            case 'write_thru':
             {
                 $value = null;
                 if ((!is_null($value_int) && !is_null($value_string)) || (is_null($value_int) && is_null($value_string))) {
@@ -611,7 +616,7 @@ class GivEnergy extends Root
             throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response code: ' . $response_code));
         }
         switch ($action) {
-            case 'read':
+            case 'read_thru':
             {
                 if (!($contents = $response->getBody()->getContents()) ||
                     !($contents_data = json_decode($contents, true)) ||
@@ -621,11 +626,18 @@ class GivEnergy extends Root
                     $value = $contents_data['data']['value'];
                 }
             }
-            case 'write':
+            case 'write_thru':
             {
                 break;
             }
         }
+        $this->log_setting($action, $value);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function log_setting($action, $value): void {
         // log value to `settings` table
         $sql = 'INSERT INTO `settings` (`device`, `action`, `setting`, `value`, `context`) 
                                 VALUES (?,        ?,        ?,         ?,       ?)';

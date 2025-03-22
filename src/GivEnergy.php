@@ -598,7 +598,7 @@ class GivEnergy extends Root
                 } elseif (!is_null($value_string)) {
                     $value = $value_string;
                 }
-                $request_body = ['headers' => $headers, 'query' => ['value' => (string)$value, 'context' => $context]];
+                $request_body = ['headers' => $headers, 'query' => ['value' => (string) $value, 'context' => $context]];
                 break;
             }
             default:
@@ -641,5 +641,28 @@ class GivEnergy extends Root
         }
         $this->mysqli->commit();
         unset($stmt);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function write_thru($setting, string $value): ?bool
+    {   // returns whether setting already set to value
+        $sql = 'SELECT  `value` 
+                  FROM  `settings` 
+                  WHERE `id` = (SELECT  MAX(`id`)
+                                  FROM  `settings`
+                                  WHERE `setting` = ? AND
+                                        `action`  = \'WRITE_THRU\')';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('s', $setting) ||
+            !$stmt->bind_result($value_thru) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $stmt->fetch();
+        return is_null($value_thru) ? null : ($value == $value_thru);
     }
 }

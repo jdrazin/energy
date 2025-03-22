@@ -565,27 +565,44 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    private function command(string $action, string $setting, ?int $value_int, ?string $value_string, ?string $context): void
+    private function command(string $action_pre, string $setting, ?int $value_int, ?string $value_string, ?string $context): void
     {
-        switch ($action = strtolower(trim($action))) {
+        // form string value
+        $value = null;
+        if ((!is_null($value_int) && !is_null($value_string)) || (is_null($value_int) && is_null($value_string))) {
+            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No or more than one non-null value'));
+        } elseif (!is_null($value_int)) {
+            $value = $value_int;
+        } elseif (!is_null($value_string)) {
+            $value = $value_string;
+        }
+
+        $written_thru_value = $this->written_thru_value($setting);
+        switch (strtolower(trim($action_pre))) {
             case 'read':                // read setting value into `settings` table
-            case 'write':               // write setting to device, then read to `settings` table
             {
+                if (is_null($written_thru_value)) {
+                    $action = 'read_thru';
+                }
+                else {
+                    $value =  $written_thru_value;
+                    $action = 'read_proxy';
+                }
+                break;
+            }
+            case 'write':
+            {
+                $action = (!is_null($written_thru_value) && ($written_thru_value == $value)) ? 'write_proxy' : 'write_thru';  // write thru to battery if not set to value
                 break;
             }
             default:
             {
-                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Invalid action: ' . $action));
+                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Invalid action: ' . $action_pre));
             }
         }
         if (!isset($this->inverterControlSettings[$setting])) {
             throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No command with name: ' . $setting));
         }
-
-        //
-
-
-
         $id = $this->inverterControlSettings[$setting];
         $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action;
         $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
@@ -593,8 +610,7 @@ class GivEnergy extends Root
                     'Accept' => 'application/json'];
         $client = new Client();
         switch ($action) {
-            case 'write_thru':
-            {
+            case 'write_thru': {
                 $value = null;
                 if ((!is_null($value_int) && !is_null($value_string)) || (is_null($value_int) && is_null($value_string))) {
                     throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No or more than one non-null value'));
@@ -605,6 +621,9 @@ class GivEnergy extends Root
                 }
                 $request_body = ['headers' => $headers, 'query' => ['value' => (string) $value, 'context' => $context]];
                 break;
+            }
+            case 'read_thru': {
+                
             }
             default:
             {
@@ -637,8 +656,7 @@ class GivEnergy extends Root
     /**
      * @throws Exception
      */
-    private function log_setting($action, $value): void {
-        // log value to `settings` table
+    private function log_setting($action, $value): void {        // log value to `settings` table
         $sql = 'INSERT INTO `settings` (`device`, `action`, `setting`, `value`, `context`) 
                                 VALUES (?,        ?,        ?,         ?,       ?)';
         $device = 'BATTERY';
@@ -658,8 +676,7 @@ class GivEnergy extends Root
     /**
      * @throws Exception
      */
-    private function write_thru($setting, string $value): ?bool
-    {   // returns whether setting already set to value
+    private function written_thru_value(string $setting): ?string  {   // returns setting value
         $sql = 'SELECT  `value` 
                   FROM  `settings` 
                   WHERE `id` = (SELECT  MAX(`id`)
@@ -668,13 +685,13 @@ class GivEnergy extends Root
                                         `action`  = \'WRITE_THRU\')';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('s', $setting) ||
-            !$stmt->bind_result($value_thru) ||
+            !$stmt->bind_result($value) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $stmt->fetch();
-        return is_null($value_thru) ? null : ($value == $value_thru);
+        return $value;
     }
 }

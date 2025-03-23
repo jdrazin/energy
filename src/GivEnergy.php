@@ -692,10 +692,10 @@ class GivEnergy extends Root
                   WHERE `id` = (SELECT  MAX(`id`)
                                   FROM  `proxy_settings`
                                   WHERE `setting` = ? AND
-                                        `action`  = \'WRITE_THRU\')';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
+                                        `action`  IN(\'WRITE_DEVICE\', \'WRITE_PROXY\'))';
+        if (!($stmt = $this->mysqli->prepare($sql))      ||
             !$stmt->bind_param('s', $setting) ||
-            !$stmt->bind_result($value) ||
+            !$stmt->bind_result($value)            ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');

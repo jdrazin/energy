@@ -567,17 +567,6 @@ class GivEnergy extends Root
      */
     private function command(string $action_pre, string $setting, ?int $value_int, ?string $value_string, ?string $context): void
     {
-        // form string from value
-        if ((!is_null($value_int) && !is_null($value_string)) || (is_null($value_int) && is_null($value_string))) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No or more than one non-null value'));
-        } elseif (!is_null($value_int)) {
-            $value = $value_int;
-        } elseif (!is_null($value_string)) {
-            $value = $value_string;
-        }
-        else {
-            $value = null;
-        }
         $proxy_value = $this->proxy_value($setting);
         switch (strtolower(trim($action_pre))) {
             case 'read':                             // read setting value into `settings` table
@@ -593,6 +582,17 @@ class GivEnergy extends Root
             }
             case 'write':
             {
+                // form string from value
+                if ((!is_null($value_int) && !is_null($value_string)) || (is_null($value_int) && is_null($value_string))) {
+                    throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No or more than one non-null value'));
+                } elseif (!is_null($value_int)) {
+                    $value = $value_int;
+                } elseif (!is_null($value_string)) {
+                    $value = $value_string;
+                }
+                else {
+                    $value = null;
+                }
                 $action_post = (!is_null($proxy_value) && ($proxy_value == $value)) ? 'write_proxy' : 'write_device';  // write to battery if null or not set to same value
                 break;
             }
@@ -604,51 +604,47 @@ class GivEnergy extends Root
         if (!isset($this->inverterControlSettings[$setting])) {
             throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No command with name: ' . $setting));
         }
-        $id = $this->inverterControlSettings[$setting];
-        $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action_post;
-        $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json'];
-        $client = new Client();
-        switch ($action_post) {
-            case 'write_device': {
-                $value = null;
-                if ((!is_null($value_int) && !is_null($value_string)) || (is_null($value_int) && is_null($value_string))) {
-                    throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No or more than one non-null value'));
-                } elseif (!is_null($value_int)) {
-                    $value = $value_int;
-                } elseif (!is_null($value_string)) {
-                    $value = $value_string;
+        if (($action_post == 'write_device') || ($action_post == 'read_device')) {
+            $id = $this->inverterControlSettings[$setting];
+            $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action_post;
+            $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json'];
+            $client = new Client();
+            switch ($action_post) {
+                case 'write_device': {
+                    $value = null;
+                    if ((!is_null($value_int) && !is_null($value_string)) || (is_null($value_int) && is_null($value_string))) {
+                        throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No or more than one non-null value'));
+                    } elseif (!is_null($value_int)) {
+                        $value = $value_int;
+                    } elseif (!is_null($value_string)) {
+                        $value = $value_string;
+                    }
+                    $request_body = ['headers' => $headers, 'query' => ['value' => (string) $value, 'context' => $context]];
+                    break;
                 }
-                $request_body = ['headers' => $headers, 'query' => ['value' => (string) $value, 'context' => $context]];
-                break;
-            }
-            case 'read_device': {
-                
-            }
-            default:
-            {
-                $request_body = ['headers' => $headers, 'query' => ['context' => $context]];
-            }
-        }
-        $response = $client->post($url, $request_body);
-        if (intval(($response_code = $response->getStatusCode()) / 100) != self::RESPONSE_OK) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response code: ' . $response_code));
-        }
-        switch ($action_post) {
-            case 'read_device':
-            {
-                if (!($contents = $response->getBody()->getContents()) ||
-                    !($contents_data = json_decode($contents, true)) ||
-                    !isset($contents_data['data']['value'])) {
-                    throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response value'));
-                } else {
-                    $value = $contents_data['data']['value'];
+                case 'read_device':
+                default:
+                {
+                    $request_body = ['headers' => $headers, 'query' => ['context' => $context]];
                 }
             }
-            case 'write_device':
-            {
-                break;
+            $response = $client->post($url, $request_body);
+            if (intval(($response_code = $response->getStatusCode()) / 100) != self::RESPONSE_OK) {
+                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response code: ' . $response_code));
+            }
+            switch ($action_post) {
+                case 'read_device': {
+                    if (!($contents = $response->getBody()->getContents()) ||
+                        !($contents_data = json_decode($contents, true)) ||
+                        !isset($contents_data['data']['value'])) {
+                        throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response value'));
+                    } else {
+                        $value = $contents_data['data']['value'];
+                    }
+                    break;
+                }
             }
         }
         $this->log_setting($action_post, $value);

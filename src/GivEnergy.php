@@ -565,8 +565,8 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    private function command(string $action_pre, string $setting, ?int $value_int, ?string $value_string, ?string $context): void
-    {
+    private function command(string $action_pre, string $setting, ?int $value_int, ?string $value_string, ?string $context): void {
+        $value = null;
         $proxy_value = $this->proxy_value($setting);
         switch (strtolower(trim($action_pre))) {
             case 'read':                             // read setting value into `settings` table
@@ -589,9 +589,6 @@ class GivEnergy extends Root
                     $value = $value_int;
                 } elseif (!is_null($value_string)) {
                     $value = $value_string;
-                }
-                else {
-                    $value = null;
                 }
                 $action_post = (!is_null($proxy_value) && ($proxy_value == $value)) ? 'write_proxy' : 'write_device';  // write to battery if null or not set to same value
                 break;

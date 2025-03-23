@@ -567,8 +567,7 @@ class GivEnergy extends Root
      */
     private function command(string $action_pre, string $setting, ?int $value_int, ?string $value_string, ?string $context): void
     {
-        // form string value
-        $value = null;
+        // form string from value
         if ((!is_null($value_int) && !is_null($value_string)) || (is_null($value_int) && is_null($value_string))) {
             throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No or more than one non-null value'));
         } elseif (!is_null($value_int)) {
@@ -576,23 +575,25 @@ class GivEnergy extends Root
         } elseif (!is_null($value_string)) {
             $value = $value_string;
         }
-
-        $written_thru_value = $this->written_thru_value($setting);
+        else {
+            $value = null;
+        }
+        $proxy_value = $this->proxy_value($setting);
         switch (strtolower(trim($action_pre))) {
-            case 'read':                // read setting value into `settings` table
+            case 'read':                             // read setting value into `settings` table
             {
-                if (is_null($written_thru_value)) {
-                    $action = 'read_thru';
+                if (is_null($proxy_value)) {
+                    $action_post = 'read_device';      // no value previously read for setting: read from battery
                 }
                 else {
-                    $value =  $written_thru_value;
-                    $action = 'read_proxy';
+                    $value = $proxy_value;
+                    $action_post = 'read_proxy';     // value previously read for setting, read from proxy
                 }
                 break;
             }
             case 'write':
             {
-                $action = (!is_null($written_thru_value) && ($written_thru_value == $value)) ? 'write_proxy' : 'write_thru';  // write thru to battery if not set to value
+                $action_post = (!is_null($proxy_value) && ($proxy_value == $value)) ? 'write_proxy' : 'write_device';  // write to battery if null or not set to same value
                 break;
             }
             default:
@@ -604,13 +605,13 @@ class GivEnergy extends Root
             throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No command with name: ' . $setting));
         }
         $id = $this->inverterControlSettings[$setting];
-        $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action;
+        $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action_post;
         $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json'];
         $client = new Client();
-        switch ($action) {
-            case 'write_thru': {
+        switch ($action_post) {
+            case 'write_device': {
                 $value = null;
                 if ((!is_null($value_int) && !is_null($value_string)) || (is_null($value_int) && is_null($value_string))) {
                     throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No or more than one non-null value'));
@@ -622,7 +623,7 @@ class GivEnergy extends Root
                 $request_body = ['headers' => $headers, 'query' => ['value' => (string) $value, 'context' => $context]];
                 break;
             }
-            case 'read_thru': {
+            case 'read_device': {
                 
             }
             default:
@@ -634,8 +635,8 @@ class GivEnergy extends Root
         if (intval(($response_code = $response->getStatusCode()) / 100) != self::RESPONSE_OK) {
             throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response code: ' . $response_code));
         }
-        switch ($action) {
-            case 'read_thru':
+        switch ($action_post) {
+            case 'read_device':
             {
                 if (!($contents = $response->getBody()->getContents()) ||
                     !($contents_data = json_decode($contents, true)) ||
@@ -645,12 +646,12 @@ class GivEnergy extends Root
                     $value = $contents_data['data']['value'];
                 }
             }
-            case 'write_thru':
+            case 'write_device':
             {
                 break;
             }
         }
-        $this->log_setting($action, $value);
+        $this->log_setting($action_post, $value);
     }
 
     /**
@@ -676,7 +677,7 @@ class GivEnergy extends Root
     /**
      * @throws Exception
      */
-    private function written_thru_value(string $setting): ?string  {   // returns setting value
+    private function proxy_value(string $setting): ?string  {   // returns setting value
         $sql = 'SELECT  `value` 
                   FROM  `settings` 
                   WHERE `id` = (SELECT  MAX(`id`)

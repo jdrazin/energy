@@ -608,8 +608,8 @@ class GivEnergy extends Root
             $id = $this->inverterControlSettings[$setting];
             $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action_post;
             $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json'];
+                        'Content-Type'  => 'application/json',
+                        'Accept'        => 'application/json'];
             $client = new Client();
             switch ($action_post) {
                 case 'write_device': {

@@ -36,7 +36,7 @@ class GivEnergy extends Root
                         EV_METER_ID                             = 0,
                         UPPER_SOC_LIMIT_PERCENT                 = 95,
                         LOWER_SOC_LIMIT_PERCENT                 = 5,
-                        EV_TIME_WINDOW_MINUTES  = 5;
+                        EV_TIME_WINDOW_MINUTES                  = 5;
     private const array ENTITIES_BATTERY_AIO = [
                                             'SOLAR_W'                => ['solar',       'power'],
                                             'GRID_W'                 => ['grid',        'power'],
@@ -119,11 +119,26 @@ class GivEnergy extends Root
         /*
          * restores autonomous battery operation settings
          */
+        $this->delete_proxy_settings();
         $this->defaults(self::PRE_DEFAULTS);
         $this->set_preset_charge_discharge_blocks();
         $this->defaults(self::POST_DEFAULTS);
     }
 
+    /**
+     * @throws Exception
+     */
+    private function delete_proxy_settings(): void
+    {
+        $sql = 'TRUNCATE TABLE `proxy_settings';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+    }
 
     /**
      * @throws GuzzleException
@@ -565,11 +580,11 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    private function command(string $action_pre, string $setting, ?int $value_int, ?string $value_string, ?string $context): void {
+    public function command(string $action_pre, string $setting, ?int $value_int, ?string $value_string, ?string $context): string {
         $value = null;
         $proxy_value = $this->proxy_value($setting);
         switch (strtolower(trim($action_pre))) {
-            case 'read':                             // read setting value into `settings` table
+            case 'read':                             // read setting value into `proxy_settings` table
             {
                 if (is_null($proxy_value)) {
                     $action_post = 'read_device';      // no value previously read for setting: read from battery
@@ -603,7 +618,7 @@ class GivEnergy extends Root
         }
         if (($action_post == 'write_device') || ($action_post == 'read_device')) {
             $id = $this->inverterControlSettings[$setting];
-            $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action_post;
+            $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/' . $id . '/' . $action_pre;
             $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
                         'Content-Type'  => 'application/json',
                         'Accept'        => 'application/json'];
@@ -624,7 +639,7 @@ class GivEnergy extends Root
                 case 'read_device':
                 default:
                 {
-                    $request_body = ['headers' => $headers, 'query' => ['context' => $context]];
+                    $request_body = ['headers' => $headers];
                 }
             }
             $response = $client->post($url, $request_body);
@@ -644,15 +659,16 @@ class GivEnergy extends Root
                 }
             }
         }
-        $this->log_setting($action_post, $value);
+        $this->log_setting($action_post, $setting, $value, $context);
+        return $value;
     }
 
     /**
      * @throws Exception
      */
-    private function log_setting($action, $value): void {        // log value to `settings` table
-        $sql = 'INSERT INTO `settings` (`device`, `action`, `setting`, `value`, `context`) 
-                                VALUES (?,        ?,        ?,         ?,       ?)';
+    private function log_setting($action, $setting, $value, $context): void {        // log value to `proxy_settings` table
+        $sql = 'INSERT INTO `proxy_settings` (`device`, `action`, `setting`, `value`, `context`) 
+                                      VALUES (?,        ?,        ?,         ?,       ?)';
         $device = 'BATTERY';
         $action = strtoupper($action);
         $value  = (string) $value;
@@ -672,9 +688,9 @@ class GivEnergy extends Root
      */
     private function proxy_value(string $setting): ?string  {   // returns setting value
         $sql = 'SELECT  `value` 
-                  FROM  `settings` 
+                  FROM  `proxy_settings` 
                   WHERE `id` = (SELECT  MAX(`id`)
-                                  FROM  `settings`
+                                  FROM  `proxy_settings`
                                   WHERE `setting` = ? AND
                                         `action`  = \'WRITE_THRU\')';
         if (!($stmt = $this->mysqli->prepare($sql)) ||

@@ -202,7 +202,7 @@ cost = dayCostGbp(gridSlotKwhs)
 
 # optimise
 #result    = minimize(dayCostGbp, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-14, 'maxiter': 1000000}) # Nelder-Mead
-result    = minimize(dayCostGbp, gridSlotKwhs, method="Powell", options={'disp': 0, 'ftol': 1E-6, 'maxiter': 1000000}) # Powell
+result    = minimize(dayCostGbp, gridSlotKwhs, method="Powell", options={'disp': 0, 'ftol': 1E-8, 'maxiter': 1000000}) # Powell
 
 
 

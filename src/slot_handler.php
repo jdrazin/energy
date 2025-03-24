@@ -82,17 +82,17 @@ try {
 catch (exception $e) {
     $message = $e->getMessage();
     if (EMAIL_NOTIFICATION_ON_ERROR) {
-        (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
-                                  'html'      => false,
-                                  'bodyHTML'  => $message,
-                                  'bodyAlt'   => strip_tags($message)]);
+        (new SMTPEmail())->email(['subject'  => 'EnergyController: Error',
+                                  'html'     => false,
+                                  'bodyHTML' => $message,
+                                  'bodyAlt'  => strip_tags($message)]);
     }
     $root = new Root();
     $root->logDb('MESSAGE', $message,  null, 'FATAL');
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
         $root->logDb('MESSAGE', 'Attempting to initialise ...', 'NOTICE');
-        (new GivEnergy())->reset_inverter();
+        (new GivEnergy())->reset_inverter(true);              // set charge discharge blocks
         $root->logDb('MESSAGE', '... initialise done', 'NOTICE');
     }
     exit(1);

@@ -191,7 +191,7 @@ class Root
         $sql     = 'INSERT INTO `log` (`event`, `message`, `text`, `urgency`) VALUES (?, ?, ?, ?)';
         $mysqli  = $this->mysqli();
         $stmt    = $mysqli->prepare($sql);
-        $message = $this->ellipsis(trim($message), self::LOG_MAX_CHARS);
+        $message = $message ? $this->ellipsis(trim($message), self::LOG_MAX_CHARS) : '';
         $stmt->bind_param('ssss', $event, $message, $text, $urgency);
         $stmt->execute();
         $mysqli->commit();

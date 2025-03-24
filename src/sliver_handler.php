@@ -21,7 +21,7 @@ const   PID_FOLDER                  = '/var/www/html/energy/',
         ARGS                        = ['CRON' => 1],
         INITIALISE_ON_EXCEPTION     = false,
         EMAIL_NOTIFICATION_ON_ERROR = false,
-        ENABLE_SLIVER_COMMAND       = false;
+        ENABLE_SLIVER_COMMAND       = true;
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
@@ -35,7 +35,7 @@ try {
         }
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && USE_CRONTAB) || !$cron) {
-        echo (new Sliver())->charge_w();
+        echo (new Sliver())->charge_w() . 'W';
     }
     if (USE_PID_SEMAPHORE) {
         if (!unlink($pid_filename)) {

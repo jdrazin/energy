@@ -27,22 +27,22 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class GivEnergy extends Root
 {
-    private const int   RESPONSE_OK                             = 2,
-                        CHARGE_DISCHARGE_SLOT_START             = 1,
-                        CHARGE_DISCHARGE_SLOT_STOP              = 10,
-                        CONTROL_CHARGE_DISCHARGE_SLOT           = 1,   // slot number used for control
-                        EV_POWER_ACTIVE_IMPORT                  = 13,  // Instantaneous active power imported by EV. (W or kW)
-                        EV_POWER_ACTIVE_IMPORT_UNIT             = 5,   // kW
-                        EV_METER_ID                             = 0,
-                        UPPER_SOC_LIMIT_PERCENT                 = 95,
-                        LOWER_SOC_LIMIT_PERCENT                 = 5,
-                        EV_TIME_WINDOW_MINUTES                  = 5;
+    private const int   RESPONSE_OK                   = 2,
+                        CHARGE_DISCHARGE_SLOT_START   = 1,
+                        CHARGE_DISCHARGE_SLOT_STOP    = 10,
+                        CONTROL_CHARGE_DISCHARGE_SLOT = 1,   // slot number used for control
+                        EV_POWER_ACTIVE_IMPORT        = 13,  // Instantaneous active power imported by EV. (W or kW)
+                        EV_POWER_ACTIVE_IMPORT_UNIT   = 5,   // kW
+                        EV_METER_ID                   = 0,
+                        UPPER_SOC_LIMIT_PERCENT       = 95,
+                        LOWER_SOC_LIMIT_PERCENT       = 5,
+                        EV_TIME_WINDOW_MINUTES        = 5;
     private const array ENTITIES_BATTERY_AIO = [
-                                            'SOLAR_W'                => ['solar',       'power'],
-                                            'GRID_W'                 => ['grid',        'power'],
-                                            'LOAD_HOUSE_W'           => ['consumption', 'power'],
-                                            'BATTERY_LEVEL_PERCENT'  => ['battery',     'percent']
-                                            ],
+                                                'SOLAR_W'                => ['solar',       'power'],
+                                                'GRID_W'                 => ['grid',        'power'],
+                                                'LOAD_HOUSE_W'           => ['consumption', 'power'],
+                                                'BATTERY_LEVEL_PERCENT'  => ['battery',     'percent']
+                                                ],
                         CONTROL_VALUES = [
                                             'Pause Battery'             => ['Not Paused'                => 0,
                                                                             'Pause Charge'              => 1,

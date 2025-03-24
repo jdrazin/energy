@@ -191,6 +191,17 @@ while i < number_slots:
     gridSlotKwhs   .append(float(sys.argv[index]))
     i+= 1
 
+# load min, max boundary pairs
+    index += 1
+    bounds = []
+    i = 0
+    while i < number_slots:
+        index += 1
+        bounds   .append(float(sys.argv[index]))
+        i+= 1
+        bounds   .append(float(sys.argv[index]))
+        i+= 1
+
 # get cpu time
 import time
 obj = time.gmtime(0)

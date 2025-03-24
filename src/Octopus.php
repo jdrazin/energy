@@ -25,10 +25,11 @@ class Octopus extends Root
                                     'DAY' => 'standing-charges/',
                                 ],
                     ENTITIES = [
-                                    'GRID_W'                => ['grid_kw',                  1000.0],
-                                    'SOLAR_W'               => ['solar_kw',                 1000.0],
-                                    'LOAD_HOUSE_W'          => ['load_house_kw',            1000.0],
-                                    'BATTERY_LEVEL_PERCENT' => ['battery_level_percent',    1.0]
+                                    'grid_kw'               => [['GRID_W',                 +1000.0],
+                                                                ['EV_W',                   -1000.0]],
+                                    'solar_kw'              => [['SOLAR_W',                +1000.0]],
+                                    'load_house_kw'         => [['LOAD_HOUSE_W',           +1000.0]],
+                                    'battery_level_percent' => [['BATTERY_LEVEL_PERCENT',      1.0]]
                                 ];
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api;
@@ -73,7 +74,7 @@ class Octopus extends Root
                         $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($db_slots);
                         $slot_solution = (new EnergyCost($batteryLevelKwh, $db_slots))->minimise(); // minimise energy cost
                         if ($active_tariff) {                                        // make battery command
-                            $this->log($slot_solution);                               // log slot command
+                            $this->log($slot_solution);                              // log slot command
                             $this->makeActiveTariffCombinationDbSlotsLast24hrs();    // make historic slots for last 24 hours
                             $this->slots_make_cubic_splines();                       // generate cubic splines
                         }
@@ -519,11 +520,15 @@ class Octopus extends Root
         $values = new Values();
         foreach (self::ENTITIES as $entity => $properties) {
             foreach ($slots as $slot => $v) {       // returns averages for graphing purposes, about START times (i.e. slot_start_time - 15mins TO slot_start_time + 15mins
-                $slots[$slot][$properties[0]] = $values->average($entity, 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MIN / 2) / $properties[1];
+                $power_w = 0.0;
+                foreach ($properties as $property) {
+                    $power_w += $values->average($property[0], 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MIN / 2) / $property[1];
+                }
+                $slots[$slot][$entity] = $power_w;
             }
             $sql = 'UPDATE  `slots` 
-                      SET   `' . $properties[0] . '` = ?
-                      WHERE `slot`                  = ? AND
+                      SET   `' . $entity . '` = ?
+                      WHERE `slot`            = ? AND
                             NOT `final`';
             unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||
@@ -533,7 +538,7 @@ class Octopus extends Root
                 throw new Exception($message);
             }
             foreach ($slots as $slot => $v) {
-                if (!is_null($value = $v[$properties[0]])) {
+                if (!is_null($value = $v[$entity])) {
                     $stmt->execute();
                 }
             }

@@ -28,7 +28,7 @@ def dayCostGbp(grid_kws):
     cost_grid_import                 = 0.0
     cost_grid_export                 = 0.0
     cost_grid_out_of_spec            = 0.0
-    cost_energy_wear     = 0.0
+    cost_energy_wear                 = 0.0
     cost_power_out_of_spec           = 0.0
     import_kwh                       = 0.0
     export_kwh                       = 0.0
@@ -201,7 +201,11 @@ start_time = time.time()
 cost = dayCostGbp(gridSlotKwhs)
 
 # optimise
-result    = minimize(dayCostGbp, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-14, 'maxiter': 1000000})
+#result    = minimize(dayCostGbp, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-14, 'maxiter': 1000000}) # Nelder-Mead
+result    = minimize(dayCostGbp, gridSlotKwhs, method="Powell", options={'disp': 0, 'ftol': 1E-6, 'maxiter': 1000000}) # Powell
+
+
+
 elapsed_s = time.time() - start_time
 
 # output result as json

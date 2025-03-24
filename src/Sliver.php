@@ -96,7 +96,7 @@ class Sliver extends Root
             $charge_kw += $charge_increment_kw;
         }
         $sql = 'INSERT INTO `sliver_solutions`  (`charge_w`, `level_percent`, `cost_total_gbp_per_hour`, `cost_grid_gbp_per_hour`, `cost_wear_gbp_per_hour`, `slot_mode`,    `slot_abs_charge_power_w`,  `slot_target_level_percent`, `house_load_kw`, `solar_kw`) 
-                                VALUES (?,           ?,               ?,                    ?,                  ?,                   ?,              ?,                          ?,                           ?,               ?          )';
+                                         VALUES (?,           ?,               ?,                        ?,                        ?,                        ?,              ?,                          ?,                           ?,               ?         )';
         $optimum                      = $data[$optimum_level];
         $optimum_charge_kw            = $optimum['charge_kw'];
         $cost_total_gbp_per_hour      = round($optimum['total_gbp_per_hour'], 3);

@@ -15,13 +15,13 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const   PID_FOLDER                          = '/var/www/html/energy/',
-        USE_PID_SEMAPHORE                   = false,
-        USE_CRONTAB                         = false,
-        ARGS                                = ['CRON' => 1],
-        INITIALISE_ON_EXCEPTION             = false,
-        EMAIL_NOTIFICATION_ON_ERROR         = false,
-        ENABLE_SLIVER_COMMAND               = false;
+const   PID_FOLDER                  = '/var/www/html/energy/',
+        USE_PID_SEMAPHORE           = false,
+        USE_CRONTAB                 = false,
+        ARGS                        = ['CRON' => 1],
+        INITIALISE_ON_EXCEPTION     = false,
+        EMAIL_NOTIFICATION_ON_ERROR = false,
+        ENABLE_SLIVER_COMMAND       = false;
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
@@ -46,24 +46,24 @@ try {
 catch (exception $e) {
     $message = $e->getMessage();
     if (EMAIL_NOTIFICATION_ON_ERROR) {
-        (new SMTPEmail())->email(['subject'   => 'EnergyController: Error',
-            'html'      => false,
-            'bodyHTML'  => $message,
-            'bodyAlt'   => strip_tags($message)]);
+        (new SMTPEmail())->email([  'subject'  => 'EnergyController: Error',
+                                    'html'     => false,
+                                    'bodyHTML' => $message,
+                                    'bodyAlt'  => strip_tags($message)]);
     }
     $root = new Root();
-    $root->logDb('MESSAGE', $message, 'FATAL');
+    $root->logDb('MESSAGE', $message, null, 'FATAL');
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
-        $root->logDb('MESSAGE', 'Attempting to initialise ...', 'NOTICE');
+        $root->logDb('MESSAGE', 'Attempting to initialise ...', null,'NOTICE');
         (new GivEnergy())->reset_inverter();
-        $root->logDb('MESSAGE', '... initialise done', 'NOTICE');
+        $root->logDb('MESSAGE', '... initialise done', null, 'NOTICE');
     }
     exit(1);
 }
 catch (GuzzleException $e) {
     $message = $e->getMessage();
-    (new Root())->logDb('MESSAGE', $message, 'FATAL');
+    (new Root())->logDb('MESSAGE', $message,  null, 'FATAL');
     echo $message . PHP_EOL;
     exit(1);
 }

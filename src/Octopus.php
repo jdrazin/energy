@@ -518,16 +518,16 @@ class Octopus extends Root
             throw new Exception($message);
         }
         $values = new Values();
-        foreach (self::ENTITIES as $entity => $properties) {
+        foreach (self::ENTITIES as $column => $power_elements) {
             foreach ($slots as $slot => $v) {       // returns averages for graphing purposes, about START times (i.e. slot_start_time - 15mins TO slot_start_time + 15mins
                 $power_w = 0.0;
-                foreach ($properties as $property) {
-                    $power_w += $values->average($property[0], 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MIN / 2) / $property[1];
+                foreach ($power_elements as $power_element) {
+                    $power_w += $values->average($power_element[0], 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MIN / 2) / $power_element[1];
                 }
-                $slots[$slot][$entity] = $power_w;
+                $slots[$slot][$column] = $power_w;
             }
             $sql = 'UPDATE  `slots` 
-                      SET   `' . $entity . '` = ?
+                      SET   `' . $column . '` = ?
                       WHERE `slot`            = ? AND
                             NOT `final`';
             unset($stmt);
@@ -538,7 +538,7 @@ class Octopus extends Root
                 throw new Exception($message);
             }
             foreach ($slots as $slot => $v) {
-                if (!is_null($value = $v[$entity])) {
+                if (!is_null($value = $v[$column])) {
                     $stmt->execute();
                 }
             }

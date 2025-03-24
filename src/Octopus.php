@@ -123,14 +123,14 @@ class Octopus extends Root
      */
     public function requestTariffs(): void  // get tariffs for both directions
     {
-        if ($this->skip_request(__NAMESPACE__, __CLASS__)) {  // skip request if called recently
-            $this->request_result(__CLASS__, false);
+        if ($this->skipRequest(__NAMESPACE__, __CLASS__)) {  // skip request if called recently
+            $this->requestResult(__CLASS__, false);
             return;
         }
         foreach (self::DIRECTIONS as $tariffs_rates) {
             $this->getTariff($tariffs_rates);
         }
-        $this->request_result(__CLASS__, true); // update timestamp for successful request
+        $this->requestResult(__CLASS__, true); // update timestamp for successful request
     }
 
     /**
@@ -154,7 +154,7 @@ class Octopus extends Root
                 }
                 catch (GuzzleException $e) {
                     $message = $e->getMessage();
-                    (new Root())->logDb('MESSAGE', $message, 'WARNING');
+                    (new Root())->logDb('MESSAGE', $message,  null,'WARNING');
                     echo $message . PHP_EOL;
                     if ($this->requestIsStale(__NAMESPACE__, __CLASS__)) { // give up if too long since last successful request
                         throw new Exception($message);

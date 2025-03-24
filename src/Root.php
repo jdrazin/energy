@@ -188,9 +188,10 @@ class Root
      * make db handle and log message
      */
     {
-        $sql    = 'INSERT INTO `log` (`event`, `message`, `text`, `urgency`) VALUES (?, ?, ?, ?)';
-        $mysqli = $this->mysqli();
-        $stmt   = $mysqli->prepare($sql);
+        $sql     = 'INSERT INTO `log` (`event`, `message`, `text`, `urgency`) VALUES (?, ?, ?, ?)';
+        $mysqli  = $this->mysqli();
+        $stmt    = $mysqli->prepare($sql);
+        $message = $this->ellipsis(trim($message), self::LOG_MAX_CHARS);
         $stmt->bind_param('ssss', $event, $message, $text, $urgency);
         $stmt->execute();
         $mysqli->commit();
@@ -339,7 +340,7 @@ class Root
     /**
      * @throws Exception
      */
-    public function skip_request($namespace, $class): bool { // returns whether to skip request to prevent throttling
+    public function skipRequest($namespace, $class): bool { // returns whether to skip request to prevent overloading server
         $class = $this->strip_namespace($namespace, $class);
         $sql = 'SELECT NOW() < `last_successful_request` + INTERVAL `min_minutes_since_last` MINUTE
                     FROM    `requests`
@@ -376,8 +377,8 @@ class Root
     /**
      * @throws Exception
      */
-    public function request_result($class, $skip_request): void
-    {
+    public function requestResult($class, $skip_request): void
+    { // updates timestamp of request, and timestamp of successful request if successful
         $sql = 'UPDATE `requests`
                    SET `last_request`            = NOW(),
                        `last_successful_request` = IF(?, `last_successful_request`, NOW())

@@ -191,16 +191,18 @@ while i < number_slots:
     gridSlotKwhs   .append(float(sys.argv[index]))
     i+= 1
 
-# load min, max boundary pairs
+#load min, max boundary pairs
+index += 1
+bounds = []
+i = 0
+while i < number_slots:
     index += 1
-    bounds = []
-    i = 0
-    while i < number_slots:
-        index += 1
-        bounds   .append(float(sys.argv[index]))
-        i+= 1
-        bounds   .append(float(sys.argv[index]))
-        i+= 1
+    min = float(sys.argv[index])
+    index += 1
+    max = float(sys.argv[index])
+    i+= 1
+    bound = (min, max)
+    bounds.append(bound)
 
 # get cpu time
 import time
@@ -213,9 +215,7 @@ cost = dayCostGbp(gridSlotKwhs)
 
 # optimise
 #result    = minimize(dayCostGbp, gridSlotKwhs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-14, 'maxiter': 1000000}) # Nelder-Mead
-result    = minimize(dayCostGbp, gridSlotKwhs, method="Powell", options={'disp': 0, 'ftol': 1E-8, 'maxiter': 1000000}) # Powell
-
-
+result = minimize(dayCostGbp, gridSlotKwhs, method='powell', bounds=bounds, options={'disp': 0, 'ftol': 1E-8, 'maxiter': 1000000}) # Powell
 
 elapsed_s = time.time() - start_time
 

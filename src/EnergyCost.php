@@ -362,6 +362,12 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= -$this->total_load_kws[$slot_count] . ' ';
         }
+        // use boundary grid values
+        $command .= 'BOUNDARY_PAIRS_grid_kws= ';
+        for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
+            $command .= -$this->total_load_kws[$slot_count]-$this->problem['batteryMaxChargeKw']    . ' ';
+            $command .= -$this->total_load_kws[$slot_count]+$this->problem['batteryMaxDischargeKw'] . ' ';
+        }
         return $command;
     }
 
@@ -535,7 +541,6 @@ class EnergyCost extends Root
     }
 
     public function wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour): array {
-        $energy_grid_kwh    = $grid_kw * $duration_hour;
         $battery_charge_kwh = $charge_kw * $duration_hour;
         $battery_energy_per_kwh     = $this->wearPerKwh( $battery_level_kwh,
                                                         0.0,

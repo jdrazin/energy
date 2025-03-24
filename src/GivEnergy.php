@@ -114,14 +114,16 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function reset_inverter(): void
+    public function reset_inverter(bool $set_charge_discharge_blocks): void
     {
         /*
          * restores autonomous battery operation settings
          */
         $this->delete_proxy_settings();
         $this->defaults(self::PRE_DEFAULTS);
-        $this->set_preset_charge_discharge_blocks();
+        if ($set_charge_discharge_blocks) {
+            $this->set_charge_discharge_blocks();
+        }
         $this->defaults(self::POST_DEFAULTS);
     }
 
@@ -160,7 +162,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function set_preset_charge_discharge_blocks(): void
+    public function set_charge_discharge_blocks(): void
     { // assume default settings
         foreach (self::CHARGE_DIRECTIONS as $charge_direction) {
             for ($block_number = self::CHARGE_DISCHARGE_SLOT_START; $block_number <= self::CHARGE_DISCHARGE_SLOT_STOP; $block_number++) {

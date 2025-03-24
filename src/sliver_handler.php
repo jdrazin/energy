@@ -56,7 +56,7 @@ catch (exception $e) {
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
         $root->logDb('MESSAGE', 'Attempting to initialise ...', null,'NOTICE');
-        (new GivEnergy())->reset_inverter();
+        (new GivEnergy())->reset_inverter(true); // set charge discharge blocks
         $root->logDb('MESSAGE', '... initialise done', null, 'NOTICE');
     }
     exit(1);

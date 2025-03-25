@@ -10,17 +10,20 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const SETTING = 'AC Charge Upper % Limit';
+const SLIVER_COMMAND = [
+                            'mode'                  => 'DISCHARGE',
+                            'start'                 => '09:55',
+                            'stop'                  => '10:56',
+                            'abs_charge_power_w'    => 2000,
+                            'target_level_percent'  => 40,
+                        ];
 
-$givenergy = new GivEnergy();
-//$givenergy->reset_inverter();
 try {
-    echo $givenergy->command('read',  SETTING, null, null, null) . PHP_EOL;
-    $givenergy->command('write',  SETTING, 95, null, null);
-    echo $givenergy->command('read',  SETTING, null, null, null) . PHP_EOL;
+    $givenergy = new GivEnergy();
+    $givenergy->control(SLIVER_COMMAND);
 }
 catch (GuzzleException|Exception $e) {
-
+    exit(1);
 }
 exit(0);
 

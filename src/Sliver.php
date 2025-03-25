@@ -138,9 +138,10 @@ class Sliver extends Root
         if (ENABLE_SLIVER_COMMAND) {                        // control battery for active combination on completion of countdown to next slot
                 $givenergy->control([
                                         'mode'                  => $slot_mode,
-                                        'start'                 => $slot_target_parameters['start'],
-                                        'stop'                  => $slot_target_parameters['stop'],
-                                        'abs_charge_power_w'    => abs($charge_power_w)
+                                        'start'                 => (new DateTime($slot_target_parameters['start']))->format('H:i'),
+                                        'stop'                  => (new DateTime($slot_target_parameters['stop'])) ->format('H:i'),
+                                        'abs_charge_power_w'    => abs($charge_power_w),
+                                        'target_level_percent'  => $slot_target_level_percent
                                     ]);
             }
         return $charge_power_w;

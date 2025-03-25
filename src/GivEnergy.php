@@ -463,13 +463,6 @@ class GivEnergy extends Root
                                 if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
                                     throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
                                 }
-                                /*
-                                 * allow discharge to continue beyond reaching target to avoid satisfying load from grid at peak times
-                                 */
-                                $target_level_percent = ($mode == 'DISCHARGE') ? self::LOWER_SOC_LIMIT_PERCENT : $target_level_percent;
-                                /*
-                                 * stay inside operating range
-                                 */
                                 $target_level_percent = min(max(self::LOWER_SOC_LIMIT_PERCENT, $target_level_percent), self::UPPER_SOC_LIMIT_PERCENT);
                                 $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
                                                                     $mode,

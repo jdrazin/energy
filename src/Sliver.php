@@ -141,7 +141,8 @@ class Sliver extends Root
                                         'start'                 => (new DateTime($slot_target_parameters['start']))->format('H:i'),
                                         'stop'                  => (new DateTime($slot_target_parameters['stop'])) ->format('H:i'),
                                         'abs_charge_power_w'    => abs($charge_power_w),
-                                        'target_level_percent'  => $slot_target_level_percent
+                                        'target_level_percent'  => $slot_target_level_percent,
+                                        'message'               => 'sliver control'
                                     ]);
             }
         return $charge_power_w;

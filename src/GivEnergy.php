@@ -36,7 +36,7 @@ class GivEnergy extends Root
                         EV_METER_ID                   = 0,
                         UPPER_SOC_LIMIT_PERCENT       = 95,
                         LOWER_SOC_LIMIT_PERCENT       = 5,
-                        EV_TIME_WINDOW_MINUTES        = 5;
+                        EV_TIME_WINDOW_MINUTES        = 10;
     private const array ENTITIES_BATTERY_AIO = [
                                                 'SOLAR_W'                => ['solar',       'power'],
                                                 'GRID_W'                 => ['grid',        'power'],
@@ -268,8 +268,8 @@ class GivEnergy extends Root
                     ];
         $data_points = [];
         $client = new Client();
-        $query = ['start_time' => $start,
-            'end_time' => $stop];
+        $query = [  'start_time'    => $start,
+                    'end_time'      => $stop];
         foreach (self::EV_METER_IDS as $meter_id) {
             $query['meter_ids[' . $meter_id . ']'] = $meter_id;
         }
@@ -296,8 +296,8 @@ class GivEnergy extends Root
         $time              =  new DateTime();
         $time_now          =  $time->format(Root::MYSQL_FORMAT_DATETIME);
         $time_window_start =  $time->modify('-' . self::EV_TIME_WINDOW_MINUTES . ' minute')->format(Root::MYSQL_FORMAT_DATETIME);
-        if (!($latest_ev_data         =  $this->getEVChargerData($time_window_start, $time_now)) ||
-            !($latest_ev_measurement = end($latest_ev_data))                              ||
+        if (!($latest_ev_data = $this->getEVChargerData($time_window_start, $time_now)) ||
+            !($latest_ev_measurement = end($latest_ev_data)) ||
             is_null($power_w = $this->power_w([0 => ($latest_ev_measurement['measurements'][0] ?? [])]))) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No latest EV data');
             $this->logDb('MESSAGE', $message, null, 'ERROR');

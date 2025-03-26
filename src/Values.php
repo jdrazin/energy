@@ -285,6 +285,7 @@ class Values extends Root
 
     /**
      * @throws DateMalformedStringException
+     * @throws Exception
      */
     private function powersKwSlotAverage($entity, $type, $history_day_limit): array
     {
@@ -313,6 +314,12 @@ class Values extends Root
                 !$stmt->fetch() ||
                 is_null($power_kw)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                $message =  'entity:'            . $entity             . ', ' .
+                            'type:'              . $type               . ', ' .
+                            'start_minutes:'     . $start_minutes      . ', ' .
+                            'stop_minutes:'      . $stop_minutes       . ', ' .
+                            'history_day_limit:' . $history_day_limit;
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }

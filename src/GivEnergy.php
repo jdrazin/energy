@@ -293,8 +293,8 @@ class GivEnergy extends Root
      */
     public function evLatestPowerW(): float
     {
-        $time              = new DateTime();
-        $time_now          = $time->format(Root::MYSQL_FORMAT_DATETIME);
+        $time = new DateTime();
+        $time_now = $time->format(Root::MYSQL_FORMAT_DATETIME);
         $time_window_start = $time->modify('-' . self::EV_TIME_WINDOW_MINUTES . ' minute')->format(Root::MYSQL_FORMAT_DATETIME);
         if (!($latest_ev_data = $this->getEVChargerData($time_window_start, $time_now))) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No EV data');

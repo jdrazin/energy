@@ -301,7 +301,7 @@ class GivEnergy extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        // choose last power reading that exists
+        // choose last EV power reading that exists
         $power_w = null;
         foreach ($latest_ev_data as $latest_ev_datum) {
             if ($measurements = $latest_ev_datum['measurements'] ?? []) {

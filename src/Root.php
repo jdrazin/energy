@@ -354,7 +354,7 @@ class Root
             throw new Exception($message);
         }
         $stmt->fetch();
-        return is_null($skip_request) ? true : $skip_request;
+        return is_null($skip_request) ? false : $skip_request;
     }
 
     protected function requestIsStale($namespace, $class): bool {// returns whether to requests are stale (i.e. cannot proceed)

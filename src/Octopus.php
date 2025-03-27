@@ -81,9 +81,9 @@ class Octopus extends Root
                     }
                 }
             }
-        $this->logForecast($db_slots->slots[0]['start']);                            // log forecast to costs
+            $this->logForecast($db_slots->slots[0]['start']);                        // log forecast to costs
         } else {
-            (new EnergyCost(null, null))->minimise();     // minimise energy cost
+            (new EnergyCost(null, null))->minimise();        // minimise energy cost
         }
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null,  null,'NOTICE');
     }

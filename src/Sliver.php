@@ -50,7 +50,7 @@ class Sliver extends Root
             $grid_tariff_gbp_per_kwh  =   $grid_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'];
             $grid_gbp_per_hour        =  -$grid_tariff_gbp_per_kwh*$grid_kw;
             $wear_gbp_per_hour        =  $energy_cost->wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour);
-            $cost_wear_gbp_per_hour   =  $wear_gbp_per_hour['battery_power'] + $wear_gbp_per_hour['grid_power'];   // omit energy storage wear
+            $cost_wear_gbp_per_hour   =  $wear_gbp_per_hour['grid_power'];
             $total_gbp_per_hour       =  $grid_gbp_per_hour + $cost_wear_gbp_per_hour;
             $data[$level] = [ 'grid_kw'                         => $grid_kw,
                               'grid_tariff_gbp_per_kwh'         => $grid_tariff_gbp_per_kwh,

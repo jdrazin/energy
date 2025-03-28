@@ -239,23 +239,19 @@ class EnergyCost extends Root
         $this->slotCommands = [];
         $grid_w = (int) (1000.0 * $grid_kw);
         $message = '';
-        if ($battery_charge_kw > 0.0) {  // CHARGE
+        if ($battery_charge_kw > 0.0) {    // CHARGE
             $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
         } else {                           // DISCHARGE
             $charge_power_w = (int) round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
         }
-        if (abs($grid_w) < self::THRESHOLD_POWER_W) {                                 // ECO if no appreciable import/export
+        if (abs($charge_power_w) < self::THRESHOLD_POWER_W) {           // ECO if no appreciable charge / discharge
             $mode = 'ECO';
-            $abs_charge_power_w = null;
+            $abs_charge_power_w   = null;
             $target_level_percent = null;
-        } elseif (abs($charge_power_w) > self::THRESHOLD_POWER_W) {                   // CHARGE, DISCHARGE when above threshold charge power
+        } else {                                                        // CHARGE, DISCHARGE when above threshold charge power
             $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
             $abs_charge_power_w = abs($charge_power_w);
             $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
-        } else {                                                                      // otherwise IDLE
-            $mode = 'IDLE';
-            $abs_charge_power_w = null;
-            $target_level_percent = null;
         }
         return [
             'id'                    => $id,

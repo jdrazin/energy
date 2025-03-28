@@ -26,37 +26,22 @@ class Sliver extends Root
         if (!($slot_target_parameters = $this->slotTargetParameters())) { // get slot target parameters
             return 'No slot data';
         }
-        $slot_solution                = $slot_target_parameters['slot_solution'];
-        $slot_mode                    = $slot_target_parameters['mode'];
-        switch ($slot_mode) {
-            case 'CHARGE':
-            case 'DISCHARGE': {
-                $sign                          = $slot_mode == 'CHARGE' ? -1.0 : 1.0;
-                $slot_end_target_level_percent = $slot_target_parameters['target_level_percent'];
-                $abs_charge_power_w            = $slot_target_parameters['abs_charge_power_w'];
-                $slot_duration_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime($slot_target_parameters['stop']))->i;
-                $slot_progress_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime())->i;
-                $slot_energy_kwh               = ($abs_charge_power_w/1000.0)*((float) $slot_progress_minutes)/60.0;
-                $slot_start_percent            = ((float) $slot_end_target_level_percent) + $sign * (100.0 * $slot_energy_kwh / $this->config['battery']['initial_raw_capacity_kwh']);
-                $target_percent                = round($slot_start_percent + ($slot_progress_minutes/$slot_duration_minutes)* ($slot_end_target_level_percent - $slot_start_percent));
-                break;
-            }
-            default:
-        }
-        $battery                        =  $givenergy->latest();                                // get battery data
-        $ev_load_kw                     =  $givenergy->evLatestPowerW()/1000.0;                 // ev load
-        $battery_level_percent          =  $battery['battery']['percent'];
-        $battery_level_kwh              =  $battery_level_percent*$energy_cost->batteryCapacityKwh/100.0;
-        $house_load_kw                  =  $battery['consumption']/1000.0;
-        $solar_kw                       =  $battery['solar']['power']/1000.0;
-        $net_load_kw                    =  $house_load_kw+$ev_load_kw-$solar_kw;
-        $charge_min_kw                  = -$givenergy->battery['max_discharge_kw'];
-        $charge_max_kw                  =  $givenergy->battery['max_charge_kw'];
-        $charge_increment_kw            = ($charge_max_kw - $charge_min_kw)/self::CHARGE_POWER_LEVELS;
-        $duration_hour                  =  self::SLIVER_DURATION_MINUTES / 60.0;
-        $charge_kw                      =  $charge_min_kw;
-        $data                           =  [];
-        $optimum_total_gbp_per_hour    =  null;
+        $slot_solution              = $slot_target_parameters['slot_solution'];
+        $slot_mode                  = $slot_target_parameters['mode'];
+        $battery                    =  $givenergy->latest();                                // get battery data
+        $ev_load_kw                 =  $givenergy->evLatestPowerW()/1000.0;                 // ev load
+        $battery_level_percent      =  $battery['battery']['percent'];
+        $battery_level_kwh          =  $battery_level_percent*$energy_cost->batteryCapacityKwh/100.0;
+        $house_load_kw              =  $battery['consumption']/1000.0;
+        $solar_kw                   =  $battery['solar']['power']/1000.0;
+        $net_load_kw                =  $house_load_kw+$ev_load_kw-$solar_kw;
+        $charge_min_kw              = -$givenergy->battery['max_discharge_kw'];
+        $charge_max_kw              =  $givenergy->battery['max_charge_kw'];
+        $charge_increment_kw        = ($charge_max_kw - $charge_min_kw)/self::CHARGE_POWER_LEVELS;
+        $duration_hour              =  self::SLIVER_DURATION_MINUTES / 60.0;
+        $charge_kw                  =  $charge_min_kw;
+        $data                       =  [];
+        $optimum_total_gbp_per_hour =  null;
         $energy_cost->makeNormalisationCoefficients();
         for ($level = 0; $level <= self::CHARGE_POWER_LEVELS; $level++) {
             $grid_kw                  = -($net_load_kw + $charge_kw);
@@ -75,7 +60,7 @@ class Sliver extends Root
                               'cost_total_wear_gbp_per_hour'    => $cost_wear_gbp_per_hour];
             if (is_null($optimum_total_gbp_per_hour) || ($total_gbp_per_hour < $optimum_total_gbp_per_hour)) {
                 $optimum_total_gbp_per_hour = $total_gbp_per_hour;
-                $optimum_level               = $level;
+                $optimum_level              = $level;
             }
             $charge_kw += $charge_increment_kw;
         }
@@ -87,14 +72,29 @@ class Sliver extends Root
         $cost_grid_gbp_per_hour  = round($optimum['grid_gbp_per_hour'], 3);
         $cost_wear_gbp_per_hour  = round($optimum['cost_total_wear_gbp_per_hour'], 3);
         switch ($slot_mode) {
+            case 'CHARGE':
+            case 'DISCHARGE': {
+                $sign                          = $slot_mode == 'CHARGE' ? -1.0 : 1.0;
+                $slot_end_target_level_percent = $slot_target_parameters['target_level_percent'];
+                $abs_charge_power_w            = $slot_target_parameters['abs_charge_power_w'];
+                $slot_duration_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime($slot_target_parameters['stop']))->i;
+                $slot_progress_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime())->i;
+                $slot_energy_kwh               = ($abs_charge_power_w/1000.0)*((float) $slot_progress_minutes)/60.0;
+                $slot_start_percent            = ((float) $slot_end_target_level_percent) + $sign * (100.0 * $slot_energy_kwh / $this->config['battery']['initial_raw_capacity_kwh']);
+                $target_percent                = round($slot_start_percent + ($slot_progress_minutes/$slot_duration_minutes) * ($slot_end_target_level_percent - $slot_start_percent));
+                break;
+            }
+            default:
+                $target_percent                = null;
+        }
+        switch ($slot_mode) {
             case 'CHARGE': {
-                $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW)  && ($battery_level_percent < $target_percent)) ? round($optimum_charge_kw, 3)  : 0.0;
+                $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW)  && ($battery_level_percent < $target_percent)) ? round($optimum_charge_kw, 3) : 0.0;
                 break;
             }
             case 'DISCHARGE': {
                 $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent > $target_percent)) ? round($optimum_charge_kw, 3) : 0.0;
                 break;
-
             }
             case 'ECO':
             case 'IDLE': {

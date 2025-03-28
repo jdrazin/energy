@@ -45,12 +45,12 @@ class Sliver extends Root
         $optimum_total_gbp_per_hour    =  null;
         $energy_cost->makeNormalisationCoefficients();
         for ($level = 0; $level <= self::CHARGE_POWER_LEVELS; $level++) {
-            $grid_kw                        = -($net_load_kw + $charge_kw);
-            $grid_tariff_gbp_per_kwh        =   $grid_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'];
-            $grid_gbp_per_hour              =  -$grid_tariff_gbp_per_kwh*$grid_kw;
-            $wear_gbp_per_hour              =  $energy_cost->wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour);
-            $cost_total_wear_gbp_per_hour   =  ($wear_gbp_per_hour['battery_energy'] + $wear_gbp_per_hour['battery_power'] + $wear_gbp_per_hour['grid_power']);
-            $total_gbp_per_hour             =  $grid_gbp_per_hour + $cost_total_wear_gbp_per_hour;
+            $grid_kw                  = -($net_load_kw + $charge_kw);
+            $grid_tariff_gbp_per_kwh  =   $grid_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'];
+            $grid_gbp_per_hour        =  -$grid_tariff_gbp_per_kwh*$grid_kw;
+            $wear_gbp_per_hour        =  $energy_cost->wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour);
+            $cost_wear_gbp_per_hour   =  $wear_gbp_per_hour['battery_power'] + $wear_gbp_per_hour['grid_power'];   // omit energy storage wear
+            $total_gbp_per_hour       =  $grid_gbp_per_hour + $cost_wear_gbp_per_hour;
             $data[$level] = [ 'grid_kw'                         => $grid_kw,
                               'grid_tariff_gbp_per_kwh'         => $grid_tariff_gbp_per_kwh,
                               'charge_kw'                       => $charge_kw,
@@ -58,7 +58,7 @@ class Sliver extends Root
                               'grid_gbp_per_hour'               => $grid_gbp_per_hour,
                               'wear_gbp_per_hour'               => $wear_gbp_per_hour,
                               'total_gbp_per_hour'              => $total_gbp_per_hour,
-                              'cost_total_wear_gbp_per_hour'    => $cost_total_wear_gbp_per_hour];
+                              'cost_total_wear_gbp_per_hour'    => $cost_wear_gbp_per_hour];
             if (is_null($optimum_total_gbp_per_hour) || ($total_gbp_per_hour < $optimum_total_gbp_per_hour)) {
                 $optimum_total_gbp_per_hour = $total_gbp_per_hour;
                 $optimum_level               = $level;
@@ -71,7 +71,7 @@ class Sliver extends Root
         $optimum_charge_kw            = $optimum['charge_kw'];
         $cost_total_gbp_per_hour      = round($optimum['total_gbp_per_hour'], 3);
         $cost_grid_gbp_per_hour       = round($optimum['grid_gbp_per_hour'], 3);
-        $cost_total_wear_gbp_per_hour = round($optimum['cost_total_wear_gbp_per_hour'], 3);
+        $cost_wear_gbp_per_hour = round($optimum['cost_total_wear_gbp_per_hour'], 3);
         switch ($slot_mode) {
             case 'CHARGE': {
                 $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent < $slot_target_level_percent)) ? round($optimum_charge_kw, 3)  : 0.0;
@@ -90,7 +90,7 @@ class Sliver extends Root
         }
         $charge_power_w = round(1000.0 * $charge_kw);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('didddsdidd', $charge_kw,$battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $cost_total_wear_gbp_per_hour, $slot_mode, $slot_abs_charge_power_w, $slot_target_level_percent, $house_load_kw, $solar_kw) ||
+            !$stmt->bind_param('didddsdidd', $charge_kw,$battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $cost_wear_gbp_per_hour, $slot_mode, $slot_abs_charge_power_w, $slot_target_level_percent, $house_load_kw, $solar_kw) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');

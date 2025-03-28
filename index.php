@@ -26,7 +26,8 @@ $app->addRoutingMiddleware();
  */
 $app->get('/control/slots', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($slots = $energy->slots()) === false) {
+    $cubic_spline = isset($_GET['cubic_spline']) && $_GET['cubic_spline'];
+    if (($slots = $energy->slots($cubic_spline)) === false) {
         return $response->withStatus(401);
     }
     $response->getBody()->write($slots);

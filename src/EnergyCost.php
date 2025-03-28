@@ -237,7 +237,6 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         $this->slotCommands = [];
-        $grid_w = (int) (1000.0 * $grid_kw);
         $message = '';
         if ($battery_charge_kw > 0.0) {    // CHARGE
             $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));

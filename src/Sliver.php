@@ -28,8 +28,12 @@ class Sliver extends Root
         }
         $slot_solution                  =  $slot_target_parameters['slot_solution'];
         $slot_mode                      =  $slot_target_parameters['mode'];
-        $slot_abs_charge_power_w        =  $slot_target_parameters['abs_charge_power_w'];
-        $slot_target_level_percent      =  $slot_target_parameters['target_level_percent'];
+        $slot_end_target_level_percent  =  $slot_target_parameters['target_level_percent'];
+
+$target_level_percent = $slot_end_target_level_percent;
+        $slot_duration_minutes          =  (new DateTime($slot_target_parameters['start']))->diff(new DateTime($slot_target_parameters['stop']))->i;
+        $slot_progress_minutes          =  (new DateTime($slot_target_parameters['start']))->diff(new DateTime())->i;
+
         $battery                        =  $givenergy->latest();                                // get battery data
         $ev_load_kw                     =  $givenergy->evLatestPowerW()/1000.0;                 // ev load
         $battery_level_percent          =  $battery['battery']['percent'];
@@ -75,11 +79,11 @@ class Sliver extends Root
         $cost_wear_gbp_per_hour  = round($optimum['cost_total_wear_gbp_per_hour'], 3);
         switch ($slot_mode) {
             case 'CHARGE': {
-                $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent < $slot_target_level_percent)) ? round($optimum_charge_kw, 3)  : 0.0;
+                $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW)  && ($battery_level_percent < $target_level_percent)) ? round($optimum_charge_kw, 3)  : 0.0;
                 break;
             }
             case 'DISCHARGE': {
-                $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent > $slot_target_level_percent)) ? round($optimum_charge_kw, 3) : 0.0;
+                $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent > $target_level_percent)) ? round($optimum_charge_kw, 3) : 0.0;
                 break;
 
             }
@@ -112,7 +116,7 @@ class Sliver extends Root
                                         'start'                 => (new DateTime($slot_target_parameters['start']))->format('H:i'),
                                         'stop'                  => (new DateTime($slot_target_parameters['stop'])) ->format('H:i'),
                                         'abs_charge_power_w'    => abs($charge_power_w),
-                                        'target_level_percent'  => $slot_target_level_percent,
+                                        'target_level_percent'  => $slot_end_target_level_percent,
                                         'message'               => 'sliver control'
                                     ]);
             }

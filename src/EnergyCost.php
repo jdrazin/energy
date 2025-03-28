@@ -238,9 +238,9 @@ class EnergyCost extends Root
         }
         $this->slotCommands = [];
         $message = '';
-        if ($battery_charge_kw > 0.0) {    // CHARGE
+        if ($battery_charge_kw > 0.0) {                                 // CHARGE
             $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
-        } else {                           // DISCHARGE
+        } else {                                                        // DISCHARGE
             $charge_power_w = (int) round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
         }
         if (abs($charge_power_w) < self::THRESHOLD_POWER_W) {           // ECO if no appreciable charge / discharge

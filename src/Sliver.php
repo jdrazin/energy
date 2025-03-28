@@ -88,12 +88,12 @@ class Sliver extends Root
                 $target_percent                = null;
         }
         switch ($slot_mode) {
-            case 'CHARGE': {    // only charge if above min efficient power and target not yet reached
-                $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW)  && ($battery_level_percent < $target_percent)) ? round($optimum_charge_kw, 3) : 0.0;
+            case 'CHARGE': {    // only charge if above min efficient power and target not exceeded
+                $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW)  && ($battery_level_percent <= $target_percent)) ? round($optimum_charge_kw, 3) : 0.0;
                 break;
             }
-            case 'DISCHARGE': { // only discharge if above min efficient power and target not yet reached
-                $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent > $target_percent)) ? round($optimum_charge_kw, 3) : 0.0;
+            case 'DISCHARGE': { // only discharge if above min efficient power and target not exceeded
+                $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent >= $target_percent)) ? round($optimum_charge_kw, 3) : 0.0;
                 break;
             }
             case 'ECO':

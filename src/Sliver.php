@@ -72,7 +72,7 @@ class Sliver extends Root
         $cost_grid_gbp_per_hour  = round($optimum['grid_gbp_per_hour'], 3);
         $cost_wear_gbp_per_hour  = round($optimum['cost_total_wear_gbp_per_hour'], 3);
         switch ($slot_mode) {
-            case 'CHARGE':
+            case 'CHARGE':          // calculate target percent level into slot
             case 'DISCHARGE': {
                 $sign                          = $slot_mode == 'CHARGE' ? -1.0 : 1.0;
                 $slot_end_target_level_percent = $slot_target_parameters['target_level_percent'];

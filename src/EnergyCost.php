@@ -203,8 +203,8 @@ class EnergyCost extends Root
             return [];
         }
         else {
-            $slot_solution = $this->slotSolution();                                   // make slot solution
             $this->insertOptimumGridInverterKw($optimumGridKws);                      // insert for each slot: grid and battery discharge energies (kWh)
+            $slot_solution = $this->slotSolution();                                   // make slot solution
             $this->insertSlotNextDayCostEstimates($slot_solution['id']);
             return $slot_solution;
         }

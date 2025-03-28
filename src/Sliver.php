@@ -9,6 +9,7 @@ class Sliver extends Root
     const int   SLIVER_DURATION_MINUTES = 1,
                 SLIVER_DB_MAX_AGE_DAY   = 7,
                 CHARGE_POWER_LEVELS     = 100;
+    const float CHARGE_DISCHARGE_MIN_KW = 0.5;
 
     public function __construct()
     {
@@ -73,11 +74,11 @@ class Sliver extends Root
         $cost_total_wear_gbp_per_hour = round($optimum['cost_total_wear_gbp_per_hour'], 3);
         switch ($slot_mode) {
             case 'CHARGE': {
-                $charge_kw = (($optimum_charge_kw > 0.0) && ($battery_level_percent < $slot_target_level_percent)) ? round($optimum_charge_kw, 3) : 0.0;
+                $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent < $slot_target_level_percent)) ? round($optimum_charge_kw, 3)  : 0.0;
                 break;
             }
             case 'DISCHARGE': {
-                $charge_kw = (($optimum_charge_kw < 0.0) && ($battery_level_percent > $slot_target_level_percent)) ? round($optimum_charge_kw, 3) : 0.0;
+                $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent > $slot_target_level_percent)) ? round($optimum_charge_kw, 3) : 0.0;
                 break;
 
             }

@@ -17,7 +17,10 @@ class DbSlots extends Root
     public function __construct()
     {
         parent::__construct();
-        $sql = 'DELETE FROM `slots` WHERE NOT `final`';
+        $sql = 'DELETE `slots` FROM `slots`
+                  INNER JOIN `tariff_combinations` `tc` ON `tc`.`id` = `slots`.`tariff_combination`
+                  WHERE NOT `slots`.`final` OR
+                        (`slots`.`final` AND NOT IFNULL(`tc`.`active`, FALSE) AND `slots`.`slot` >= 0)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

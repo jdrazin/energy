@@ -16,46 +16,15 @@ class Sliver extends Root
     }
 
     /**
-     * @throws Exception
-     */
-    public function slotTargetParameters(): array {
-        $sql = 'SELECT  `start`,
-                        `stop`,
-                        `mode`,
-                        `abs_charge_power_w`,
-                        `target_level_percent`,
-                        `import_gbp_per_kwh`,
-                        `export_gbp_per_kwh`
-                   FROM `slot_solutions`
-                   WHERE NOW() BETWEEN `start` AND `stop`';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        if (!$stmt->fetch()) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No slot data');
-            throw new Exception($message);
-        }
-        return ['start'                 =>  $start,
-                'stop'                  =>  $stop,
-                'mode'                  =>  $mode,
-                'abs_charge_power_w'    =>  $abs_charge_power_w,
-                'target_level_percent'  =>  $target_level_percent,
-                'import_gbp_per_kwh'    =>  $import_gbp_per_kwh,
-                'export_gbp_per_kwh'    =>  $export_gbp_per_kwh];
-    }
-
-    /**
      * @throws GuzzleException
      * @throws Exception
      */
-    public function charge_w(): int {
+    public function charge_w(): string {
         $givenergy                      =  new GivEnergy();
         $energy_cost                    =  new EnergyCost(null, null);
-        $slot_target_parameters         =  $this->slotTargetParameters();             // get slot target parameters
+        if (!($slot_target_parameters = $this->slotTargetParameters())) { // get slot target parameters
+            return 'No slot data';
+        }
         $slot_mode                      =  $slot_target_parameters['mode'];
         $slot_abs_charge_power_w        =  $slot_target_parameters['abs_charge_power_w'];
         $slot_target_level_percent      =  $slot_target_parameters['target_level_percent'];
@@ -145,6 +114,42 @@ class Sliver extends Root
                                         'message'               => 'sliver control'
                                     ]);
             }
-        return $charge_power_w;
+        return (string) $charge_power_w;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function slotTargetParameters(): array {
+        $sql = 'SELECT  `start`,
+                        `stop`,
+                        `mode`,
+                        `abs_charge_power_w`,
+                        `target_level_percent`,
+                        `import_gbp_per_kwh`,
+                        `export_gbp_per_kwh`
+                   FROM `slot_solutions`
+                   WHERE NOW() BETWEEN `start` AND `stop`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_result($start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        if (!$stmt->fetch()) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No slot data');
+            $this->logDb('MESSAGE', $message, null, 'WARNING');
+            return [];
+        }
+        else {
+            return ['start'             =>  $start,
+                    'stop'                  =>  $stop,
+                    'mode'                  =>  $mode,
+                    'abs_charge_power_w'    =>  $abs_charge_power_w,
+                    'target_level_percent'  =>  $target_level_percent,
+                    'import_gbp_per_kwh'    =>  $import_gbp_per_kwh,
+                    'export_gbp_per_kwh'    =>  $export_gbp_per_kwh];
+        }
     }
 }

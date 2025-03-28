@@ -237,7 +237,6 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         $this->slotCommands = [];
-        $message = '';
         if ($battery_charge_kw > 0.0) {                                 // CHARGE
             $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
         } else {                                                        // DISCHARGE
@@ -247,10 +246,12 @@ class EnergyCost extends Root
             $mode = 'ECO';
             $abs_charge_power_w   = null;
             $target_level_percent = null;
+            $message = $mode;
         } else {                                                        // CHARGE, DISCHARGE when above threshold charge power
             $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
-            $abs_charge_power_w = abs($charge_power_w);
+            $abs_charge_power_w   = abs($charge_power_w);
             $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
+            $message              = $mode . ' @' . $abs_charge_power_w . 'W to ' . $target_level_percent .  '%';
         }
         return [
             'id'                    => $id,
@@ -261,7 +262,7 @@ class EnergyCost extends Root
             'target_level_percent'  => $target_level_percent,
             'import_gbp_per_kwh'    => $import_gbp_per_kwh,
             'export_gbp_per_kwh'    => $export_gbp_per_kwh,
-            'message'               => $mode . $message
+            'message'               => $message
         ];
     }
 

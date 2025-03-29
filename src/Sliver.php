@@ -45,15 +45,15 @@ class Sliver extends Root
         $energy_cost->makeNormalisationCoefficients();
         $sql = 'TRUNCATE TABLE `sliver`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            $stmt->execute()) {
+            !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        $sql = 'INSERT INTO `sliver` (`id`, `optimum`,   `grid_kw`,  `grid_tariff_gbp_per_kwh`, `charge_kw`, `battery_level_kwh`, `grid_gbp_per_hour`, `wear_gbp_per_hour`, `total_gbp_per_hour`, `cost_total_wear_gbp_per_hour`)
-                             VALUES (?,    ?,           ?,          ?,                         ?,           ?,                   ?,                   ?,                   ?,                    ?                             )';
+        $sql = 'INSERT INTO `sliver` (`id`, `grid_kw`,  `grid_tariff_gbp_per_kwh`, `charge_kw`, `battery_level_kwh`, `grid_gbp_per_hour`, `wear_gbp_per_hour`, `total_gbp_per_hour`, `cost_total_wear_gbp_per_hour`)
+                             VALUES (?,     ?,          ?,                         ?,           ?,                   ?,                   ?,                   ?,                    ?                             )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iidddddddd', $id, $optimum,   $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $battery_level_kwh, $grid_gbp_per_hour, $wear_gbp_per_hour, $total_gbp_per_hour, $cost_total_wear_gbp_per_hour)) {
+            !$stmt->bind_param('idddddddd', $id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $battery_level_kwh, $grid_gbp_per_hour, $wear_gbp_per_hour, $total_gbp_per_hour, $cost_wear_gbp_per_hour)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
@@ -84,7 +84,7 @@ class Sliver extends Root
                     SET     `optimum` = TRUE
                     WHERE   `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $id) ||
+            !$stmt->bind_param('i', $optimum_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');

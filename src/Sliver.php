@@ -43,30 +43,46 @@ class Sliver extends Root
         $data                       =  [];
         $optimum_total_gbp_per_hour =  null;
         $energy_cost->makeNormalisationCoefficients();
-        for ($level = 0; $level <= self::CHARGE_POWER_LEVELS; $level++) {
+        $sql = 'TRUNCATE TABLE `sliver`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            $stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $sql = 'INSERT INTO `sliver` (`id`, `optimum`,   `grid_kw`,  `grid_tariff_gbp_per_kwh`, `charge_kw`, `battery_level_kwh`, `grid_gbp_per_hour`, `wear_gbp_per_hour`, `total_gbp_per_hour`, `cost_total_wear_gbp_per_hour`)
+                             VALUES (?,    ?,           ?,          ?,                         ?,           ?,                   ?,                   ?,                   ?,                    ?                             )';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('iidddddddd', $id, $optimum,   $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $battery_level_kwh, $grid_gbp_per_hour, $wear_gbp_per_hour, $total_gbp_per_hour, $cost_total_wear_gbp_per_hour)) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        for ($id = 0; $id <= self::CHARGE_POWER_LEVELS; $id++) {
             $grid_kw                  = -($net_load_kw + $charge_kw);
             $grid_tariff_gbp_per_kwh  =   $grid_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'];
             $grid_gbp_per_hour        =  -$grid_tariff_gbp_per_kwh*$grid_kw;
             $wear_gbp_per_hour        =  $energy_cost->wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour);
             $cost_wear_gbp_per_hour   =  $wear_gbp_per_hour['grid_power'];
             $total_gbp_per_hour       =  $grid_gbp_per_hour + $cost_wear_gbp_per_hour;
-            $data[$level] = [ 'grid_kw'                         => $grid_kw,
-                              'grid_tariff_gbp_per_kwh'         => $grid_tariff_gbp_per_kwh,
-                              'charge_kw'                       => $charge_kw,
-                              'battery_level_kwh'               => $battery_level_kwh,
-                              'grid_gbp_per_hour'               => $grid_gbp_per_hour,
-                              'wear_gbp_per_hour'               => $wear_gbp_per_hour,
-                              'total_gbp_per_hour'              => $total_gbp_per_hour,
-                              'cost_total_wear_gbp_per_hour'    => $cost_wear_gbp_per_hour];
+            $data[$id] = ['grid_kw'                         => $grid_kw,
+                          'grid_tariff_gbp_per_kwh'         => $grid_tariff_gbp_per_kwh,
+                          'charge_kw'                       => $charge_kw,
+                          'battery_level_kwh'               => $battery_level_kwh,
+                          'grid_gbp_per_hour'               => $grid_gbp_per_hour,
+                          'wear_gbp_per_hour'               => $wear_gbp_per_hour,
+                          'total_gbp_per_hour'              => $total_gbp_per_hour,
+                          'cost_total_wear_gbp_per_hour'    => $cost_wear_gbp_per_hour];
+            $stmt->execute();
             if (is_null($optimum_total_gbp_per_hour) || ($total_gbp_per_hour < $optimum_total_gbp_per_hour)) {
                 $optimum_total_gbp_per_hour = $total_gbp_per_hour;
-                $optimum_level              = $level;
+                $optimum_id = $id;
             }
             $charge_kw += $charge_increment_kw;
         }
         $sql = 'INSERT INTO `sliver_solutions`  (`slot_solution`, `charge_kw`, `level_percent`, `cost_total_gbp_per_hour`, `cost_grid_gbp_per_hour`, `cost_wear_gbp_per_hour`, `house_load_kw`, `solar_kw`) 
                                          VALUES (?,               ?,           ?,               ?,                        ?,                        ?,                          ?,               ?        )';
-        $optimum                 = $data[$optimum_level];
+        $optimum                 = $data[$optimum_id];
         $optimum_charge_kw       = $optimum['charge_kw'];
         $cost_total_gbp_per_hour = round($optimum['total_gbp_per_hour'], 3);
         $cost_grid_gbp_per_hour  = round($optimum['grid_gbp_per_hour'], 3);

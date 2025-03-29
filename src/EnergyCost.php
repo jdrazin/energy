@@ -6,8 +6,6 @@ use Exception;
 
 class EnergyCost extends Root
 {
-    const float     THRESHOLD_POWER_W = 100.0;
-
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
                     OPTIMISATION_LOG        = '/var/www/html/energy/test/optimisation.log',
@@ -242,17 +240,10 @@ class EnergyCost extends Root
         } else {                                                        // DISCHARGE
             $charge_power_w = (int) round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
         }
-        if (abs($charge_power_w) < self::THRESHOLD_POWER_W) {           // ECO if no appreciable charge / discharge
-            $mode = 'ECO';
-            $abs_charge_power_w   = null;
-            $target_level_percent = null;
-            $message = $mode;
-        } else {                                                        // CHARGE, DISCHARGE when above threshold charge power
-            $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
-            $abs_charge_power_w   = abs($charge_power_w);
-            $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
-            $message              = $mode . ' @' . $abs_charge_power_w . 'W to ' . $target_level_percent .  '%';
-        }
+        $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
+        $abs_charge_power_w   = abs($charge_power_w);
+        $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
+        $message              = $mode . ' @' . $abs_charge_power_w . 'W to ' . $target_level_percent .  '%';
         return [
             'id'                    => $id,
             'start'                 => $start,

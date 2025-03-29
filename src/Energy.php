@@ -119,7 +119,7 @@ class Energy extends Root
         if (!$this->authenticate()) {
             return false;
         }
-        $sql = 'SELECT   CONCAT(`slo`.`message`, \', now @\', ROUND(1000.0*ABS(`sli`.`charge_kw`)), \'W (\' , TIME(`sli`.`timestamp`), \')\' )
+        $sql = 'SELECT   CONCAT(`slo`.`message`, \' at \', DATE_FORMAT(`slo`.`stop`, \'%H:%i\') , \' UTC, now @\', ROUND(1000.0*ABS(`sli`.`charge_kw`)), \'W (\' , TIME(`sli`.`timestamp`), \')\' )
                     FROM  `sliver_solutions` `sli`
                     INNER JOIN `slot_solutions` `slo` ON `slo`.`id` = `sli`.`slot_solution`
                     WHERE `sli`.`id` = (SELECT MAX(`id`)

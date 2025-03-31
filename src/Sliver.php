@@ -50,7 +50,7 @@ class Sliver extends Root
             throw new Exception($message);
         }
         $sql = 'INSERT INTO `slivers` (`id`, `grid_kw`,  `grid_tariff_gbp_per_kwh`, `charge_kw`, `battery_level_kwh`, `grid_gbp_per_hour`, `wear_gbp_per_hour`, `total_gbp_per_hour`, `cost_total_wear_gbp_per_hour`)
-                             VALUES (?,     ?,          ?,                         ?,           ?,                   ?,                   ?,                   ?,                    ?                             )';
+                               VALUES (?,     ?,          ?,                         ?,           ?,                   ?,                   ?,                   ?,                    ?                            )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('idddddddd', $id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $battery_level_kwh, $grid_gbp_per_hour, $wear_gbp_per_hour, $total_gbp_per_hour, $cost_wear_gbp_per_hour)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

@@ -202,14 +202,16 @@ class Sliver extends Root
             return [];
         }
         else {
-            return ['slot_solution'         =>  $slot_solution,
-                    'start'                 =>  $start,
-                    'stop'                  =>  $stop,
-                    'mode'                  =>  $mode,
-                    'abs_charge_power_w'    =>  $abs_charge_power_w,
-                    'target_level_percent'  =>  $target_level_percent,
-                    'import_gbp_per_kwh'    =>  $import_gbp_per_kwh,
-                    'export_gbp_per_kwh'    =>  $export_gbp_per_kwh];
+            return [
+                    'slot_solution'        => $slot_solution,
+                    'start'                => $start,
+                    'stop'                 => $stop,
+                    'mode'                 => $mode,
+                    'abs_charge_power_w'   => $abs_charge_power_w,
+                    'target_level_percent' => $target_level_percent,
+                    'import_gbp_per_kwh'   => $import_gbp_per_kwh,
+                    'export_gbp_per_kwh'   => $export_gbp_per_kwh
+                    ];
         }
     }
 }

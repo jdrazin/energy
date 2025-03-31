@@ -25,8 +25,19 @@ class Sliver extends Root
         if (!($slot_target_parameters = $this->slotTargetParameters())) { // get slot target parameters
             return 'No slot data';
         }
+        // insert sliver solution row get get primary key
         $slot_solution              = $slot_target_parameters['slot_solution'];
-        $slot_mode                  = $slot_target_parameters['mode'];
+        $sql = 'INSERT INTO `sliver_solutions`  (`slot_solution`) VALUES (?)';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $slot_solution) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $sliver_id = $this->mysqli->insert_id;
+
+        $slot_mode                  =  $slot_target_parameters['mode'];
         $battery                    =  $givenergy->latest();                                // get battery data
         $ev_load_kw                 =  $givenergy->evLatestPowerW()/1000.0;                 // ev load
         $battery_level_percent      =  $battery['battery']['percent'];
@@ -89,8 +100,15 @@ class Sliver extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        $sql = 'INSERT INTO `sliver_solutions`  (`slot_solution`, `charge_kw`, `level_percent`, `cost_total_gbp_per_hour`, `cost_grid_gbp_per_hour`, `cost_wear_gbp_per_hour`, `house_load_kw`, `solar_kw`) 
-                                         VALUES (?,               ?,           ?,               ?,                        ?,                        ?,                          ?,               ?        )';
+        $sql = 'UPDATE  `sliver_solutions`
+                    SET `charge_kw` = ?,
+                        `level_percent`,
+                        `cost_total_gbp_per_hour`,
+                        `cost_grid_gbp_per_hour`,
+                        `cost_wear_gbp_per_hour`,
+                        `house_load_kw`,
+                        `solar_kw`
+                  WHERE `slot_solution` = ?';
         $optimum                 = $data[$optimum_id];
         $optimum_charge_kw       = $optimum['charge_kw'];
         $cost_total_gbp_per_hour = round($optimum['total_gbp_per_hour'], 3);

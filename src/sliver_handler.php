@@ -66,4 +66,5 @@ catch (GuzzleException $e) {
     (new Root())->logDb('MESSAGE', $message,  null, 'FATAL');
     echo $message . PHP_EOL;
     exit(1);
+} catch (Exception $e) {
 }

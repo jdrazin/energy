@@ -20,8 +20,8 @@ class Sliver extends Root
      * @throws Exception
      */
     public function charge_w(): string {
-        $givenergy                    = new GivEnergy();
-        $energy_cost                  = new EnergyCost(null, null);
+        $givenergy   = new GivEnergy();
+        $energy_cost = new EnergyCost(null, null);
         if (!($slot_target_parameters = $this->slotTargetParameters())) { // no slot solution target, no sliver to solve so place in ECO mode
             $command = [
                         'slot_solution'         =>  null,

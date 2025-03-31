@@ -23,12 +23,14 @@ class Sliver extends Root
         $givenergy                    = new GivEnergy();
         $energy_cost                  = new EnergyCost(null, null);
         if (!($slot_target_parameters = $this->slotTargetParameters())) { // no slot solution target, no sliver to solve so place in ECO mode
-            $command = ['slot_solution'         =>  null,
+            $command = [
+                        'slot_solution'         =>  null,
                         'start'                 =>  null,
                         'stop'                  =>  null,
                         'mode'                  =>  'ECO',
                         'abs_charge_power_w'    =>  null,
-                        'target_level_percent'  =>  null];
+                        'target_level_percent'  =>  null
+                        ];
         }
         else { // insert sliver solution row get get primary key
             $slot_solution = $slot_target_parameters['slot_solution'];

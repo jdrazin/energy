@@ -31,8 +31,8 @@ class Sliver extends Root
                         'target_level_percent'  =>  null];
         }
         else { // insert sliver solution row get get primary key
-            $slot_solution              = $slot_target_parameters['slot_solution'];
-            $sql = 'INSERT INTO `sliver_solutions`  (`slot_solution`) VALUES (?)';
+            $slot_solution = $slot_target_parameters['slot_solution'];
+            $sql = 'INSERT INTO `sliver_solutions` (`slot_solution`) VALUES (?)';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('i', $slot_solution) ||
                 !$stmt->execute()) {
@@ -40,7 +40,7 @@ class Sliver extends Root
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
-            $sliver_solution_id         = $this->mysqli->insert_id;
+            $sliver_solution_id         =  $this->mysqli->insert_id;
             $slot_mode                  =  $slot_target_parameters['mode'];
             $battery                    =  $givenergy->latest();                                // get battery data
             $ev_load_kw                 =  $givenergy->evLatestPowerW()/1000.0;                 // ev load

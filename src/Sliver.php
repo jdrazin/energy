@@ -19,7 +19,7 @@ class Sliver extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function charge_w(): string {
+    public function command(): void {
         $givenergy   = new GivEnergy();
         $energy_cost = new EnergyCost(null, null);
         if (!($slot_target_parameters = $this->slotTargetParameters())) { // no slot solution target, no sliver to solve so place in ECO mode
@@ -172,7 +172,6 @@ class Sliver extends Root
         if (ENABLE_SLIVER_COMMAND) {                        // control battery for active combination on completion of countdown to next slot
             $givenergy->control($command);
         }
-        return (string) $charge_power_w;
     }
 
     /**

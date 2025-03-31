@@ -90,9 +90,9 @@ class Sliver extends Root
             }
             $charge_kw += $charge_increment_kw;
         }
-        $sql = 'UPDATE      `slivers`
-                    SET     `optimum` = TRUE
-                    WHERE   `id` = ?';
+        $sql = 'UPDATE    `slivers`
+                    SET   `optimum` = TRUE
+                    WHERE `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $optimum_id) ||
             !$stmt->execute()) {
@@ -102,12 +102,12 @@ class Sliver extends Root
         }
         $sql = 'UPDATE  `sliver_solutions`
                     SET `charge_kw` = ?,
-                        `level_percent`,
-                        `cost_total_gbp_per_hour`,
-                        `cost_grid_gbp_per_hour`,
-                        `cost_wear_gbp_per_hour`,
-                        `house_load_kw`,
-                        `solar_kw`
+                        `level_percent` = ?,
+                        `cost_total_gbp_per_hour` = ?,
+                        `cost_grid_gbp_per_hour` = ?,
+                        `cost_wear_gbp_per_hour` = ?,
+                        `house_load_kw` = ?,
+                        `solar_kw` = ?
                   WHERE `slot_solution` = ?';
         $optimum                 = $data[$optimum_id];
         $optimum_charge_kw       = $optimum['charge_kw'];

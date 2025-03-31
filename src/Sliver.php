@@ -7,7 +7,6 @@ use GuzzleHttp\Exception\GuzzleException;
 class Sliver extends Root
 {
     const int   SLIVER_DURATION_MINUTES = 1,
-                SLIVER_DB_MAX_AGE_DAY   = 7,
                 CHARGE_POWER_LEVELS     = 100;
     const float CHARGE_DISCHARGE_MIN_KW = 0.5;
 
@@ -131,14 +130,6 @@ class Sliver extends Root
         $charge_power_w = round(1000.0 * $charge_kw);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ididdddd', $slot_solution, $charge_kw,$battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $cost_wear_gbp_per_hour, $house_load_kw, $solar_kw) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        $sql = 'DELETE FROM `sliver_solutions`
-                    WHERE `timestamp` + INTERVAL ' . self::SLIVER_DB_MAX_AGE_DAY . ' DAY < NOW()';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');

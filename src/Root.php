@@ -17,7 +17,8 @@ class Root
                             SECONDS_PER_MINUTE = 60,
                             JSON_MAX_DEPTH = 10,
                             LOG_MAX_CHARS = 255,
-                            CUBIC_SPLINE_MULTIPLE = 8;
+                            CUBIC_SPLINE_MULTIPLE = 8,
+                            SLOT_SOLUTIIONS_DB_MAX_AGE_DAY = 30;
     private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
     public array            $apis = [], $config = [], $tariff_combinations = [];
     protected               mysqli $mysqli;

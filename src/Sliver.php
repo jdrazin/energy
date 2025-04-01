@@ -143,7 +143,7 @@ class Sliver extends Root
                     break;
                 }
             }
-            $charge_power_w = round(1000.0 * $charge_kw);
+            $charge_power_w = round(1000.0 * $optimum_charge_kw);
             $sql = 'UPDATE  `sliver_solutions`
                         SET `slot_solution` = ?,
                             `charge_kw` = ?,
@@ -155,7 +155,7 @@ class Sliver extends Root
                             `solar_kw` = ?
                       WHERE `id` = ?';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('ididddddi', $slot_solution, $charge_kw, $battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $wear_gbp_per_hour, $house_load_kw, $solar_kw, $sliver_solution_id) ||
+                !$stmt->bind_param('ididddddi', $slot_solution, $optimum_charge_kw, $battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $wear_gbp_per_hour, $house_load_kw, $solar_kw, $sliver_solution_id) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');

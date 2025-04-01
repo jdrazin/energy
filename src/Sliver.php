@@ -67,9 +67,9 @@ class Sliver extends Root
                 throw new Exception($message);
             }
             $sql = 'INSERT INTO `slivers` (`id`, `sliver_solution`, `grid_kw`, `grid_tariff_gbp_per_kwh`, `charge_kw`, `grid_gbp_per_hour`, `total_gbp_per_hour`, `wear_gbp_per_hour`)
-                                   VALUES (?,    ?,                 ?,         ?,                         ?,           ?,                   ?,                    ?                            )';
+                                   VALUES (?,    ?,                 ?,         ?,                         ?,           ?,                   ?,                    ?                  )';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('iidddddd', $id,  $sliver_solution_id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $grid_gbp_per_hour, $total_gbp_per_hour, $cost_wear_gbp_per_hour)) {
+                !$stmt->bind_param('iidddddd', $id,  $sliver_solution_id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $grid_gbp_per_hour, $total_gbp_per_hour, $wear_gbp_per_hour)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
@@ -79,8 +79,8 @@ class Sliver extends Root
                 $grid_tariff_gbp_per_kwh  =   $grid_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'];
                 $grid_gbp_per_hour        =  -$grid_tariff_gbp_per_kwh*$grid_kw;
                 $wear_gbp_per_hour        =  $energy_cost->wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour);
-                $cost_wear_gbp_per_hour   =  $wear_gbp_per_hour['grid_power'];
-                $total_gbp_per_hour       =  $grid_gbp_per_hour + $cost_wear_gbp_per_hour;
+                $wear_gbp_per_hour   =  $wear_gbp_per_hour['grid_power'];
+                $total_gbp_per_hour       =  $grid_gbp_per_hour + $wear_gbp_per_hour;
                 $data[$id] =    [
                                 'grid_kw'                         => $grid_kw,
                                 'grid_tariff_gbp_per_kwh'         => $grid_tariff_gbp_per_kwh,
@@ -88,7 +88,7 @@ class Sliver extends Root
                                 'battery_level_kwh'               => $battery_level_kwh,
                                 'grid_gbp_per_hour'               => $grid_gbp_per_hour,
                                 'total_gbp_per_hour'              => $total_gbp_per_hour,
-                                'cost_total_wear_gbp_per_hour'    => $cost_wear_gbp_per_hour
+                                'cost_total_wear_gbp_per_hour'    => $wear_gbp_per_hour
                                 ];
                 $stmt->execute();
                 if (is_null($optimum_total_gbp_per_hour) || ($total_gbp_per_hour < $optimum_total_gbp_per_hour)) {
@@ -111,7 +111,7 @@ class Sliver extends Root
             $optimum_charge_kw       = $optimum['charge_kw'];
             $cost_total_gbp_per_hour = round($optimum['total_gbp_per_hour'], 3);
             $cost_grid_gbp_per_hour  = round($optimum['grid_gbp_per_hour'], 3);
-            $cost_wear_gbp_per_hour  = round($optimum['cost_total_wear_gbp_per_hour'], 3);
+            $wear_gbp_per_hour  = round($optimum['cost_total_wear_gbp_per_hour'], 3);
             switch ($slot_mode) {
                 case 'CHARGE':          // calculate target percent level into slot
                 case 'DISCHARGE': {
@@ -155,7 +155,7 @@ class Sliver extends Root
                             `solar_kw` = ?
                       WHERE `id` = ?';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('ididddddi', $slot_solution, $charge_kw, $battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $cost_wear_gbp_per_hour, $house_load_kw, $solar_kw, $sliver_solution_id) ||
+                !$stmt->bind_param('ididddddi', $slot_solution, $charge_kw, $battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $wear_gbp_per_hour, $house_load_kw, $solar_kw, $sliver_solution_id) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');

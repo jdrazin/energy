@@ -242,7 +242,7 @@ class EnergyCost extends Root
         }
         $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
         $abs_charge_power_w   = abs($charge_power_w);
-        $target_level_percent = (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh);
+        $target_level_percent = min(100, max(0, (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh)));
         $message              = $mode . ' @' . $abs_charge_power_w . 'W to ' . $target_level_percent .  '%';
         return [
             'id'                    => $id,

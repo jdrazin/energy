@@ -66,10 +66,10 @@ class Sliver extends Root
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
-            $sql = 'INSERT INTO `slivers` (`id`, `grid_kw`,  `grid_tariff_gbp_per_kwh`, `charge_kw`, `battery_level_kwh`, `grid_gbp_per_hour`, `wear_gbp_per_hour`, `total_gbp_per_hour`, `cost_total_wear_gbp_per_hour`)
-                               VALUES (?,     ?,          ?,                         ?,           ?,                   ?,                   ?,                   ?,                    ?                            )';
+            $sql = 'INSERT INTO `slivers` (`id`, `grid_kw`, `grid_tariff_gbp_per_kwh`, `charge_kw`, `grid_gbp_per_hour`, `wear_gbp_per_hour`, `total_gbp_per_hour`, `cost_total_wear_gbp_per_hour`)
+                                   VALUES (?,    ?,         ?,                         ?,           ?,                    ?,                   ?,                    ?                            )';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('idddddddd', $id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $battery_level_kwh, $grid_gbp_per_hour, $wear_gbp_per_hour, $total_gbp_per_hour, $cost_wear_gbp_per_hour)) {
+                !$stmt->bind_param('iddddddd', $id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $grid_gbp_per_hour, $wear_gbp_per_hour, $total_gbp_per_hour, $cost_wear_gbp_per_hour)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
@@ -106,15 +106,6 @@ class Sliver extends Root
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
-            $sql = 'UPDATE  `sliver_solutions`
-                    SET `charge_kw` = ?,
-                        `level_percent` = ?,
-                        `cost_total_gbp_per_hour` = ?,
-                        `cost_grid_gbp_per_hour` = ?,
-                        `cost_wear_gbp_per_hour` = ?,
-                        `house_load_kw` = ?,
-                        `solar_kw` = ?
-                  WHERE `slot_solution` = ?';
             $optimum                 = $data[$optimum_id];
             $optimum_charge_kw       = $optimum['charge_kw'];
             $cost_total_gbp_per_hour = round($optimum['total_gbp_per_hour'], 3);
@@ -134,7 +125,7 @@ class Sliver extends Root
                     break;
                 }
                 default:
-                    $target_percent                = null;
+                    $target_percent = null;
             }
             switch ($slot_mode) {
                 case 'CHARGE': {    // only charge if above min efficient power and target not reached
@@ -152,8 +143,18 @@ class Sliver extends Root
                 }
             }
             $charge_power_w = round(1000.0 * $charge_kw);
+            $sql = 'UPDATE  `sliver_solutions`
+                        SET `slot_solution` = ?,
+                            `charge_kw` = ?,
+                            `level_percent` = ?,
+                            `cost_total_gbp_per_hour` = ?,
+                            `cost_grid_gbp_per_hour` = ?,
+                            `cost_wear_gbp_per_hour` = ?,
+                            `house_load_kw` = ?,
+                            `solar_kw` = ?
+                      WHERE `id` = ?';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('ididddddi', $slot_solution, $charge_kw,$battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $cost_wear_gbp_per_hour, $house_load_kw, $solar_kw, $sliver_solution_id) ||
+                !$stmt->bind_param('ididddddi', $slot_solution, $charge_kw, $battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $cost_wear_gbp_per_hour, $house_load_kw, $solar_kw, $sliver_solution_id) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');

@@ -84,7 +84,7 @@
       "name": "inverter",
       "#": "https://www.researchgate.net/figure/Efficiency-curve-of-various-solar-inverters_fig8_258220930",
       "cost_install_gbp": 0,
-      "power_threshold_kw": 11.0,
+      "power_threshold_kw": 11.5,
       "out_of_spec_activation_power_kw": 0.4,
       "power_efficiency": 0.96
     },

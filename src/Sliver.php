@@ -66,10 +66,10 @@ class Sliver extends Root
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
-            $sql = 'INSERT INTO `slivers` (`id`, `sliver_solution`, `grid_kw`, `grid_tariff_gbp_per_kwh`, `charge_kw`, `grid_gbp_per_hour`, `wear_gbp_per_hour`, `total_gbp_per_hour`, `cost_total_wear_gbp_per_hour`)
-                                   VALUES (?,    ?,                 ?,         ?,                         ?,           ?,                    ?,                   ?,                    ?                            )';
+            $sql = 'INSERT INTO `slivers` (`id`, `sliver_solution`, `grid_kw`, `grid_tariff_gbp_per_kwh`, `charge_kw`, `grid_gbp_per_hour`, `total_gbp_per_hour`, `wear_gbp_per_hour`)
+                                   VALUES (?,    ?,                 ?,         ?,                         ?,           ?,                   ?,                    ?                            )';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('iiddddddd', $id,  $sliver_solution_id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $grid_gbp_per_hour, $wear_gbp_per_hour, $total_gbp_per_hour, $cost_wear_gbp_per_hour)) {
+                !$stmt->bind_param('iidddddd', $id,  $sliver_solution_id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $grid_gbp_per_hour, $total_gbp_per_hour, $cost_wear_gbp_per_hour)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
@@ -81,14 +81,15 @@ class Sliver extends Root
                 $wear_gbp_per_hour        =  $energy_cost->wearGbpPerHour($grid_kw, $charge_kw, $battery_level_kwh, $duration_hour);
                 $cost_wear_gbp_per_hour   =  $wear_gbp_per_hour['grid_power'];
                 $total_gbp_per_hour       =  $grid_gbp_per_hour + $cost_wear_gbp_per_hour;
-                $data[$id] = ['grid_kw'                         => $grid_kw,
-                    'grid_tariff_gbp_per_kwh'         => $grid_tariff_gbp_per_kwh,
-                    'charge_kw'                       => $charge_kw,
-                    'battery_level_kwh'               => $battery_level_kwh,
-                    'grid_gbp_per_hour'               => $grid_gbp_per_hour,
-                    'wear_gbp_per_hour'               => $wear_gbp_per_hour,
-                    'total_gbp_per_hour'              => $total_gbp_per_hour,
-                    'cost_total_wear_gbp_per_hour'    => $cost_wear_gbp_per_hour];
+                $data[$id] =    [
+                                'grid_kw'                         => $grid_kw,
+                                'grid_tariff_gbp_per_kwh'         => $grid_tariff_gbp_per_kwh,
+                                'charge_kw'                       => $charge_kw,
+                                'battery_level_kwh'               => $battery_level_kwh,
+                                'grid_gbp_per_hour'               => $grid_gbp_per_hour,
+                                'total_gbp_per_hour'              => $total_gbp_per_hour,
+                                'cost_total_wear_gbp_per_hour'    => $cost_wear_gbp_per_hour
+                                ];
                 $stmt->execute();
                 if (is_null($optimum_total_gbp_per_hour) || ($total_gbp_per_hour < $optimum_total_gbp_per_hour)) {
                     $optimum_total_gbp_per_hour = $total_gbp_per_hour;

@@ -66,10 +66,10 @@ class Sliver extends Root
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
-            $sql = 'INSERT INTO `slivers` (`id`, `grid_kw`, `grid_tariff_gbp_per_kwh`, `charge_kw`, `grid_gbp_per_hour`, `wear_gbp_per_hour`, `total_gbp_per_hour`, `cost_total_wear_gbp_per_hour`)
-                                   VALUES (?,    ?,         ?,                         ?,           ?,                    ?,                   ?,                    ?                            )';
+            $sql = 'INSERT INTO `slivers` (`id`, `sliver_solution`, `grid_kw`, `grid_tariff_gbp_per_kwh`, `charge_kw`, `grid_gbp_per_hour`, `wear_gbp_per_hour`, `total_gbp_per_hour`, `cost_total_wear_gbp_per_hour`)
+                                   VALUES (?,    ?,                 ?,         ?,                         ?,           ?,                    ?,                   ?,                    ?                            )';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('iddddddd', $id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $grid_gbp_per_hour, $wear_gbp_per_hour, $total_gbp_per_hour, $cost_wear_gbp_per_hour)) {
+                !$stmt->bind_param('iiddddddd', $id,  $sliver_solution_id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $grid_gbp_per_hour, $wear_gbp_per_hour, $total_gbp_per_hour, $cost_wear_gbp_per_hour)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);

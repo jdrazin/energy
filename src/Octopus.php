@@ -176,10 +176,17 @@ class Octopus extends Root
             $this->requestResult(false);
             return;
         }
-        foreach (self::DIRECTIONS as $tariffs_rates) {
-            $this->getTariff($tariffs_rates);
+        try {
+            foreach (self::DIRECTIONS as $tariffs_rates) {
+                $this->getTariff($tariffs_rates);
+            }
+            $success = true;
         }
-        $this->requestResult(true); // update timestamp for successful request
+        catch (exception $e) { // log warning if request fails
+            $this->logDb('MESSAGE', $e->getMessage(),  null, 'WARNING');
+            $success = false;
+        }
+        $this->requestResult($success); // update timestamp
     }
 
     /**
@@ -205,9 +212,6 @@ class Octopus extends Root
                     $message = $e->getMessage();
                     (new Root())->logDb('MESSAGE', $message,  null,'WARNING');
                     echo $message . PHP_EOL;
-                    if ($this->requestIsStale(__NAMESPACE__, __CLASS__)) { // give up if too long since last successful request
-                        throw new Exception($message);
-                    }
                 }
             }
         }

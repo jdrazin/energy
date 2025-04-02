@@ -361,25 +361,6 @@ class Root
     /**
      * @throws Exception
      */
-    protected function requestIsStale(): bool {// returns whether to requests are stale (i.e. cannot proceed)
-        $sql = 'SELECT NOW() > `last_successful_request` + INTERVAL `max_minutes_since_last` MINUTE
-                    FROM  `requests`
-                    WHERE `host` = ?';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('s', $this->class) ||
-            !$stmt->bind_result($request_is_stale) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        $stmt->fetch();
-        return $request_is_stale;
-    }
-
-    /**
-     * @throws Exception
-     */
     public function requestResult($success): void
     { // updates timestamp of request, and timestamp of successful request if successful
         $sql = 'UPDATE `requests`
@@ -394,6 +375,30 @@ class Root
             throw new Exception($message);
         }
         $this->mysqli->commit();
+        if (!$success && $this->requestIsStale()) { // give up if too long since last successful request
+           $message = $this->class . ': requests are stale';
+           (new Root())->logDb('MESSAGE', $message,  null,'FATAL');
+           throw new Exception($message);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function requestIsStale(): bool {  // returns whether to requests are stale (i.e. cannot proceed)
+        $sql = 'SELECT NOW() > `last_successful_request` + INTERVAL `max_minutes_since_last` MINUTE
+                    FROM  `requests`
+                    WHERE `host` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('s', $this->class) ||
+            !$stmt->bind_result($request_is_stale) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $stmt->fetch();
+        return $request_is_stale;
     }
 
     /**

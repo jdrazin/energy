@@ -1,8 +1,6 @@
 <?php
 namespace Src;
 
-
-
 class HeatPump extends Component
 {
 
@@ -29,13 +27,13 @@ class HeatPump extends Component
     {
         if (!$this->active || !$request_transfer_consume_j) {
             $transfer_consume_j = ['transfer' => 0.0,
-                'consume' => 0.0];
+                                   'consume'  => 0.0];
         } else {
             $cop = $this->cop($temp_delta_c);
             $transfer_cap_j = min($request_transfer_consume_j, $this->max_output_j);        // cap transfer at heatpump capacity
             $consumed_cap_j = $this->energy_background_step_j + ($transfer_cap_j / $cop);
             $transfer_consume_j = ['transfer' => $transfer_cap_j,
-                'consume' => $consumed_cap_j];
+                                    'consume' => $consumed_cap_j];
         }
         $this->transferConsumeUpdate($transfer_consume_j, $time);
         return $transfer_consume_j;

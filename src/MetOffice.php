@@ -28,13 +28,20 @@ class MetOffice extends Root
 
     public function forecast(): void
     {
+        $made_successful_request = false;
         if ($this->skipRequest()) { // skip request if called recently
-            $this->requestResult(false); // update timestamp for failed request
+            $this->requestResult(false); // update timestamp
             return;
         }
-        $forecast = $this->getForecast();
-        $this->insertPoints($forecast['features'][0]['properties']['timeSeries']);
-        $this->requestResult(true); // update timestamp for successful request
+        try {
+            $forecast = $this->getForecast();
+            $this->insertPoints($forecast['features'][0]['properties']['timeSeries']);
+            $made_successful_request = true;
+        }
+        catch (exception $e) { // log warning if request fails
+            $this->logDb('MESSAGE', $e->getMessage(),  null, 'WARNING');
+        }
+        $this->requestResult($made_successful_request); // update timestamp
     }
 
     /**

@@ -23,20 +23,26 @@ class Solcast extends Root
     }
 
     /**
-     * @throws DateMalformedStringException
      * @throws Exception
      * @throws GuzzleException
      * @throws \Exception
      */
     public function getSolarActualForecast(): void
     {
+        $made_successful_request = false;
         if ($this->skipRequest()) { // skip request if called recently
             $this->requestResult(false); // update timestamp for failed request
             return;
         }
-        $this->insertEnergy();
-        $this->deleteOldForecasts();
-        $this->requestResult(true); // update timestamp for successful request
+        try {
+            $this->insertEnergy();
+            $this->deleteOldForecasts();
+            $made_successful_request = true;
+        }
+        catch (exception $e) {
+            $this->logDb('MESSAGE', $e->getMessage(),  null, 'WARNING');
+        }
+        $this->requestResult($made_successful_request); // update timestamp for successful request
     }
 
     /**

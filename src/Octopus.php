@@ -172,6 +172,7 @@ class Octopus extends Root
      */
     public function requestTariffs(): void  // get tariffs for both directions
     {
+        $made_successful_request = false;
         if ($this->skipRequest()) {  // skip request if called recently
             $this->requestResult(false);
             return;
@@ -180,13 +181,12 @@ class Octopus extends Root
             foreach (self::DIRECTIONS as $tariffs_rates) {
                 $this->getTariff($tariffs_rates);
             }
-            $success = true;
+            $made_successful_request = true;
         }
         catch (exception $e) { // log warning if request fails
             $this->logDb('MESSAGE', $e->getMessage(),  null, 'WARNING');
-            $success = false;
         }
-        $this->requestResult($success); // update timestamp
+        $this->requestResult($made_successful_request); // update timestamp
     }
 
     /**

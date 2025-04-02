@@ -361,21 +361,21 @@ class Root
     /**
      * @throws Exception
      */
-    public function requestResult($success): void
+    public function requestResult($made_successful_request): void
     { // updates timestamp of request, and timestamp of successful request if successful
         $sql = 'UPDATE `requests`
                    SET `last_request`            = NOW(),
                        `last_successful_request` = IF(?, NOW(), `last_successful_request`)
                    WHERE `host` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('is', $success, $this->class) ||
+            !$stmt->bind_param('is', $made_successful_request, $this->class) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $this->mysqli->commit();
-        if (!$success && $this->requestIsStale()) { // give up if too long since last successful request
+        if (!$made_successful_request && $this->requestIsStale()) { // give up if too long since last successful request
            $message = $this->class . ': requests are stale';
            (new Root())->logDb('MESSAGE', $message,  null,'FATAL');
            throw new Exception($message);

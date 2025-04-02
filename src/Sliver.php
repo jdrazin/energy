@@ -130,11 +130,11 @@ class Sliver extends Root
             }
             switch ($slot_mode) {
                 case 'CHARGE': {    // only charge if above min efficient power and target not reached
-                    $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW)  && ($battery_level_percent < $target_percent)) ? round($optimum_charge_kw, 3) : 0.0;
+                    $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent < $target_percent) && ($optimum_charge_kw > 0.0)) ? round($optimum_charge_kw, 3) : 0.0;
                     break;
                 }
                 case 'DISCHARGE': { // only discharge if above min efficient power and target not reached
-                    $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent > $target_percent)) ? round($optimum_charge_kw, 3) : 0.0;
+                    $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW)&& ($battery_level_percent > $target_percent) && ($optimum_charge_kw < 0.0)) ? round($optimum_charge_kw, 3) : 0.0;
                     break;
                 }
                 case 'ECO':
@@ -143,7 +143,6 @@ class Sliver extends Root
                     break;
                 }
             }
-            $charge_power_w = round(1000.0 * $optimum_charge_kw);
             $sql = 'UPDATE  `sliver_solutions`
                         SET `slot_solution` = ?,
                             `charge_kw` = ?,
@@ -154,8 +153,9 @@ class Sliver extends Root
                             `house_load_kw` = ?,
                             `solar_kw` = ?
                       WHERE `id` = ?';
+            $abs_charge_power_w = abs(round(1000.0 * $charge_kw));
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('ididddddi', $slot_solution, $optimum_charge_kw, $battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $wear_gbp_per_hour, $house_load_kw, $solar_kw, $sliver_solution_id) ||
+                !$stmt->bind_param('ididddddi', $slot_solution, $charge_kw, $battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $wear_gbp_per_hour, $house_load_kw, $solar_kw, $sliver_solution_id) ||
                 !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -166,7 +166,7 @@ class Sliver extends Root
                             'mode'                  => $slot_mode,
                             'start'                 => (new DateTime($slot_target_parameters['start']))->format('H:i'),
                             'stop'                  => (new DateTime($slot_target_parameters['stop'])) ->format('H:i'),
-                            'abs_charge_power_w'    => abs($charge_power_w),
+                            'abs_charge_power_w'    => $abs_charge_power_w,
                             'target_level_percent'  => $slot_end_target_level_percent,
                             'message'               => 'sliver control'
                         ];

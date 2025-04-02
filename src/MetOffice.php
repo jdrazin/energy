@@ -16,7 +16,8 @@ class MetOffice extends Root
     public function __construct()
     {
         parent::__construct();
-        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
+        $this->class = $this->strip_namespace(__NAMESPACE__, __CLASS__);
+        $this->api = $this->apis[$this->class];
         $this->location = $this->config['location'];
     }
 
@@ -27,13 +28,13 @@ class MetOffice extends Root
 
     public function forecast(): void
     {
-        if ($this->skipRequest(__NAMESPACE__, __CLASS__)) { // skip request if called recently
-            $this->requestResult(__CLASS__, false); // update timestamp for failed request
+        if ($this->skipRequest()) { // skip request if called recently
+            $this->requestResult(false); // update timestamp for failed request
             return;
         }
         $forecast = $this->getForecast();
         $this->insertPoints($forecast['features'][0]['properties']['timeSeries']);
-        $this->requestResult(__CLASS__, true); // update timestamp for successful request
+        $this->requestResult(true); // update timestamp for successful request
     }
 
     /**

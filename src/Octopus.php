@@ -40,7 +40,8 @@ class Octopus extends Root
     public function __construct()
     {
         parent::__construct();
-        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__, __CLASS__)];
+        $this->class = $this->strip_namespace(__NAMESPACE__, __CLASS__);
+        $this->api = $this->apis[$this->class];
         $this->requestTariffs();                                                // get latest tariff data
         $this->tariffCombinationsActiveFirst();                                 // get tariff combinations of interest, starting with active combination
     }
@@ -52,7 +53,7 @@ class Octopus extends Root
     public function traverseTariffs($cron): void
     {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', '', null, 'NOTICE');
-        if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
+        if (!Root::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
             $db_slots = new DbSlots();                                           // make day slots
             $values = new Values();
             $givenergy = new GivEnergy();
@@ -171,14 +172,14 @@ class Octopus extends Root
      */
     public function requestTariffs(): void  // get tariffs for both directions
     {
-        if ($this->skipRequest(__NAMESPACE__, __CLASS__)) {  // skip request if called recently
-            $this->requestResult(__CLASS__, false);
+        if ($this->skipRequest()) {  // skip request if called recently
+            $this->requestResult(false);
             return;
         }
         foreach (self::DIRECTIONS as $tariffs_rates) {
             $this->getTariff($tariffs_rates);
         }
-        $this->requestResult(__CLASS__, true); // update timestamp for successful request
+        $this->requestResult(true); // update timestamp for successful request
     }
 
     /**

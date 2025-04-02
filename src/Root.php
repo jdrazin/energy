@@ -22,6 +22,7 @@ class Root
     private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
     public array            $apis = [], $config = [], $tariff_combinations = [];
     protected               mysqli $mysqli;
+    protected string        $class;
     private const           int FORECAST_STALE_HOURS = 2;
 
     /**
@@ -341,13 +342,12 @@ class Root
     /**
      * @throws Exception
      */
-    public function skipRequest($namespace, $class): bool { // returns whether to skip request to prevent overloading server
-        $class = $this->strip_namespace($namespace, $class);
+    public function skipRequest(): bool { // returns whether to skip request to prevent overloading server
         $sql = 'SELECT NOW() < `last_successful_request` + INTERVAL `min_minutes_since_last` MINUTE
                     FROM    `requests`
                     WHERE   `host` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('s', $class) ||
+            !$stmt->bind_param('s', $this->class) ||
             !$stmt->bind_result($skip_request) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -358,13 +358,15 @@ class Root
         return is_null($skip_request) ? false : $skip_request;
     }
 
-    protected function requestIsStale($namespace, $class): bool {// returns whether to requests are stale (i.e. cannot proceed)
-        $class = $this->strip_namespace($namespace, $class);
+    /**
+     * @throws Exception
+     */
+    protected function requestIsStale(): bool {// returns whether to requests are stale (i.e. cannot proceed)
         $sql = 'SELECT NOW() > `last_successful_request` + INTERVAL `max_minutes_since_last` MINUTE
                     FROM    `requests`
                     WHERE   `host` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('s', $class) ||
+            !$stmt->bind_param('s', $this->class) ||
             !$stmt->bind_result($request_is_stale) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -378,14 +380,14 @@ class Root
     /**
      * @throws Exception
      */
-    public function requestResult($class, $skip_request): void
+    public function requestResult($skip_request): void
     { // updates timestamp of request, and timestamp of successful request if successful
         $sql = 'UPDATE `requests`
                    SET `last_request`            = NOW(),
                        `last_successful_request` = IF(?, `last_successful_request`, NOW())
                    WHERE `host` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('is', $skip_request, $class) ||
+            !$stmt->bind_param('is', $skip_request, $this->class) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');

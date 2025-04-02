@@ -29,7 +29,8 @@ class EmonCms extends Root
     public function __construct()
     {
         parent::__construct();
-        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
+        $this->class = $this->strip_namespace(__NAMESPACE__, __CLASS__);
+        $this->api = $this->apis[$this->class];
     }
 
     /**
@@ -39,13 +40,13 @@ class EmonCms extends Root
      */
     public function getData(): void
     {
-        if ($this->skipRequest(__NAMESPACE__, __CLASS__)) {  // skip request if called recently
-            $this->requestResult(__CLASS__, false); // update timestamp for failed request
+        if ($this->skipRequest()) {  // skip request if called recently
+            $this->requestResult(false); // update timestamp for failed request
             return;
         }
         $this->getHeating();
         $this->getTempExternal();
-        $this->requestResult(__CLASS__, true); // update timestamp for successful request
+        $this->requestResult(true); // update timestamp for successful request
     }
 
     /**

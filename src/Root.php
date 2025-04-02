@@ -363,8 +363,8 @@ class Root
      */
     protected function requestIsStale(): bool {// returns whether to requests are stale (i.e. cannot proceed)
         $sql = 'SELECT NOW() > `last_successful_request` + INTERVAL `max_minutes_since_last` MINUTE
-                    FROM    `requests`
-                    WHERE   `host` = ?';
+                    FROM  `requests`
+                    WHERE `host` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('s', $this->class) ||
             !$stmt->bind_result($request_is_stale) ||

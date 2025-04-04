@@ -38,7 +38,6 @@ def dayCostGbp(X):
     slot_count             = 0
     while slot_count < number_slots:
         grid_kw               = X[slot_count]
-        solar_clip_kw         = X[slot_count+number_slots]
         load_house_kw         = load_house_kws[slot_count]
         solar_gross_kw        = solar_gross_kws[slot_count]
         tariff_import_per_kwh = tariffImportPerKwhs[slot_count]
@@ -57,7 +56,7 @@ def dayCostGbp(X):
 
         # battery
         battery_charge_kwh   = -energy_grid_kwh - total_load_kwh
-        battery_charge_kw    = -grid_kw - total_load_kw
+        battery_charge_kw    = -grid_kw         - total_load_kw
         if battery_charge_kw > 0.0:
             battery_level_kwh += battery_charge_kwh * batteryOneWayEfficiency
         else:
@@ -82,16 +81,6 @@ def dayCostGbp(X):
                                                            batteryWearPowerExponentialCoefficient,
                                                            batteryWearPowerActivationKw,
                                                            batteryPowerNormalisationCoefficient) * abs(battery_charge_kwh)
-
-        # grid power out of spec
-        cost_grid_out_of_spec       += wearPerKwh       (  grid_kw,
-                                                          -importLimitKw,
-                                                           exportLimitKw,
-                                                           batteryWearPowerCostAverageGbpPerKwh,
-                                                           batteryWearPowerConstantCoefficient,
-                                                           batteryWearPowerExponentialCoefficient,
-                                                           batteryWearPowerActivationKw,
-                                                           gridPowerNormalisationCoefficient) * abs(energy_grid_kwh)
 
         cost_energy_average_per_kwh_acc += 0.5 * (tariff_import_per_kwh + tariff_export_per_kwh) # accumulate average energy cost
         slot_count += 1

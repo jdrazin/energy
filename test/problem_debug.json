@@ -1,4 +1,5 @@
 {
+    "#": "see https://drazin.youtrack.cloud/youtrack/issue/D-355/Solution-overcharges-battery",
     "batteryCapacityKwh": 13.5,
     "batteryOneWayEfficiency": 0.9643650760992956,
     "batteryWearEnergyCostAverageGbpPerKwh": 0.03,

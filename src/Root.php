@@ -8,7 +8,7 @@ class Root
 {
     public const string     EARLIEST_DATE = '2024-08-01 00:00:00',
                             COMMENT_STRING = '#';
-    const bool              DEBUG_MINIMISER = false;
+
     const string            APIS_PATH = '/home/jdrazin/.energy/apis.json',
                             CONFIG_PATH = '/var/www/html/energy/config.json',
                             MYSQL_FORMAT_DATETIME = 'Y-m-d H:i:s',

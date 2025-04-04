@@ -116,7 +116,7 @@ class Octopus extends Root
                                 (SELECT   DATE(`start`) AS `date`,
                                                `tariff_combination`,
                                                \'FORECAST\',
-                                                ROUND(SUM((`load_house_kw`-`solar_kw`)*IF(`load_house_kw`-`solar_kw` > 0, `import_gbp_per_kwh`, `export_gbp_per_kwh`))+SUM(`import_gbp_per_day`+`export_gbp_per_day`)/' . DbSlots::SLOTS_PER_DAY . ', 2) AS `grid_cost_raw_gbp`,
+                                                ROUND(SUM((`load_house_kw`-`solar_gross_kw`)*IF(`load_house_kw`-`solar_gross_kw` > 0, `import_gbp_per_kwh`, `export_gbp_per_kwh`))+SUM(`import_gbp_per_day`+`export_gbp_per_day`)/' . DbSlots::SLOTS_PER_DAY . ', 2) AS `grid_cost_raw_gbp`,
                                                 ROUND(SUM(`grid_kw`*IF(`grid_kw` < 0, `import_gbp_per_kwh`, `export_gbp_per_kwh`))+SUM(`import_gbp_per_day`+`export_gbp_per_day`)/' . DbSlots::SLOTS_PER_DAY . ', 2) AS `grid_cost_optimised_gbp`
                                         FROM `slots`
                                         WHERE NOT `final` AND
@@ -399,8 +399,8 @@ class Octopus extends Root
                             ROUND(`p`.`load_house_kw`, 3)           AS `previous_load_house_kw`,
                             ROUND(`n`.`grid_kw`, 3)                 AS `grid_kw`,
                             ROUND(`p`.`grid_kw`, 3)                 AS `previous_grid_kw`,
-                            ROUND(`n`.`solar_kw`, 3)                AS `solar_kw`,
-                            ROUND(`p`.`solar_kw`, 3)                AS `previous_solar_kw`,
+                            ROUND(`n`.`solar_gross_kw`, 3)          AS `solar_gross_kw`,
+                            ROUND(`p`.`solar_gross_kw`, 3)          AS `previous_gross_solar_kw`,
                             ROUND(`n`.`battery_level_kwh`, 3)       AS `battery_level_kwh`,
                             ROUND(`p`.`battery_level_kwh`, 3)       AS `previous_battery_kwh`
                   FROM      `slots` `n`
@@ -408,7 +408,7 @@ class Octopus extends Root
                                         `start`,
                                         `load_house_kw`,
                                         `grid_kw`,
-                                        `solar_kw`,
+                                        `solar_gross_kw`,
                                         `battery_level_kwh`
                                 FROM    `slots`
                                 WHERE   `final`) `p` ON `p`.`slot`+48 = `n`.`slot`
@@ -593,8 +593,8 @@ class Octopus extends Root
             }
         }
         $this->mysqli->commit();
-        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_kw`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
-                       (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_kw`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
+        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
+                       (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
                                     FROM `slots` `s`
                                     WHERE NOT `final` AND
                                               `tariff_combination` IN (0, ?))  
@@ -602,7 +602,7 @@ class Octopus extends Root
                                               `stop`                      = `s`.`stop`,
                                               `load_house_kw`             = `s`.`load_house_kw`, 
                                               `grid_kw`                   = `s`.`grid_kw`,
-                                              `solar_kw`                  = `s`.`solar_kw`,
+                                              `solar_gross_kw`                  = `s`.`solar_gross_kw`,
                                               `battery_charge_kw`         = `s`.`battery_charge_kw`, 
                                               `battery_level_kwh`         = `s`.`battery_level_kwh`,
                                               `battery_level_percent`     = `s`.`battery_level_percent`,

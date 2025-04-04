@@ -174,13 +174,11 @@ class EnergyCost extends Root
            $this->solar_gross_kws = $this->problem['solar_gross_kws'];           // get solar forecast (excludes grid clipping) from problem
         }
         $this->costs = [];
-        $grid_kws = [];
-        foreach ($this->load_house_kws as $slot => $load_house_kw) {              // match pre-optimised first guess to total load
-            $load_house_kw   = $this->load_house_kws [$slot];
-            $solar_gross_kw  = $this->solar_gross_kws[$slot];
-            $grid_kws[$slot] = $solar_gross_kw - $load_house_kw;
+        $charge_kws = [];
+        foreach ($this->load_house_kws as $slot => $load_house_kw) {              // first guess zero charge
+            $charge_kws[$slot] = 0.0;
         }
-        $this->costs['raw'] = $this->costCLI($command = $this->command(), $grid_kws);
+        $this->costs['raw'] = $this->costCLI($command = $this->command(), $charge_kws);
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
         $text   = $command . PHP_EOL . $output . PHP_EOL;
@@ -361,61 +359,15 @@ class EnergyCost extends Root
         for ($slot = 0; $slot < $number_slots; $slot++) {
             $command .= $this->solar_gross_kws[$slot] . ' ';
         }
-        // make first guess
-        $grid_first_guesses_kws = $this->grid_first_guesses_kws($number_slots);
-        $command .= 'grid_first_guesses_kws= ';
+        // first guess is zero charge
+        $command .= 'charge_first_guesses_kws= ';
         for ($slot = 0; $slot < $number_slots; $slot++) {
-            $command .= $grid_first_guesses_kws[$slot] . ' ';
-        }
-        // use boundary grid values
-        $grid_boundary_pairs_kws = $this->grid_boundary_pairs_kws($number_slots);
-        $command .= 'grid_boundary_pairs_kws= ';
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $grid_boundary_pair_kw = $grid_boundary_pairs_kws[$slot];
-            $command .= $grid_boundary_pair_kw['lower'] . ' ';
-            $command .= $grid_boundary_pair_kw['upper'] . ' ';
+            $command .= '0.0 ';
         }
         return $command;
     }
 
-    private function grid_first_guesses_kws($number_slots): array {
-        $import_limit_kw = $this->problem['importLimitKw'];
-        $export_limit_kw = $this->problem['exportLimitKw'];
-        $first_guess_grid_kws = [];
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $load_house_kw               = $this->load_house_kws[$slot];
-            $solar_gross_kw              = $this->solar_gross_kws[$slot];
-            $grid_gross_kw               = $solar_gross_kw - $load_house_kw;
-            $first_guess_grid_kw         = max(-$import_limit_kw, min($grid_gross_kw, $export_limit_kw));
-            $first_guess_grid_kws[$slot] = $first_guess_grid_kw;
-        }
-        return $first_guess_grid_kws; // limit first guess to zero charge
-    }
-    private function grid_boundary_pairs_kws($number_slots): array {
-        $import_limit_kw = $this->problem['importLimitKw'];
-        $export_limit_kw = $this->problem['exportLimitKw'];
-        $grid_boundary_pairs_kws = [];
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $grid_boundary_pairs_kws[] = [
-                                            'lower' => -$import_limit_kw,
-                                            'upper' =>  $export_limit_kw
-                                         ];
-        }
-        return $grid_boundary_pairs_kws;
-    }
-
-    private function solar_clip_boundary_pairs_kws($number_slots): array {
-        $solar_clip_boundary_pairs_kws = [];
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $solar_clip_boundary_pairs_kws[] = [
-                                                 'lower' => 0.0,                            // no clip:   full solar generation
-                                                 'upper' => $this->solar_gross_kws[$slot]   // full clip: zero solar generation
-                                               ];
-        }
-        return $solar_clip_boundary_pairs_kws;
-    }
-
-    private function costCLI($command, $grid_kws): array {
+    private function costCLI($command, $charge_kws): array {
         //
         // calculates cost using SciPy command line arguments and $grid_kw solution
         //
@@ -488,10 +440,10 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $solar_gross_kws[]                          = (float) $this->strip();
         }
-        return $this->dayCostGbp($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws);
+        return $this->dayCostGbp($charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws);
     }
 
-    private function dayCostGbp($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws): array {
+    private function dayCostGbp($battery_charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws): array {
         /*
          * calculate cost components: does not include standing costs
          */
@@ -507,12 +459,13 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $tariff_import_per_kwh = $import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
-            $grid_kw               = $grid_kws[$slot_count];
+            $charge_kw             = $battery_charge_kws[$slot_count];
             $load_house_kw         = $load_house_kws[$slot_count];
-            $solar_gross_kw        = min($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw);       // clip to solar limit
-            $solar_net_kw          = $solar_gross_kw - $load_house_kw;
-            $energy_grid_kwh       = $grid_kw * $this->slotDurationHour;
-            $solar_net_kwh         = $solar_net_kw * $this->slotDurationHour;
+            $solar_clipped_kw      = min($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw);       // clip to solar limit
+            $grid_kw               = $solar_clipped_kw - $load_house_kw - $charge_kw;
+            $grid_limited_kwh      = min($grid_kw, $this->exportLimitKw);
+            $energy_grid_kwh       = $grid_limited_kwh * $this->slotDurationHour;
+            $battery_charge_kwh    = $charge_kw * $this->slotDurationHour;
 
             // grid
             if ($energy_grid_kwh > 0.0) {
@@ -524,8 +477,6 @@ class EnergyCost extends Root
             }
 
             // battery
-            $battery_charge_kwh = $solar_net_kwh - $energy_grid_kwh;
-            $battery_charge_kw  = $solar_net_kw  - $grid_kw;
             if ($battery_charge_kwh > 0.0) {
                $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayEfficiency;
             }
@@ -543,7 +494,7 @@ class EnergyCost extends Root
                                                            $this->batteryWearEnergyActivationKwh,
                                                            $this->batteryWearEnergyNormalisationCoefficient)*abs($battery_charge_kwh);
             // battery charge/discharge power out of spec
-            $cost_power_out_of_spec += $this->wearPerKwh(   $battery_charge_kw,
+            $cost_power_out_of_spec += $this->wearPerKwh(   $charge_kw,
                                                            -$this->batteryMaxDischargeKw,
                                                             $this->batteryMaxChargeKw,
                                                             $this->batteryWearPowerCostAverageGbpPerKwh,

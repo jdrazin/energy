@@ -34,10 +34,12 @@ def dayCostGbp(grid_kws):
     export_kwh                       = 0.0
     slot_count                       = 0
     while slot_count < number_slots:
+        load_house_kw         = load_house_kws[slot_count]
+        solar_gross_kw        = solar_gross_kws[slot_count]
         grid_power_slot_kw    = grid_kws[slot_count]
-        total_load_kw         = total_load_kws[slot_count]
         tariff_import_per_kwh = tariffImportPerKwhs[slot_count]
         tariff_export_per_kwh = tariffExportPerKwhs[slot_count]
+        total_load_kw         = load_house_kw - solar_gross_kw
         energy_grid_kwh       = grid_power_slot_kw * slotDurationHour
         total_load_kwh        = total_load_kw * slotDurationHour
         #
@@ -173,13 +175,22 @@ while i < number_slots:
     tariffExportPerKwhs.append(float(sys.argv[index]))
     i+= 1
 
-# load total_load_kws
+# load house_load_kws
 index += 1
 total_load_kws = []
 i = 0
 while i < number_slots:
     index += 1
     total_load_kws   .append(float(sys.argv[index]))
+    i+= 1
+
+# load solar_gross_kws
+index += 1
+solar_gross_kws = []
+i = 0
+while i < number_slots:
+    index += 1
+    solar_gross_kws  .append(float(sys.argv[index]))
     i+= 1
 
 # load initial guesses
@@ -206,8 +217,8 @@ while i < number_slots:
 
 # get cpu time
 import time
-obj = time.gmtime(0)
-epoch = time.asctime(obj)
+obj        = time.gmtime(0)
+epoch      = time.asctime(obj)
 start_time = time.time()
 
 # get cost

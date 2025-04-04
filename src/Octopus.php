@@ -50,10 +50,9 @@ class Octopus extends Root
      * @throws Exception
      * @throws GuzzleException
      */
-    public function traverseTariffs($cron): void
-    {
+    public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', '', null, 'NOTICE');
-        if (!Root::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
+        if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
             $db_slots = new DbSlots();                                           // make day slots
             $values = new Values();
             $givenergy = new GivEnergy();
@@ -108,8 +107,7 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function logForecast($start): void // write costs
-    {
+    private function logForecast($start): void { // write costs
         $next_slot_start         = (new DateTime($start));
         $next_slot_start_hour    = (int) $next_slot_start->format('H');
         $next_slot_start_minutes = (int) $next_slot_start->format('i');
@@ -170,8 +168,7 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    public function requestTariffs(): void  // get tariffs for both directions
-    {
+    public function requestTariffs(): void { // get tariffs for both directions
         $made_successful_request = false;
         if ($this->skipRequest()) {  // skip request if called recently
             $this->requestResult(false);
@@ -192,8 +189,7 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function getTariff($tariffs_rates): void
-    {
+    private function getTariff($tariffs_rates): void {
         $region_code = $this->api['region_code'];
         $energy_type_prefix = $this->api['energy_type_prefix'];
         $energy_type_postfix = $this->api['energy_type_postfix'];

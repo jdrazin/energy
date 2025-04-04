@@ -1,5 +1,5 @@
 #
-# Nelder-Mead cost optimiser, see https://docs.scipy.org/doc/scipy/reference/optimize.minimize-neldermead.html#optimize-minimize-neldermead
+# Powell cost optimiser, see https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_powell.html#fmin-powell
 #
 import math
 import sys
@@ -23,28 +23,32 @@ def dayCostGbp(X):
                                                                         batteryWearPowerActivationKw,
                                                                        -batteryMaxDischargeRateKw,
                                                                         batteryMaxChargeRateKw)
-    gridPowerNormalisationCoefficient     = normalisationCoefficient(   gridWearPowerConstantCoefficient,
-                                                                        gridWearPowerExponentialCoefficient,
-                                                                        gridWearPowerActivationKw,
-                                                                       -importLimitKw,
-                                                                        exportLimitKw)
     cost_grid_import       = 0.0
     cost_grid_export       = 0.0
-    cost_grid_out_of_spec  = 0.0
     cost_energy_wear       = 0.0
     cost_power_out_of_spec = 0.0
     import_kwh             = 0.0
     export_kwh             = 0.0
     slot_count             = 0
     while slot_count < number_slots:
-        grid_kw               = X[slot_count]
-        load_house_kw         = load_house_kws[slot_count]
-        solar_gross_kw        = solar_gross_kws[slot_count]
         tariff_import_per_kwh = tariffImportPerKwhs[slot_count]
         tariff_export_per_kwh = tariffExportPerKwhs[slot_count]
-        total_load_kw         = load_house_kw - solar_gross_kw + solar_clip_kw
-        energy_grid_kwh       = grid_kw * slotDurationHour
-        total_load_kwh        = total_load_kw * slotDurationHour
+        battery_charge_kw     = X[slot_count]
+        load_house_kw         = load_house_kws[slot_count]
+        solar_gross_kw        = solar_gross_kws[slot_count]
+        if solar_gross_kw > solarGenerationLimitKw:
+            solar_clipped_kw  = solarGenerationLimitKw
+        else:
+            solar_clipped_kw  = solar_gross_kw
+
+        grid_unlimited_kw     = solar_clipped_kw - load_house_kw - battery_charge_kw
+        if grid_unlimited_kw > exportLimitKw:
+            grid_limited_kw = exportLimitKw
+        else:
+            grid_limited_kw = grid_unlimited_kw
+
+        energy_grid_kwh       = grid_limited_kw   * slotDurationHour
+        battery_charge_kwh    = battery_charge_kw * slotDurationHour
         #
         # grid
         if energy_grid_kwh > 0.0:
@@ -55,8 +59,6 @@ def dayCostGbp(X):
             cost_grid_import -= tariff_import_per_kwh * energy_grid_kwh
 
         # battery
-        battery_charge_kwh   = -energy_grid_kwh - total_load_kwh
-        battery_charge_kw    = -grid_kw         - total_load_kw
         if battery_charge_kw > 0.0:
             battery_level_kwh += battery_charge_kwh * batteryOneWayEfficiency
         else:
@@ -84,8 +86,8 @@ def dayCostGbp(X):
 
         cost_energy_average_per_kwh_acc += 0.5 * (tariff_import_per_kwh + tariff_export_per_kwh) # accumulate average energy cost
         slot_count += 1
-    cost_level_change = (batteryEnergyInitialKwh - battery_level_kwh) * cost_energy_average_per_kwh_acc / number_slots
-    day_cost_gbp = cost_grid_import + cost_grid_export + cost_grid_out_of_spec + cost_energy_wear + cost_power_out_of_spec + cost_level_change
+    cost_energy_level_change = (batteryEnergyInitialKwh - battery_level_kwh) * cost_energy_average_per_kwh_acc / number_slots
+    day_cost_gbp = cost_grid_import + cost_grid_export + cost_energy_wear + cost_power_out_of_spec + cost_energy_level_change
     return day_cost_gbp
 
 # define wear function
@@ -107,6 +109,8 @@ def normalisationCoefficient(constant_coefficient, exponential_coefficient, acti
     return normalisation_coefficient
 
 # constants
+index =  2
+solarGenerationLimitKw                      = float(sys.argv[index])
 index =  2
 batteryCapacityKwh                          = float(sys.argv[index])
 index += 2
@@ -170,11 +174,11 @@ while i < number_slots:
 
 # load house_load_kws
 index += 1
-total_load_kws = []
+load_house_kws = []
 i = 0
 while i < number_slots:
     index += 1
-    total_load_kws   .append(float(sys.argv[index]))
+    load_house_kws   .append(float(sys.argv[index]))
     i+= 1
 
 # load solar_gross_kws
@@ -186,48 +190,23 @@ while i < number_slots:
     solar_gross_kws  .append(float(sys.argv[index]))
     i+= 1
 
-# load initial grid guesses: gridSlotKwhs
-index += 1
-Xs = []
+# load initial zero charge guess
+X = []
 i = 0
 while i < number_slots:
     index += 1
-    Xs   .append(float(sys.argv[index]))
+    X   .append(0.0)
     i+= 1
 
-# load initial solar clip guesses: solarClipKwhs
-index += 1
-Xs = []
-i = 0
-while i < number_slots:
-    index += 1
-    Xs   .append(float(sys.argv[index]))
-    i+= 1
-
-#load grid min, max boundary pairs
+#load charge min, max boundary pairs
 index += 1
 bounds = []
 i = 0
 while i < number_slots:
-    index += 1
-    min = float(sys.argv[index])
-    index += 1
-    max = float(sys.argv[index])
+    charge_min_kw = -batteryMaxDischargeRateKw
+    charge_max_kw = +batteryMaxChargeRateKw
     i+= 1
-    bound = (min, max)
-    bounds.append(bound)
-
-#load solar clip min, max boundary pairs
-index += 1
-bounds = []
-i = 0
-while i < number_slots:
-    index += 1
-    min = float(sys.argv[index])
-    index += 1
-    max = float(sys.argv[index])
-    i+= 1
-    bound = (min, max)
+    bound = (charge_min_kw, charge_max_kw)
     bounds.append(bound)
 
 # get cpu time
@@ -237,11 +216,11 @@ epoch      = time.asctime(obj)
 start_time = time.time()
 
 # get cost
-cost = dayCostGbp(Xs)
+cost = dayCostGbp(X)
 
 # optimise
 #result    = minimize(dayCostGbp, Xs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-14, 'maxiter': 1000000}) # Nelder-Mead
-result = minimize(dayCostGbp, Xs, method='powell', bounds=bounds, options={'disp': 0, 'ftol': 1E-14, 'maxiter': 1000000}) # Powell
+result = minimize(dayCostGbp, X, method='powell', bounds=bounds, options={'disp': 0, 'ftol': 1E-14, 'maxiter': 1000000}) # Powell
 
 elapsed_s = time.time() - start_time
 

@@ -120,7 +120,7 @@ class EnergyCost extends Root
             }
         }
         else { // instantiate from config
-            $this->solarGenerationLimitKw                        = (float) $this->config['solar_pv']['inverter']['power_threshold_kw'];
+            $this->solarGenerationLimitKw                   = (float) $this->config['solar_pv']['inverter']['power_threshold_kw'];
             $this->batteryCapacityKwh                       = (float) $this->config['battery']['initial_raw_capacity_kwh'];
             $this->batteryOneWayEfficiency                  = sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0);
 
@@ -425,7 +425,7 @@ class EnergyCost extends Root
         $this->strip();
         $this->strip(); // removes PYTHON_SCRIPT_COMMAND
         $this->strip();
-        $this->solarGenerationLimitKw                        = (float) $this->strip();
+        $this->solarGenerationLimitKw                   = (float) $this->strip();
         $this->strip();
         $this->batteryCapacityKwh                       = (float) $this->strip();
         $this->strip();
@@ -505,13 +505,13 @@ class EnergyCost extends Root
         $import_kwh             = 0.0;
         $export_kwh             = 0.0;
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $grid_power_slot_kw    = $grid_kws[$slot_count];
-            $load_house_kw         = $load_house_kws[$slot_count];
-            $solar_gross_kw        = max($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw); // limit gross solar output
             $tariff_import_per_kwh = $import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
+            $grid_kw               = $grid_kws[$slot_count];
+            $load_house_kw         = $load_house_kws[$slot_count];
+            $solar_gross_kw        = min($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw);       // clip to solar limit
             $solar_net_kw          = $solar_gross_kw - $load_house_kw;
-            $energy_grid_kwh       = $grid_power_slot_kw * $this->slotDurationHour;
+            $energy_grid_kwh       = $grid_kw * $this->slotDurationHour;
             $solar_net_kwh         = $solar_net_kw * $this->slotDurationHour;
 
             // grid
@@ -525,13 +525,14 @@ class EnergyCost extends Root
 
             // battery
             $battery_charge_kwh = $solar_net_kwh - $energy_grid_kwh;
-            $battery_charge_kw  = $solar_net_kw  - $grid_power_slot_kw;
+            $battery_charge_kw  = $solar_net_kw  - $grid_kw;
             if ($battery_charge_kwh > 0.0) {
                $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayEfficiency;
             }
             else {
                $battery_level_kwh += $battery_charge_kwh / $this->batteryOneWayEfficiency;
             }
+
             // operational and out of spec wear
             $cost_energy_wear      += $this->wearPerKwh(   $battery_level_kwh,
                                                            0.0,

@@ -6,6 +6,8 @@ use Exception;
 
 class EnergyCost extends Root
 {
+    const bool      DEBUG_MINIMISER         = false;
+
     const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
                     OPTIMISATION_LOG        = '/var/www/html/energy/test/optimisation.log',

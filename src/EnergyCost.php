@@ -168,7 +168,7 @@ class EnergyCost extends Root
         else { // use debug JSON and make slot arrays as necessary
            $this->problem         = $this->makeSlotsArrays(json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
            $this->load_house_kws  = $this->problem['load_house_kws'];            // get total house load from problem
-           $this->solar_gross_kws = $this->problem['solar_kws'];                 // get solar forecast (excludes grid clipping) from problem
+           $this->solar_gross_kws = $this->problem['solar_gross_kws'];           // get solar forecast (excludes grid clipping) from problem
         }
         $this->costs = [];
         $grid_kws = [];
@@ -462,9 +462,9 @@ class EnergyCost extends Root
             $grid_power_slot_kw    = $grid_kws[$slot_count];
             $load_house_kw         = $load_house_kws[$slot_count];
             $solar_gross_kw        = $solar_gross_kws[$slot_count];
-            $total_load_kw         = $load_house_kw - $solar_gross_kw;
             $tariff_import_per_kwh = $import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
+            $total_load_kw         = $load_house_kw - $solar_gross_kw;
             $energy_grid_kwh       = $grid_power_slot_kw * $this->slotDurationHour;
             $total_load_kwh        = $total_load_kw * $this->slotDurationHour;
 

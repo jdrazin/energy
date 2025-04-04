@@ -179,7 +179,7 @@ class Solcast extends Root
         $url_pre = $this->api['base'] . $this->api['site_id'] . '/';
         $url_post = '?format=json';
         $url = $url_pre . $data_type . $url_post;
-        if (self::DEBUG_MINIMISER) {
+        if (EnergyCost::DEBUG_MINIMISER) {
             $pathname = '/var/www/html/energy/test/' . $data_type . '.txt';
             $response = file_get_contents($pathname);
         } else {

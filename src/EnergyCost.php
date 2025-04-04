@@ -400,8 +400,7 @@ class EnergyCost extends Root
         return $grid_boundary_pairs_kws;
     }
 
-    private function costCLI($command, $grid_kws): array
-    {
+    private function costCLI($command, $grid_kws): array {
         //
         // calculates cost using SciPy command line arguments and $grid_kw solution
         //

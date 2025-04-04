@@ -16,7 +16,6 @@ const     PID_FOLDER                        = '/var/www/html/energy/',
           CONFIG_JSON                       = 'config.json',
           JSON_PROJECTION_ID                = 0,
           TEST_PROJECTION_ID                = 2689834495,
-          USE_PID_SEMAPHORE                 = true,
           USE_CRONTAB                       = true,
           ARGS                              = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION           = true,
@@ -25,7 +24,7 @@ const     PID_FOLDER                        = '/var/www/html/energy/',
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
-    if (USE_PID_SEMAPHORE) {
+    if (DEBUG) {
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
             exit(1);
@@ -55,7 +54,7 @@ try {
             }
         }
     }
-    if (USE_PID_SEMAPHORE) {
+    if (DEBUG) {
         if (!unlink($pid_filename)) {
             throw new Exception('Cannot delete semaphore');
         }

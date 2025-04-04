@@ -16,8 +16,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const   PID_FOLDER                  = '/var/www/html/energy/',
-        USE_PID_SEMAPHORE           = true,
-        USE_CRONTAB                 = true,
+        DEBUG                       = false,         // disable cron and semaphore single thread control
         ARGS                        = ['CRON' => 1],
         INITIALISE_ON_EXCEPTION     = false,
         EMAIL_NOTIFICATION_ON_ERROR = false,
@@ -25,7 +24,7 @@ const   PID_FOLDER                  = '/var/www/html/energy/',
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
-    if (USE_PID_SEMAPHORE) {
+    if (!DEBUG) {
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
             exit(1);
@@ -34,10 +33,10 @@ try {
             file_put_contents($pid_filename, getmypid());
         }
     }
-    if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && USE_CRONTAB) || !$cron) {
+    if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !DEBUG) || !$cron) {
         (new Sliver())->command();
     }
-    if (USE_PID_SEMAPHORE) {
+    if (!DEBUG) {
         if (!unlink($pid_filename)) {
             throw new Exception('Cannot delete semaphore');
         }

@@ -67,7 +67,7 @@ class DbSlots extends Root
                                             `export_gbp_per_kwh`    = NULL,
                                             `import_gbp_per_day`    = NULL,
                                             `export_gbp_per_day`    = NULL,
-                                            `solar_kw`              = NULL,
+                                            `solar_gross_kw`              = NULL,
                                             `load_non_heating_kw`   = NULL,
                                             `load_heating_kw`       = NULL,
                                             `final`                 = FALSE';

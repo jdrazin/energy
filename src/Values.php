@@ -37,9 +37,7 @@ class Values extends Root
     /**
      * @throws Exception
      */
-    public function makeHeatingPowerLookupDaySlotExtTemp(): void
-    {
-        // writes heating powers to 2D array:  power_w[day_slot][temperature]
+    public function makeHeatingPowerLookupDaySlotExtTemp(): void { // writes heating powers to 2D array:  power_w[day_slot][temperature]
         $sql = "SELECT `day_slot_temp_c_heating_electric_w`.`day_slot`,
                        `day_slot_temp_c_heating_electric_w`.`temp_c`,
                        `day_slot_temp_c_heating_electric_w`.`heating_thermal_w`

@@ -20,7 +20,8 @@ class EnergyCost extends Root
                                                       ];
 
     // setup parameters
-    public    float $batteryCapacityKwh,
+    public    float $solarPowerLimitKw,
+                    $batteryCapacityKwh,
                     $batteryOneWayEfficiency,
                     $batteryWearEnergyCostAverageGbpPerKwh,
                     $batteryWearEnergyConstantCoefficient,
@@ -83,6 +84,7 @@ class EnergyCost extends Root
                 ];
             }
             $this->problem              = [
+                                            'solarGenerationLimitKw'                    => $this->config['solar_pv']['inverter']['power_threshold_kw'],
                                             'batteryCapacityKwh'                        => $this->config['battery']['initial_raw_capacity_kwh'],
                                             'batteryOneWayEfficiency'                   => sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0),
                                             'batteryWearEnergyCostAverageGbpPerKwh'     => $this->config['battery']['wear']['energy']['cost_average_gbp_per_kwh'],
@@ -118,6 +120,7 @@ class EnergyCost extends Root
             }
         }
         else { // instantiate from config
+            $this->solarGenerationLimitKw                        = (float) $this->config['solar_pv']['inverter']['power_threshold_kw'];
             $this->batteryCapacityKwh                       = (float) $this->config['battery']['initial_raw_capacity_kwh'];
             $this->batteryOneWayEfficiency                  = sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0);
 
@@ -315,6 +318,7 @@ class EnergyCost extends Root
         // make CLI command string
         //
         $command = self::PYTHON_SCRIPT_COMMAND . ' ';
+        $command .= $this->parameter_name_value('solarGenerationLimitKw');
         $command .= $this->parameter_name_value('batteryCapacityKwh');
         $command .= $this->parameter_name_value('batteryOneWayEfficiency');
         $command .= $this->parameter_name_value('batteryWearEnergyCostAverageGbpPerKwh');
@@ -387,23 +391,14 @@ class EnergyCost extends Root
         }
         return $first_guess_grid_kws; // limit first guess to zero charge
     }
-
-    private function solar_clip_first_guesses_kws($number_slots): array {
-        $solar_clip_first_guesses_kws = [];
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $solar_clip_first_guesses_kws[$slot] = $this->solar_gross_kws[$slot]; // clip solar entirely
-        }
-        return $solar_clip_first_guesses_kws;
-    }
-
     private function grid_boundary_pairs_kws($number_slots): array {
         $import_limit_kw = $this->problem['importLimitKw'];
         $export_limit_kw = $this->problem['exportLimitKw'];
         $grid_boundary_pairs_kws = [];
         for ($slot = 0; $slot < $number_slots; $slot++) {
             $grid_boundary_pairs_kws[] = [
-                                            'lower' => -$import_limit_kw - $this->problem['gridWearPowerActivationKw'],
-                                            'upper' =>  $export_limit_kw + $this->problem['gridWearPowerActivationKw']
+                                            'lower' => -$import_limit_kw,
+                                            'upper' =>  $export_limit_kw
                                          ];
         }
         return $grid_boundary_pairs_kws;
@@ -429,6 +424,8 @@ class EnergyCost extends Root
         $this->string = $command;
         $this->strip();
         $this->strip(); // removes PYTHON_SCRIPT_COMMAND
+        $this->strip();
+        $this->solarGenerationLimitKw                        = (float) $this->strip();
         $this->strip();
         $this->batteryCapacityKwh                       = (float) $this->strip();
         $this->strip();
@@ -503,7 +500,6 @@ class EnergyCost extends Root
         $this->makeNormalisationCoefficients();
         $cost_grid_import       = 0.0;
         $cost_grid_export       = 0.0;
-        $cost_grid_out_of_spec  = 0.0;
         $cost_energy_wear       = 0.0;
         $cost_power_out_of_spec = 0.0;
         $import_kwh             = 0.0;
@@ -511,12 +507,12 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
             $grid_power_slot_kw    = $grid_kws[$slot_count];
             $load_house_kw         = $load_house_kws[$slot_count];
-            $solar_gross_kw        = $solar_gross_kws[$slot_count];
+            $solar_gross_kw        = max($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw); // limit gross solar output
             $tariff_import_per_kwh = $import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
-            $total_load_kw         = $load_house_kw - $solar_gross_kw;
+            $solar_net_kw          = $solar_gross_kw - $load_house_kw;
             $energy_grid_kwh       = $grid_power_slot_kw * $this->slotDurationHour;
-            $total_load_kwh        = $total_load_kw * $this->slotDurationHour;
+            $solar_net_kwh         = $solar_net_kw * $this->slotDurationHour;
 
             // grid
             if ($energy_grid_kwh > 0.0) {
@@ -528,8 +524,8 @@ class EnergyCost extends Root
             }
 
             // battery
-            $battery_charge_kwh = -$energy_grid_kwh - $total_load_kwh;
-            $battery_charge_kw  = -$grid_power_slot_kw - $total_load_kw;
+            $battery_charge_kwh = $solar_net_kwh - $energy_grid_kwh;
+            $battery_charge_kw  = $solar_net_kw  - $grid_power_slot_kw;
             if ($battery_charge_kwh > 0.0) {
                $battery_level_kwh += $battery_charge_kwh * $this->batteryOneWayEfficiency;
             }

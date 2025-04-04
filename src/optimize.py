@@ -28,14 +28,14 @@ def dayCostGbp(X):
                                                                         gridWearPowerActivationKw,
                                                                        -importLimitKw,
                                                                         exportLimitKw)
-    cost_grid_import                 = 0.0
-    cost_grid_export                 = 0.0
-    cost_grid_out_of_spec            = 0.0
-    cost_energy_wear                 = 0.0
-    cost_power_out_of_spec           = 0.0
-    import_kwh                       = 0.0
-    export_kwh                       = 0.0
-    slot_count                       = 0
+    cost_grid_import       = 0.0
+    cost_grid_export       = 0.0
+    cost_grid_out_of_spec  = 0.0
+    cost_energy_wear       = 0.0
+    cost_power_out_of_spec = 0.0
+    import_kwh             = 0.0
+    export_kwh             = 0.0
+    slot_count             = 0
     while slot_count < number_slots:
         grid_kw               = X[slot_count]
         solar_clip_kw         = X[slot_count+number_slots]

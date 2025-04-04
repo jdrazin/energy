@@ -113,7 +113,7 @@ class Values extends Root
             }
             $powers_kw[$slot] = round(min($power_w/1000.0, $this->solar_pv_inverter_power_threshold_kw), 3);       // clip solar generation to maximum power
         }
-        $this->updateSlotPowerskW($powers_kw, 'solar_kw');
+        $this->updateSlotPowerskW($powers_kw, 'solar_gross_kw');
     }
 
     public function average($entity, $type, $start, $stop, $offset_minutes): ?float

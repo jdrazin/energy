@@ -46,6 +46,8 @@ class EnergyCost extends Root
                     $gridWearPowerNormalisationCoefficient;
 
     private array   $problem,
+                    $load_house_kws,        // house load, excluding EV
+                    $solar_gross_kws,       // gross solar generation, excludes dynamic grid power clipping
                     $total_load_kws,
                     $tariff_combination,
                     $costs;
@@ -156,14 +158,17 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
-        (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
-        if (self::DEBUG_MINIMISER) {  // use debug JSON and make slot arrays as necessary
-           $this->problem           = $this->makeSlotsArrays(json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
-           $this->total_load_kws    = $this->problem['total_load_kws'];          // get total load from problem
+        if (!self::DEBUG_MINIMISER) {
+            (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
+            $this->problem         = json_decode(file_get_contents(self::JSON_PROBLEM), true);
+            $slot_kws              = $this->slot_kws();                           // get house load from db (excludes EV)
+            $this->load_house_kws  = $slot_kws['load_house_kws'];                 // house load (excludes EV)
+            $this->solar_gross_kws = $slot_kws['solar_kws'];                      // gross solar forecast (excludes grid clipping)
         }
-        else {
-            $this->problem          = json_decode(file_get_contents(self::JSON_PROBLEM), true);
-            $this->total_load_kws   = $this->total_load_kws();                   // get total load from db
+        else { // use debug JSON and make slot arrays as necessary
+           $this->problem         = $this->makeSlotsArrays(json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
+           $this->load_house_kws  = $this->problem['load_house_kws'];            // get total house load from problem
+           $this->solar_gross_kws = $this->problem['solar_kws'];                 // get solar forecast (excludes grid clipping) from problem
         }
         $this->costs = [];
         $grid_kws = [];
@@ -342,11 +347,15 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= $export_gbp_per_kwhs[$slot_count] . ' ';
         }
-        $command .= 'total_load_kws= ';
+        $command .= 'load_house_kws= ';
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
-            $command .= $this->total_load_kws[$slot_count] . ' ';
+            $command .= $this->load_house_kws[$slot_count] . ' ';
         }
-        // use total load power for first guess
+        $command .= 'solar_gross_kws= ';
+        for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
+            $command .= $this->solar_gross_kws[$slot_count] . ' ';
+        }
+        // use total load power for first guess  // todo
         $command .= 'FIRST_GUESS_grid_kws= ';
         for ($slot_count = 0; $slot_count < $number_slots; $slot_count++) {
             $command .= -$this->total_load_kws[$slot_count] . ' ';
@@ -423,31 +432,37 @@ class EnergyCost extends Root
             $export_gbp_per_kws[]                       = (float) $this->strip();
         }
         $this->strip();
-        $total_load_kws = [];
+        $load_house_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $total_load_kws[]                           = (float) $this->strip();
+            $load_house_kws[]                           = (float) $this->strip();
         }
-        return $this->dayCostGbp($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws);
+        $this->strip();
+        $solar_gross_kws = [];
+        for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
+            $solar_gross_kws[]                          = (float) $this->strip();
+        }
+        return $this->dayCostGbp($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws);
     }
 
-    private function dayCostGbp($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $total_load_kws): array {
+    private function dayCostGbp($grid_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws): array {
         /*
          * calculate cost components: does not include standing costs
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;          // battery level at beginning of day
         $this->makeNormalisationCoefficients();
-        $cost_grid_import                     = 0.0;
-        $cost_grid_export                     = 0.0;
-        $cost_grid_out_of_spec                = 0.0;
-        $cost_energy_wear                     = 0.0;
-        $cost_power_out_of_spec               = 0.0;
-        $import_kwh                           = 0.0;
-        $export_kwh                           = 0.0;
+        $cost_grid_import       = 0.0;
+        $cost_grid_export       = 0.0;
+        $cost_grid_out_of_spec  = 0.0;
+        $cost_energy_wear       = 0.0;
+        $cost_power_out_of_spec = 0.0;
+        $import_kwh             = 0.0;
+        $export_kwh             = 0.0;
         for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
-            $grid_power_slot_kw = $grid_kws[$slot_count];
-
-            $total_load_kw         = $total_load_kws[$slot_count];
+            $grid_power_slot_kw    = $grid_kws[$slot_count];
+            $load_house_kw         = $load_house_kws[$slot_count];
+            $solar_gross_kw        = $solar_gross_kws[$slot_count];
+            $total_load_kw         = $load_house_kw - $solar_gross_kw;
             $tariff_import_per_kwh = $import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
             $energy_grid_kwh       = $grid_power_slot_kw * $this->slotDurationHour;
@@ -659,29 +674,34 @@ class EnergyCost extends Root
         $this->mysqli->commit();
     }
 
-    private function total_load_kws(): array {
+    private function slot_kws(): array {
         /*
-         * calculate total load (L) net of solar generation
+         * get house load
          */
         $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'SELECT      `load_house_kw` - `solar_kw` AS `total_load_kw`
-                   FROM     `slots`         
+        $sql = 'SELECT      `load_house_kw`, `solar_gross_kw` 
+                   FROM     `slots`
                    WHERE    `tariff_combination` = ? AND
                             NOT `final`
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($total_load_kw) ||
+            !$stmt->bind_result($load_house_kw, $solar_gross_kw) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        $total_load_kws = [];
+        $slot_kws        = [];
+        $load_house_kws  = [];
+        $solar_gross_kws = [];
         while ($stmt->fetch()) {
-            $total_load_kws[] = $total_load_kw;
+            $load_house_kws[] = $load_house_kw;
+            $solar_gross_kws[]      = $solar_gross_kw;
         }
-        return $total_load_kws;
+        $slot_kws['load_house_kws'] = $load_house_kws;
+        $slot_kws['solar_kws']      = $solar_gross_kws;
+        return $slot_kws;
     }
 
     private function strip(): string

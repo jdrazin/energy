@@ -429,7 +429,7 @@ class GivEnergy extends Root
         $timestamp_now = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot
         $timestamp_start = (new DateTime($db_slots->getDbNextDaySlots($db_slots->tariff_combination)[0]['start']))->getTimestamp();
         $time_duration_s = $timestamp_start - $timestamp_now;
-        if ($time_duration_s < 0 && !self::DEBUG_MINIMISER) {
+        if ($time_duration_s < 0 && !EnergyCost::DEBUG_MINIMISER) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'time to start must be positive: ' . $time_duration_s);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);

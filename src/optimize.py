@@ -111,7 +111,7 @@ def normalisationCoefficient(constant_coefficient, exponential_coefficient, acti
 # constants
 index =  2
 solarGenerationLimitKw                      = float(sys.argv[index])
-index =  2
+index += 2
 batteryCapacityKwh                          = float(sys.argv[index])
 index += 2
 batteryOneWayEfficiency                     = float(sys.argv[index])

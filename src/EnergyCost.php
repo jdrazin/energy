@@ -43,21 +43,20 @@ class EnergyCost extends Root
                     $importLimitKw,
                     $exportLimitKw,
                     $batteryWearEnergyNormalisationCoefficient,
-                    $batteryWearPowerNormalisationCoefficient,
-                    $gridWearPowerNormalisationCoefficient;
+                    $batteryWearPowerNormalisationCoefficient;
 
     private array   $problem,
                     $load_house_kws,        // house load, excluding EV
                     $solar_gross_kws,       // gross solar generation, excludes dynamic grid power clipping
-                    $total_load_kws,
+                    $grid_kws,
                     $tariff_combination,
                     $costs;
 
     public array   $slotCommands;
 
-    public string $string;
-    private int $number_slots;
-    private mixed $db_slots;
+    public string   $string;
+    private int     $number_slots;
+    private mixed   $db_slots;
 
     /**
      * @throws Exception
@@ -206,8 +205,8 @@ class EnergyCost extends Root
         if (self::DEBUG_MINIMISER) {
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
-            foreach ($this->total_load_kws as $k => $v) {
-                echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->total_load_kws[$k], 3) . ', ' . round($optimumChargeKws[$k], 3) . PHP_EOL;
+            foreach ($this->grid_kws as $k => $v) {
+                echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->grid_kws[$k], 3) . ', ' . round($optimumChargeKws[$k], 3) . PHP_EOL;
             }
             return [];
         }
@@ -459,11 +458,12 @@ class EnergyCost extends Root
             $load_house_kw         = $load_house_kws[$slot_count];
             $solar_clipped_kw      = min($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw);       // clip solar to generation limit
             $grid_kw               = $solar_clipped_kw - $load_house_kw - $battery_charge_kw;
-            $grid_limited_kw       = min($grid_kw, $this->exportLimitKw);                                     // clip grid export to limit
-      //      if ($solar_clipped_kw - $load_house_kw < 0.0) {                                                   // tie export to battery discharge limit when no net solar
-      //          $grid_limited_kw = min($grid_limited_kw, $this->batteryMaxDischargeKw);
+            $grid_kw               = min($grid_kw, $this->exportLimitKw);                                     // clip grid export to limit
+      //      if ($solar_clipped_kw - $load_house_kw < 0.0) {                                                 // tie export to battery discharge limit when no net solar
+      //          $grid_kw = min($grid_kw, $this->batteryMaxDischargeKw);
       //      }
-            $grid_kwh              = $grid_limited_kw   * $this->slotDurationHour;
+            $this->grid_kws[$slot_count] = $grid_kw;
+            $grid_kwh              = $grid_kw           * $this->slotDurationHour;
             $battery_charge_kwh    = $battery_charge_kw * $this->slotDurationHour;
 
             // grid
@@ -627,7 +627,7 @@ class EnergyCost extends Root
         $sql = 'UPDATE      `slots` 
                    SET      `battery_charge_kw`  = ROUND(?, 3),
                             `battery_level_kwh`  = ROUND(?, 3),
-                            `grid_kw`            = ROUND(?, 3),
+                            `grid_kw`            = ROUND(?, 3)
                    WHERE    `slot`               = ? AND
                             `tariff_combination` = ? AND
                             NOT `final`';
@@ -641,7 +641,7 @@ class EnergyCost extends Root
         $battery_level_kwh = $this->batteryEnergyInitialKwh;
         foreach ($optimum_charge_kws as $slot => $optimum_charge_kw) {
             $battery_level_kwh += $optimum_charge_kw * DbSlots::SLOT_DURATION_MIN / 60;
-            $optimum_grid_kw    = $this->total_load_kws[$slot] - $optimum_charge_kw ;
+            $optimum_grid_kw    = $this->load_house_kws[$slot] - $this->solar_gross_kws[$slot] - $optimum_charge_kw ;
             $stmt->execute();
         }
         $this->mysqli->commit();
@@ -688,8 +688,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function insertSlotNextDayCostEstimates($slot): void
-    {
+    private function insertSlotNextDayCostEstimates($slot): void     {
         $standing               = ($this->problem['import_gbp_per_day'] ?? 0.0) + ($this->problem['export_gbp_per_day'] ?? 0.0);
         $raw                    = $this->costs['raw'];
         $raw_import             = round($raw['cost_import'], 3);

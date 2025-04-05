@@ -27,7 +27,7 @@ class Octopus extends Root
                     ENTITIES = [
                                     'grid_kw'               => [['GRID_W',                 +1000.0],
                                                                 ['LOAD_EV_W',              +1000.0]],
-                                    'solar_kw'              => [['SOLAR_W',                +1000.0]],
+                                    'solar_gross_kw'        => [['SOLAR_W',                +1000.0]],
                                     'load_house_kw'         => [['LOAD_HOUSE_W',           +1000.0]],
                                     'battery_level_percent' => [['BATTERY_LEVEL_PERCENT',      1.0]]
                                 ];
@@ -602,7 +602,7 @@ class Octopus extends Root
                                               `stop`                      = `s`.`stop`,
                                               `load_house_kw`             = `s`.`load_house_kw`, 
                                               `grid_kw`                   = `s`.`grid_kw`,
-                                              `solar_gross_kw`                  = `s`.`solar_gross_kw`,
+                                              `solar_gross_kw`            = `s`.`solar_gross_kw`,
                                               `battery_charge_kw`         = `s`.`battery_charge_kw`, 
                                               `battery_level_kwh`         = `s`.`battery_level_kwh`,
                                               `battery_level_percent`     = `s`.`battery_level_percent`,

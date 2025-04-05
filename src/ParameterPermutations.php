@@ -18,7 +18,7 @@ class ParameterPermutations
                 $this->variables[] = $element_name;
                 $permutations_count *= 2;
             } else {
-                $this->fixed[$element_name] = $config[$element_name]['active'];
+                $this->fixed[$element_name] = $config[$element_name]['active'] ?? false;
             }
         }
         $this->msb = count($this->variables) - 1;

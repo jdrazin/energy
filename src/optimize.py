@@ -51,9 +51,9 @@ def dayCostGbp(X):
             grid_limited_kw = grid_unlimited_kw
 
         # tie export to battery discharge limit when no net solar
-        if solar_clipped_kw - load_house_kw < 0.0:
-            if grid_limited_kw > batteryMaxDischargeRateKw:
-                grid_limited_kw = batteryMaxDischargeRateKw
+  #      if solar_clipped_kw - load_house_kw < 0.0:
+  #          if grid_limited_kw > batteryMaxDischargeRateKw:
+  #              grid_limited_kw = batteryMaxDischargeRateKw
 
         grid_kwh              = grid_limited_kw   * slotDurationHour
         battery_charge_kwh    = battery_charge_kw * slotDurationHour
@@ -239,7 +239,7 @@ output = {
     "evaluations":      result.nfev,
     "status":           result.status,
     "message":          result.message,
-    "optimumGridKws":   result.x.tolist(),
+    "optimumChargeKws":   result.x.tolist(),
     "energyCost":       result.fun
 }
 print(json.dumps(output))

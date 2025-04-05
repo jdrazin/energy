@@ -259,7 +259,7 @@ class Energy extends Root
     private function write_cpu_seconds($projection_id, $cpu_seconds): void {
         $sql = 'UPDATE  `projections` 
                   SET   `cpu_seconds` = ?
-                  WHERE `projection`  = ?';
+                  WHERE `id`          = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ii', $cpu_seconds, $projection_id) ||
             !$stmt->execute()) {

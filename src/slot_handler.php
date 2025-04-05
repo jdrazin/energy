@@ -42,12 +42,12 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const PID_FOLDER                     = '/var/www/html/energy/',
-      DEBUG                          = true,  // disable cron and semaphore single thread control
+      DEBUG                          = false,  // disable cron and semaphore single thread control
       ARGS                           = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION        = false,
       EMAIL_NOTIFICATION_ON_ERROR    = false,
       REPLACE_WITH_STUB              = false,
-      ACTIVE_TARIFF_COMBINATION_ONLY = true;
+      ACTIVE_TARIFF_COMBINATION_ONLY = false;
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';

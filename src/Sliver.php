@@ -110,7 +110,7 @@ class Sliver extends Root
             $optimum_charge_kw       = $optimum['charge_kw'];
             $cost_total_gbp_per_hour = round($optimum['total_gbp_per_hour'], 3);
             $cost_grid_gbp_per_hour  = round($optimum['grid_gbp_per_hour'], 3);
-            $wear_gbp_per_hour  = round($optimum['cost_total_wear_gbp_per_hour'], 3);
+            $wear_gbp_per_hour       = round($optimum['cost_total_wear_gbp_per_hour']['battery_energy']+$optimum['cost_total_wear_gbp_per_hour']['battery_power'], 3);
             switch ($slot_mode) {
                 case 'CHARGE':          // calculate target percent level into slot
                 case 'DISCHARGE': {

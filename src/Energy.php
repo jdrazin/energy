@@ -271,7 +271,7 @@ class Energy extends Root
 
     public function deleteProjection($projection_id): void  {
         $sql = 'DELETE FROM `permutations`
-                      WHERE `projection` = ?';
+                  WHERE `projection` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
             !$stmt->execute() ||
@@ -304,12 +304,13 @@ class Energy extends Root
         $sql = 'SELECT  `status`,
                         `timestamp`,
                         UNIX_TIMESTAMP(`submitted`),
-                        `comment`
+                        `comment`,
+                        `cpu_seconds`
                   FROM  `projections`
                   WHERE `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
-            !$stmt->bind_result($status, $timestamp, $submitted_unix_timestamp, $comment) ||
+            !$stmt->bind_result($status, $timestamp, $submitted_unix_timestamp, $comment, $cpu_seconds) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -319,7 +320,7 @@ class Energy extends Root
         switch($status) {
             case 'COMPLETED':
             case 'NOTIFIED': {
-                return $comment;
+                return $comment . ' elapsed: ' . $cpu_seconds . 's';
                 }
             case 'IN_QUEUE': {
                 $sql = 'SELECT  COUNT(`status`)
@@ -368,8 +369,8 @@ class Energy extends Root
         if ($max_duration_years && $row_count) {
             // get acronyms
             $sql = 'SELECT DISTINCT `acronym`
-                   FROM         `permutations`
-                   WHERE        `projection` = ?';
+                       FROM         `permutations`
+                       WHERE        `projection` = ?';
             unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('i', $projection_id) ||

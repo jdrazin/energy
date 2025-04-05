@@ -211,7 +211,7 @@ class EnergyCost extends Root
             return [];
         }
         else {
-            $this->insertOptimumGridInverterKw($optimumChargeKws);                      // insert for each slot: grid and battery discharge energies (kWh)
+            $this->insertOptimumChargeGridKw($optimumChargeKws);                      // insert for each slot: grid and battery discharge energies (kWh)
             $slot_solution = $this->slotSolution();                                   // make slot solution
             $this->insertSlotNextDayCostEstimates($slot_solution['id']);
             return $slot_solution;
@@ -621,7 +621,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function insertOptimumGridInverterKw($optimum_charge_kws): void
+    private function insertOptimumChargeGridKw($optimum_charge_kws): void
     {
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'UPDATE      `slots` 
@@ -641,7 +641,7 @@ class EnergyCost extends Root
         $battery_level_kwh = $this->batteryEnergyInitialKwh;
         foreach ($optimum_charge_kws as $slot => $optimum_charge_kw) {
             $battery_level_kwh += $optimum_charge_kw * DbSlots::SLOT_DURATION_MIN / 60;
-            $optimum_grid_kw    = $this->load_house_kws[$slot] - $this->solar_gross_kws[$slot] - $optimum_charge_kw ;
+            $optimum_grid_kw    = $this->grid_kws[$slot];
             $stmt->execute();
         }
         $this->mysqli->commit();

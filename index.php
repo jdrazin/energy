@@ -4,7 +4,6 @@ namespace Src;
 require_once __DIR__ . '/vendor/autoload.php';
 
 use DateTime;
-use DateTimeInterface;
 use DateTimeZone;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -70,7 +69,7 @@ $app->post('/projections', function (Request $request, Response $response) {
     $config  = json_decode($config_json, true);
     $energy  = new Energy(null);
     $email   = $config['email']   ?? false;
-    $comment = ($config[Root::COMMENT_STRING] ?? '') . ' (' . (new DateTime("now", new DateTimeZone("UTC")))->format(DateTimeInterface::RFC850) . ')';
+    $comment = ($config[Root::COMMENT_STRING] ?? '') . ' (' . (new DateTime("now", new DateTimeZone("UTC")))->format('j M Y H:i:s') . ')';
     if (($projection_id = $energy->submitProjection($config_json, $email, $comment)) === false) {
         return $response->withStatus(401);
     }

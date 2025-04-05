@@ -21,7 +21,7 @@ const     DEBUG                             = false,
           ARGS                              = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION           = true,
           EMAIL_NOTIFICATION_ON_ERROR       = false,
-          MODE                              = 'id';
+          MODE                              = 'cron';
 
 try {
     $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';

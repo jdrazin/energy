@@ -36,27 +36,35 @@ def dayCostGbp(X):
         battery_charge_kw     = X[slot_count]
         load_house_kw         = load_house_kws[slot_count]
         solar_gross_kw        = solar_gross_kws[slot_count]
+
+        # clip solar to generation limit
         if solar_gross_kw > solarGenerationLimitKw:
             solar_clipped_kw  = solarGenerationLimitKw
         else:
             solar_clipped_kw  = solar_gross_kw
 
+        # clip grid export to limit
         grid_unlimited_kw     = solar_clipped_kw - load_house_kw - battery_charge_kw
         if grid_unlimited_kw > exportLimitKw:
             grid_limited_kw = exportLimitKw
         else:
             grid_limited_kw = grid_unlimited_kw
 
-        energy_grid_kwh       = grid_limited_kw   * slotDurationHour
+        # tie export to battery discharge limit when no net solar
+        if solar_clipped_kw - load_house_kw < 0.0:
+            if grid_limited_kw > batteryMaxDischargeRateKw:
+                grid_limited_kw = batteryMaxDischargeRateKw
+
+        grid_kwh              = grid_limited_kw   * slotDurationHour
         battery_charge_kwh    = battery_charge_kw * slotDurationHour
         #
         # grid
-        if energy_grid_kwh > 0.0:
-            export_kwh       += energy_grid_kwh
-            cost_grid_export -= tariff_export_per_kwh * energy_grid_kwh
+        if grid_kwh > 0.0:
+            export_kwh       += grid_kwh
+            cost_grid_export -= tariff_export_per_kwh * grid_kwh
         else:
-            import_kwh       += -energy_grid_kwh
-            cost_grid_import -= tariff_import_per_kwh * energy_grid_kwh
+            import_kwh       += -grid_kwh
+            cost_grid_import -= tariff_import_per_kwh * grid_kwh
 
         # battery
         if battery_charge_kw > 0.0:

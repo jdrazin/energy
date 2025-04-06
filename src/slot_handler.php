@@ -91,7 +91,7 @@ catch (exception $e) {
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
         $root->logDb('MESSAGE', 'Attempting to initialise ...', 'NOTICE');
-        (new GivEnergy())->reset_inverter(true);              // set charge discharge blocks
+        (new GivEnergy())->initialise(true);              // set charge discharge blocks
         $root->logDb('MESSAGE', '... initialise done', 'NOTICE');
     }
     exit(1);

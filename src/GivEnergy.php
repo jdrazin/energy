@@ -99,6 +99,7 @@ class GivEnergy extends Root
                                             'standard_timezone'                         => 'givenergy_standard_timezone'
                                         ];
 
+    public $local_timezone;
     public array $api, $battery, $inverterControlSettings;
 
     /**
@@ -109,8 +110,9 @@ class GivEnergy extends Root
     public function __construct()
     {
         parent::__construct();
-        $this->battery = $this->config['battery'];
-        $this->api = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
+        $this->api            = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
+        $this->battery        = $this->config['battery'];
+        $this->local_timezone = ($local_timezone = $this->local_timezone()) ? $local_timezone : $this->get_local_timezone();
         $this->getInverterControlSettings();  // get settings
     }
 
@@ -133,7 +135,7 @@ class GivEnergy extends Root
         $this->defaults(self::POST_DEFAULTS);
     }
 
-    public function get_local_timezone(): void {  // gets locale from account details
+    public function get_local_timezone(): string {  // gets locale from account details
         $url = $this->api['base_url'] . '/account';
         $headers = [
             'Authorization' => 'Bearer ' . $this->api['api_token'],
@@ -157,7 +159,23 @@ class GivEnergy extends Root
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
         }
+        return $standard_timezone;
+    }
 
+    public function local_timezone(): ?string {  // gets locale from account details
+        $sql = 'SELECT `value_string` FROM `properties`
+                    WHERE `name` = ?';
+        $name_standard_timezone = self::PROPERTY_NAMES['standard_timezone'];
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('s', $name_standard_timezone) ||
+            !$stmt->bind_result( $local_timezone) ||
+            !$stmt->execute()) {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'no timezone');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
+        }
+        $stmt->fetch();
+        return $local_timezone;
     }
 
     /**

@@ -14,6 +14,8 @@ ini_set('mysql.connect_timeout','36000');
 try {
     $givenergy = new GivEnergy();
     $givenergy->get_local_timezone();
+    $local_timezone = $givenergy->local_timezone();
+    echo $givenergy->local_timezone;
 }
 catch (GuzzleException|Exception $e) {
     exit(1);

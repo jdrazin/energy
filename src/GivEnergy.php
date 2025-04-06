@@ -37,6 +37,7 @@ class GivEnergy extends Root
                         UPPER_SOC_LIMIT_PERCENT       = 95,
                         LOWER_SOC_LIMIT_PERCENT       = 5,
                         EV_TIME_WINDOW_MINUTES        = 10;
+
     private const array ENTITIES_BATTERY_AIO = [
                                                 'SOLAR_W'                => ['solar',       'power'],
                                                 'GRID_W'                 => ['grid',        'power'],
@@ -93,6 +94,9 @@ class GivEnergy extends Root
                                        ],
                         EV_MEASURANDS = [
                                           13,                                                               // instantaneous active power imported by EV. (W or kW)
+                                        ],
+                        PROPERTY_NAMES = [
+                                            'standard_timezone'                         => 'givenergy_standard_timezone'
                                         ];
 
     public array $api, $battery, $inverterControlSettings;
@@ -114,9 +118,11 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function reset_inverter(bool $set_charge_discharge_blocks): void
+    public function initialise(bool $set_charge_discharge_blocks): void
     {
         /*
+         * gets timezones
+         *
          * restores autonomous battery operation settings
          */
         $this->delete_proxy_settings();
@@ -125,6 +131,33 @@ class GivEnergy extends Root
             $this->set_charge_discharge_blocks();
         }
         $this->defaults(self::POST_DEFAULTS);
+    }
+
+    public function get_local_timezone(): void {  // gets locale from account details
+        $url = $this->api['base_url'] . '/account';
+        $headers = [
+            'Authorization' => 'Bearer ' . $this->api['api_token'],
+            'Content-Type'  => 'application/json',
+            'Accept'        => 'application/json',
+        ];
+        $client = new Client();
+        $response = $client->get($url, ['headers' => $headers]);
+        if (!($standard_timezone = json_decode((string)$response->getBody(), true)['data']['standard_timezone'] ?? false)) {
+            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'no timezone'));
+        }
+        $sql = 'INSERT INTO `properties` (`name`, `value_string`)
+                                 VALUES  (?,       ?            )
+                    ON DUPLICATE KEY UPDATE `value_string` = ?';
+        $name_standard_timezone = self::PROPERTY_NAMES['standard_timezone'];
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('sss', $name_standard_timezone, $standard_timezone, $standard_timezone) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
+        }
+
     }
 
     /**

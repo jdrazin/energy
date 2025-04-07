@@ -120,8 +120,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function initialise(bool $set_charge_discharge_blocks): void
-    {
+    public function initialise(bool $set_charge_discharge_blocks): void {
         /*
          * gets timezones
          *

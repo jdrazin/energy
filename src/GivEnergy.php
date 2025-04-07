@@ -520,61 +520,67 @@ class GivEnergy extends Root
             $this->clear_preset_charge_discharge_blocks();
         }
         $mode                   = $command['mode']                    ?? null;
-        $start                  = $command['start']                   ?? null;
-        $stop                   = $command['stop']                    ?? null;
+        $start                  = $this->UTCToLocalTime($command['datetime_start'], $this->local_timezone,'H:i') ?? null;
+        $stop                   = $this->UTCToLocalTime($command['datetime_stop' ], $this->local_timezone,'H:i') ?? null;
         $abs_charge_power_w     = $command['abs_charge_power_w']      ?? null;
         $target_level_percent   = $command['target_level_percent']    ?? null;
         $message                = $command['message']                 ?? 'no context';
-        switch ($mode) {
-            case 'CHARGE':
-            case 'DISCHARGE': {
-                                if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
-                                    throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
-                                }
-                                $target_level_percent = min(max(self::LOWER_SOC_LIMIT_PERCENT, $target_level_percent), self::UPPER_SOC_LIMIT_PERCENT);
-                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                                                                    $mode,
-                                                                    [
-                                                                    'start'                 => $start,
-                                                                    'stop'                  => $stop,
-                                                                    'abs_charge_power_w'    => $abs_charge_power_w,
-                                                                    'target_level_percent'  => $target_level_percent
-                                                                    ],
-                                                               __FUNCTION__);
-                                $this->clear_slot($mode == 'CHARGE' ? 'DC Discharge' : 'AC Charge');  // clear other slot direction
-                                break;
-                            }
-            case 'ECO':     { // matches battery discharge power to net load: load - solar (i.e. zero export)
-                                $this->command( 'write', 'Enable Eco Mode', null, 1, $message);
-                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                                    'CHARGE',
-                                    [
-                                        'start'                 => '00:00',
-                                        'stop'                  => '00:00',
-                                        'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Charge Power'],
-                                        'target_level_percent'  => self::POST_DEFAULTS['AC Charge Upper % Limit']
-                                    ],
-                                    __FUNCTION__);
-                                $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
-                                    'DISCHARGE',
-                                    [
-                                        'start'                 => '00:00',
-                                        'stop'                  => '00:00',
-                                        'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Discharge Power'],
-                                        'target_level_percent'  => self::POST_DEFAULTS['Battery Cutoff % Limit']
-                                    ],
-                                    __FUNCTION__);
-                                $this->command('write', 'Battery Discharge Power', (int)(1000 * $this->battery['max_discharge_kw']), null, __FUNCTION__);
-                                break;
-                            }
-            case 'IDLE':    {
-                                $this->command( 'write', 'Enable Eco Mode', null, 0, $message);
-                                $this->clear_slot('AC Charge');     // clear time slots
-                                $this->clear_slot('DC Discharge');
-                                break;
-                            }
-            default: {
-                throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Unknown control mode: ' . $mode));
+        if (GIVENERGY_ENABLE) {
+            switch ($mode) {
+                case 'CHARGE':
+                case 'DISCHARGE':
+                {
+                    if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
+                        throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
+                    }
+                    $target_level_percent = min(max(self::LOWER_SOC_LIMIT_PERCENT, $target_level_percent), self::UPPER_SOC_LIMIT_PERCENT);
+                    $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
+                        $mode,
+                        [
+                            'start' => $start,
+                            'stop' => $stop,
+                            'abs_charge_power_w' => $abs_charge_power_w,
+                            'target_level_percent' => $target_level_percent
+                        ],
+                        __FUNCTION__);
+                    $this->clear_slot($mode == 'CHARGE' ? 'DC Discharge' : 'AC Charge');  // clear other slot direction
+                    break;
+                }
+                case 'ECO':
+                { // matches battery discharge power to net load: load - solar (i.e. zero export)
+                    $this->command('write', 'Enable Eco Mode', null, 1, $message);
+                    $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
+                        'CHARGE',
+                        [
+                            'start' => '00:00',
+                            'stop'  => '00:00',
+                            'abs_charge_power_w' => self::POST_DEFAULTS['Battery Charge Power'],
+                            'target_level_percent' => self::POST_DEFAULTS['AC Charge Upper % Limit']
+                        ],
+                        __FUNCTION__);
+                    $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
+                        'DISCHARGE',
+                        [
+                            'start' => '00:00',
+                            'stop'  => '00:00',
+                            'abs_charge_power_w' => self::POST_DEFAULTS['Battery Discharge Power'],
+                            'target_level_percent' => self::POST_DEFAULTS['Battery Cutoff % Limit']
+                        ],
+                        __FUNCTION__);
+                    $this->command('write', 'Battery Discharge Power', (int)(1000 * $this->battery['max_discharge_kw']), null, __FUNCTION__);
+                    break;
+                }
+                case 'IDLE':
+                {
+                    $this->command('write', 'Enable Eco Mode', null, 0, $message);
+                    $this->clear_slot('AC Charge');     // clear time slots
+                    $this->clear_slot('DC Discharge');
+                    break;
+                }
+                default:
+                {
+                    throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Unknown control mode: ' . $mode));
+                }
             }
         }
     }

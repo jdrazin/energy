@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 class Sliver extends Root
 {
     const int   SLIVER_DURATION_MINUTES = 1,
-                CHARGE_POWER_LEVELS     = 100;
+                CHARGE_POWER_LEVELS     = 1000;
     const float CHARGE_DISCHARGE_MIN_KW = 0.5;
 
     public function __construct()
@@ -69,7 +69,7 @@ class Sliver extends Root
             $sql = 'INSERT INTO `slivers` (`id`, `sliver_solution`, `grid_kw`, `grid_tariff_gbp_per_kwh`, `charge_kw`, `grid_gbp_per_hour`, `total_gbp_per_hour`, `wear_gbp_per_hour`)
                                    VALUES (?,    ?,                 ?,         ?,                         ?,           ?,                   ?,                    ?                  )';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('iidddddd', $id,  $sliver_solution_id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $grid_gbp_per_hour, $total_gbp_per_hour, $wear_gbp_per_hour)) {
+                !$stmt->bind_param('iidddddd', $id,  $sliver_solution_id, $grid_kw,  $grid_tariff_gbp_per_kwh, $charge_kw, $grid_gbp_per_hour, $total_gbp_per_hour, $total_wear_gbp_per_hour)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
@@ -79,7 +79,8 @@ class Sliver extends Root
                 $grid_tariff_gbp_per_kwh  =   $grid_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'];
                 $grid_gbp_per_hour        =  -$grid_tariff_gbp_per_kwh*$grid_kw;
                 $wear_gbp_per_hour        =  $energy_cost->wearGbpPerHour($charge_kw, $battery_level_kwh, $duration_hour);
-                $total_gbp_per_hour       =  $grid_gbp_per_hour + $wear_gbp_per_hour['battery_energy'] + $wear_gbp_per_hour['battery_power'];
+                $total_wear_gbp_per_hour  =  $wear_gbp_per_hour['battery_energy'] + $wear_gbp_per_hour['battery_power'];
+                $total_gbp_per_hour       =  $grid_gbp_per_hour + $total_wear_gbp_per_hour;
                 $data[$id] =    [
                                 'grid_kw'                         => $grid_kw,
                                 'grid_tariff_gbp_per_kwh'         => $grid_tariff_gbp_per_kwh,

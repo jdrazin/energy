@@ -50,8 +50,8 @@ const PID_FOLDER                     = '/var/www/html/energy/',
       ACTIVE_TARIFF_COMBINATION_ONLY = false;
 
 try {
-    $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
     if (!DEBUG) {
+        $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
             exit(1);

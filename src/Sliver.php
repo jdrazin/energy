@@ -163,16 +163,14 @@ class Sliver extends Root
             $this->mysqli->commit();
             $command  = [
                             'mode'                  => $slot_mode,
-                            'start'                 => (new DateTime($slot_target_parameters['start']))->format('H:i'),
-                            'stop'                  => (new DateTime($slot_target_parameters['stop'])) ->format('H:i'),
+                            'datetime_start'        => (new DateTime($slot_target_parameters['start']))->format(Root::MYSQL_FORMAT_DATETIME), // UTC
+                            'datetime_stop'         => (new DateTime($slot_target_parameters['stop'])) ->format(Root::MYSQL_FORMAT_DATETIME), // UTC
                             'abs_charge_power_w'    => $abs_charge_power_w,
                             'target_level_percent'  => $slot_end_target_level_percent,
                             'message'               => 'sliver control'
                         ];
         }
-        if (ENABLE_SLIVER_COMMAND) {                        // control battery for active combination on completion of countdown to next slot
-            $givenergy->control($command);
-        }
+        $givenergy->control($command);              // control battery for active combination on completion of countdown to next slot
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 namespace Src;
 use DateTime;
+use DateTimeZone;
 use Exception;
 use mysqli;
 
@@ -454,8 +455,7 @@ class Root
         }
     }
 
-    protected function latestValueDatetime($entity, $type, $earliest_datetime): string
-    {
+    protected function latestValueDatetime($entity, $type, $earliest_datetime): string {
         /*
          * returns latest datetime of value of entity, type - or earliest date if none
          */
@@ -473,5 +473,24 @@ class Root
         }
         $stmt->fetch();
         return $latest_value_datetime ?? $earliest_datetime;
+    }
+
+    /**
+     * @throws \DateMalformedStringException
+     * @throws \DateInvalidTimeZoneException
+     * @throws Exception
+     */
+    protected function UTCToLocalTime($datetime_string, $timezone, $format): ?string {
+        if (!$datetime_string) {
+            return null;
+        }
+        if (!$timezone || !$format) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'missing timezone or format');
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $datetime = new DateTime($datetime_string);
+        $datetime->setTimezone(new DateTimeZone($timezone));
+        return $datetime->format($format);
     }
 }

@@ -230,8 +230,8 @@ class EnergyCost extends Root
                                 `start`,
                                 `stop`,
                                 `battery_charge_kw`,
-                                `battery_level_kwh`,
-                                `battery_level_percent`,
+                                `battery_level_stop_kwh`,
+                                `battery_level_stop_percent`,
                                 `grid_kw`,
                                 `load_house_kw`,
                                 `solar_gross_kw`
@@ -248,24 +248,23 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
+        $abs_charge_w = round(1000.0 * abs($battery_charge_kw));
         $target_level_percent = min(100, max(0, (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh)));
         if (abs($battery_charge_kw) < self::ABS_ECO_THRESHOLD_KW) {
-            $mode               = 'ECO';
-            $battery_charge_kw  = null;
-            $abs_charge_power_w = null;
+            $mode = 'ECO';
         }
         else {
-            $mode               = $battery_charge_kw < 0.0 ? 'DISCHARGE' : 'CHARGE';
-            $battery_charge_kw  = round(1000.0 * abs($battery_charge_kw));
+            $mode = $battery_charge_kw < 0.0 ? 'DISCHARGE' : 'CHARGE';
         }
         return [
             'id'                    => $id,
             'start'                 => $start,
             'stop'                  => $stop,
             'mode'                  => $mode,
-            'abs_charge_power_w'    => $abs_charge_power_w,
-            'target_level_percent'  => $target_level_percent
-        ];
+            'abs_charge_w'          => $abs_charge_w,
+            'target_level_percent'  => $target_level_percent,
+            'message'               => $mode . '@' . $abs_charge_w . 'W to ' . $target_level_percent . '%'
+            ];
     }
 
     /**
@@ -626,11 +625,11 @@ class EnergyCost extends Root
     {
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'UPDATE      `slots` 
-                   SET      `battery_charge_kw`  = ROUND(?, 3),
-                            `battery_level_kwh`  = ROUND(?, 3),
-                            `grid_kw`            = ROUND(?, 3)
-                   WHERE    `slot`               = ? AND
-                            `tariff_combination` = ? AND
+                   SET      `battery_charge_kw`       = ROUND(?, 3),
+                            `battery_level_stop_kwh`  = ROUND(?, 3),
+                            `grid_kw`                 = ROUND(?, 3)
+                   WHERE    `slot`                    = ? AND
+                            `tariff_combination`      = ? AND
                             NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('dddii', $optimum_charge_kw, $battery_level_kwh, $optimum_grid_kw, $slot, $tariff_combination_id) ||

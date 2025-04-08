@@ -25,11 +25,11 @@ class Octopus extends Root
                                     'DAY' => 'standing-charges/',
                                 ],
                     ENTITIES = [
-                                    'grid_kw'               => [['GRID_W',                 +1000.0],
-                                                                ['LOAD_EV_W',              +1000.0]],
-                                    'solar_gross_kw'        => [['SOLAR_W',                +1000.0]],
-                                    'load_house_kw'         => [['LOAD_HOUSE_W',           +1000.0]],
-                                    'battery_level_percent' => [['BATTERY_LEVEL_PERCENT',      1.0]]
+                                    'grid_kw'                   => [['GRID_W',                 +1000.0],
+                                                                    ['LOAD_EV_W',              +1000.0]],
+                                    'solar_gross_kw'             => [['SOLAR_W',                +1000.0]],
+                                    'load_house_kw'              => [['LOAD_HOUSE_W',           +1000.0]],
+                                    'battery_level_stop_percent' => [['BATTERY_LEVEL_PERCENT',      1.0]]
                                 ];
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api;
@@ -71,8 +71,8 @@ class Octopus extends Root
                         $values->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
 
                         // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
-                        $batteryLevelKwh = $batteryLevelKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($db_slots);
-                        $slot_solution = (new EnergyCost($batteryLevelKwh, $db_slots))->minimise(); // minimise energy cost
+                        $batteryLevelInitialKwh = $batteryLevelInitialKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($db_slots); // initial level at beginning of slot 0
+                        $slot_solution = (new EnergyCost($batteryLevelInitialKwh, $db_slots))->minimise(); // minimise energy cost
                         if ($active_tariff) {                                        // make battery command
                             $this->log($slot_solution);                              // log slot command
                             $this->makeActiveTariffCombinationDbSlotsLast24hrs();    // make historic slots for last 24 hours
@@ -396,15 +396,15 @@ class Octopus extends Root
                             ROUND(`p`.`grid_kw`, 3)                 AS `previous_grid_kw`,
                             ROUND(`n`.`solar_gross_kw`, 3)          AS `solar_gross_kw`,
                             ROUND(`p`.`solar_gross_kw`, 3)          AS `previous_gross_solar_kw`,
-                            ROUND(`n`.`battery_level_kwh`, 3)       AS `battery_level_kwh`,
-                            ROUND(`p`.`battery_level_kwh`, 3)       AS `previous_battery_kwh`
+                            ROUND(`n`.`battery_level_stop_kwh`, 3)  AS `battery_level_kwh`,
+                            ROUND(`p`.`battery_level_stop_kwh`, 3)  AS `previous_battery_kwh`
                   FROM      `slots` `n`
                   LEFT JOIN (SELECT     `slot`,
                                         `start`,
                                         `load_house_kw`,
                                         `grid_kw`,
                                         `solar_gross_kw`,
-                                        `battery_level_kwh`
+                                        `battery_level_stop_kwh`
                                 FROM    `slots`
                                 WHERE   `final`) `p` ON `p`.`slot`+48 = `n`.`slot`
                   WHERE     `n`.`slot` >= 0 AND `n`.`final`
@@ -588,8 +588,8 @@ class Octopus extends Root
             }
         }
         $this->mysqli->commit();
-        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
-                       (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_charge_kw`, `battery_level_kwh`, `battery_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
+        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_charge_kw`, `battery_level_stop_kwh`, `battery_level_stop_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
+                       (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_charge_kw`, `battery_level_stop_kwh`, `battery_level_stop_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
                                     FROM `slots` `s`
                                     WHERE NOT `final` AND
                                               `tariff_combination` IN (0, ?))  
@@ -599,8 +599,8 @@ class Octopus extends Root
                                               `grid_kw`                   = `s`.`grid_kw`,
                                               `solar_gross_kw`            = `s`.`solar_gross_kw`,
                                               `battery_charge_kw`         = `s`.`battery_charge_kw`, 
-                                              `battery_level_kwh`         = `s`.`battery_level_kwh`,
-                                              `battery_level_percent`     = `s`.`battery_level_percent`,
+                                              `battery_level_stop_kwh`    = `s`.`battery_level_stop_kwh`,
+                                              `battery_level_stop_percent`= `s`.`battery_level_stop_percent`,
                                               `import_gbp_per_kwh`        = `s`.`import_gbp_per_kwh`, 
                                               `export_gbp_per_kwh`        = `s`.`export_gbp_per_kwh`, 
                                               `import_gbp_per_day`        = `s`.`import_gbp_per_day`, 
@@ -617,9 +617,9 @@ class Octopus extends Root
         }
         if ($battery_capacity_kwh = $this->config['battery']['initial_raw_capacity_kwh']) {
             $sql = 'UPDATE  `slots`
-                      SET   `battery_level_kwh` = ROUND(IFNULL(`battery_level_kwh`, ? * `battery_level_percent` /100.0),  1)
+                      SET   `battery_level_stop_kwh` = ROUND(IFNULL(`battery_level_stop_kwh`, ? * `battery_level_stop_percent` /100.0),  1)
                       WHERE `final` AND 
-                            `battery_level_percent` IS NOT NULL';
+                            `battery_level_stop_percent` IS NOT NULL';
             unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('d', $battery_capacity_kwh) ||
@@ -629,9 +629,9 @@ class Octopus extends Root
                 throw new Exception($message);
             }
             $sql = 'UPDATE  `slots`
-                      SET   `battery_level_percent` = ROUND(IFNULL(`battery_level_percent`, 100.0 * `battery_level_kwh` / ?), 1)
+                      SET   `battery_level_stop_percent` = ROUND(IFNULL(`battery_level_stop_percent`, 100.0 * `battery_level_stop_kwh` / ?), 1)
                       WHERE `final` AND
-                            `battery_level_kwh` IS NOT NULL';
+                            `battery_level_stop_kwh` IS NOT NULL';
             unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('d', $battery_capacity_kwh) ||

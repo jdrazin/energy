@@ -138,25 +138,16 @@ class Octopus extends Root
      * @throws Exception
      */
     private function log($slot_solution): void {
-        $sql = 'INSERT INTO `slot_solutions` (`start`, `stop`, `mode`, `abs_charge_power_w`, `target_level_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `message`) 
-                                     VALUES (?,       ?,       ?,      ?,                   ?,                      ?,                    ?,                    ?        )
-                           ON DUPLICATE KEY UPDATE `mode`                 = ?,
-                                                   `abs_charge_power_w`   = ?, 
-                                                   `target_level_percent` = ?,
-                                                   `import_gbp_per_kwh`   = ?,
-                                                   `export_gbp_per_kwh`   = ?,
-                                                   `message`              = ?';
+        $sql = 'INSERT INTO `slot_solutions` (`start`, `stop`, `charge_power_w`, `target_level_percent`) 
+                                     VALUES  (?,       ?,       ?,                ?,                   )
+                           ON DUPLICATE KEY UPDATE `charge_power_w`       = ?, 
+                                                   `target_level_percent` = ?';
         $start                 = $slot_solution['start'];
         $stop                  = $slot_solution['stop'];
-        $mode                  = $slot_solution['mode'];
-        $abs_charge_power_w    = $slot_solution['abs_charge_power_w'];
+        $charge_power_w        = $slot_solution['charge_power_w'];
         $target_level_percent  = $slot_solution['target_level_percent'];
-        $import_gbp_per_kwh    = $slot_solution['import_gbp_per_kwh'];
-        $export_gbp_per_kwh    = $slot_solution['export_gbp_per_kwh'];
-        $message               = $slot_solution['message'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('sssiiddssiidds', $start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh, $message,
-                                                                               $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh, $message) ||
+            !$stmt->bind_param('ssiiii',$start,$stop, $charge_power_w, $target_level_percent, $charge_power_w, $target_level_percent) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

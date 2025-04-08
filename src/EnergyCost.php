@@ -19,6 +19,9 @@ class EnergyCost extends Root
                                                         'export_gbp_per_kwhs'
                                                       ];
 
+    const float     ABS_BURST_POWER_KW       = 6.0,
+                    ABS_ECO_THRESHOLD_KW = 0.5;
+
     // setup parameters
     public    float $solarGenerationLimitKw,
                     $batteryCapacityKwh,
@@ -52,7 +55,7 @@ class EnergyCost extends Root
                     $tariff_combination,
                     $costs;
 
-    public array   $slotCommands;
+    public array    $slotCommands;
 
     public string   $string;
     private int     $number_slots;
@@ -226,44 +229,42 @@ class EnergyCost extends Root
         $sql = 'SELECT          `id`,
                                 `start`,
                                 `stop`,
-                                `grid_kw`,
                                 `battery_charge_kw`,
                                 `battery_level_kwh`,
-                                `import_gbp_per_kwh`,
-                                `export_gbp_per_kwh`
+                                `battery_level_percent`,
+                                `grid_kw`,
+                                `load_house_kw`,
+                                `solar_gross_kw`
                     FROM        `slots`
                     WHERE       `slot` = 0 AND
                                 `tariff_combination` = ? AND
                                 NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($id, $start, $stop, $grid_kw, $battery_charge_kw, $battery_level_kwh, $import_gbp_per_kwh, $export_gbp_per_kwh) ||
+            !$stmt->bind_result($id, $start, $stop, $battery_charge_kw, $battery_level_kwh, $battery_level_percent, $grid_kw, $load_house_kw, $solar_gross_kw) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        $this->slotCommands = [];
-        if ($battery_charge_kw > 0.0) {                                 // CHARGE
-            $charge_power_w = (int) round(1000.0 * min($battery_charge_kw, $this->batteryMaxChargeKw));
-        } else {                                                        // DISCHARGE
-            $charge_power_w = (int) round(1000.0 * max($battery_charge_kw, -$this->batteryMaxDischargeKw));
-        }
-        $mode = $charge_power_w > 0 ? 'CHARGE' : 'DISCHARGE';
-        $abs_charge_power_w   = abs($charge_power_w);
         $target_level_percent = min(100, max(0, (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh)));
-        $message              = $mode . ' @' . $abs_charge_power_w . 'W to ' . $target_level_percent .  '%';
+        if (abs($battery_charge_kw) < self::ABS_ECO_THRESHOLD_KW) {
+            $mode               = 'ECO';
+            $battery_charge_kw  = null;
+            $abs_charge_power_w = null;
+        }
+        else {
+            $mode               = $battery_charge_kw < 0.0 ? 'DISCHARGE' : 'CHARGE';
+            $battery_charge_kw  = round(1000.0 * abs($battery_charge_kw));
+        }
         return [
             'id'                    => $id,
             'start'                 => $start,
             'stop'                  => $stop,
             'mode'                  => $mode,
             'abs_charge_power_w'    => $abs_charge_power_w,
-            'target_level_percent'  => $target_level_percent,
-            'import_gbp_per_kwh'    => $import_gbp_per_kwh,
-            'export_gbp_per_kwh'    => $export_gbp_per_kwh,
-            'message'               => $message
+            'target_level_percent'  => $target_level_percent
         ];
     }
 

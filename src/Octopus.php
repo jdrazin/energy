@@ -53,9 +53,9 @@ class Octopus extends Root
     public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', '', null, 'NOTICE');
         if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
-            $db_slots = new DbSlots();                                           // make day slots
-            $values = new Values();
-            $givenergy = new GivEnergy();
+            $db_slots   = new DbSlots();                                          // make day slots
+            $values     = new Values();
+            $givenergy  = new GivEnergy();
             $givenergy->getData();                                                // grid, load_house, solar (yesterday, today) > `values`
             (new EmonCms())->getData();                                           // home heating and temperature > `values`
             $values->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature
@@ -138,16 +138,20 @@ class Octopus extends Root
      * @throws Exception
      */
     private function log($slot_solution): void {
-        $sql = 'INSERT INTO `slot_solutions` (`start`, `stop`, `charge_power_w`, `target_level_percent`) 
-                                     VALUES  (?,       ?,       ?,                ?,                   )
-                           ON DUPLICATE KEY UPDATE `charge_power_w`       = ?, 
-                                                   `target_level_percent` = ?';
-        $start                 = $slot_solution['start'];
-        $stop                  = $slot_solution['stop'];
-        $charge_power_w        = $slot_solution['charge_power_w'];
-        $target_level_percent  = $slot_solution['target_level_percent'];
+        $sql = 'INSERT INTO `slot_solutions` (`start`, `stop`, `mode`, `abs_charge_w`, `target_level_percent`, `message`) 
+                                     VALUES  (?,       ?,       ?,     ?,              ?,                     ?         )
+                           ON DUPLICATE KEY UPDATE `mode`                 = ?,
+                                                   `abs_charge_w`         = ?,
+                                                   `target_level_percent` = ?,
+                                                   `message`              = ?';
+        $start                  = $slot_solution['start'];
+        $stop                   = $slot_solution['stop'];
+        $mode                   = $slot_solution['mode'];
+        $abs_charge_w           = $slot_solution['abs_charge_w'];
+        $target_level_percent   = $slot_solution['target_level_percent'];
+        $message                = $slot_solution['message'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ssiiii',$start,$stop, $charge_power_w, $target_level_percent, $charge_power_w, $target_level_percent) ||
+            !$stmt->bind_param('sssiissiis',$start,$stop, $mode, $abs_charge_w, $target_level_percent, $message, $mode, $abs_charge_w, $target_level_percent, $message) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

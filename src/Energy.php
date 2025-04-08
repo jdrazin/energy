@@ -119,7 +119,7 @@ class Energy extends Root
         if (!$this->authenticate()) {
             return false;
         }
-        $sql = 'SELECT   CONCAT(`slo`.`message`, \' at \', DATE_FORMAT(`slo`.`stop`, \'%H:%i\'), \'UTC\')
+        $sql = 'SELECT   CONCAT(`slo`.`message`, \' at \', DATE_FORMAT(`slo`.`stop`, \'%H:%i\'), \' UTC\')
                   FROM  `slot_solutions` `slo`
                   WHERE `slo`.`id` = (SELECT MAX(`id`)
                                         FROM `slot_solutions`)';

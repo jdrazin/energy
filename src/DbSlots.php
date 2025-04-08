@@ -58,19 +58,19 @@ class DbSlots extends Root
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'INSERT INTO `slots` (`tariff_combination`, `slot`, `start`, `stop`, `final`)
                              VALUES (?,                    ?,      ?,       ?     , FALSE)
-                    ON DUPLICATE KEY UPDATE `slot`                   = ?,
-                                            `load_house_kw`          = NULL,
-                                            `grid_kw`                = NULL,
-                                            `battery_charge_kw`      = NULL,
-                                            `battery_level_stop_kwh` = NULL,
-                                            `import_gbp_per_kwh`     = NULL,
-                                            `export_gbp_per_kwh`     = NULL,
-                                            `import_gbp_per_day`     = NULL,
-                                            `export_gbp_per_day`     = NULL,
-                                            `solar_gross_kw`         = NULL,
-                                            `load_non_heating_kw`    = NULL,
-                                            `load_heating_kw`        = NULL,
-                                            `final`                  = FALSE';
+                    ON DUPLICATE KEY UPDATE `slot`                    = ?,
+                                            `load_house_kw`           = NULL,
+                                            `grid_kw`                 = NULL,
+                                            `battery_level_start_kwh` = NULL,
+                                            `battery_charge_kw`       = NULL,
+                                            `import_gbp_per_kwh`      = NULL,
+                                            `export_gbp_per_kwh`      = NULL,
+                                            `import_gbp_per_day`      = NULL,
+                                            `export_gbp_per_day`      = NULL,
+                                            `solar_gross_kw`          = NULL,
+                                            `load_non_heating_kw`     = NULL,
+                                            `load_heating_kw`         = NULL,
+                                            `final`                   = FALSE';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('iisss', $tariff_combination_id, $slot, $start, $stop, $slot)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

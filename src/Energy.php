@@ -119,11 +119,12 @@ class Energy extends Root
         if (!$this->authenticate()) {
             return false;
         }
-        $sql = 'SELECT   CONCAT(`slo`.`message`, \' at \', DATE_FORMAT(`slo`.`stop`, \'%H:%i\'), \' UTC\')
+        $sql = 'SELECT   CONCAT(`slo`.`message`, \' at \', DATE_FORMAT(CONVERT_TZ(`slo`.`stop`, \'UTC\', ?), \'%H:%i\'))
                   FROM  `slot_solutions` `slo`
                   WHERE `slo`.`id` = (SELECT MAX(`id`)
                                         FROM `slot_solutions`)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('s', $this->config['time']['zone']) ||
             !$stmt->bind_result($slot_solution) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

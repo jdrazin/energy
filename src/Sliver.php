@@ -118,7 +118,7 @@ class Sliver extends Root
                 case 'DISCHARGE': {
                     $sign                          = $slot_mode == 'CHARGE' ? -1.0 : 1.0;
                     $slot_end_target_level_percent = $slot_target_parameters['target_level_percent'];
-                    $abs_charge_power_w            = $slot_target_parameters['abs_charge_power_w'];
+                    $abs_charge_power_w            = $slot_target_parameters['abs_charge_w'];
                     $slot_duration_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime($slot_target_parameters['stop']))->i;
                     $slot_progress_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime())->i;
                     $slot_energy_kwh               = ($abs_charge_power_w/1000.0)*((float) $slot_progress_minutes)/60.0;

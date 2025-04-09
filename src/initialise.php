@@ -18,7 +18,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const PID_FOLDER                     = '/var/www/html/energy/pids/',
-      DEBUG                          = false;  // disable cron and semaphore single thread control
+      DEBUG                          = true;  // disable cron and semaphore single thread control
 
 try {
     if (!DEBUG) {
@@ -32,9 +32,9 @@ try {
         }
     }
     $root = new Root();
-    $root->logDb('MESSAGE', 'Initialising ...', 'NOTICE');
+    $root->logDb('MESSAGE', 'Initialising ...', null,'NOTICE');
     (new GivEnergy())->initialise(true);              // set charge discharge blocks
-    $root->logDb('MESSAGE', 'Initialise done', 'NOTICE');
+    $root->logDb('MESSAGE', 'Initialise done', null,'NOTICE');
 
     if (!DEBUG) {
         if (!unlink($pid_filename)) {

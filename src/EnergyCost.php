@@ -229,9 +229,8 @@ class EnergyCost extends Root
         $sql = 'SELECT          `id`,
                                 `start`,
                                 `stop`,
+                                `battery_level_start_kwh`,
                                 `battery_charge_kw`,
-                                `battery_level_stop_kwh`,
-                                `battery_level_stop_percent`,
                                 `grid_kw`,
                                 `load_house_kw`,
                                 `solar_gross_kw`
@@ -241,7 +240,7 @@ class EnergyCost extends Root
                                 NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($id, $start, $stop, $battery_charge_kw, $battery_level_kwh, $battery_level_percent, $grid_kw, $load_house_kw, $solar_gross_kw) ||
+            !$stmt->bind_result($id, $start, $stop, $battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -249,7 +248,7 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         $abs_charge_w = round(1000.0 * abs($battery_charge_kw));
-        $target_level_percent = min(100, max(0, (int) round(100.0 * ($battery_level_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh)));
+        $target_level_percent = min(100, max(0, (int) round(100.0 * ($battery_level_start_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh)));
         if (abs($battery_charge_kw) < self::ABS_ECO_THRESHOLD_KW) {
             $mode = 'ECO';
         }
@@ -624,25 +623,25 @@ class EnergyCost extends Root
     private function insertOptimumChargeGridKw($optimum_charge_kws): void
     {
         $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'UPDATE      `slots` 
-                   SET      `battery_charge_kw`       = ROUND(?, 3),
-                            `battery_level_stop_kwh`  = ROUND(?, 3),
+        $sql = 'UPDATE      `slots`
+                   SET      `battery_level_start_kwh` = ROUND(?, 3),
+                            `battery_charge_kw`       = ROUND(?, 3),
                             `grid_kw`                 = ROUND(?, 3)
                    WHERE    `slot`                    = ? AND
                             `tariff_combination`      = ? AND
                             NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('dddii', $optimum_charge_kw, $battery_level_kwh, $optimum_grid_kw, $slot, $tariff_combination_id) ||
+            !$stmt->bind_param('dddii',  $battery_level_start_kwh, $optimum_charge_kw, $optimum_grid_kw, $slot, $tariff_combination_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        $battery_level_kwh = $this->batteryEnergyInitialKwh;
+        $battery_level_start_kwh = $this->batteryEnergyInitialKwh;
         foreach ($optimum_charge_kws as $slot => $optimum_charge_kw) {
-            $battery_level_kwh += $optimum_charge_kw * DbSlots::SLOT_DURATION_MIN / 60;
-            $optimum_grid_kw    = $this->grid_kws[$slot];
+            $optimum_grid_kw         = $this->grid_kws[$slot];
             $stmt->execute();
+            $battery_level_start_kwh = $battery_level_start_kwh + $optimum_charge_kw * DbSlots::SLOT_DURATION_MIN / 60;;
         }
         $this->mysqli->commit();
     }

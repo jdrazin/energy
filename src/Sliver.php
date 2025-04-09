@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 class Sliver extends Root
 {
     const int   SLIVER_DURATION_MINUTES = 1,
-                CHARGE_POWER_LEVELS     = 1000;
+                CHARGE_POWER_LEVELS     = 100;
     const float CHARGE_DISCHARGE_MIN_KW = 0.5;
 
     public function __construct()
@@ -22,13 +22,14 @@ class Sliver extends Root
     public function command(): void {
         $givenergy   = new GivEnergy();
         $energy_cost = new EnergyCost(null, null);
-        if (!($slot_target_parameters = $this->slotTargetParameters())) { // no slot solution target, no sliver to solve so place in ECO mode
+        if (!($slot_target_parameters = $this->slotTargetParameters()) ||
+            !($current_tariff         = $this->currentTariff())) { // no slot solution target or tariff data: place in ECO mode
             $command = [
                         'slot_solution'         =>  null,
                         'start'                 =>  null,
                         'stop'                  =>  null,
                         'mode'                  =>  'ECO',
-                        'abs_charge_power_w'    =>  null,
+                        'abs_charge_w'          =>  null,
                         'target_level_percent'  =>  null
                         ];
         }
@@ -76,7 +77,7 @@ class Sliver extends Root
             }
             for ($id = 0; $id <= self::CHARGE_POWER_LEVELS; $id++) {
                 $grid_kw                  = -($net_load_kw + $charge_kw);
-                $grid_tariff_gbp_per_kwh  =   $grid_kw < 0.0 ? $slot_target_parameters['import_gbp_per_kwh'] : $slot_target_parameters['export_gbp_per_kwh'];
+                $grid_tariff_gbp_per_kwh  =   $grid_kw < 0.0 ? $current_tariff['import_gbp_per_kwh'] : $current_tariff['export_gbp_per_kwh'];
                 $grid_gbp_per_hour        =  -$grid_tariff_gbp_per_kwh*$grid_kw;
                 $wear_gbp_per_hour        =  $energy_cost->wearGbpPerHour($charge_kw, $battery_level_kwh, $duration_hour);
                 $total_wear_gbp_per_hour  =  $wear_gbp_per_hour['battery_energy'] + $wear_gbp_per_hour['battery_power'];
@@ -98,8 +99,8 @@ class Sliver extends Root
                 $charge_kw += $charge_increment_kw;
             }
             $sql = 'UPDATE    `slivers`
-                    SET   `optimum` = TRUE
-                    WHERE `id` = ?';
+                        SET   `optimum` = TRUE
+                        WHERE `id` = ?';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('i', $optimum_id) ||
                 !$stmt->execute()) {
@@ -182,14 +183,12 @@ class Sliver extends Root
                         `start`,
                         `stop`,
                         `mode`,
-                        `abs_charge_power_w`,
-                        `target_level_percent`,
-                        `import_gbp_per_kwh`,
-                        `export_gbp_per_kwh`
+                        `abs_charge_w`,
+                        `target_level_percent`
                    FROM `slot_solutions`
                    WHERE NOW() BETWEEN `start` AND `stop`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($slot_solution, $start, $stop, $mode, $abs_charge_power_w, $target_level_percent, $import_gbp_per_kwh, $export_gbp_per_kwh) ||
+            !$stmt->bind_result($slot_solution, $start, $stop, $mode, $abs_charge_w, $target_level_percent) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -206,11 +205,35 @@ class Sliver extends Root
                     'start'                => $start,
                     'stop'                 => $stop,
                     'mode'                 => $mode,
-                    'abs_charge_power_w'   => $abs_charge_power_w,
-                    'target_level_percent' => $target_level_percent,
-                    'import_gbp_per_kwh'   => $import_gbp_per_kwh,
-                    'export_gbp_per_kwh'   => $export_gbp_per_kwh
+                    'abs_charge_w'         => $abs_charge_w,
+                    'target_level_percent' => $target_level_percent
                     ];
         }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function currentTariff(): array {
+        $sql = 'SELECT  `ti`.`rate` AS `import_gbp_per_kwh`,
+                        `te`.`rate` AS `export_gbp_per_kwh`
+                   FROM `tariff_combinations` `tc`
+                   JOIN `tariff_rates_import` `ti` ON `ti`.`tariff` = `tc`.`import` AND NOW() BETWEEN `ti`.`start` AND `ti`.`stop` AND `ti`.`per` = \'KWH\'
+                   JOIN `tariff_rates_export` `te` ON `te`.`tariff` = `tc`.`export` AND NOW() BETWEEN `te`.`start` AND `te`.`stop` AND `te`.`per` = \'KWH\'
+                   WHERE `tc`.`active` ';
+                if (!($stmt = $this->mysqli->prepare($sql)) ||
+                    !$stmt->bind_result($import_gbp_per_kwh, $export_gbp_per_kwh) ||
+                    !$stmt->execute()) {
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
+                    throw new Exception($message);
+                }
+        if (!$stmt->fetch()) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No tariff, revert to ECO mode');
+            $this->logDb('MESSAGE', $message, null, 'WARNING');
+            return [];
+        }
+        return ['import_gbp_per_kwh' => $import_gbp_per_kwh,
+                'export_gbp_per_kwh' => $export_gbp_per_kwh];
     }
 }

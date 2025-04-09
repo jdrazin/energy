@@ -90,9 +90,9 @@ catch (exception $e) {
     $root->logDb('MESSAGE', $message,  null, 'FATAL');
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
-        $root->logDb('MESSAGE', 'Attempting to initialise ...', 'NOTICE');
+        $root->logDb('MESSAGE', 'Attempting to initialise ...', null, 'NOTICE');
         (new GivEnergy())->initialise(true);              // set charge discharge blocks
-        $root->logDb('MESSAGE', '... initialise done', 'NOTICE');
+        $root->logDb('MESSAGE', '... initialise done', null, 'NOTICE');
     }
     exit(1);
 }

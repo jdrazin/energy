@@ -25,11 +25,11 @@ class Octopus extends Root
                                     'DAY' => 'standing-charges/',
                                 ],
                     ENTITIES = [
-                                    'grid_kw'                   => [['GRID_W',                 +1000.0],
+                                    'grid_kw'                 => [['GRID_W',                 +1000.0],
                                                                     ['LOAD_EV_W',              +1000.0]],
-                                    'solar_gross_kw'             => [['SOLAR_W',                +1000.0]],
-                                    'load_house_kw'              => [['LOAD_HOUSE_W',           +1000.0]],
-                                    'battery_level_stop_percent' => [['BATTERY_LEVEL_PERCENT',      1.0]]
+                                    'solar_gross_kw'          => [['SOLAR_W',                +1000.0]],
+                                    'load_house_kw'           => [['LOAD_HOUSE_W',           +1000.0]],
+                                    'battery_level_start_kwh' => [['BATTERY_LEVEL_KWH',      1.0]]
                                 ];
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api;
@@ -396,15 +396,15 @@ class Octopus extends Root
                             ROUND(`p`.`grid_kw`, 3)                 AS `previous_grid_kw`,
                             ROUND(`n`.`solar_gross_kw`, 3)          AS `solar_gross_kw`,
                             ROUND(`p`.`solar_gross_kw`, 3)          AS `previous_gross_solar_kw`,
-                            ROUND(`n`.`battery_level_stop_kwh`, 3)  AS `battery_level_kwh`,
-                            ROUND(`p`.`battery_level_stop_kwh`, 3)  AS `previous_battery_kwh`
+                            ROUND(`n`.`battery_level_start_kwh`, 3) AS `battery_level_kwh`,
+                            ROUND(`p`.`battery_level_start_kwh`, 3) AS `previous_battery_kwh`
                   FROM      `slots` `n`
                   LEFT JOIN (SELECT     `slot`,
                                         `start`,
                                         `load_house_kw`,
                                         `grid_kw`,
                                         `solar_gross_kw`,
-                                        `battery_level_stop_kwh`
+                                        `battery_level_start_kwh`
                                 FROM    `slots`
                                 WHERE   `final`) `p` ON `p`.`slot`+48 = `n`.`slot`
                   WHERE     `n`.`slot` >= 0 AND `n`.`final`
@@ -588,8 +588,8 @@ class Octopus extends Root
             }
         }
         $this->mysqli->commit();
-        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_charge_kw`, `battery_level_stop_kwh`, `battery_level_stop_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
-                       (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_charge_kw`, `battery_level_stop_kwh`, `battery_level_stop_percent`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
+        $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_level_start_kwh`, `battery_charge_kw`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
+                       (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_level_start_kwh`, `battery_charge_kw`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
                                     FROM `slots` `s`
                                     WHERE NOT `final` AND
                                               `tariff_combination` IN (0, ?))  
@@ -598,9 +598,8 @@ class Octopus extends Root
                                               `load_house_kw`             = `s`.`load_house_kw`, 
                                               `grid_kw`                   = `s`.`grid_kw`,
                                               `solar_gross_kw`            = `s`.`solar_gross_kw`,
+                                              `battery_level_start_kwh`   = `s`.`battery_level_start_kwh`,
                                               `battery_charge_kw`         = `s`.`battery_charge_kw`, 
-                                              `battery_level_stop_kwh`    = `s`.`battery_level_stop_kwh`,
-                                              `battery_level_stop_percent`= `s`.`battery_level_stop_percent`,
                                               `import_gbp_per_kwh`        = `s`.`import_gbp_per_kwh`, 
                                               `export_gbp_per_kwh`        = `s`.`export_gbp_per_kwh`, 
                                               `import_gbp_per_day`        = `s`.`import_gbp_per_day`, 
@@ -614,32 +613,6 @@ class Octopus extends Root
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
-        }
-        if ($battery_capacity_kwh = $this->config['battery']['initial_raw_capacity_kwh']) {
-            $sql = 'UPDATE  `slots`
-                      SET   `battery_level_stop_kwh` = ROUND(IFNULL(`battery_level_stop_kwh`, ? * `battery_level_stop_percent` /100.0),  1)
-                      WHERE `final` AND 
-                            `battery_level_stop_percent` IS NOT NULL';
-            unset($stmt);
-            if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('d', $battery_capacity_kwh) ||
-                !$stmt->execute()) {
-                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
-            }
-            $sql = 'UPDATE  `slots`
-                      SET   `battery_level_stop_percent` = ROUND(IFNULL(`battery_level_stop_percent`, 100.0 * `battery_level_stop_kwh` / ?), 1)
-                      WHERE `final` AND
-                            `battery_level_stop_kwh` IS NOT NULL';
-            unset($stmt);
-            if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('d', $battery_capacity_kwh) ||
-                !$stmt->execute()) {
-                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
-            }
         }
         $this->mysqli->commit();
     }

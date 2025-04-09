@@ -46,7 +46,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function slots($cubic_spline): bool|string {
+    public function slots(): bool|string {
         if (!$this->authenticate()) {
             return false;
         }

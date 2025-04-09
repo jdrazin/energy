@@ -77,9 +77,9 @@ class Sliver extends Root
                 throw new Exception($message);
             }
             for ($id = 0; $id <= self::CHARGE_POWER_LEVELS; $id++) {
-                $grid_kw                  = -($net_load_kw + $charge_kw);
-                $grid_tariff_gbp_per_kwh  =   $grid_kw < 0.0 ? $current_tariff['import_gbp_per_kwh'] : $current_tariff['export_gbp_per_kwh'];
-                $grid_gbp_per_hour        =  -$grid_tariff_gbp_per_kwh*$grid_kw;
+                $grid_kw                  = -$net_load_kw - $charge_kw;
+                $grid_tariff_gbp_per_kwh  =  $grid_kw < 0.0 ? $current_tariff['import_gbp_per_kwh'] : $current_tariff['export_gbp_per_kwh'];
+                $grid_gbp_per_hour        = -$grid_tariff_gbp_per_kwh*$grid_kw;
                 $wear_gbp_per_hour        =  $energy_cost->wearGbpPerHour($charge_kw, $battery_level_kwh, $duration_hour);
                 $total_wear_gbp_per_hour  =  $wear_gbp_per_hour['battery_energy'] + $wear_gbp_per_hour['battery_power'];
                 $total_gbp_per_hour       =  $grid_gbp_per_hour + $total_wear_gbp_per_hour;

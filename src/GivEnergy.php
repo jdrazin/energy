@@ -241,10 +241,37 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function getData(): void
-    {
+    public function getData(): void {
+        // load latest GivEnergy ecosystem data into db
         $this->getBattery();
         $this->getEVCharger();
+        $this->swapPercentToKwh();
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function swapPercentToKwh(): void {  // convert percentage to absolute energy
+        $sql = 'UPDATE IGNORE `values`
+                   SET    `value`  = ? * `value`/100.0,
+                          `entity` = \'BATTERY_LEVEL_KWH\'
+                   WHERE  `entity` = \'BATTERY_LEVEL_PERCENT\'';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('d', $this->battery['initial_raw_capacity_kwh']) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $sql = 'DELETE FROM `values` 
+                    WHERE `entity` = \'BATTERY_LEVEL_PERCENT\'';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $this->mysqli->commit();
     }
 
     /**

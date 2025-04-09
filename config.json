@@ -360,7 +360,7 @@
     "discount_rate_pa": 0.04
   },
   "time": {
-    "zone": "GB",
+    "zone": "Europe/London",
     "start": "2025-01-01 00:00:00",
     "max_project_duration_years": 25,
     "timestep_seconds": 216

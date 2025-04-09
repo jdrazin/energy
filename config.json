@@ -212,13 +212,13 @@
     },
     "wear": {
       "energy": {
-        "cost_average_gbp_per_kwh": 0.03,
+        "cost_average_gbp_per_kwh": 0.02,
         "constant_coefficient": 0.5,
         "exponential_coefficient": 25.0,
         "activation_kwh": 0.4
       },
       "power": {
-        "cost_average_gbp_per_kwh": 0.03,
+        "cost_average_gbp_per_kwh": 0.01,
         "constant_coefficient": 0.0,
         "exponential_coefficient": 25.0,
         "activation_kw": 0.1

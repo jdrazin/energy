@@ -45,7 +45,7 @@ class Sliver extends Root
             }
             $sliver_solution_id         =  $this->mysqli->insert_id;
             $slot_mode                  =  $slot_target_parameters['mode'];
-            $target_level_percent       = $slot_target_parameters['target_level_percent'];
+            $target_level_percent       =  $slot_target_parameters['target_level_percent'];
             $battery                    =  $givenergy->latest();                                // get battery data
             $ev_load_kw                 =  $givenergy->evLatestPowerW()/1000.0;                 // ev load
             $battery_level_percent      =  $battery['battery']['percent'];
@@ -114,28 +114,25 @@ class Sliver extends Root
             $cost_total_gbp_per_hour = round($optimum['total_gbp_per_hour'], 3);
             $cost_grid_gbp_per_hour  = round($optimum['grid_gbp_per_hour'], 3);
             $wear_gbp_per_hour       = round($optimum['cost_total_wear_gbp_per_hour']['battery_energy']+$optimum['cost_total_wear_gbp_per_hour']['battery_power'], 3);
-            switch ($slot_mode) {
-                case 'CHARGE':          // calculate target percent level into slot
-                case 'DISCHARGE': {
-                    $sign                          = $slot_mode == 'CHARGE' ? -1.0 : 1.0;
-                    $abs_charge_power_w            = $slot_target_parameters['abs_charge_w'];
-                    $slot_duration_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime($slot_target_parameters['stop']))->i;
-                    $slot_progress_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime())->i;
-                    $slot_energy_kwh               = ($abs_charge_power_w/1000.0)*((float) $slot_progress_minutes)/60.0;
-                    $slot_start_percent            = ((float) $target_level_percent) + $sign * (100.0 * $slot_energy_kwh / $this->config['battery']['initial_raw_capacity_kwh']);
-                    $target_percent                = round($slot_start_percent + ($slot_progress_minutes/$slot_duration_minutes) * ($target_level_percent - $slot_start_percent));
-                    break;
-                }
-                default:
-                    $target_percent = null;
+            if ($slot_mode == 'CHARGE' || $slot_mode == 'DISCHARGE') {
+                $sign                = $slot_mode == 'CHARGE' ? -1.0 : 1.0;
+                $abs_charge_w  = $slot_target_parameters['abs_charge_w'];
+                $slot_duration_minutes = (new DateTime($slot_target_parameters['start']))->diff(new DateTime($slot_target_parameters['stop']))->i;
+                $slot_progress_minutes = (new DateTime($slot_target_parameters['start']))->diff(new DateTime())->i;
+                $slot_energy_kwh       = ($abs_charge_w/1000.0)*((float) $slot_progress_minutes)/60.0;
+                $slot_start_percent    = ((float) $target_level_percent) + $sign * (100.0 * $slot_energy_kwh / $this->config['battery']['initial_raw_capacity_kwh']);
+                $target_percent        = round($slot_start_percent + ($slot_progress_minutes/$slot_duration_minutes) * ($target_level_percent - $slot_start_percent));
+            }
+            else {
+                $target_percent        = $target_level_percent;
             }
             switch ($slot_mode) {
                 case 'CHARGE': {    // only charge if above min efficient power and target not reached
-                    $charge_kw = (($optimum_charge_kw > self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent < $target_percent) && ($optimum_charge_kw > 0.0)) ? round($optimum_charge_kw, 3) : 0.0;
+                    $charge_kw = $battery_level_percent < $target_percent ? round($abs_charge_w/1000.0) : 0;
                     break;
                 }
                 case 'DISCHARGE': { // only discharge if above min efficient power and target not reached
-                    $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW)&& ($battery_level_percent > $target_percent) && ($optimum_charge_kw < 0.0)) ? round($optimum_charge_kw, 3) : 0.0;
+                    $charge_kw = (($optimum_charge_kw < -self::CHARGE_DISCHARGE_MIN_KW) && ($battery_level_percent > $target_percent) && ($optimum_charge_kw < 0.0)) ? round($optimum_charge_kw, 3) : 0.0;
                     break;
                 }
                 case 'ECO':
@@ -154,7 +151,7 @@ class Sliver extends Root
                             `house_load_kw` = ?,
                             `solar_kw` = ?
                       WHERE `id` = ?';
-            $abs_charge_power_w = abs(round(1000.0 * $charge_kw));
+            $abs_charge_w = abs(round(1000.0 * $charge_kw));
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('ididddddi', $slot_solution, $charge_kw, $battery_level_percent, $cost_total_gbp_per_hour, $cost_grid_gbp_per_hour, $wear_gbp_per_hour, $house_load_kw, $solar_kw, $sliver_solution_id) ||
                 !$stmt->execute()) {
@@ -167,7 +164,7 @@ class Sliver extends Root
                             'mode'                  => $slot_mode,
                             'datetime_start'        => (new DateTime($slot_target_parameters['start']))->format(Root::MYSQL_FORMAT_DATETIME), // UTC
                             'datetime_stop'         => (new DateTime($slot_target_parameters['stop'])) ->format(Root::MYSQL_FORMAT_DATETIME), // UTC
-                            'abs_charge_power_w'    => $abs_charge_power_w,
+                            'abs_charge_power_w'    => $abs_charge_w,
                             'target_level_percent'  => $target_level_percent,
                             'message'               => 'sliver control'
                         ];

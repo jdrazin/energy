@@ -560,6 +560,7 @@ class GivEnergy extends Root
                         throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
                     }
                     $target_level_percent = min(max(self::LOWER_SOC_LIMIT_PERCENT, $target_level_percent), self::UPPER_SOC_LIMIT_PERCENT);
+                    $this->command('write', 'Enable Eco Mode', null, 0, $message);
                     $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
                         $mode,
                         [
@@ -598,7 +599,7 @@ class GivEnergy extends Root
                 }
                 case 'IDLE':
                 {
-                    $this->command('write', 'Enable Eco Mode', null, 0, $message);
+                    $this->command('write', 'Enable Eco Mode', null, 1, $message);
                     $this->clear_slot('AC Charge');     // clear time slots
                     $this->clear_slot('DC Discharge');
                     break;

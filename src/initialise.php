@@ -17,7 +17,7 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const PID_FOLDER                     = '/var/www/html/energy/',
+const PID_FOLDER                     = '/var/www/html/energy/pids/',
       DEBUG                          = false;  // disable cron and semaphore single thread control
 
 try {
@@ -32,11 +32,10 @@ try {
         }
     }
     $root = new Root();
-    if (INITIALISE_ON_EXCEPTION) {
-        $root->logDb('MESSAGE', 'Attempting to initialise ...', 'NOTICE');
-        (new GivEnergy())->initialise(true);              // set charge discharge blocks
-        $root->logDb('MESSAGE', '... initialise done', 'NOTICE');
-    }
+    $root->logDb('MESSAGE', 'Initialising ...', 'NOTICE');
+    (new GivEnergy())->initialise(true);              // set charge discharge blocks
+    $root->logDb('MESSAGE', 'Initialise done', 'NOTICE');
+
     if (!DEBUG) {
         if (!unlink($pid_filename)) {
             throw new Exception('Cannot delete semaphore');

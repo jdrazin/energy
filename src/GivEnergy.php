@@ -580,8 +580,8 @@ class GivEnergy extends Root
                         [
                             'start' => '00:00',
                             'stop'  => '00:00',
-                            'abs_charge_power_w' => self::POST_DEFAULTS['Battery Charge Power'],
-                            'target_level_percent' => self::POST_DEFAULTS['AC Charge Upper % Limit']
+                            'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Charge Power'],
+                            'target_level_percent'  => self::POST_DEFAULTS['AC Charge Upper % Limit']
                         ],
                         __FUNCTION__);
                     $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
@@ -589,8 +589,8 @@ class GivEnergy extends Root
                         [
                             'start' => '00:00',
                             'stop'  => '00:00',
-                            'abs_charge_power_w' => self::POST_DEFAULTS['Battery Discharge Power'],
-                            'target_level_percent' => self::POST_DEFAULTS['Battery Cutoff % Limit']
+                            'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Discharge Power'],
+                            'target_level_percent'  => self::POST_DEFAULTS['Battery Cutoff % Limit']
                         ],
                         __FUNCTION__);
                     $this->command('write', 'Battery Discharge Power', (int)(1000 * $this->battery['max_discharge_kw']), null, __FUNCTION__);

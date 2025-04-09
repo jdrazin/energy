@@ -45,6 +45,7 @@ class Sliver extends Root
             }
             $sliver_solution_id         =  $this->mysqli->insert_id;
             $slot_mode                  =  $slot_target_parameters['mode'];
+            $target_level_percent       = $slot_target_parameters['target_level_percent'];
             $battery                    =  $givenergy->latest();                                // get battery data
             $ev_load_kw                 =  $givenergy->evLatestPowerW()/1000.0;                 // ev load
             $battery_level_percent      =  $battery['battery']['percent'];
@@ -117,13 +118,12 @@ class Sliver extends Root
                 case 'CHARGE':          // calculate target percent level into slot
                 case 'DISCHARGE': {
                     $sign                          = $slot_mode == 'CHARGE' ? -1.0 : 1.0;
-                    $slot_end_target_level_percent = $slot_target_parameters['target_level_percent'];
                     $abs_charge_power_w            = $slot_target_parameters['abs_charge_w'];
                     $slot_duration_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime($slot_target_parameters['stop']))->i;
                     $slot_progress_minutes         = (new DateTime($slot_target_parameters['start']))->diff(new DateTime())->i;
                     $slot_energy_kwh               = ($abs_charge_power_w/1000.0)*((float) $slot_progress_minutes)/60.0;
-                    $slot_start_percent            = ((float) $slot_end_target_level_percent) + $sign * (100.0 * $slot_energy_kwh / $this->config['battery']['initial_raw_capacity_kwh']);
-                    $target_percent                = round($slot_start_percent + ($slot_progress_minutes/$slot_duration_minutes) * ($slot_end_target_level_percent - $slot_start_percent));
+                    $slot_start_percent            = ((float) $target_level_percent) + $sign * (100.0 * $slot_energy_kwh / $this->config['battery']['initial_raw_capacity_kwh']);
+                    $target_percent                = round($slot_start_percent + ($slot_progress_minutes/$slot_duration_minutes) * ($target_level_percent - $slot_start_percent));
                     break;
                 }
                 default:
@@ -168,7 +168,7 @@ class Sliver extends Root
                             'datetime_start'        => (new DateTime($slot_target_parameters['start']))->format(Root::MYSQL_FORMAT_DATETIME), // UTC
                             'datetime_stop'         => (new DateTime($slot_target_parameters['stop'])) ->format(Root::MYSQL_FORMAT_DATETIME), // UTC
                             'abs_charge_power_w'    => $abs_charge_power_w,
-                            'target_level_percent'  => $slot_end_target_level_percent,
+                            'target_level_percent'  => $target_level_percent,
                             'message'               => 'sliver control'
                         ];
         }

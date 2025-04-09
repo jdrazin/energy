@@ -458,9 +458,9 @@ class EnergyCost extends Root
             $solar_clipped_kw      = min($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw);       // clip solar to generation limit
             $grid_kw               = $solar_clipped_kw - $load_house_kw - $battery_charge_kw;
             $grid_kw               = min($grid_kw, $this->exportLimitKw);                                     // clip grid export to limit
-      //      if ($solar_clipped_kw - $load_house_kw < 0.0) {                                                 // tie export to battery discharge limit when no net solar
-      //          $grid_kw = min($grid_kw, $this->batteryMaxDischargeKw);
-      //      }
+            if ($solar_clipped_kw - $load_house_kw < 0.0) {                                                 // tie export to battery discharge limit when no net solar
+                $grid_kw = min($grid_kw, $this->batteryMaxDischargeKw);
+            }
             $this->grid_kws[$slot_count] = $grid_kw;
             $grid_kwh              = $grid_kw           * $this->slotDurationHour;
             $battery_charge_kwh    = $battery_charge_kw * $this->slotDurationHour;

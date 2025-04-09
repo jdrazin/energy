@@ -262,7 +262,7 @@ class EnergyCost extends Root
             'mode'                  => $mode,
             'abs_charge_w'          => $abs_charge_w,
             'target_level_percent'  => $target_level_percent,
-            'message'               => $mode . '@' . $abs_charge_w . 'W to ' . $target_level_percent . '%'
+            'message'               => $mode . ($mode == 'ECO' ? '' : '@' . $abs_charge_w . 'W') . ' to ' . $target_level_percent . '%'
             ];
     }
 

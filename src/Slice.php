@@ -25,7 +25,7 @@ class Slice extends Root
         $battery                = $givenergy->latest()['battery'];
         $batteryLevelInitialKwh = $givenergy->batteryLevelNowKwh($battery); // initial level at beginning of slot 0
         $battery_charge_now_w   = $givenergy->batteryChargeNowW($battery);
-        $energy_cost            = new EnergyCost('slices', $batteryLevelInitialKwh, $octopus->tariff_combinations[0]);
+        $energy_cost            = new EnergyCost('slices', $batteryLevelInitialKwh, $octopus->tariffCombinations()[0]);
         $energy_cost->minimise();
 
 

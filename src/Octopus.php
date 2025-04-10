@@ -488,7 +488,7 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function tariffCombinations(): array
+    public function tariffCombinations(): array
     {
         // select tariff combinations, active first
         $sql = 'SELECT     `tc`.`id`,

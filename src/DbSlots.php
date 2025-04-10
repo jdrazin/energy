@@ -72,9 +72,9 @@ class DbSlots extends Root
                                             `final`                   = FALSE';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('iisss', $tariff_combination_id, $slot, $start, $stop, $slot)) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
         foreach ($this->slots as $slot => $v) {
             $start = $v['start'];
@@ -104,6 +104,7 @@ class DbSlots extends Root
      * @throws Exception
      */
     public function getDbNextDaySlots($tariff_combination): array {  // returns slot times
+        $tariff_combination_id = $tariff_combination['id'];
         $sql = 'SELECT  `id`,
                         `slot`,
                         `start`,
@@ -114,7 +115,6 @@ class DbSlots extends Root
                         `slot` IS NOT NULL AND
                         NOT `final`
                   ORDER BY `slot` ASC';
-        $tariff_combination_id = $tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
             !$stmt->bind_result($id, $slot, $start, $stop, $mid) ||
@@ -126,10 +126,10 @@ class DbSlots extends Root
         $slots = [];
         while ($stmt->fetch()) {
             $slots[$slot] = [
-                                'id'    => $id,
-                                'start' => $start,
-                                'mid'   => $mid,
-                                'stop'  => $stop
+                            'id'    => $id,
+                            'start' => $start,
+                            'mid'   => $mid,
+                            'stop'  => $stop
                             ];
         }
         return $slots;

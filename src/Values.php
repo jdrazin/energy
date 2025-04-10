@@ -19,7 +19,7 @@ class Values extends Root
                 MIN_POWER_W = 100.0,
                 MAX_LIMIT_TEMPERATURE = 21.0;
 
-    private array $power_w;
+    private array $power_w, $tariff_combination;
 
     private mixed $db_slots;
 
@@ -86,9 +86,10 @@ class Values extends Root
     /**
      * @throws Exception
      */
-    public function estimatePowers($db_slots): void
+    public function estimatePowers($db_slots, $tariff_combination): void
     {
-        $this->db_slots = $db_slots;
+        $this->db_slots           = $db_slots;
+        $this->tariff_combination = $tariff_combination;
         $this->solarForecast();                                                                                                 // solar forecast
         $this->heatingEstimate();                                                                                               // estimate heating power for each slot based on historic performance
         $this->estimateLoadNonHeating();                                                                                        // calculate non_heating historic slots
@@ -259,14 +260,13 @@ class Values extends Root
 
     private function updateSlotPowerskW($powers_kw, $column): void
     {
-        $tariff_combination_id = $this->db_slots->tariff_combination['id'];
         $sql = 'UPDATE   `slots` 
                    SET   ' . $column . ' = ?
                    WHERE `slot` = ? AND
                          `tariff_combination` = ? AND
                          NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('dii', $power_kw, $slot, $tariff_combination_id)) {
+            !$stmt->bind_param('dii', $power_kw, $slot, $this->tariff_combination['id'])) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
@@ -354,9 +354,8 @@ class Values extends Root
                   SET       `load_house_kw` = `load_non_heating_kw` + `load_heating_kw`
                   WHERE     `tariff_combination` = ? AND
                             NOT `final`';
-        $tariff_combination_id = $this->db_slots->tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $tariff_combination_id) ||
+            !$stmt->bind_param('i', $this->tariff_combination['id']) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

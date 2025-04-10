@@ -174,7 +174,6 @@ class EnergyCost extends Root
         /*
          * get house load
          */
-        $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'SELECT      `battery_level_start_kwh`,
                             `battery_charge_kw`,
                             `grid_kw`,
@@ -189,7 +188,7 @@ class EnergyCost extends Root
                              NOT `final`
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $tariff_combination_id) ||
+            !$stmt->bind_param('i', $this->tariff_combination['id']) ||
             !$stmt->bind_result($battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -235,7 +234,6 @@ class EnergyCost extends Root
     private function slices(): array {
         $slots_kws = $this->slots(); // get slot data
 
-
     }
 
     /**
@@ -252,15 +250,15 @@ class EnergyCost extends Root
             switch ($this->type) {
                 case 'slots': {
                     (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
-                    $slot_kws              = $this->slots();                          // get house load from db (excludes EV)
-                    $this->load_house_kws  = $slot_kws['load_house_kws'];                 // house load (excludes EV)
-                    $this->solar_gross_kws = $slot_kws['solar_kws'];                      // gross solar forecast (excludes grid clipping)
+                    $slots                = $this->slots();                              // get house load from db (excludes EV)
+                    $this->load_house_kws  = $slots['load_house_kws'];                 // house load (excludes EV)
+                    $this->solar_gross_kws = $slots['solar_kws'];                      // gross solar forecast (excludes grid clipping)
                     break;
                 }
                 case 'slices': {
-
-                    $this->load_house_kws  = $slices_kws['load_house_kws'];               // house load (excludes EV)
-                    $this->solar_gross_kws = $slices_kws['solar_kws'];                    // gross solar forecast (excludes grid clipping)
+                    $slices                = $this->slices();                          // get house load from db (excludes EV)
+                    $this->load_house_kws  = $slices['load_house_kws'];                // house load (excludes EV)
+                    $this->solar_gross_kws = $slices['solar_kws'];                     // gross solar forecast (excludes grid clipping)
                     break;
                 }
             }

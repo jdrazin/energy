@@ -22,7 +22,7 @@ class Root
                             CUBIC_SPLINE_MULTIPLE = 8,
                             SLOT_SOLUTIIONS_DB_MAX_AGE_DAY = 30;
     private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
-    public array            $apis = [], $config = [], $tariff_combinations = [];
+    public array            $apis = [], $config = [];
     protected               mysqli $mysqli;
     protected string        $class;
     private const           int FORECAST_STALE_HOURS = 2;

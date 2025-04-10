@@ -43,7 +43,6 @@ class Octopus extends Root
         $this->class = $this->strip_namespace(__NAMESPACE__, __CLASS__);
         $this->api = $this->apis[$this->class];
         $this->requestTariffs();                                                // get latest tariff data
-        $this->tariffCombinationsActiveFirst();                                 // get tariff combinations of interest, starting with active combination
     }
 
     /**
@@ -61,22 +60,22 @@ class Octopus extends Root
             $values->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature
             (new Solcast())->getSolarActualForecast();                            // solar actuals & forecasts > 'powers'
             (new MetOffice())->forecast();                                        // get temperature forecast
-   //         $timestamp_start = (new DateTime($db_slots->getDbNextDaySlots($tariff_combination)[0]['start']))->getTimestamp(); // beginning of slot 0
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
-            foreach ($this->tariff_combinations as $tariff_combination) {
-                $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);
-                $timestamp_start = (new DateTime($next_day_slots[0]['start']))->getTimestamp(); // beginning of slot 0
-                if (($active_tariff = $tariff_combination['active']) || !ACTIVE_TARIFF_COMBINATION_ONLY) {
+            $tariff_combinations_active_first = $this->tariffCombinationsActiveFirst();                                 // get tariff combinations of interest, starting with active combination
+            foreach ($tariff_combinations_active_first as $tariff_combination) {
+                if (($tariff_combination['active']) || !ACTIVE_TARIFF_COMBINATION_ONLY) {
                     if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
-                        $db_slots->makeDbSlotsNext24hrs($tariff_combination);        // make slots for this tariff combination
-                        $this->makeSlotRates($db_slots);                             // make tariffs
-                        $values->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
+                        $db_slots->makeDbSlotsNext24hrs($tariff_combination);       // make slots for this tariff combination
+                        $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);
+                        $this->makeSlotRates($db_slots, $tariff_combination);       // make tariffs
+                        $values->estimatePowers($db_slots, $tariff_combination);    // forecast slot solar, heating, non-heating and load powers
 
                         // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
+                        $timestamp_start = (new DateTime($next_day_slots[0]['start']))->getTimestamp(); // beginning of slot 0
                         $batteryLevelInitialKwh = $batteryLevelInitialKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($timestamp_start); // initial level at beginning of slot 0
-                        $slot_solution = (new EnergyCost('slots', $batteryLevelInitialKwh, $db_slots))->minimise('slots'); // minimise energy cost
-                        if ($active_tariff) {                                        // make battery command
+                        $slot_solution = (new EnergyCost('slots', $batteryLevelInitialKwh, $tariff_combination))->minimise(); // minimise energy cost
+                        if ($tariff_combination['active']) {                                        // make battery command
                             $this->log($slot_solution);                              // log slot command
                             $this->makeActiveTariffCombinationDbSlotsLast24hrs();    // make historic slots for last 24 hours
                             $this->slots_make_cubic_splines();                       // generate cubic splines
@@ -275,9 +274,8 @@ class Octopus extends Root
      * @throws DateMalformedStringException
      * @throws Exception
      */
-    public function makeSlotRates($db_slots): void        // get future rates for tariff combination
+    public function makeSlotRates($db_slots, $tariff_combination): void        // get future rates for tariff combination
     {
-        $tariff_combination_id = $db_slots->tariff_combination['id'];
         $sql = 'UPDATE      `slots`
                     SET     `import_gbp_per_kwh` = ?,
                             `export_gbp_per_kwh` = ?,
@@ -287,7 +285,7 @@ class Octopus extends Root
                             `tariff_combination` = ? AND
                             NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ddddii', $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day, $slot, $tariff_combination_id)) {
+            !$stmt->bind_param('ddddii', $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day, $slot, $tariff_combination['id'])) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
@@ -299,7 +297,7 @@ class Octopus extends Root
             foreach (self::DIRECTIONS as $direction => $x) {
                 $tariff_table = self::DIRECTIONS[$direction]['rates'];
                 foreach (self::RATE_PERS as $unit => $y) {
-                    if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $db_slots->tariff_combination[$direction], $tariff_table, 0))) {      // get rate
+                    if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $tariff_combination[$direction], $tariff_table, 0))) {      // get rate
                         if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $db_slots->tariff_combination[$direction], $tariff_table, -1))) { // if none, try same slot in previous date
                             throw new \Exception('no ' . $direction . ' tariff between ' . $start . ' and ' . $stop);                                                          // otherwise throw exception
                         }
@@ -490,7 +488,7 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function tariffCombinationsActiveFirst(): void
+    private function tariffCombinationsActiveFirst(): array
     {
         // select tariff combinations, active first
         $sql = 'SELECT     `tc`.`id`,
@@ -511,14 +509,17 @@ class Octopus extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        $this->tariff_combinations = [];
+        $tariff_combinations_active_first = [];
         while ($stmt->fetch()) {
-            $this->tariff_combinations[] = ['id'     => $id,
-                                            'name'   => $name,
-                                            'active' => $active,
-                                            'import' => $import,
-                                            'export' => $export];
+            $tariff_combinations_active_first[] = [
+                                                    'id'     => $id,
+                                                    'name'   => $name,
+                                                    'active' => $active,
+                                                    'import' => $import,
+                                                    'export' => $export
+                                                  ];
         }
+        return $tariff_combinations_active_first;
     }
 
     /**

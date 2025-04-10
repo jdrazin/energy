@@ -499,9 +499,7 @@ class GivEnergy extends Root
         //
         // return effective battery level and capacity for input to optimiser
         //
-        $initial_raw_capacity_kwh = $this->config['battery']['initial_raw_capacity_kwh'];
-        $battery = $this->latest()['battery'];
-        $stored_now_kwh = (((float)$battery['percent']) / 100.0) * $initial_raw_capacity_kwh;
+        $battery_level_now_kwh = $this->batteryLevelNowKwh();
         $battery_power_now_w = ((float)$battery['power']);
         $timestamp_now = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot
         $timestamp_start = (new DateTime($db_slots->getDbNextDaySlots($db_slots->tariff_combination)[0]['start']))->getTimestamp();
@@ -511,7 +509,18 @@ class GivEnergy extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        return $stored_now_kwh -($battery_power_now_w * ((float)$time_duration_s) / Energy::JOULES_PER_KWH);
+        return $battery_level_now_kwh -($battery_power_now_w * ((float)$time_duration_s) / Energy::JOULES_PER_KWH);
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    public function batteryLevelNowKwh(): float {
+        //
+        // return current effective battery level
+        //
+        $battery = $this->latest()['battery'];
+        return (((float)$battery['percent']) / 100.0) * $this->config['battery']['initial_raw_capacity_kwh'];
     }
 
     /**
@@ -521,8 +530,8 @@ class GivEnergy extends Root
     {
         $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/';
         $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json'];
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json'];
         $client = new Client();
         $response = $client->get($url, ['headers' => $headers]);
         $settings = json_decode((string)$response->getBody(), true)['data'];

@@ -4,7 +4,7 @@ use DateTime;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 
-class SliverOld extends Root
+class Slice extends Root
 {
     const int   SLIVER_DURATION_MINUTES = 1,
                 CHARGE_POWER_LEVELS     = 100;
@@ -20,8 +20,17 @@ class SliverOld extends Root
      * @throws Exception
      */
     public function command(): void {
-        $givenergy   = new GivEnergy();
-        $energy_cost = new EnergyCost(null, null);
+        $givenergy              = new GivEnergy();
+        $battery                = $givenergy->latest()['battery'];
+        $batteryLevelInitialKwh = $givenergy->batteryLevelNowKwh($battery); // initial level at beginning of slot 0
+        $battery_charge_now_w   = $givenergy->batteryChargeNowW($battery);
+        $energy_cost            = new EnergyCost('slices', $batteryLevelInitialKwh, null);
+        $energy_cost->minimise();
+
+
+
+
+
         if (!($slot_target_parameters = $this->slotTargetParameters()) ||
             !($current_tariff         = $this->currentTariff())) { // no slot solution target or tariff data: place in ECO mode
             $command = [

@@ -500,7 +500,7 @@ class GivEnergy extends Root
         // return effective battery level and capacity for input to optimiser
         $battery                = $this->latest()['battery'];
         $battery_level_now_kwh  = $this->batteryLevelNowKwh($battery);
-        $battery_power_now_w    = $this->batteryChargeNowW($battery);
+        $battery_charge_now_w   = $this->batteryChargeNowW($battery);
         $timestamp_now          = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot
         $timestamp_start        = (new DateTime($db_slots->getDbNextDaySlots($db_slots->tariff_combination)[0]['start']))->getTimestamp();
         $time_duration_s        = $timestamp_start - $timestamp_now;
@@ -509,7 +509,7 @@ class GivEnergy extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        return $battery_level_now_kwh -($battery_power_now_w * ((float)$time_duration_s) / Energy::JOULES_PER_KWH);
+        return $battery_level_now_kwh +($battery_charge_now_w * ((float)$time_duration_s) / Energy::JOULES_PER_KWH);
     }
 
     /**
@@ -533,7 +533,7 @@ class GivEnergy extends Root
         if (is_null($battery)) {
             $battery = $this->latest()['battery'];
         }
-        return ((float) $battery['power']);
+        return ((float) -$battery['power']);
     }
 
     /**

@@ -8,7 +8,7 @@ class EnergyCost extends Root
 {
     const bool      DEBUG_MINIMISER         = false;
 
-    const string    JSON_PROBLEM            = '/var/www/html/energy/test/problem.json',
+    const string
                     JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
                     OPTIMISATION_LOG        = '/var/www/html/energy/test/optimisation.log',
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
@@ -17,10 +17,11 @@ class EnergyCost extends Root
                                                         'load_house_kws',
                                                         'import_gbp_per_kwhs',
                                                         'export_gbp_per_kwhs'
-                                                      ];
+                                                      ],
+                    JSON_PROBLEM            = ['slots'  => '/var/www/html/energy/test/problem_slots.json',
+                                               'slices' => '/var/www/html/energy/test/problem_slices.json'];
 
-    const float     ABS_BURST_POWER_KW       = 6.0,
-                    ABS_ECO_GRID_THRESHOLD_KW = 0.5;
+    const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5;
 
     // setup parameters
     public    float $solarGenerationLimitKw,
@@ -55,7 +56,7 @@ class EnergyCost extends Root
                     $tariff_combination,
                     $costs;
 
-    public array    $slotCommands;
+    private string  $type;
 
     public string   $string;
     private int     $number_slots;
@@ -64,12 +65,12 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    public function __construct($batteryLevelInitialKwh, $db_slots)
-    {
+    public function __construct($type, $batteryLevelInitialKwh, $db_slots) {
         parent::__construct();
+        $this->type = $type;                                                        // type of minimisation: slots, slices
         if (!is_null($batteryLevelInitialKwh) && !is_null($db_slots)) {             // make json instantiate
-            $this->slotDurationHour     = (float)(DbSlots::SLOT_DURATION_MIN / 60);
-            $this->number_slots         = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
+            $this->slotDurationHour             = (float)(DbSlots::SLOT_DURATION_MIN / 60);
+            $this->number_slots                 = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
             if (!self::DEBUG_MINIMISER) {
                 $this->batteryEnergyInitialKwh  = $batteryLevelInitialKwh;
                 $this->db_slots                 = $db_slots;
@@ -156,7 +157,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    public function minimise(): array // returns optimum battery charge level for next slot
+    public function minimise(): array // returns optimum battery charge level for next slots/slices
     {
         //
         // see https://scipy-lectures.org/advanced/mathematical_optimization/#knowing-your-problem
@@ -164,11 +165,22 @@ class EnergyCost extends Root
         // convex, non-smooth, exact cost
         //
         if (!self::DEBUG_MINIMISER) {
-            (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
-            $this->problem         = json_decode(file_get_contents(self::JSON_PROBLEM), true);
-            $slot_kws              = $this->slot_kws();                           // get house load from db (excludes EV)
-            $this->load_house_kws  = $slot_kws['load_house_kws'];                 // house load (excludes EV)
-            $this->solar_gross_kws = $slot_kws['solar_kws'];                      // gross solar forecast (excludes grid clipping)
+            $this->problem = json_decode(file_get_contents(self::JSON_PROBLEM[$type]), true);
+            switch ($this->type) {
+                case 'slots': {
+                    (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
+                    $slot_kws              = $this->slots_kws();                           // get house load from db (excludes EV)
+                    $this->load_house_kws  = $slot_kws['load_house_kws'];                 // house load (excludes EV)
+                    $this->solar_gross_kws = $slot_kws['solar_kws'];                      // gross solar forecast (excludes grid clipping)
+                    break;
+                }
+                case 'slices': {
+                    $slices_kws            = $this->slices_kws();                         // make slices from this and next slot
+                    $this->load_house_kws  = $slices_kws['load_house_kws'];               // house load (excludes EV)
+                    $this->solar_gross_kws = $slices_kws['solar_kws'];                    // gross solar forecast (excludes grid clipping)
+                    break;
+                }
+            }
         }
         else { // use debug JSON and make slot arrays as necessary
            $this->problem         = $this->makeSlotsArrays(json_decode(file_get_contents(self::JSON_PROBLEM_DEBUG), true));
@@ -646,34 +658,75 @@ class EnergyCost extends Root
         $this->mysqli->commit();
     }
 
-    private function slot_kws(): array {
+    /**
+     * @throws Exception
+     */
+    private function slots_kws(): array {
         /*
          * get house load
          */
         $tariff_combination_id = $this->tariff_combination['id'];
-        $sql = 'SELECT      `load_house_kw`, `solar_gross_kw` 
+        $sql = 'SELECT      `battery_level_start_kwh`,
+                            `battery_charge_kw`,
+                            `grid_kw`,
+                            `load_house_kw`,
+                            `solar_gross_kw`,
+                            `import_gbp_per_kwh`,
+                            `export_gbp_per_kwh`,
+                            `import_gbp_per_day`,
+                            `export_gbp_per_day`
                    FROM     `slots`
                    WHERE    `tariff_combination` = ? AND
-                            NOT `final`
+                             NOT `final`
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($load_house_kw, $solar_gross_kw) ||
+            !$stmt->bind_result($battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        $slot_kws        = [];
-        $load_house_kws  = [];
-        $solar_gross_kws = [];
+        $slot_kws                   = [];
+        $battery_level_start_kwhs   = [];
+        $battery_charge_kws         = [];
+        $grid_kws                   = [];
+        $load_house_kws             = [];
+        $solar_gross_kws            = [];
+        $import_gbp_per_kwh         = [];
+        $export_gbp_per_kwh         = [];
+        $import_gbp_per_day         = [];
+        $export_gbp_per_day         = [];
         while ($stmt->fetch()) {
-            $load_house_kws[] = $load_house_kw;
-            $solar_gross_kws[]      = $solar_gross_kw;
+            $battery_level_start_kwhs[] = $battery_level_start_kwh;
+            $battery_charge_kws[]       = $battery_charge_kw;
+            $grid_kws[]                 = $grid_kw;
+            $load_house_kws[]           = $load_house_kw;
+            $solar_gross_kws[]          = $solar_gross_kw;
+            $import_gbp_per_kwhs[]      = $import_gbp_per_kwh;
+            $export_gbp_per_kwhs[]      = $export_gbp_per_kwh;
+            $import_gbp_per_days[]      = $import_gbp_per_day;
+            $export_gbp_per_days[]      = $export_gbp_per_day;
         }
-        $slot_kws['load_house_kws'] = $load_house_kws;
-        $slot_kws['solar_kws']      = $solar_gross_kws;
+        $slot_kws['battery_level_start_kwhs']   = $battery_level_start_kwhs;
+        $slot_kws['battery_charge_kws']         = $battery_charge_kws;
+        $slot_kws['grid_kws']                   = $grid_kws;
+        $slot_kws['load_house_kws']             = $load_house_kws;
+        $slot_kws['solar_kws']                  = $solar_gross_kws;
+        $slot_kws['import_gbp_per_kwhs']        = $import_gbp_per_kwhs;
+        $slot_kws['export_gbp_per_kwhs']        = $export_gbp_per_kwhs;
+        $slot_kws['import_gbp_per_days']        = $import_gbp_per_days;
+        $slot_kws['export_gbp_per_days']        = $export_gbp_per_days;
         return $slot_kws;
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function slices_kws(): array {
+        $slots_kws = $this->slots_kws();
+
+
     }
 
     private function strip(): string

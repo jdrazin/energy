@@ -34,7 +34,7 @@ try {
         }
     }
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !DEBUG) || !$cron) {
-        (new Sliver())->command();
+        (new Slice())->command();
     }
     if (!DEBUG) {
         if (!unlink($pid_filename)) {

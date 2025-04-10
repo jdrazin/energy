@@ -2,6 +2,7 @@
 
 namespace Src;
 
+use DateTime;
 use Exception;
 
 class EnergyCost extends Root
@@ -239,9 +240,73 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function slices(): array {
-        $slots = $this->slots(); // get slot data
-
+    private function slices(): array {  // return slices from the first/seconds slot starting at current time
+        /*
+         * get house load
+         */
+        $sql = 'SELECT      `start`,
+                            `stop`,
+                            `battery_level_start_kwh`,
+                            `battery_charge_kw`,
+                            `grid_kw`,
+                            `load_house_kw`,
+                            `solar_gross_kw`,
+                            `import_gbp_per_kwh`,
+                            `export_gbp_per_kwh`,
+                            `import_gbp_per_day`,
+                            `export_gbp_per_day`
+                   FROM     `slots`
+                   WHERE    `tariff_combination` = ? AND
+                             NOT `final` AND
+                             ? BETWEEN `start` AND `stop`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('is', $this->tariff_combination['id'], $datetime_string) ||
+            !$stmt->bind_result($start, $stop, $battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $starts                     = [];
+        $stops                      = [];
+        $slices                      = [];
+        $battery_level_start_kwhs   = [];
+        $battery_charge_kws         = [];
+        $grid_kws                   = [];
+        $load_house_kws             = [];
+        $solar_gross_kws            = [];
+        $import_gbp_per_kwh         = [];
+        $export_gbp_per_kwh         = [];
+        $import_gbp_per_day         = [];
+        $export_gbp_per_day         = [];
+        $datetime = new DateTime();
+        for ($slice = 0; $slice < $this->number_slices_per_slot; $slice++) {
+            $datetime_string = $datetime->format(self::MYSQL_FORMAT_DATETIME);
+            $stmt->execute();
+            $stmt->fetch();
+            $starts[]                   = $datetime_string;
+            $battery_level_start_kwhs[] = $battery_level_start_kwh;
+            $battery_charge_kws[]       = $battery_charge_kw;
+            $grid_kws[]                 = $grid_kw;
+            $load_house_kws[]           = $load_house_kw;
+            $solar_gross_kws[]          = $solar_gross_kw;
+            $import_gbp_per_kwhs[]      = $import_gbp_per_kwh;
+            $export_gbp_per_kwhs[]      = $export_gbp_per_kwh;
+            $import_gbp_per_days[]      = $import_gbp_per_day;
+            $export_gbp_per_days[]      = $export_gbp_per_day;
+            $datetime->modify('+' . self::SLICE_DURATION_MINUTES . ' minute');
+        }
+        $slices['starts']                     = $starts;
+        $slices['battery_level_start_kwhs']   = $battery_level_start_kwhs;
+        $slices['battery_charge_kws']         = $battery_charge_kws;
+        $slices['grid_kws']                   = $grid_kws;
+        $slices['load_house_kws']             = $load_house_kws;
+        $slices['solar_kws']                  = $solar_gross_kws;
+        $slices['import_gbp_per_kwhs']        = $import_gbp_per_kwhs;
+        $slices['export_gbp_per_kwhs']        = $export_gbp_per_kwhs;
+        $slices['import_gbp_per_days']        = $import_gbp_per_days;
+        $slices['export_gbp_per_days']        = $export_gbp_per_days;
+        return $slices;
     }
 
     /**

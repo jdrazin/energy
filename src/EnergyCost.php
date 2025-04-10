@@ -589,34 +589,43 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function loadImportExport(): array
-    { // get slot load, import and export tariffs for each slot
-        $sql = 'SELECT      `load_house_kw`,
-                            `import_gbp_per_kwh`,
-                            `export_gbp_per_kwh`,
-                            `import_gbp_per_day`,
-                            `export_gbp_per_day`
-                   FROM     `slots`
-                   WHERE    `tariff_combination` = ? AND 
-                            `slot` IS NOT NULL AND
-                            NOT `final`
-                   ORDER BY `slot`';
-        $id = $this->tariff_combination['id'];
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $id) ||
-            !$stmt->bind_result($load_house_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        $load_house_kw = [];
-        $import_gbp_per_kwh = [];
-        $export_gbp_per_kwh = [];
-        while ($stmt->fetch()) {
-            $load_house_kws[]      = $load_house_kw;
-            $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
-            $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
+    private function loadImportExport(): array { // get load, import and export tariffs for each slot/slice
+        switch ($this->type) {
+            case ('slots'): {
+                $sql = 'SELECT      `load_house_kw`,
+                                    `import_gbp_per_kwh`,
+                                    `export_gbp_per_kwh`,
+                                    `import_gbp_per_day`,
+                                    `export_gbp_per_day`
+                           FROM     `slots`
+                           WHERE    `tariff_combination` = ? AND 
+                                    `slot` IS NOT NULL AND
+                                    NOT `final`
+                           ORDER BY `slot`';
+                $id = $this->tariff_combination['id'];
+                if (!($stmt = $this->mysqli->prepare($sql)) ||
+                    !$stmt->bind_param('i', $id) ||
+                    !$stmt->bind_result($load_house_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
+                    !$stmt->execute()) {
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
+                    throw new Exception($message);
+                }
+                $load_house_kw = [];
+                $import_gbp_per_kwh = [];
+                $export_gbp_per_kwh = [];
+                while ($stmt->fetch()) {
+                    $load_house_kws[]      = $load_house_kw;
+                    $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
+                    $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
+                }
+                break;
+            }
+            case ('slices'): {
+
+                break;
+            }
+
         }
         return [
                 'load_house_kws'        => $load_house_kws,

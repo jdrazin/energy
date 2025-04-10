@@ -498,7 +498,6 @@ class GivEnergy extends Root
     {
         //
         // return effective battery level and capacity for input to optimiser
-        //
         $battery                = $this->latest()['battery'];
         $battery_level_now_kwh  = $this->batteryLevelNowKwh($battery);
         $battery_power_now_w    = $this->batteryChargeNowW($battery);

@@ -9,7 +9,7 @@ class DbSlots extends Root
     public const int SLOTS_PER_DAY = 48,
         SLOT_DURATION_MINUTES = 30;
 
-    public array $previous_slot = [], $slots = [], $tariff_combination = [];
+    public array $previous_slot = [], $slots = [];
 
     /**
      * @throws Exception
@@ -54,8 +54,7 @@ class DbSlots extends Root
      */
     public function makeDbSlotsNext24hrs($tariff_combination): void
     {
-        $this->tariff_combination = $tariff_combination;
-        $tariff_combination_id = $this->tariff_combination['id'];
+        $tariff_combination_id = $tariff_combination['id'];
         $sql = 'INSERT INTO `slots` (`tariff_combination`, `slot`, `start`, `stop`, `final`)
                              VALUES (?,                    ?,      ?,       ?     , FALSE)
                     ON DUPLICATE KEY UPDATE `slot`                    = ?,
@@ -104,9 +103,12 @@ class DbSlots extends Root
     /**
      * @throws Exception
      */
-    public function getDbNextDaySlots($tariff_combination): array
-    {  // returns slot times
-        $sql = 'SELECT  `id`, `slot`, `start`, `stop`, `start` + INTERVAL CEIL(TIMESTAMPDIFF(SECOND, `start`, `stop`)/2.0) SECOND `mid`
+    public function getDbNextDaySlots($tariff_combination): array {  // returns slot times
+        $sql = 'SELECT  `id`,
+                        `slot`,
+                        `start`,
+                        `stop`,
+                        `start` + INTERVAL CEIL(TIMESTAMPDIFF(SECOND, `start`, `stop`)/2.0) SECOND `mid`
                   FROM  `slots`
                   WHERE `tariff_combination` = ? AND
                         `slot` IS NOT NULL AND
@@ -115,20 +117,20 @@ class DbSlots extends Root
         $tariff_combination_id = $tariff_combination['id'];
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($id, $key, $start, $stop, $mid) ||
+            !$stmt->bind_result($id, $slot, $start, $stop, $mid) ||
             !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
         $slots = [];
         while ($stmt->fetch()) {
-            $slots[$key] = [
-                'id' => $id,
-                'start' => $start,
-                'mid' => $mid,
-                'stop' => $stop
-            ];
+            $slots[$slot] = [
+                                'id'    => $id,
+                                'start' => $start,
+                                'mid'   => $mid,
+                                'stop'  => $stop
+                            ];
         }
         return $slots;
     }

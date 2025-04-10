@@ -494,7 +494,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function batteryLevelSlotBeginExtrapolateKwh($db_slots): float
+    public function batteryLevelSlotBeginExtrapolateKwh($timestamp_start): float
     {
         //
         // return effective battery level and capacity for input to optimiser
@@ -502,7 +502,6 @@ class GivEnergy extends Root
         $battery_level_now_kwh  = $this->batteryLevelNowKwh($battery);
         $battery_charge_now_w   = $this->batteryChargeNowW($battery);
         $timestamp_now          = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot
-        $timestamp_start        = (new DateTime($db_slots->getDbNextDaySlots($db_slots->tariff_combination)[0]['start']))->getTimestamp();
         $time_duration_s        = $timestamp_start - $timestamp_now;
         if ($time_duration_s < 0 && !EnergyCost::DEBUG_MINIMISER) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'time to start must be positive: ' . $time_duration_s);

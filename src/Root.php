@@ -12,6 +12,7 @@ class Root
 
     const string            APIS_PATH = '/home/jdrazin/.energy/apis.json',
                             CONFIG_PATH = '/var/www/html/energy/config.json',
+                            DEBUG_PATH = '/var/www/html/energy/debug/',
                             MYSQL_FORMAT_DATETIME = 'Y-m-d H:i:s',
                             MYSQL_FORMAT_DATE = 'Y-m-d';
     protected const int     SECONDS_PER_HOUR = 3600,

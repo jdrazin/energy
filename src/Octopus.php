@@ -26,7 +26,7 @@ class Octopus extends Root
                                 ],
                     ENTITIES = [
                                     'grid_kw'                 => [['GRID_W',                 +1000.0],
-                                                                    ['LOAD_EV_W',              +1000.0]],
+                                                                  ['LOAD_EV_W',              +1000.0]],
                                     'solar_gross_kw'          => [['SOLAR_W',                +1000.0]],
                                     'load_house_kw'           => [['LOAD_HOUSE_W',           +1000.0]],
                                     'battery_level_start_kwh' => [['BATTERY_LEVEL_KWH',      1.0]]
@@ -53,17 +53,20 @@ class Octopus extends Root
     public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', '', null, 'NOTICE');
         if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
-            $db_slots   = new DbSlots();                                          // make day slots
-            $values     = new Values();
-            $givenergy  = new GivEnergy();
+            $db_slots  = new DbSlots();                                          // make day slots
+            $values    = new Values();
+            $givenergy = new GivEnergy();
             $givenergy->getData();                                                // grid, load_house, solar (yesterday, today) > `values`
             (new EmonCms())->getData();                                           // home heating and temperature > `values`
             $values->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature
             (new Solcast())->getSolarActualForecast();                            // solar actuals & forecasts > 'powers'
             (new MetOffice())->forecast();                                        // get temperature forecast
+   //         $timestamp_start = (new DateTime($db_slots->getDbNextDaySlots($tariff_combination)[0]['start']))->getTimestamp(); // beginning of slot 0
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
             foreach ($this->tariff_combinations as $tariff_combination) {
+                $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);
+                $timestamp_start = (new DateTime($next_day_slots[0]['start']))->getTimestamp(); // beginning of slot 0
                 if (($active_tariff = $tariff_combination['active']) || !ACTIVE_TARIFF_COMBINATION_ONLY) {
                     if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
                         $db_slots->makeDbSlotsNext24hrs($tariff_combination);        // make slots for this tariff combination
@@ -71,7 +74,7 @@ class Octopus extends Root
                         $values->estimatePowers($db_slots);                          // forecast slot solar, heating, non-heating and load powers
 
                         // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
-                        $batteryLevelInitialKwh = $batteryLevelInitialKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($db_slots); // initial level at beginning of slot 0
+                        $batteryLevelInitialKwh = $batteryLevelInitialKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($timestamp_start); // initial level at beginning of slot 0
                         $slot_solution = (new EnergyCost('slots', $batteryLevelInitialKwh, $db_slots))->minimise('slots'); // minimise energy cost
                         if ($active_tariff) {                                        // make battery command
                             $this->log($slot_solution);                              // log slot command
@@ -510,11 +513,11 @@ class Octopus extends Root
         }
         $this->tariff_combinations = [];
         while ($stmt->fetch()) {
-            $this->tariff_combinations[] = ['id' => $id,
-                'name' => $name,
-                'active' => $active,
-                'import' => $import,
-                'export' => $export];
+            $this->tariff_combinations[] = ['id'     => $id,
+                                            'name'   => $name,
+                                            'active' => $active,
+                                            'import' => $import,
+                                            'export' => $export];
         }
     }
 

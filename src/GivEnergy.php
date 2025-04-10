@@ -499,11 +499,12 @@ class GivEnergy extends Root
         //
         // return effective battery level and capacity for input to optimiser
         //
-        $battery_level_now_kwh = $this->batteryLevelNowKwh();
-        $battery_power_now_w = ((float)$battery['power']);
-        $timestamp_now = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot
-        $timestamp_start = (new DateTime($db_slots->getDbNextDaySlots($db_slots->tariff_combination)[0]['start']))->getTimestamp();
-        $time_duration_s = $timestamp_start - $timestamp_now;
+        $battery                = $this->latest()['battery'];
+        $battery_level_now_kwh  = $this->batteryLevelNowKwh($battery);
+        $battery_power_now_w    = $this->batteryChargeNowW($battery);
+        $timestamp_now          = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot
+        $timestamp_start        = (new DateTime($db_slots->getDbNextDaySlots($db_slots->tariff_combination)[0]['start']))->getTimestamp();
+        $time_duration_s        = $timestamp_start - $timestamp_now;
         if ($time_duration_s < 0 && !EnergyCost::DEBUG_MINIMISER) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'time to start must be positive: ' . $time_duration_s);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -515,19 +516,31 @@ class GivEnergy extends Root
     /**
      * @throws GuzzleException
      */
-    public function batteryLevelNowKwh(): float {
+    public function batteryLevelNowKwh(?array $battery): float {
         //
         // return current effective battery level
-        //
-        $battery = $this->latest()['battery'];
-        return (((float)$battery['percent']) / 100.0) * $this->config['battery']['initial_raw_capacity_kwh'];
+        if (is_null($battery)) {
+            $battery = $this->latest()['battery'];
+        }
+        return (((float) $battery['percent']) / 100.0) * $this->config['battery']['initial_raw_capacity_kwh'];
     }
 
     /**
      * @throws GuzzleException
      */
-    private function getInverterControlSettings(): void
-    {
+    public function batteryChargeNowW(?array $battery): float {
+        //
+        // return current battery charge (+ve) / discharge (-ve) power
+        if (is_null($battery)) {
+            $battery = $this->latest()['battery'];
+        }
+        return ((float) $battery['power']);
+    }
+
+    /**
+     * @throws GuzzleException
+     */
+    private function getInverterControlSettings(): void {
         $url = $this->api['base_url'] . '/inverter/' . $this->api['inverter_serial_number'] . '/settings/';
         $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
                     'Content-Type'  => 'application/json',

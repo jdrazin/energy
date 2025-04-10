@@ -298,7 +298,6 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
     }
-
     private function makeSlotsArrays($problem): array {
         $number_slots = $problem['number_slots'];
         foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {
@@ -323,7 +322,6 @@ class EnergyCost extends Root
         }
         return $problem;
     }
-
     private function command(): string {
         //
         // make CLI command string
@@ -374,7 +372,6 @@ class EnergyCost extends Root
         }
         return $command;
     }
-
     private function costCLI($command, $charge_kws): array {
         //
         // calculates cost using SciPy command line arguments and $grid_kw solution
@@ -450,7 +447,6 @@ class EnergyCost extends Root
         }
         return $this->dayCostGbp($charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws);
     }
-
     private function dayCostGbp($battery_charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws): array {
         /*
          * calculate cost components: does not include standing costs
@@ -528,7 +524,6 @@ class EnergyCost extends Root
                     'export_kwh'    => $export_kwh
         ];
     }
-
     private function wearPerKwh($x, $x_min, $x_max, $wear_cost_average, $constant_coefficient, $exponential_coefficient, $activation, $normalisation_coefficient): float {
         $X  = ((($x - $x_min) / ($x_max - $x_min)) - 0.5);
         $X2 = $X * $X;
@@ -544,7 +539,6 @@ class EnergyCost extends Root
         $wear = $normalisation_coefficient*$wear_cost_average*($t1+$t2+$t3);
         return $wear;
     }
-
     public function wearGbpPerHour($charge_kw, $battery_level_kwh, $duration_hour): array {
         $battery_charge_kwh = $charge_kw * $duration_hour;
         $battery_energy_per_kwh     = $this->wearPerKwh( $battery_level_kwh,
@@ -568,7 +562,6 @@ class EnergyCost extends Root
         return ['battery_energy' => $battery_energy_per_hour,
                 'battery_power'  => $battery_power_per_hour];
     }
-
     public function makeNormalisationCoefficients(): void
     {
         $this->batteryWearEnergyNormalisationCoefficient    = $this->normalisationCoefficient(  $this->batteryWearEnergyConstantCoefficient,

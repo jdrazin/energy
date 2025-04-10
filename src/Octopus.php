@@ -620,4 +620,3 @@ class Octopus extends Root
         $this->mysqli->commit();
     }
 }
-

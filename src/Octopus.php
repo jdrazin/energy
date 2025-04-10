@@ -62,8 +62,8 @@ class Octopus extends Root
             (new MetOffice())->forecast();                                        // get temperature forecast
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
-            $tariff_combinations_active_first = $this->tariffCombinationsActiveFirst();                                 // get tariff combinations of interest, starting with active combination
-            foreach ($tariff_combinations_active_first as $tariff_combination) {
+            $tariff_combinations = $this->tariffCombinations();                                 // get tariff combinations of interest, starting with active combination
+            foreach ($tariff_combinations as $tariff_combination) {
                 if (($tariff_combination['active']) || !ACTIVE_TARIFF_COMBINATION_ONLY) {
                     if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
                         $db_slots->makeDbSlotsNext24hrs($tariff_combination);       // make slots for this tariff combination
@@ -75,10 +75,10 @@ class Octopus extends Root
                         $timestamp_start = (new DateTime($next_day_slots[0]['start']))->getTimestamp(); // beginning of slot 0
                         $batteryLevelInitialKwh = $batteryLevelInitialKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($timestamp_start); // initial level at beginning of slot 0
                         $slot_solution = (new EnergyCost('slots', $batteryLevelInitialKwh, $tariff_combination))->minimise(); // minimise energy cost
-                        if ($tariff_combination['active']) {                                        // make battery command
-                            $this->log($slot_solution);                              // log slot command
-                            $this->makeActiveTariffCombinationDbSlotsLast24hrs();    // make historic slots for last 24 hours
-                            $this->slots_make_cubic_splines();                       // generate cubic splines
+                        if ($tariff_combination['active']) {                                            // make battery command
+                            $this->log($slot_solution);                                                 // log slot command
+                            $this->makeActiveTariffCombinationDbSlotsLast24hrs($tariff_combination);    // make historic slots for last 24 hours
+                            $this->slots_make_cubic_splines();                                          // generate cubic splines
                         }
                     }
                 }
@@ -488,7 +488,7 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    private function tariffCombinationsActiveFirst(): array
+    private function tariffCombinations(): array
     {
         // select tariff combinations, active first
         $sql = 'SELECT     `tc`.`id`,
@@ -525,8 +525,7 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    public function makeActiveTariffCombinationDbSlotsLast24hrs(): void {
-        $tariff_combination_id = $this->tariff_combinations[0]['id'];
+    public function makeActiveTariffCombinationDbSlotsLast24hrs($tariff_combination): void {
         $sql = 'SELECT `slot`  - 48,
                        `start` - INTERVAL 24 HOUR,
                        `stop`  - INTERVAL 24 HOUR
@@ -559,7 +558,7 @@ class Octopus extends Root
                       ORDER BY `slot`';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('s', $tariff_combination_id) ||
+            !$stmt->bind_param('i', $tariff_combination['id']) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -612,7 +611,7 @@ class Octopus extends Root
                                               `load_heating_kw`           = `s`.`load_heating_kw`';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $tariff_combination_id) ||
+            !$stmt->bind_param('i', $tariff_combination['id']) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');

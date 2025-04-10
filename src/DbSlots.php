@@ -7,7 +7,7 @@ use Exception;
 class DbSlots extends Root
 {
     public const int SLOTS_PER_DAY = 48,
-        SLOT_DURATION_MIN = 30;
+        SLOT_DURATION_MINUTES = 30;
 
     public array $previous_slot = [], $slots = [], $tariff_combination = [];
 
@@ -28,8 +28,8 @@ class DbSlots extends Root
             throw new Exception($message);
         }
         $slot_time = $this->dayFirstSlotStart();
-        $half_slot_duration_min = self::SLOT_DURATION_MIN / 2;
-        $slot_time->modify(-2 * self::SLOT_DURATION_MIN . ' minute');     // back up two slots to beginning of last slot
+        $half_slot_duration_min = self::SLOT_DURATION_MINUTES / 2;
+        $slot_time->modify(-2 * self::SLOT_DURATION_MINUTES . ' minute');     // back up two slots to beginning of last slot
         $this->previous_slot['start'] = $slot_time->format(Root::MYSQL_FORMAT_DATETIME);
         $this->previous_slot['start_unix_timestamp'] = $slot_time->getTimestamp();
         $slot_time->modify($half_slot_duration_min . ' minute');      // middle of last slot
@@ -38,7 +38,7 @@ class DbSlots extends Root
         $slot_time->modify($half_slot_duration_min . ' minute');      // end of last slot
         $this->previous_slot['stop'] = $slot_time->format(Root::MYSQL_FORMAT_DATETIME);
         $this->previous_slot['stop_unix_timestamp'] = $slot_time->getTimestamp();
-        $slot_time->modify(self::SLOT_DURATION_MIN . ' minute');      // skip through current slot to beginning of first slot
+        $slot_time->modify(self::SLOT_DURATION_MINUTES . ' minute');      // skip through current slot to beginning of first slot
         for ($slot = 0; $slot < self::SLOTS_PER_DAY; $slot++) {
             $start = $slot_time->format(Root::MYSQL_FORMAT_DATETIME);
             $slot_time->modify($half_slot_duration_min . ' minute');  //  add half slot duration
@@ -93,11 +93,11 @@ class DbSlots extends Root
         $now = new DateTime();                                                 // returns last 48x 30 minute slots, with last slow ending on the last half hour
         $slot_time = clone $now;                                               // align slot time to end of last slot
         $slot_time->setTime($slot_time->format('G'), 0);           // set to current hour, 0 minute, 0 second
-        $slot_time->modify(self::SLOT_DURATION_MIN . ' minute');
+        $slot_time->modify(self::SLOT_DURATION_MINUTES . ' minute');
         if ($now < $slot_time) {                                               // if now in 2nd half-hour then slot ends on half hour
-            $slot_time->modify(-self::SLOT_DURATION_MIN . ' minute');   // otherwise wind back
+            $slot_time->modify(-self::SLOT_DURATION_MINUTES . ' minute');   // otherwise wind back
         }
-        $slot_time->modify(self::SLOT_DURATION_MIN . ' minute');        // first slot begins with beginning of next half hour slot
+        $slot_time->modify(self::SLOT_DURATION_MINUTES . ' minute');        // first slot begins with beginning of next half hour slot
         return $slot_time;
     }
 

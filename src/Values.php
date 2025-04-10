@@ -307,7 +307,7 @@ class Values extends Root
             $start_hour = (int)$datetime_start->format('H');
             $start_minute = (int)$datetime_start->format('i');
             $start_minutes = $start_minute + (60 * $start_hour);
-            $stop_minutes = $start_minutes + DbSlots::SLOT_DURATION_MIN;
+            $stop_minutes = $start_minutes + DbSlots::SLOT_DURATION_MINUTES;
             if (!$stmt->execute() ||
                 !$stmt->fetch() ||
                 is_null($power_kw)) {

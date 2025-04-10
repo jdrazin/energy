@@ -111,7 +111,7 @@ class Octopus extends Root
         $next_slot_start         = (new DateTime($start));
         $next_slot_start_hour    = (int) $next_slot_start->format('H');
         $next_slot_start_minutes = (int) $next_slot_start->format('i');
-        if ($next_slot_start_minutes+60*$next_slot_start_hour < DbSlots::class::SLOT_DURATION_MIN) { // log forecast for the day if
+        if ($next_slot_start_minutes+60*$next_slot_start_hour < DbSlots::class::SLOT_DURATION_MINUTES) { // log forecast for the day if
             $sql = 'INSERT INTO `costs` (`date`, `tariff_combination`, `type`, `grid_cost_raw_gbp`, `grid_cost_optimised_gbp`)
                                 (SELECT   DATE(`start`) AS `date`,
                                                `tariff_combination`,
@@ -566,7 +566,7 @@ class Octopus extends Root
             foreach ($slots as $slot => $v) {       // returns averages for graphing purposes, about START times (i.e. slot_start_time - 15mins TO slot_start_time + 15mins
                 $power_w = 0.0;
                 foreach ($power_elements as $power_element) {
-                    $power_w += $values->average($power_element[0], 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MIN / 2) / $power_element[1];
+                    $power_w += $values->average($power_element[0], 'MEASURED', $v['start'], $v['stop'], -DbSlots::SLOT_DURATION_MINUTES / 2) / $power_element[1];
                 }
                 $slots[$slot][$column] = $power_w;
             }

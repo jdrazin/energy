@@ -8,8 +8,7 @@ class EnergyCost extends Root
 {
     const bool      DEBUG_MINIMISER         = false;
 
-    const string
-                    JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
+    const string    JSON_PROBLEM_DEBUG      = '/var/www/html/energy/test/problem_debug.json',
                     OPTIMISATION_LOG        = '/var/www/html/energy/test/optimisation.log',
                     PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
@@ -22,6 +21,8 @@ class EnergyCost extends Root
                                                'slices' => '/var/www/html/energy/test/problem_slices.json'];
 
     const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5;
+
+    const int       SLICE_DURATION_MINUTES = 2;
 
     // setup parameters
     public    float $solarGenerationLimitKw,
@@ -59,7 +60,7 @@ class EnergyCost extends Root
     private string  $type;
 
     public string   $string;
-    private int     $number_slots;
+    private int     $number_slots, $number_slices_per_slot;
     private mixed   $db_slots;
 
     /**
@@ -69,8 +70,9 @@ class EnergyCost extends Root
         parent::__construct();
         $this->type = $type;                                                        // type of minimisation: slots, slices
         if (!is_null($batteryLevelInitialKwh) && !is_null($db_slots)) {             // make json instantiate
-            $this->slotDurationHour             = (float)(DbSlots::SLOT_DURATION_MIN / 60);
-            $this->number_slots                 = 24 * 60 / DbSlots::SLOT_DURATION_MIN;
+            $this->slotDurationHour             = (float)(DbSlots::SLOT_DURATION_MINUTES / 60);
+            $this->number_slots                 = 24 * 60 / DbSlots::SLOT_DURATION_MINUTES;
+            $this->number_slices_per_slot       = DbSlots::SLOT_DURATION_MINUTES/self::SLICE_DURATION_MINUTES;
             if (!self::DEBUG_MINIMISER) {
                 $this->batteryEnergyInitialKwh  = $batteryLevelInitialKwh;
                 $this->db_slots                 = $db_slots;
@@ -169,7 +171,7 @@ class EnergyCost extends Root
             switch ($this->type) {
                 case 'slots': {
                     (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
-                    $slot_kws              = $this->slots_kws();                           // get house load from db (excludes EV)
+                    $slot_kws              = $this->slots_kws();                          // get house load from db (excludes EV)
                     $this->load_house_kws  = $slot_kws['load_house_kws'];                 // house load (excludes EV)
                     $this->solar_gross_kws = $slot_kws['solar_kws'];                      // gross solar forecast (excludes grid clipping)
                     break;
@@ -653,7 +655,7 @@ class EnergyCost extends Root
         foreach ($optimum_charge_kws as $slot => $optimum_charge_kw) {
             $optimum_grid_kw         = $this->grid_kws[$slot];
             $stmt->execute();
-            $battery_level_start_kwh = $battery_level_start_kwh + $optimum_charge_kw * DbSlots::SLOT_DURATION_MIN / 60;;
+            $battery_level_start_kwh = $battery_level_start_kwh + $optimum_charge_kw * DbSlots::SLOT_DURATION_MINUTES / 60;;
         }
         $this->mysqli->commit();
     }
@@ -724,7 +726,7 @@ class EnergyCost extends Root
      * @throws Exception
      */
     private function slices_kws(): array {
-        $slots_kws = $this->slots_kws();
+        $slots_kws = $this->slots_kws(); // get slot data
 
 
     }

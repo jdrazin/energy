@@ -139,7 +139,7 @@ class EmonCms extends Root
             'id' => EmonCms::FEED_IDS['temperature_external_c'],
             'start' => $slot['start_unix_timestamp'],
             'end' => $slot['stop_unix_timestamp'],
-            'interval' => DbSlots::SLOT_DURATION_MIN * self::SECONDS_PER_MINUTE
+            'interval' => DbSlots::SLOT_DURATION_MINUTES * self::SECONDS_PER_MINUTE
         ];
         $client = new Client();
         $get_response = $client->get($this->api['base_url'], ['query' => $query]);
@@ -157,7 +157,7 @@ class EmonCms extends Root
             'id' => self::FEED_IDS[$entity_id],
             'start' => ($start = $slot['start_unix_timestamp']),
             'end' => ($stop = $slot['stop_unix_timestamp']),
-            'interval' => DbSlots::SLOT_DURATION_MIN * self::SECONDS_PER_MINUTE
+            'interval' => DbSlots::SLOT_DURATION_MINUTES * self::SECONDS_PER_MINUTE
         ];
         $client = new Client();
         $get_response = $client->get($this->api['base_url'], ['query' => $query]);

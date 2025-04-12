@@ -71,7 +71,7 @@ class EnergyCost extends Root
     private string  $type;
 
     public string   $string;
-    private int     $number_slots, $number_slices_per_slot;
+    private int     $number_slots_slices, $number_slices_per_slot;
 
     /**
      * @throws Exception
@@ -84,7 +84,7 @@ class EnergyCost extends Root
         if (!is_null($batteryLevelInitialKwh) && !is_null($tariff_combination)) { // make json instantiate
             $this->tariff_combination          = $tariff_combination;
             $this->slotDurationHour            = (float)(DbSlots::SLOT_DURATION_MINUTES / 60);
-            $this->number_slots                = 24 * 60 / DbSlots::SLOT_DURATION_MINUTES;
+            $this->number_slots_slices                = 24 * 60 / DbSlots::SLOT_DURATION_MINUTES;
             if (!self::DEBUG_MINIMISER) {
                 $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;            //
                 $this->slots                   = $this->slots();                     // load slots data
@@ -125,7 +125,7 @@ class EnergyCost extends Root
                                             'gridWearPowerActivationKw'               => $this->config['energy']['grid']['wear']['power']['activation_kw'],
                                             'batteryEnergyInitialKwh'                 => $batteryLevelInitialKwh,
                                             'slotDurationHour'                        => $this->slotDurationHour,
-                                            'number_slots_slices'                     => $this->parameters['type'] == 'slots' ? $this->number_slots : $this->number_slices_per_slot,
+                                            'number_slots_slices'                     => $this->parameters['type'] == 'slots' ? $this->number_slots_slices : $this->number_slices_per_slot,
                                             'import_gbp_per_days'                     => $loadImportExports['import_gbp_per_days'],
                                             'export_gbp_per_days'                     => $loadImportExports['export_gbp_per_days'],
                                             'import_gbp_per_kwhs'                     => $loadImportExports['import_gbp_per_kwhs'],
@@ -471,22 +471,22 @@ class EnergyCost extends Root
         }
     }
     private function makeSlotsArrays($problem): array {
-        $number_slots = $problem['number_slots_slices'];
+        $number_slots_slices = $problem['number_slots_slices'];
         foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {
             if ($parameter_array = $problem[$parameter_name . '_weights'] ?? false) {
                 $weight_acc = 0.0;
                 $weights    = [];
                 $weight     = 0.0;
-                for ($slot = 0; $slot < $number_slots; $slot++) {
-                    $weight = $parameter_array[$slot/2] ?? $weight;
-                    $weights[$slot++] = $weight;
-                    $weights[$slot  ] = $weight;
+                for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
+                    $weight = $parameter_array[$slot_slice/2] ?? $weight;
+                    $weights[$slot_slice++] = $weight;
+                    $weights[$slot_slice  ] = $weight;
                     $weight_acc += $weight;
                 }
                 if (isset($problem[$parameter_name])) {
                     $value = $problem[$parameter_name];
                     foreach ($weights as $slot => $weight) {
-                      $weights[$slot] = round(0.5 * $number_slots * $value * $weight / $weight_acc, 3);
+                      $weights[$slot] = round(0.5 * $number_slots_slices * $value * $weight / $weight_acc, 3);
                     }
                 }
                 $problem[$parameter_name] = $weights;
@@ -596,25 +596,25 @@ class EnergyCost extends Root
         $this->strip();
         $this->slotDurationHour                         = (float) $this->strip();
         $this->strip();
-        $this->number_slots                             = (int)   $this->strip();
+        $this->number_slots_slices                      = (int)   $this->strip();
         $this->strip();
         $import_gbp_per_kws = [];
-        for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
+        for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $import_gbp_per_kws[]                       = (float) $this->strip();
         }
         $this->strip();
         $export_gbp_per_kws = [];
-        for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
+        for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $export_gbp_per_kws[]                       = (float) $this->strip();
         }
         $this->strip();
         $load_house_kws = [];
-        for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
+        for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $load_house_kws[]                           = (float) $this->strip();
         }
         $this->strip();
         $solar_gross_kws = [];
-        for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
+        for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $solar_gross_kws[]                          = (float) $this->strip();
         }
         return $this->dayCostGbp($charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws);
@@ -632,7 +632,7 @@ class EnergyCost extends Root
         $cost_power_out_of_spec = 0.0;
         $import_kwh             = 0.0;
         $export_kwh             = 0.0;
-        for ($slot_count = 0; $slot_count < $this->number_slots; $slot_count++) {
+        for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $tariff_import_per_kwh = $import_gbp_per_kws[$slot_count];
             $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
             $battery_charge_kw     = $battery_charge_kws[$slot_count];
@@ -684,7 +684,7 @@ class EnergyCost extends Root
                                                             $this->batteryWearPowerNormalisationCoefficient)*abs($battery_charge_kwh);
             $cost_energy_average_per_kwh_acc += 0.5 * ($tariff_import_per_kwh + $tariff_export_per_kwh);    // accumulate average energy cost
         }
-        $cost_energy_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots);
+        $cost_energy_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots_slices);
         $cost = $cost_grid_import + $cost_grid_export + $cost_energy_wear + $cost_power_out_of_spec + $cost_energy_level_change;
         return [
                     'cost'          => $cost,

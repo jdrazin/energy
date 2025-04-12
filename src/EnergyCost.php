@@ -85,14 +85,14 @@ class EnergyCost extends Root
             $this->tariff_combination          = $tariff_combination;
             $this->slotDurationHour            = (float)(DbSlots::SLOT_DURATION_MINUTES / 60);
             $this->number_slots                = 24 * 60 / DbSlots::SLOT_DURATION_MINUTES;
-            $this->number_slices_per_slot      = DbSlots::SLOT_DURATION_MINUTES/self::SLICE_DURATION_MINUTES;
             if (!self::DEBUG_MINIMISER) {
                 $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;            //
                 $this->slots                   = $this->slots();                     // load slots data
                 if ($parameters['type'] == 'slices') {                               // type of minimisation: slots, slices
-                    $this->slices              = $this->slices();                    // make slices for this/next slot
+                    $this->slices                 = $this->slices();                    // make slices for this/next slot
+                    $this->number_slices_per_slot = DbSlots::SLOT_DURATION_MINUTES/self::SLICE_DURATION_MINUTES;
                 }
-                $loadImportExports             = $this->loadImportExport();
+                $loadImportExports                = $this->loadImportExport();
             }
             else {
                 $loadImportExports      = [
@@ -339,8 +339,8 @@ class EnergyCost extends Root
                     $this->solar_gross_kws = $slices['solar_kws'];                     // gross solar forecast (excludes grid clipping)
 
                     // set first 2 slices to actual load amd solar powers
-                    $this->load_house_kws[0] = $this->load_house_kws[1] = $parameters['load_house_kw'];
-
+                    $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];
+                    $this->solar_gross_kws[0] = $this->solar_gross_kws[1] = $this->parameters['solar_kw'];
                     break;
                 }
             }
@@ -525,21 +525,22 @@ class EnergyCost extends Root
 
         $command .= 'import_gbp_per_kwhs= ';
         $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $command .= $import_gbp_per_kwhs[$slot] . ' ';
+        $number_slots_slices = $this->parameters['type'] == 'slots' ? $this->number_slots : $this->number_slices_per_slot;
+        for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
+            $command .= $import_gbp_per_kwhs[$slot_slice] . ' ';
         }
         $command .= 'export_gbp_per_kwhs= ';
         $export_gbp_per_kwhs = $this->problem['export_gbp_per_kwhs'];
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $command .= $export_gbp_per_kwhs[$slot] . ' ';
+        for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
+            $command .= $export_gbp_per_kwhs[$slot_slice] . ' ';
         }
         $command .= 'load_house_kws= ';
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $command .= $this->load_house_kws[$slot] . ' ';
+        for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
+            $command .= $this->load_house_kws[$slot_slice] . ' ';
         }
         $command .= 'solar_gross_kws= ';
-        for ($slot = 0; $slot < $number_slots; $slot++) {
-            $command .= $this->solar_gross_kws[$slot] . ' ';
+        for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
+            $command .= $this->solar_gross_kws[$slot_slice] . ' ';
         }
         return $command;
     }

@@ -96,38 +96,38 @@ class EnergyCost extends Root
                                               'load_house_kws'      => [],
                                               'import_gbp_per_kwhs' => [],
                                               'export_gbp_per_kwhs' => [],
-                                              'import_gbp_per_day'  => [],
-                                              'export_gbp_per_day'  => []
+                                              'import_gbp_per_days' => [],
+                                              'export_gbp_per_days' => []
                                           ];
             }
             $this->problem              = [
-                                            'solarGenerationLimitKw'                    => $this->config['solar_pv']['inverter']['power_threshold_kw'],
-                                            'batteryCapacityKwh'                        => $this->config['battery']['initial_raw_capacity_kwh'],
-                                            'batteryOneWayEfficiency'                   => sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0),
-                                            'batteryWearEnergyCostAverageGbpPerKwh'     => $this->config['battery']['wear']['energy']['cost_average_gbp_per_kwh'],
-                                            'batteryWearEnergyConstantCoefficient'      => $this->config['battery']['wear']['energy']['constant_coefficient'],
-                                            'batteryWearEnergyExponentialCoefficient'   => $this->config['battery']['wear']['energy']['exponential_coefficient'],
-                                            'batteryWearEnergyActivationKwh'            => $this->config['battery']['wear']['energy']['activation_kwh'],
-                                            'batteryWearPowerCostAverageGbpPerKwh'      => $this->config['battery']['wear']['power'] ['cost_average_gbp_per_kwh'],
-                                            'batteryWearPowerConstantCoefficient'       => $this->config['battery']['wear']['power'] ['constant_coefficient'],
-                                            'batteryWearPowerExponentialCoefficient'    => $this->config['battery']['wear']['power'] ['exponential_coefficient'],
-                                            'batteryWearPowerActivationKw'              => $this->config['battery']['wear']['power'] ['activation_kw'],
-                                            'batteryMaxChargeKw'                        => $this->config['battery']['max_charge_kw'],
-                                            'batteryMaxDischargeKw'                     => $this->config['battery']['max_discharge_kw'],
-                                            'importLimitKw'                             => $this->config['energy']['grid']['import']['limit_kw'],
-                                            'exportLimitKw'                             => $this->config['energy']['grid']['export']['limit_kw'],
-                                            'gridWearPowerCostAverageGbpPerKwh'         => $this->config['energy']['grid']['wear']['power']['cost_average_gbp_per_kwh'],
-                                            'gridWearPowerConstantCoefficient'          => $this->config['energy']['grid']['wear']['power']['constant_coefficient'],
-                                            'gridWearPowerExponentialCoefficient'       => $this->config['energy']['grid']['wear']['power']['exponential_coefficient'],
-                                            'gridWearPowerActivationKw'                 => $this->config['energy']['grid']['wear']['power']['activation_kw'],
-                                            'batteryEnergyInitialKwh'                   => $batteryLevelInitialKwh,
-                                            'slotDurationHour'                          => $this->slotDurationHour,
-                                            'number_slots'                              => $this->number_slots,
-                                            'import_gbp_per_day'                        => $loadImportExports['import_gbp_per_day'],
-                                            'export_gbp_per_day'                        => $loadImportExports['export_gbp_per_day'],
-                                            'import_gbp_per_kwhs'                       => $loadImportExports['import_gbp_per_kwhs'],
-                                            'export_gbp_per_kwhs'                       => $loadImportExports['export_gbp_per_kwhs'],
-                                            'load_house_kws'                            => $loadImportExports['load_house_kws'],
+                                            'solarGenerationLimitKw'                  => $this->config['solar_pv']['inverter']['power_threshold_kw'],
+                                            'batteryCapacityKwh'                      => $this->config['battery']['initial_raw_capacity_kwh'],
+                                            'batteryOneWayEfficiency'                 => sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0),
+                                            'batteryWearEnergyCostAverageGbpPerKwh'   => $this->config['battery']['wear']['energy']['cost_average_gbp_per_kwh'],
+                                            'batteryWearEnergyConstantCoefficient'    => $this->config['battery']['wear']['energy']['constant_coefficient'],
+                                            'batteryWearEnergyExponentialCoefficient' => $this->config['battery']['wear']['energy']['exponential_coefficient'],
+                                            'batteryWearEnergyActivationKwh'          => $this->config['battery']['wear']['energy']['activation_kwh'],
+                                            'batteryWearPowerCostAverageGbpPerKwh'    => $this->config['battery']['wear']['power'] ['cost_average_gbp_per_kwh'],
+                                            'batteryWearPowerConstantCoefficient'     => $this->config['battery']['wear']['power'] ['constant_coefficient'],
+                                            'batteryWearPowerExponentialCoefficient'  => $this->config['battery']['wear']['power'] ['exponential_coefficient'],
+                                            'batteryWearPowerActivationKw'            => $this->config['battery']['wear']['power'] ['activation_kw'],
+                                            'batteryMaxChargeKw'                      => $this->config['battery']['max_charge_kw'],
+                                            'batteryMaxDischargeKw'                   => $this->config['battery']['max_discharge_kw'],
+                                            'importLimitKw'                           => $this->config['energy']['grid']['import']['limit_kw'],
+                                            'exportLimitKw'                           => $this->config['energy']['grid']['export']['limit_kw'],
+                                            'gridWearPowerCostAverageGbpPerKwh'       => $this->config['energy']['grid']['wear']['power']['cost_average_gbp_per_kwh'],
+                                            'gridWearPowerConstantCoefficient'        => $this->config['energy']['grid']['wear']['power']['constant_coefficient'],
+                                            'gridWearPowerExponentialCoefficient'     => $this->config['energy']['grid']['wear']['power']['exponential_coefficient'],
+                                            'gridWearPowerActivationKw'               => $this->config['energy']['grid']['wear']['power']['activation_kw'],
+                                            'batteryEnergyInitialKwh'                 => $batteryLevelInitialKwh,
+                                            'slotDurationHour'                        => $this->slotDurationHour,
+                                            'number_slots'                            => $this->number_slots,
+                                            'import_gbp_per_days'                     => $loadImportExports['import_gbp_per_days'],
+                                            'export_gbp_per_days'                     => $loadImportExports['export_gbp_per_days'],
+                                            'import_gbp_per_kwhs'                     => $loadImportExports['import_gbp_per_kwhs'],
+                                            'export_gbp_per_kwhs'                     => $loadImportExports['export_gbp_per_kwhs'],
+                                            'load_house_kws'                          => $loadImportExports['load_house_kws'],
                                           ];
             if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
                 !file_put_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->type], $json_problem)) {
@@ -367,7 +367,7 @@ class EnergyCost extends Root
 
         // calculate optimised cost elements using CLI command
         $this->costs['optimised'] = $this->costCLI($command, $optimumChargeKws = $result['optimumChargeKws']);
-        $standing_costs_gbp_per_day = $this->problem['import_gbp_per_day'] + $this->problem['export_gbp_per_day'];
+        $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
         echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
         echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
         echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
@@ -765,21 +765,24 @@ class EnergyCost extends Root
                     $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
                     $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
                 }
-                break;
+                return [
+                    'load_house_kws'        => $load_house_kws,
+                    'import_gbp_per_kwhs'   => $import_gbp_per_kwhs,
+                    'export_gbp_per_kwhs'   => $export_gbp_per_kwhs,
+                    'import_gbp_per_days'   => $import_gbp_per_day,
+                    'export_gbp_per_days'   => $export_gbp_per_day
+                ];
             }
             case ('slices'): {
-
-                break;
+                return [
+                    'load_house_kws'        => $this->slices['load_house_kws'],
+                    'import_gbp_per_kwhs'   => $this->slices['import_gbp_per_kwhs'],
+                    'export_gbp_per_kwhs'   => $this->slices['export_gbp_per_kwhs'],
+                    'import_gbp_per_days'   => $this->slices['import_gbp_per_days'],
+                    'export_gbp_per_days'   => $this->slices['export_gbp_per_days']
+                ];
             }
-
         }
-        return [
-                'load_house_kws'        => $load_house_kws,
-                'import_gbp_per_kwhs'   => $import_gbp_per_kwhs,
-                'export_gbp_per_kwhs'   => $export_gbp_per_kwhs,
-                'import_gbp_per_day'    => $import_gbp_per_day,
-                'export_gbp_per_day'    => $export_gbp_per_day
-        ];
     }
 
     private function parameter_name_value($parameter_name): string {  // make parameter substring
@@ -827,7 +830,7 @@ class EnergyCost extends Root
      * @throws Exception
      */
     private function insertSlotNextDayCostEstimates($slot): void     {
-        $standing               = ($this->problem['import_gbp_per_day'] ?? 0.0) + ($this->problem['export_gbp_per_day'] ?? 0.0);
+        $standing               = ($this->problem['import_gbp_per_days'] ?? 0.0) + ($this->problem['export_gbp_per_days'] ?? 0.0);
         $raw                    = $this->costs['raw'];
         $raw_import             = round($raw['cost_import'], 3);
         $raw_export             = round($raw['cost_export'], 3);

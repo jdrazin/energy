@@ -125,7 +125,7 @@ class EnergyCost extends Root
                                             'gridWearPowerActivationKw'               => $this->config['energy']['grid']['wear']['power']['activation_kw'],
                                             'batteryEnergyInitialKwh'                 => $batteryLevelInitialKwh,
                                             'slotDurationHour'                        => $this->slotDurationHour,
-                                            'number_slots'                            => $this->number_slots,
+                                            'number_slots_slices'                     => $this->parameters['type'] == 'slots' ? $this->number_slots : $this->number_slices_per_slot,
                                             'import_gbp_per_days'                     => $loadImportExports['import_gbp_per_days'],
                                             'export_gbp_per_days'                     => $loadImportExports['export_gbp_per_days'],
                                             'import_gbp_per_kwhs'                     => $loadImportExports['import_gbp_per_kwhs'],
@@ -358,10 +358,12 @@ class EnergyCost extends Root
                 foreach ($this->load_house_kws as $slot => $load_house_kw) {     // first guess zero charge
                     $charge_kws[$slot] = 0.0;
                 }
+                break;
             }
             case 'slices':
             {
                 $charge_kws = $this->slices['battery_charge_kws'];               // use slot solution
+                break;
             }
         }
         $command = $this->command();
@@ -469,7 +471,7 @@ class EnergyCost extends Root
         }
     }
     private function makeSlotsArrays($problem): array {
-        $number_slots = $problem['number_slots'];
+        $number_slots = $problem['number_slots_slices'];
         foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {
             if ($parameter_array = $problem[$parameter_name . '_weights'] ?? false) {
                 $weight_acc = 0.0;
@@ -518,13 +520,12 @@ class EnergyCost extends Root
         $command .= $this->parameter_name_value('gridWearPowerActivationKw');
         $command .= $this->parameter_name_value('batteryEnergyInitialKwh');
         $command .= $this->parameter_name_value('slotDurationHour');
-        $command .= $this->parameter_name_value('number_slots');
+        $command .= $this->parameter_name_value('number_slots_slices');
 
-        $number_slots = $this->problem['number_slots'];
+        $number_slots_slices = $this->problem['number_slots_slices'];
 
         $command .= 'import_gbp_per_kwhs= ';
         $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
-        $number_slots_slices = $this->parameters['type'] == 'slots' ? $this->number_slots : $this->number_slices_per_slot;
         for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
             $command .= $import_gbp_per_kwhs[$slot_slice] . ' ';
         }

@@ -51,7 +51,9 @@ class EnergyCost extends Root
                     $powerActivationKw,
                     $batteryMaxChargeKw,
                     $batteryMaxDischargeKw,
-                    $slotDurationHour,
+                    $slotSliceDurationHour,
+                    $slot_slice_duration_hour,
+                    $sliceDurationHour,
                     $batteryEnergyInitialKwh,
                     $importLimitKw,
                     $exportLimitKw,
@@ -82,9 +84,9 @@ class EnergyCost extends Root
         $batteryLevelInitialKwh = $parameters['batteryLevelInitialKwh'] ?? null;
         $tariff_combination     = $parameters['tariff_combination']     ?? null;
         if (!is_null($batteryLevelInitialKwh) && !is_null($tariff_combination)) { // make json instantiate
-            $this->tariff_combination          = $tariff_combination;
-            $this->slotDurationHour            = (float)(DbSlots::SLOT_DURATION_MINUTES / 60);
-            $this->number_slots_slices                = 24 * 60 / DbSlots::SLOT_DURATION_MINUTES;
+            $this->tariff_combination       = $tariff_combination;
+            $this->slot_slice_duration_hour = $this->parameters['type'] == 'slots' ? (float)(DbSlots::SLOT_DURATION_MINUTES / 60) : (float)(self::SLICE_DURATION_MINUTES / 60);
+            $this->number_slots_slices      = $this->parameters['type'] == 'slots' ? 24*60 / DbSlots::SLOT_DURATION_MINUTES       : DbSlots::SLOT_DURATION_MINUTES / self::SLICE_DURATION_MINUTES;
             if (!self::DEBUG_MINIMISER) {
                 $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;            //
                 $this->slots                   = $this->slots();                     // load slots data
@@ -124,8 +126,8 @@ class EnergyCost extends Root
                                             'gridWearPowerExponentialCoefficient'     => $this->config['energy']['grid']['wear']['power']['exponential_coefficient'],
                                             'gridWearPowerActivationKw'               => $this->config['energy']['grid']['wear']['power']['activation_kw'],
                                             'batteryEnergyInitialKwh'                 => $batteryLevelInitialKwh,
-                                            'slotDurationHour'                        => $this->slotDurationHour,
-                                            'number_slots_slices'                     => $this->parameters['type'] == 'slots' ? $this->number_slots_slices : $this->number_slices_per_slot,
+                                            'slotSliceDurationHour'                   => $this->slot_slice_duration_hour,
+                                            'number_slots_slices'                     => $this->number_slots_slices,
                                             'import_gbp_per_days'                     => $loadImportExports['import_gbp_per_days'],
                                             'export_gbp_per_days'                     => $loadImportExports['export_gbp_per_days'],
                                             'import_gbp_per_kwhs'                     => $loadImportExports['import_gbp_per_kwhs'],
@@ -321,8 +323,6 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
-
-
         if (!self::DEBUG_MINIMISER) {
             switch ($this->parameters['type']) {
                 case 'slots': {
@@ -434,7 +434,7 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         $abs_charge_w = round(1000.0 * abs($battery_charge_kw));
-        $target_level_percent = min(100, max(0, (int) round(100.0 * ($battery_level_start_kwh + $battery_charge_kw * $this->slotDurationHour) / $this->batteryCapacityKwh)));
+        $target_level_percent = min(100, max(0, (int) round(100.0 * ($battery_level_start_kwh + $battery_charge_kw * $this->slot_slice_duration_hour) / $this->batteryCapacityKwh)));
         if (abs($grid_kw) < self::ABS_ECO_GRID_THRESHOLD_KW) {
             $mode = 'ECO';
         }
@@ -519,18 +519,22 @@ class EnergyCost extends Root
         $command .= $this->parameter_name_value('gridWearPowerExponentialCoefficient');
         $command .= $this->parameter_name_value('gridWearPowerActivationKw');
         $command .= $this->parameter_name_value('batteryEnergyInitialKwh');
-        $command .= $this->parameter_name_value('slotDurationHour');
+        $command .= $this->parameter_name_value('slotSliceDurationHour');
         $command .= $this->parameter_name_value('number_slots_slices');
 
         $number_slots_slices = $this->problem['number_slots_slices'];
-
+        if ($this->parameters['type'] == 'slots') {
+            $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
+            $export_gbp_per_kwhs = $this->problem['export_gbp_per_kwhs'];}
+        else {
+            $import_gbp_per_kwhs = $this->slices['import_gbp_per_kwhs'];
+            $export_gbp_per_kwhs = $this->slices['export_gbp_per_kwhs'];
+        }
         $command .= 'import_gbp_per_kwhs= ';
-        $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
         for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
             $command .= $import_gbp_per_kwhs[$slot_slice] . ' ';
         }
         $command .= 'export_gbp_per_kwhs= ';
-        $export_gbp_per_kwhs = $this->problem['export_gbp_per_kwhs'];
         for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
             $command .= $export_gbp_per_kwhs[$slot_slice] . ' ';
         }
@@ -594,7 +598,7 @@ class EnergyCost extends Root
         $this->strip();
         $this->batteryEnergyInitialKwh                  = (float) $this->strip();
         $this->strip();
-        $this->slotDurationHour                         = (float) $this->strip();
+        $this->slotSliceDurationHour                         = (float) $this->strip();
         $this->strip();
         $this->number_slots_slices                      = (int)   $this->strip();
         $this->strip();
@@ -644,8 +648,8 @@ class EnergyCost extends Root
                 $grid_kw = min($grid_kw, $this->batteryMaxDischargeKw);
             }
             $this->grid_kws[$slot_count] = $grid_kw;
-            $grid_kwh              = $grid_kw           * $this->slotDurationHour;
-            $battery_charge_kwh    = $battery_charge_kw * $this->slotDurationHour;
+            $grid_kwh              = $grid_kw           * $this->slotSliceDurationHour;
+            $battery_charge_kwh    = $battery_charge_kw * $this->slotSliceDurationHour;
 
             // grid
             if ($grid_kwh > 0.0) {

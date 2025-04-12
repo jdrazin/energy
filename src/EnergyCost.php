@@ -58,7 +58,8 @@ class EnergyCost extends Root
                     $batteryWearEnergyNormalisationCoefficient,
                     $batteryWearPowerNormalisationCoefficient;
 
-    private array   $problem,
+    private array   $parameters,
+                    $problem,
                     $load_house_kws,        // house load, excluding EV
                     $solar_gross_kws,       // gross solar generation, excludes dynamic grid power clipping
                     $grid_kws,
@@ -75,18 +76,20 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    public function __construct($type, $batteryLevelInitialKwh, $tariff_combination) {
+    public function __construct($parameters) {
         parent::__construct();
-        $this->type = $type;                                                        // type of minimisation: slots, slices
-        if (!is_null($batteryLevelInitialKwh) && !is_null($tariff_combination)) {             // make json instantiate
+        $this->parameters = $parameters;
+        $batteryLevelInitialKwh = $parameters['batteryLevelInitialKwh'] ?? null;
+        $tariff_combination     = $parameters['tariff_combination']     ?? null;
+        if (!is_null($batteryLevelInitialKwh) && !is_null($tariff_combination)) { // make json instantiate
             $this->tariff_combination          = $tariff_combination;
             $this->slotDurationHour            = (float)(DbSlots::SLOT_DURATION_MINUTES / 60);
             $this->number_slots                = 24 * 60 / DbSlots::SLOT_DURATION_MINUTES;
             $this->number_slices_per_slot      = DbSlots::SLOT_DURATION_MINUTES/self::SLICE_DURATION_MINUTES;
             if (!self::DEBUG_MINIMISER) {
-                $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;
+                $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;            //
                 $this->slots                   = $this->slots();                     // load slots data
-                if ($this->type == 'slices') {
+                if ($parameters['type'] == 'slices') {                               // type of minimisation: slots, slices
                     $this->slices              = $this->slices();                    // make slices for this/next slot
                 }
                 $loadImportExports             = $this->loadImportExport();
@@ -130,7 +133,7 @@ class EnergyCost extends Root
                                             'load_house_kws'                          => $loadImportExports['load_house_kws'],
                                           ];
             if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
-                !file_put_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->type], $json_problem)) {
+                !file_put_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$parameters['type']], $json_problem)) {
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
                 $this->logDb('MESSAGE', $message, null, 'FATAL');
                 throw new Exception($message);
@@ -319,8 +322,10 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
+
+
         if (!self::DEBUG_MINIMISER) {
-            switch ($this->type) {
+            switch ($this->parameters['type']) {
                 case 'slots': {
                     (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
                     $slots                 = $this->slots();                           // get house load from db (excludes EV)
@@ -332,20 +337,33 @@ class EnergyCost extends Root
                     $slices                = $this->slices();                          // get house load from db (excludes EV)
                     $this->load_house_kws  = $slices['load_house_kws'];                // house load (excludes EV)
                     $this->solar_gross_kws = $slices['solar_kws'];                     // gross solar forecast (excludes grid clipping)
+
+                    // set first 2 slices to actual load amd solar powers
+                    $this->load_house_kws[0] = $this->load_house_kws[1] = $parameters['load_house_kw'];
+
                     break;
                 }
             }
         }
         else { // use debug JSON and make slot arrays as necessary
-           $this->problem         = json_decode(file_get_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->type]), true);
-           $this->problem         = $this->makeSlotsArrays(json_decode(file_get_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->type]), true));
+           $this->problem         = json_decode(file_get_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']]), true);
+           $this->problem         = $this->makeSlotsArrays(json_decode(file_get_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']]), true));
            $this->load_house_kws  = $this->problem['load_house_kws'];            // get total house load from problem
            $this->solar_gross_kws = $this->problem['solar_gross_kws'];           // get solar forecast (excludes grid clipping) from problem
         }
         $this->costs = [];
-        $charge_kws = [];
-        foreach ($this->load_house_kws as $slot => $load_house_kw) {              // first guess zero charge
-            $charge_kws[$slot] = 0.0;
+        switch ($this->parameters['type']) {
+            case 'slots':
+            {
+                $charge_kws = [];
+                foreach ($this->load_house_kws as $slot => $load_house_kw) {     // first guess zero charge
+                    $charge_kws[$slot] = 0.0;
+                }
+            }
+            case 'slices':
+            {
+                $charge_kws = $this->slices['battery_charge_kws'];               // use slot solution
+            }
         }
         $command = $this->command();
         $this->costs['raw'] = $this->costCLI($command, $charge_kws);
@@ -736,7 +754,7 @@ class EnergyCost extends Root
      * @throws Exception
      */
     private function loadImportExport(): array { // get load, import and export tariffs for each slot/slice
-        switch ($this->type) {
+        switch ($this->parameters['type']) {
             case ('slots'): {
                 $sql = 'SELECT      `load_house_kw`,
                                     `import_gbp_per_kwh`,
@@ -765,24 +783,30 @@ class EnergyCost extends Root
                     $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
                     $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
                 }
-                return [
-                    'load_house_kws'        => $load_house_kws,
-                    'import_gbp_per_kwhs'   => $import_gbp_per_kwhs,
-                    'export_gbp_per_kwhs'   => $export_gbp_per_kwhs,
-                    'import_gbp_per_days'   => $import_gbp_per_day,
-                    'export_gbp_per_days'   => $export_gbp_per_day
-                ];
+                $load_import_export = [
+                                            'load_house_kws'        => $load_house_kws,
+                                            'import_gbp_per_kwhs'   => $import_gbp_per_kwhs,
+                                            'export_gbp_per_kwhs'   => $export_gbp_per_kwhs,
+                                            'import_gbp_per_days'   => $import_gbp_per_day,
+                                            'export_gbp_per_days'   => $export_gbp_per_day
+                                        ];
+                break;
             }
             case ('slices'): {
-                return [
-                    'load_house_kws'        => $this->slices['load_house_kws'],
-                    'import_gbp_per_kwhs'   => $this->slices['import_gbp_per_kwhs'],
-                    'export_gbp_per_kwhs'   => $this->slices['export_gbp_per_kwhs'],
-                    'import_gbp_per_days'   => $this->slices['import_gbp_per_days'],
-                    'export_gbp_per_days'   => $this->slices['export_gbp_per_days']
-                ];
+                $load_import_export = [
+                                            'load_house_kws'        => $this->slices['load_house_kws'],
+                                            'import_gbp_per_kwhs'   => $this->slices['import_gbp_per_kwhs'],
+                                            'export_gbp_per_kwhs'   => $this->slices['export_gbp_per_kwhs'],
+                                            'import_gbp_per_days'   => $this->slices['import_gbp_per_days'],
+                                            'export_gbp_per_days'   => $this->slices['export_gbp_per_days']
+                                       ];
+                break;
+            }
+            default: {
+                $load_import_export = [];
             }
         }
+        return $load_import_export;
     }
 
     private function parameter_name_value($parameter_name): string {  // make parameter substring

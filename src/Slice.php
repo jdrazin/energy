@@ -22,12 +22,16 @@ class Slice extends Root
     public function command(): void {
         $givenergy              = new GivEnergy();
         $octopus                = new Octopus();
-        $battery                = $givenergy->latest()['battery'];
-        $batteryLevelInitialKwh = $givenergy->batteryLevelNowKwh($battery); // initial level at beginning of slot 0
-        $battery_charge_now_w   = $givenergy->batteryChargeNowW($battery);
-        $energy_cost            = new EnergyCost('slices', $batteryLevelInitialKwh, $octopus->tariffCombinations()[0]);
-        $energy_cost->minimise();
-
+        $givenergy_latest       = $givenergy->latest();
+        $parameters = [
+            'type'                   => 'slices',
+            'batteryLevelInitialKwh' => $givenergy->batteryLevelNowKwh($givenergy_latest['battery']), // initial level at beginning of slot 0,
+            'battery_charge_now_w'   => $givenergy->batteryChargeNowW($givenergy_latest['battery']),
+            'load_house_kw'          => ((float) $givenergy_latest['consumption']) / 1000.0,
+            'solar_kw'               => ((float) $givenergy_latest['solar']['power']) / 1000.0,
+            'tariff_combination'     => $octopus->tariffCombinations()[0]
+        ];
+        $slice_solution = (new EnergyCost($parameters))->minimise(); // minimise energy cost
 
 
 

@@ -55,8 +55,8 @@ def dayCostGbp(X):
             if grid_limited_kw > batteryMaxDischargeRateKw:
                 grid_limited_kw = batteryMaxDischargeRateKw
 
-        grid_kwh              = grid_limited_kw   * slotDurationHour
-        battery_charge_kwh    = battery_charge_kw * slotDurationHour
+        grid_kwh              = grid_limited_kw   * slotSliceDurationHour
+        battery_charge_kwh    = battery_charge_kw * slotSliceDurationHour
         #
         # grid
         if grid_kwh > 0.0:
@@ -158,7 +158,7 @@ gridWearPowerActivationKw                   = float(sys.argv[index])
 index += 2
 batteryEnergyInitialKwh                     = float(sys.argv[index])
 index += 2
-slotDurationHour                            = float(sys.argv[index])
+slotSliceDurationHour                            = float(sys.argv[index])
 index += 2
 number_slots                                = int  (sys.argv[index])
 

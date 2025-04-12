@@ -19,7 +19,7 @@
     "gridWearPowerExponentialCoefficient": 25,
     "gridWearPowerActivationKw": 0.1,
     "batteryEnergyInitialKwh": 13.478229166666667,
-    "slotDurationHour": 0.5,
+    "slotSliceDurationHour": 0.5,
     "number_slots": 48,
     "import_gbp_per_day": 0.427696,
     "export_gbp_per_day": 0,

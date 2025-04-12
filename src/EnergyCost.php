@@ -89,8 +89,8 @@ class EnergyCost extends Root
                 $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;            //
                 $this->slots                   = $this->slots();                     // load slots data
                 if ($parameters['type'] == 'slices') {                               // type of minimisation: slots, slices
-                    $this->slices                 = $this->slices();                    // make slices for this/next slot
                     $this->number_slices_per_slot = DbSlots::SLOT_DURATION_MINUTES/self::SLICE_DURATION_MINUTES;
+                    $this->slices                 = $this->slices();                 // make slices for this/next slot
                 }
                 $loadImportExports                = $this->loadImportExport();
             }
@@ -271,8 +271,7 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         $starts                     = [];
-        $stops                      = [];
-        $slices                      = [];
+        $slices                     = [];
         $battery_level_start_kwhs   = [];
         $battery_charge_kws         = [];
         $grid_kws                   = [];

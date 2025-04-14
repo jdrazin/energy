@@ -303,7 +303,7 @@ class Octopus extends Root
                 $tariff_table = self::DIRECTIONS[$direction]['rates'];
                 foreach (self::RATE_PERS as $unit => $y) {
                     if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $tariff_combination[$direction], $tariff_table, 0))) {      // get rate
-                        if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $db_slots->tariff_combination[$direction], $tariff_table, -1))) { // if none, try same slot in previous date
+                        if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $tariff_combination[$direction], $tariff_table, -1))) { // if none, try same slot in previous date
                             throw new \Exception('no ' . $direction . ' tariff between ' . $start . ' and ' . $stop);                                                          // otherwise throw exception
                         }
                     }

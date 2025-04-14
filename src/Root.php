@@ -494,4 +494,15 @@ class Root
         $datetime->setTimezone(new DateTimeZone($timezone));
         return $datetime->format($format);
     }
+
+    /**
+     * @throws \DateMalformedStringException
+     */
+    public function mid($start, $stop): string {
+        // return mid date time between start and stop in mysql format
+        $datetime_start = new DateTime($start);
+        $datetime_stop  = new DateTime($stop);
+        $mid_seconds   = ($datetime_stop->getTimestamp() - $datetime_start->getTimestamp())/2;
+        return $datetime_start->modify('+' . $mid_seconds . ' second')->format(Root::MYSQL_FORMAT_DATETIME);
+    }
 }

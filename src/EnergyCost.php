@@ -56,7 +56,6 @@ class EnergyCost extends Root
                     $batteryMaxDischargeKw,
                     $slotSliceDurationHour,
                     $slot_slice_duration_hour,
-                    $sliceDurationHour,
                     $batteryEnergyInitialKwh,
                     $importLimitKw,
                     $exportLimitKw,
@@ -137,8 +136,8 @@ class EnergyCost extends Root
                                             'export_gbp_per_kwhs'                     => $loadImportExports['export_gbp_per_kwhs'],
                                             'load_house_kws'                          => $loadImportExports['load_house_kws'],
                                           ];
-            if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) ||
-                !file_put_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$parameters['type']], $json_problem)) {
+            $pathname_json_problem = self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$parameters['type']];
+            if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_json_problem, $json_problem)) {
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
                 $this->logDb('MESSAGE', $message, null, 'FATAL');
                 throw new Exception($message);
@@ -396,24 +395,22 @@ class EnergyCost extends Root
             return [];
         }
         else {
+            // calculate optimised cost elements using CLI command
+            $this->costs['optimised'] = $this->costCLI($command, $optimumChargeKws);
+            $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
+            echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+            echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+            echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+            echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
             switch ($this->parameters['type']) {
-                case 'slots':
-                {
-                    // calculate optimised cost elements using CLI command
-                    $this->costs['optimised'] = $this->costCLI($command, $optimumChargeKws);
-                    $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
-                    echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-                    echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-                    echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-                    echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+                case 'slots': {
                     $this->insertOptimumChargeGridKw($optimumChargeKws);                      // insert for each slot: grid and battery discharge energies (kWh)
                     $slot_solution = $this->slotSolution();                                   // make slot solution
                     $this->insertSlotNextDayCostEstimates($slot_solution['id']);
                     return $slot_solution;
                 }
-                case 'slices':
-                {
-                    $this->insertSlices();
+                case 'slices': {
+                 //   $this->insertSlices();
                     return [];
                 }
             }

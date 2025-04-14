@@ -72,8 +72,8 @@ class Octopus extends Root
                     if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
                         $db_slots->makeDbSlotsNext24hrs($tariff_combination);       // make slots for this tariff combination
                         $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);
-                        $this->makeSlotRates($db_slots, $tariff_combination);       // make tariffs
-                        $values->estimatePowers($db_slots, $tariff_combination);    // forecast slot solar, heating, non-heating and load powers
+                        $this->makeSlotRates($db_slots->slots, $tariff_combination, false);  // make tariffs
+                        $values->estimatePowers($db_slots, $tariff_combination);      // forecast slot solar, heating, non-heating and load powers
 
                         // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
                         $timestamp_start = (new DateTime($next_day_slots[0]['start']))->getTimestamp(); // beginning of slot 0
@@ -283,23 +283,23 @@ class Octopus extends Root
      * @throws DateMalformedStringException
      * @throws Exception
      */
-    public function makeSlotRates($db_slots, $tariff_combination): void        // get future rates for tariff combination
+    public function makeSlotRates($slots, $tariff_combination, $final): void        // get future rates for tariff combination
     {
         $sql = 'UPDATE      `slots`
                     SET     `import_gbp_per_kwh` = ?,
                             `export_gbp_per_kwh` = ?,
                             `import_gbp_per_day` = ?,
                             `export_gbp_per_day` = ?
-                    WHERE   `slot` = ? AND
+                    WHERE   `slot`               = ? AND
                             `tariff_combination` = ? AND
-                            NOT `final`';
+                            `final`              = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ddddii', $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day, $slot, $tariff_combination['id'])) {
+            !$stmt->bind_param('ddddiii', $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day, $slot, $tariff_combination['id'], $final)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        foreach ($db_slots->slots as $slot => $v) {
+        foreach ($slots as $slot => $v) {
             $start = $v['start'];
             $stop = $v['stop'];
             $ratesPer = ['start' => $start, 'stop' => $stop];
@@ -554,14 +554,16 @@ class Octopus extends Root
         while ($stmt->fetch()) {
             $slots[$slot] = [
                 'start' => $start,
+                'mid'   => $this->mid($start, $stop),
                 'stop'  => $stop
             ];
          }
         // make time slot rows for previous day
-        $sql = 'INSERT IGNORE INTO `slots` (`slot`, `start`, `stop`)
+        $sql = 'INSERT IGNORE INTO `slots` (`slot`, `start`, `stop`, `tariff_combination`)
                     SELECT `slot`  - 48,
                            `start` - INTERVAL 24 HOUR,
-                           `stop`  - INTERVAL 24 HOUR
+                           `stop`  - INTERVAL 24 HOUR,
+                           ?
                       FROM `slots`
                       WHERE `slot` >= 1 AND
                             `tariff_combination` = ? AND
@@ -569,7 +571,7 @@ class Octopus extends Root
                       ORDER BY `slot`';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $tariff_combination['id']) ||
+            !$stmt->bind_param('ii', $tariff_combination['id'], $tariff_combination['id']) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -601,53 +603,26 @@ class Octopus extends Root
                 }
             }
         }
-        // get previous tariffs
-        foreach (self::DIRECTIONS as $k => $direction_v) {
-            unset($stmt);
-            $sql = 'SELECT `rate`
-                      FROM `' . $direction_v['rates'] . '`
-                      WHERE `per` = ? AND
-                            ? BETWEEN `start` AND `stop`';
-            if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('ss', $per, $mid) ||
-                !$stmt->bind_result($rate)) {
-                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, null, 'ERROR');
-                    throw new Exception($message);
-            }
-            foreach ($slots as $slot => $slot_v) {
-                $start = $slot_v['start'];
-                $stop  = $slot_v['stop'];
-                $datetime_start = new DateTime($start);
-                $datetime_stop  = new DateTime($stop);
-                $mid_seconds   = ($datetime_stop->getTimestamp() - $datetime_start->getTimestamp())/2;
-                $mid = $datetime_start->modify('+' . $mid_seconds . ' second')->format(Root::MYSQL_FORMAT_DATETIME);
-                foreach ($direction_v['slot_pers'] as $per => $column) {
-                    $stmt->execute();
-                    $stmt->fetch();
-                    $slots[$slot][$column] = $rate;
-                }
-            }
-        }
 $this->mysqli->commit();
+        $this->makeSlotRates($slots, $tariff_combination, false);  // make tariffs
         // copy non final previous & next slots for tariff combination into final rows
         $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_level_start_kwh`, `battery_charge_kw`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
                        (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_level_start_kwh`, `battery_charge_kw`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
                                     FROM `slots` `s`
                                     WHERE NOT `final` AND
-                                              `tariff_combination` IN (0, ?))  
+                                              `tariff_combination` = ?)
                     ON DUPLICATE KEY UPDATE   `start`                     = `s`.`start`,
                                               `stop`                      = `s`.`stop`,
-                                              `load_house_kw`             = `s`.`load_house_kw`, 
+                                              `load_house_kw`             = `s`.`load_house_kw`,
                                               `grid_kw`                   = `s`.`grid_kw`,
                                               `solar_gross_kw`            = `s`.`solar_gross_kw`,
                                               `battery_level_start_kwh`   = `s`.`battery_level_start_kwh`,
-                                              `battery_charge_kw`         = `s`.`battery_charge_kw`, 
-                                              `import_gbp_per_kwh`        = `s`.`import_gbp_per_kwh`, 
-                                              `export_gbp_per_kwh`        = `s`.`export_gbp_per_kwh`, 
-                                              `import_gbp_per_day`        = `s`.`import_gbp_per_day`, 
-                                              `export_gbp_per_day`        = `s`.`export_gbp_per_day`, 
-                                              `load_non_heating_kw`       = `s`.`load_non_heating_kw`, 
+                                              `battery_charge_kw`         = `s`.`battery_charge_kw`,
+                                              `import_gbp_per_kwh`        = `s`.`import_gbp_per_kwh`,
+                                              `export_gbp_per_kwh`        = `s`.`export_gbp_per_kwh`,
+                                              `import_gbp_per_day`        = `s`.`import_gbp_per_day`,
+                                              `export_gbp_per_day`        = `s`.`export_gbp_per_day`,
+                                              `load_non_heating_kw`       = `s`.`load_non_heating_kw`,
                                               `load_heating_kw`           = `s`.`load_heating_kw`';
         unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||

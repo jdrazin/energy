@@ -120,10 +120,10 @@ class Energy extends Root
             return false;
         }
         $sql = 'SELECT   CONCAT(`slo`.`message`, \' at \', DATE_FORMAT(CONVERT_TZ(`slo`.`stop`, \'UTC\', ?), \'%H:%i\'), \'hrs\', IF(`sli`.`charge_kw`, CONCAT(\', now: \', ROUND(1000.0*ABS(`sli`.`charge_kw`)), \'W at \', DATE_FORMAT(CONVERT_TZ(`sli`.`timestamp`, \'UTC\', ?), \'%H:%i\'), \'hrs\'), \'\'))
-                  FROM  `sliver_solutions` `sli`
-                  JOIN `slot_solutions` `slo` ON `slo`.`id` = `sli`.`slot_solution`
+                  FROM  `slice_solutions` `sli`
+                  JOIN  `slot_solutions` `slo` ON `slo`.`id` = `sli`.`slot_solution`
                   WHERE `sli`.`id` = (SELECT MAX(`id`)
-                                        FROM `sliver_solutions`)';
+                                        FROM `slice_solutions`)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ss', $this->config['time']['zone'], $this->config['time']['zone']) ||
             !$stmt->bind_result($slot_solution) ||

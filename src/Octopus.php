@@ -603,7 +603,6 @@ class Octopus extends Root
                 }
             }
         }
-$this->mysqli->commit();
         $this->makeSlotRates($slots, $tariff_combination, false);  // make tariffs
         // copy non final previous & next slots for tariff combination into final rows
         $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_level_start_kwh`, `battery_charge_kw`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 

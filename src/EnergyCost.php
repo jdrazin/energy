@@ -9,8 +9,7 @@ class EnergyCost extends Root
 {
     const bool      DEBUG_MINIMISER         = false;
 
-    const string    OPTIMISATION_LOG        = '/var/www/html/energy/test/optimisation.log',
-                    PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
+    const string    PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
     const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
                                                         'load_house_kws',
@@ -21,11 +20,15 @@ class EnergyCost extends Root
                                                 'OPERATIONAL' => [
                                                                      'slots'  => 'problem_slots.json',
                                                                      'slices' => 'problem_slices.json'
-                                                                ],
-                                                'DEBUG'      => [
+                                                ],
+                                                'DEBUG'       => [
                                                                     'slots'  => 'problem_debug_slots.json',
                                                                     'slices' => 'problem_debug_slices.json'
-                                                                ]
+                                                                 ]
+                                              ],
+                    OPTIMISATION_LOG        = [
+                                                'slots'  => '/var/www/html/energy/test/optimisation_slots.log',
+                                                'slices' => '/var/www/html/energy/test/optimisation_slices.log'
                                               ];
 
     const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5;
@@ -261,7 +264,7 @@ class EnergyCost extends Root
                             `import_gbp_per_day`,
                             `export_gbp_per_day`
                    FROM     `slots`
-                   WHERE    `tariff_combination` IN(0, ?) AND
+                   WHERE    `tariff_combination` = ? AND
                              NOT `final` AND
                              ? BETWEEN `start` AND `stop`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
@@ -316,8 +319,9 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    public function minimise(): array // returns optimum battery charge level for next slots/slices
-    {
+    public function minimise(): array {
+        //
+        // returns optimum battery charge level for next slots/slices
         //
         // see https://scipy-lectures.org/advanced/mathematical_optimization/#knowing-your-problem
         //
@@ -377,20 +381,12 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         if (!$command ||
-            !file_put_contents(self::OPTIMISATION_LOG, $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
+            !file_put_contents(self::OPTIMISATION_LOG[$this->parameters['type']], $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
         }
-        $this->optimisation_result($result);                                       // save optimiser performance parameters
-
-        // calculate optimised cost elements using CLI command
-        $this->costs['optimised'] = $this->costCLI($command, $optimumChargeKws = $result['optimumChargeKws']);
-        $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
-        echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-        echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-        echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-        echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+        $optimumChargeKws = $result['optimumChargeKws']; // solution charge rates
         if (self::DEBUG_MINIMISER) {
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
@@ -400,10 +396,27 @@ class EnergyCost extends Root
             return [];
         }
         else {
-            $this->insertOptimumChargeGridKw($optimumChargeKws);                      // insert for each slot: grid and battery discharge energies (kWh)
-            $slot_solution = $this->slotSolution();                                   // make slot solution
-            $this->insertSlotNextDayCostEstimates($slot_solution['id']);
-            return $slot_solution;
+            switch ($this->parameters['type']) {
+                case 'slots':
+                {
+                    // calculate optimised cost elements using CLI command
+                    $this->costs['optimised'] = $this->costCLI($command, $optimumChargeKws);
+                    $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
+                    echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+                    echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+                    echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+                    echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+                    $this->insertOptimumChargeGridKw($optimumChargeKws);                      // insert for each slot: grid and battery discharge energies (kWh)
+                    $slot_solution = $this->slotSolution();                                   // make slot solution
+                    $this->insertSlotNextDayCostEstimates($slot_solution['id']);
+                    return $slot_solution;
+                }
+                case 'slices':
+                {
+                    $this->insertSlices();
+                    return [];
+                }
+            }
         }
     }
 
@@ -452,24 +465,6 @@ class EnergyCost extends Root
             ];
     }
 
-    /**
-     * @throws Exception
-     */
-    private function optimisation_result($result): void {
-        $sql = 'UPDATE  `tariff_combinations` 
-                  SET   `result` = ?
-                  WHERE `id`     = ?';
-        $result = 'ended=' . date('Y-m-d H:i:s') . ', elapsed=' . round($result['elapsed_s'], 1) . 's, evaluations=' . $result['evaluations'];
-        $tariff_combination_id = $this->tariff_combination['id'];
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('si', $result, $tariff_combination_id) ||
-            !$stmt->execute() ||
-            !$this->mysqli->commit()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-    }
     private function makeSlotsArrays($problem): array {
         $number_slots_slices = $problem['number_slots_slices'];
         foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {

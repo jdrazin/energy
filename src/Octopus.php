@@ -12,12 +12,16 @@ class Octopus extends Root
                     ELECTRICITY_TARIFFS = 'electricity-tariffs/';
     const array     DIRECTIONS = [
                                     'import' => [
-                                        'tariffs' => 'tariff_imports',
-                                        'rates' => 'tariff_rates_import'
+                                        'tariffs'   => 'tariff_imports',
+                                        'rates'     => 'tariff_rates_import',
+                                        'slot_pers' => ['KWH' => 'import_gbp_per_kwh',
+                                                        'DAY' => 'import_gbp_per_day']
                                     ],
                                     'export' => [
-                                        'tariffs' => 'tariff_exports',
-                                        'rates' => 'tariff_rates_export'
+                                        'tariffs'   => 'tariff_exports',
+                                        'rates'     => 'tariff_rates_export',
+                                        'slot_pers' => ['KWH' => 'export_gbp_per_kwh',
+                                                        'DAY' => 'export_gbp_per_day']
                                     ]
                                 ],
                     RATE_PERS = [
@@ -25,11 +29,11 @@ class Octopus extends Root
                                     'DAY' => 'standing-charges/',
                                 ],
                     ENTITIES = [
-                                    'grid_kw'                 => [['GRID_W',                 +1000.0],
-                                                                  ['LOAD_EV_W',              +1000.0]],
-                                    'solar_gross_kw'          => [['SOLAR_W',                +1000.0]],
-                                    'load_house_kw'           => [['LOAD_HOUSE_W',           +1000.0]],
-                                    'battery_level_start_kwh' => [['BATTERY_LEVEL_KWH',      1.0]]
+                                    'grid_kw'                 => [['GRID_W',            +1000.0],
+                                                                  ['LOAD_EV_W',         +1000.0]],
+                                    'solar_gross_kw'          => [['SOLAR_W',           +1000.0]],
+                                    'load_house_kw'           => [['LOAD_HOUSE_W',      +1000.0]],
+                                    'battery_level_start_kwh' => [['BATTERY_LEVEL_KWH',  1.0]]
                                 ];
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api;
@@ -531,6 +535,7 @@ class Octopus extends Root
      * @throws Exception
      */
     public function makeActiveTariffCombinationDbSlotsLast24hrs($tariff_combination): void {
+        // make previous day times slots from next day slots
         $sql = 'SELECT `slot`  - 48,
                        `start` - INTERVAL 24 HOUR,
                        `stop`  - INTERVAL 24 HOUR
@@ -549,9 +554,10 @@ class Octopus extends Root
         while ($stmt->fetch()) {
             $slots[$slot] = [
                 'start' => $start,
-                'stop' => $stop
+                'stop'  => $stop
             ];
-        }
+         }
+        // make time slot rows for previous day
         $sql = 'INSERT IGNORE INTO `slots` (`slot`, `start`, `stop`)
                     SELECT `slot`  - 48,
                            `start` - INTERVAL 24 HOUR,
@@ -595,7 +601,36 @@ class Octopus extends Root
                 }
             }
         }
-        $this->mysqli->commit();
+        // get previous tariffs
+        foreach (self::DIRECTIONS as $k => $direction_v) {
+            unset($stmt);
+            $sql = 'SELECT `rate`
+                      FROM `' . $direction_v['rates'] . '`
+                      WHERE `per` = ? AND
+                            ? BETWEEN `start` AND `stop`';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('ss', $per, $mid) ||
+                !$stmt->bind_result($rate)) {
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
+                    throw new Exception($message);
+            }
+            foreach ($slots as $slot => $slot_v) {
+                $start = $slot_v['start'];
+                $stop  = $slot_v['stop'];
+                $datetime_start = new DateTime($start);
+                $datetime_stop  = new DateTime($stop);
+                $mid_seconds   = ($datetime_stop->getTimestamp() - $datetime_start->getTimestamp())/2;
+                $mid = $datetime_start->modify('+' . $mid_seconds . ' second')->format(Root::MYSQL_FORMAT_DATETIME);
+                foreach ($direction_v['slot_pers'] as $per => $column) {
+                    $stmt->execute();
+                    $stmt->fetch();
+                    $slots[$slot][$column] = $rate;
+                }
+            }
+        }
+$this->mysqli->commit();
+        // copy non final previous & next slots for tariff combination into final rows
         $sql = 'INSERT INTO `slots` (`final`, `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_level_start_kwh`, `battery_charge_kw`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`) 
                        (SELECT      TRUE,     `tariff_combination`, `slot`, `start`, `stop`, `load_house_kw`, `grid_kw`, `solar_gross_kw`, `battery_level_start_kwh`, `battery_charge_kw`, `import_gbp_per_kwh`, `export_gbp_per_kwh`, `import_gbp_per_day`, `export_gbp_per_day`, `load_non_heating_kw`, `load_heating_kw`
                                     FROM `slots` `s`

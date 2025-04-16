@@ -216,17 +216,25 @@ class EnergyCost extends Root
         $import_gbp_per_day         = [];
         $export_gbp_per_day         = [];
         while ($stmt->fetch()) {
-            $starts[]                   = $start;
-            $stops[]                    = $stop;
-            $battery_level_start_kwhs[] = $battery_level_start_kwh;
-            $battery_charge_kws[]       = $battery_charge_kw;
-            $grid_kws[]                 = $grid_kw;
-            $load_house_kws[]           = $load_house_kw;
-            $solar_gross_kws[]          = $solar_gross_kw;
-            $import_gbp_per_kwhs[]      = $import_gbp_per_kwh;
-            $export_gbp_per_kwhs[]      = $export_gbp_per_kwh;
-            $import_gbp_per_days[]      = $import_gbp_per_day;
-            $export_gbp_per_days[]      = $export_gbp_per_day;
+            if (!is_null($start) && !is_null($stop) && !is_null($battery_level_start_kwh) && !is_null($battery_charge_kw) && !is_null($grid_kw) && !is_null($solar_gross_kw) &&
+                    !is_null($import_gbp_per_kwh) && !is_null($export_gbp_per_kwh) && !is_null($import_gbp_per_day) && !is_null($export_gbp_per_day)) {
+                    $starts[] = $start;
+                    $stops[] = $stop;
+                    $battery_level_start_kwhs[] = $battery_level_start_kwh;
+                    $battery_charge_kws[] = $battery_charge_kw;
+                    $grid_kws[] = $grid_kw;
+                    $load_house_kws[] = $load_house_kw;
+                    $solar_gross_kws[] = $solar_gross_kw;
+                    $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
+                    $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
+                    $import_gbp_per_days[] = $import_gbp_per_day;
+                    $export_gbp_per_days[] = $export_gbp_per_day;
+            }
+            else {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'null value');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
+            }
         }
         $slots['starts']                     = $starts;
         $slots['stops']                      = $stops;
@@ -303,7 +311,7 @@ class EnergyCost extends Root
                 $datetime->modify('+' . self::SLICE_DURATION_MINUTES . ' minute');
             }
             else {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'null slot value');
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'null value');
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }

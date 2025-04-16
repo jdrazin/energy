@@ -72,8 +72,6 @@ class EnergyCost extends Root
                     $slots,
                     $slices;
 
-    private string  $type;
-
     public string   $string;
     private int     $number_slots_slices, $number_slices_per_slot;
 
@@ -270,9 +268,9 @@ class EnergyCost extends Root
             !$stmt->bind_param('is', $this->tariff_combination['id'], $datetime_string) ||
             !$stmt->bind_result($start, $stop, $battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
         $starts                     = [];
         $slices                     = [];
@@ -290,17 +288,25 @@ class EnergyCost extends Root
             $datetime_string = $datetime->format(self::MYSQL_FORMAT_DATETIME);
             $stmt->execute();
             $stmt->fetch();
-            $starts[]                   = $datetime_string;
-            $battery_level_start_kwhs[] = $battery_level_start_kwh;
-            $battery_charge_kws[]       = $battery_charge_kw;
-            $grid_kws[]                 = $grid_kw;
-            $load_house_kws[]           = $load_house_kw;
-            $solar_gross_kws[]          = $solar_gross_kw;
-            $import_gbp_per_kwhs[]      = $import_gbp_per_kwh;
-            $export_gbp_per_kwhs[]      = $export_gbp_per_kwh;
-            $import_gbp_per_days[]      = $import_gbp_per_day;
-            $export_gbp_per_days[]      = $export_gbp_per_day;
-            $datetime->modify('+' . self::SLICE_DURATION_MINUTES . ' minute');
+            if (!is_null($start) && !is_null($stop) && !is_null($battery_level_start_kwh) && !is_null($battery_charge_kw) && !is_null($grid_kw) && !is_null($solar_gross_kw) &&
+                !is_null($import_gbp_per_kwh) && !is_null($export_gbp_per_kwh) && !is_null($import_gbp_per_day)  && !is_null($export_gbp_per_day)) {
+                $starts[]                   = $datetime_string;
+                $battery_level_start_kwhs[] = $battery_level_start_kwh;
+                $battery_charge_kws[]       = $battery_charge_kw;
+                $grid_kws[]                 = $grid_kw;
+                $load_house_kws[]           = $load_house_kw;
+                $solar_gross_kws[]          = $solar_gross_kw;
+                $import_gbp_per_kwhs[]      = $import_gbp_per_kwh;
+                $export_gbp_per_kwhs[]      = $export_gbp_per_kwh;
+                $import_gbp_per_days[]      = $import_gbp_per_day;
+                $export_gbp_per_days[]      = $export_gbp_per_day;
+                $datetime->modify('+' . self::SLICE_DURATION_MINUTES . ' minute');
+            }
+            else {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'null slot value');
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
+            }
         }
         $slices['starts']                     = $starts;
         $slices['battery_level_start_kwhs']   = $battery_level_start_kwhs;
@@ -340,7 +346,7 @@ class EnergyCost extends Root
                     $this->load_house_kws  = $slices['load_house_kws'];                // house load (excludes EV)
                     $this->solar_gross_kws = $slices['solar_kws'];                     // gross solar forecast (excludes grid clipping)
 
-                    // set first 2 slices to actual load amd solar powers
+                    // set first 2 slices to current load and solar powers
                     $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];
                     $this->solar_gross_kws[0] = $this->solar_gross_kws[1] = $this->parameters['solar_kw'];
                     break;

@@ -234,12 +234,12 @@ elapsed_s = time.time() - start_time
 
 # output result as json
 output = {
-    "success":          result.success,
-    "elapsed_s":        elapsed_s,
-    "evaluations":      result.nfev,
-    "status":           result.status,
-    "message":          result.message,
-    "optimumChargeKws":   result.x.tolist(),
-    "energyCost":       result.fun
+    "success":              result.success,
+    "elapsed_s":            elapsed_s,
+    "evaluations":          result.nfev,
+    "status":               result.status,
+    "message":              result.message,
+    "optimum_charge_kws":   result.x.tolist(),
+    "energyCost":           result.fun
 }
 print(json.dumps(output))

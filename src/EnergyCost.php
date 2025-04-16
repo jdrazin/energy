@@ -134,12 +134,6 @@ class EnergyCost extends Root
                                             'export_gbp_per_kwhs'                     => $loadImportExports['export_gbp_per_kwhs'],
                                             'load_house_kws'                          => $loadImportExports['load_house_kws'],
                                           ];
-            $pathname_json_problem = self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$parameters['type']];
-            if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_json_problem, $json_problem)) {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
-                $this->logDb('MESSAGE', $message, null, 'FATAL');
-                throw new Exception($message);
-            }
         }
         else { // instantiate from config
             $this->solarGenerationLimitKw                   = (float) $this->config['solar_pv']['inverter']['power_threshold_kw'];
@@ -387,26 +381,33 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
         }
-        $optimumChargeKws = $result['optimumChargeKws']; // solution charge rates
+        $optimum_charge_kws = $result['optimum_charge_kws']; // solution charge rates
         if (self::DEBUG_MINIMISER) {
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
             foreach ($this->grid_kws as $k => $v) {
-                echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->grid_kws[$k], 3) . ', ' . round($optimumChargeKws[$k], 3) . PHP_EOL;
+                echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->grid_kws[$k], 3) . ', ' . round($optimum_charge_kws[$k], 3) . PHP_EOL;
             }
             return [];
         }
         else {
             // calculate optimised cost elements using CLI command
-            $this->costs['optimised'] = $this->costCLI($command, $optimumChargeKws);
+            $this->costs['optimised'] = $this->costCLI($command, $optimum_charge_kws);
             $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
-            echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-            echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-            echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
-            echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,2) . ' GBP' . PHP_EOL;
+            echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+            echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+            echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+            echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+            $this->problem['optimum_charge_kws'] = $optimum_charge_kws;
+            $pathname_json_problem = self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
+            if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_json_problem, $json_problem)) {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
+                $this->logDb('MESSAGE', $message, null, 'FATAL');
+                throw new Exception($message);
+            }
             switch ($this->parameters['type']) {
                 case 'slots': {
-                    $this->insertOptimumChargeGridKw($optimumChargeKws);                      // insert for each slot: grid and battery discharge energies (kWh)
+                    $this->insertOptimumChargeGridKw($optimum_charge_kws);                      // insert for each slot: grid and battery discharge energies (kWh)
                     $slot_solution = $this->slotSolution();                                   // make slot solution
                     $this->insertSlotNextDayCostEstimates($slot_solution['id']);
                     return $slot_solution;

@@ -158,7 +158,7 @@ gridWearPowerActivationKw                   = float(sys.argv[index])
 index += 2
 batteryEnergyInitialKwh                     = float(sys.argv[index])
 index += 2
-slotSliceDurationHour                            = float(sys.argv[index])
+slotSliceDurationHour                       = float(sys.argv[index])
 index += 2
 number_slots                                = int  (sys.argv[index])
 
@@ -198,12 +198,13 @@ while i < number_slots:
     solar_gross_kws  .append(float(sys.argv[index]))
     i+= 1
 
-# load initial zero charge guess
+# load initial guesses
+index += 1
 X = []
 i = 0
 while i < number_slots:
     index += 1
-    X   .append(0.0)
+    X               .append(float(sys.argv[index]))
     i+= 1
 
 #load charge min, max boundary pairs

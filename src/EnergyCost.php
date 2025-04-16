@@ -796,8 +796,8 @@ class EnergyCost extends Root
                                             'load_house_kws'        => $this->slices['load_house_kws'],
                                             'import_gbp_per_kwhs'   => $this->slices['import_gbp_per_kwhs'],
                                             'export_gbp_per_kwhs'   => $this->slices['export_gbp_per_kwhs'],
-                                            'import_gbp_per_days'   => $this->slices['import_gbp_per_days'],
-                                            'export_gbp_per_days'   => $this->slices['export_gbp_per_days']
+                                            'import_gbp_per_days'   => end($this->slices['import_gbp_per_days']),
+                                            'export_gbp_per_days'   => end($this->slices['export_gbp_per_days'])
                                        ];
                 break;
             }

@@ -465,52 +465,6 @@ class EnergyCost extends Root
             'message'               => $mode . ($mode == 'ECO' ? '' : '@' . $abs_charge_w . 'W') . ' to ' . $target_level_percent . '%'
             ];
     }
-
-    /**
-     * @throws Exception
-     */
-    private function sliceSolution($charge_kw): array {
-
-        $sql = 'SELECT          `id`,
-                                `start`,
-                                `stop`,
-                                `battery_level_start_kwh`,
-                                `battery_charge_kw`,
-                                `grid_kw`,
-                                `load_house_kw`,
-                                `solar_gross_kw`
-                    FROM        `slots`
-                    WHERE       `slot` = 0 AND
-                                `tariff_combination` = ? AND
-                                NOT `final`';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $tariff_combination_id) ||
-            !$stmt->bind_result($id, $start, $stop, $battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw) ||
-            !$stmt->execute() ||
-            !$stmt->fetch()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        $abs_charge_w = round(1000.0 * abs($battery_charge_kw));
-        $target_level_percent = min(100, max(0, (int) round(100.0 * ($battery_level_start_kwh + $battery_charge_kw * $this->slot_slice_duration_hour) / $this->batteryCapacityKwh)));
-        if (abs($grid_kw) < self::ABS_ECO_GRID_THRESHOLD_KW) {
-            $mode = 'ECO';
-        }
-        else {
-            $mode = $battery_charge_kw < 0.0 ? 'DISCHARGE' : 'CHARGE';
-        }
-        return [
-            'id'                    => $id,
-            'start'                 => $start,
-            'stop'                  => $stop,
-            'mode'                  => $mode,
-            'abs_charge_w'          => $abs_charge_w,
-            'target_level_percent'  => $target_level_percent,
-            'message'               => $mode . ($mode == 'ECO' ? '' : '@' . $abs_charge_w . 'W') . ' to ' . $target_level_percent . '%'
-        ];
-    }
-
     private function makeSlotsArrays($problem): array {
         $number_slots_slices = $problem['number_slots_slices'];
         foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {

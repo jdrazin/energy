@@ -216,8 +216,8 @@ class EnergyCost extends Root
         $import_gbp_per_day         = [];
         $export_gbp_per_day         = [];
         while ($stmt->fetch()) {
-            if (!is_null($start) && !is_null($stop) && !is_null($battery_level_start_kwh) && !is_null($battery_charge_kw) && !is_null($grid_kw) && !is_null($solar_gross_kw) &&
-                    !is_null($import_gbp_per_kwh) && !is_null($export_gbp_per_kwh) && !is_null($import_gbp_per_day) && !is_null($export_gbp_per_day)) {
+            // throw exception if slots problem paramter null
+            if (!is_null($load_house_kw) && !is_null($solar_gross_kw) &&  !is_null($import_gbp_per_kwh) && !is_null($export_gbp_per_kwh) && !is_null($import_gbp_per_day) && !is_null($export_gbp_per_day)) {
                     $starts[] = $start;
                     $stops[] = $stop;
                     $battery_level_start_kwhs[] = $battery_level_start_kwh;
@@ -296,8 +296,8 @@ class EnergyCost extends Root
             $datetime_string = $datetime->format(self::MYSQL_FORMAT_DATETIME);
             $stmt->execute();
             $stmt->fetch();
-            if (!is_null($start) && !is_null($stop) && !is_null($battery_level_start_kwh) && !is_null($battery_charge_kw) && !is_null($grid_kw) && !is_null($solar_gross_kw) &&
-                !is_null($import_gbp_per_kwh) && !is_null($export_gbp_per_kwh) && !is_null($import_gbp_per_day)  && !is_null($export_gbp_per_day)) {
+            // throw exception if slices problem paramter null
+            if (!is_null($battery_level_start_kwh) && !is_null($battery_charge_kw) && !is_null($grid_kw) && !is_null($load_house_kw) && !is_null($solar_gross_kw) && !is_null($import_gbp_per_kwh) && !is_null($export_gbp_per_kwh) && !is_null($import_gbp_per_day) && !is_null($export_gbp_per_day)) {
                 $starts[]                   = $datetime_string;
                 $battery_level_start_kwhs[] = $battery_level_start_kwh;
                 $battery_charge_kws[]       = $battery_charge_kw;

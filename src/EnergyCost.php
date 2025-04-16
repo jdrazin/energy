@@ -413,7 +413,7 @@ class EnergyCost extends Root
                     return $slot_solution;
                 }
                 case 'slices': {
-                    $this->insertSliceChargekW($slot_solution['id'], $charge_kw = round($optimum_charge_kws[0], 3));
+                    $this->insertSliceChargekW($charge_kw = round($optimum_charge_kws[0], 3));
                     $slot_solution['abs_charge_w'] = abs(1000.0 * $charge_kw);
                     return $slot_solution;
                 }
@@ -844,10 +844,11 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function insertSliceChargekW($slot_solution_id, $optimum_charge_kw): void {
-        $sql = 'INSERT INTO `slice_solutions` (`slot_solution`, `charge_kw`) VALUES (?, ?)';
+    private function insertSliceChargekW($optimum_charge_kw): void {
+        $sql = 'INSERT INTO `slice_solutions` (`slot_solution`, `charge_kw`) VALUES ((SELECT MAX(`id`)
+                          FROM `slot_solutions`), ?)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('id',  $slot_solution_id, $optimum_charge_kw) ||
+            !$stmt->bind_param('d',  $optimum_charge_kw) ||
             !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');

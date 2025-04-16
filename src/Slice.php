@@ -5,10 +5,6 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class Slice extends Root
 {
-    const int   SLIVER_DURATION_MINUTES = 1,
-                CHARGE_POWER_LEVELS     = 100;
-    const float CHARGE_DISCHARGE_MIN_KW = 0.5;
-
     public function __construct()
     {
         parent::__construct();

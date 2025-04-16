@@ -1,6 +1,5 @@
 <?php
 namespace Src;
-use DateTime;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -32,6 +31,9 @@ class Slice extends Root
             'solar_kw'                  => ((float)$givenergy_latest['solar']['power']) / 1000.0,
             'tariff_combination'        => $octopus->tariffCombinations()[0]
         ];
-        $slice_solution = (new EnergyCost($parameters))->minimise(); // minimise energy cost
+        $command = (new EnergyCost($parameters))->minimise(); // minimise energy cost
+        if (GIVENERGY_ENABLE) {
+            $givenergy->control($command);
+        }
     }
 }

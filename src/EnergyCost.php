@@ -182,9 +182,6 @@ class EnergyCost extends Root
          */
         $sql = 'SELECT      `start`,
                             `stop`,
-                            `battery_level_start_kwh`,
-                            `battery_charge_kw`,
-                            `grid_kw`,
                             `load_house_kw`,
                             `solar_gross_kw`,
                             `import_gbp_per_kwh`,
@@ -197,7 +194,7 @@ class EnergyCost extends Root
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $this->tariff_combination['id']) ||
-            !$stmt->bind_result($start, $stop, $battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
+            !$stmt->bind_result($start, $stop, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -206,9 +203,6 @@ class EnergyCost extends Root
         $starts                     = [];
         $stops                      = [];
         $slots                      = [];
-        $battery_level_start_kwhs   = [];
-        $battery_charge_kws         = [];
-        $grid_kws                   = [];
         $load_house_kws             = [];
         $solar_gross_kws            = [];
         $import_gbp_per_kwh         = [];
@@ -220,9 +214,6 @@ class EnergyCost extends Root
             if (!is_null($load_house_kw) && !is_null($solar_gross_kw) &&  !is_null($import_gbp_per_kwh) && !is_null($export_gbp_per_kwh) && !is_null($import_gbp_per_day) && !is_null($export_gbp_per_day)) {
                     $starts[] = $start;
                     $stops[] = $stop;
-                    $battery_level_start_kwhs[] = $battery_level_start_kwh;
-                    $battery_charge_kws[] = $battery_charge_kw;
-                    $grid_kws[] = $grid_kw;
                     $load_house_kws[] = $load_house_kw;
                     $solar_gross_kws[] = $solar_gross_kw;
                     $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
@@ -238,9 +229,6 @@ class EnergyCost extends Root
         }
         $slots['starts']                     = $starts;
         $slots['stops']                      = $stops;
-        $slots['battery_level_start_kwhs']   = $battery_level_start_kwhs;
-        $slots['battery_charge_kws']         = $battery_charge_kws;
-        $slots['grid_kws']                   = $grid_kws;
         $slots['load_house_kws']             = $load_house_kws;
         $slots['solar_kws']                  = $solar_gross_kws;
         $slots['import_gbp_per_kwhs']        = $import_gbp_per_kwhs;
@@ -260,7 +248,7 @@ class EnergyCost extends Root
         $sql = 'SELECT      `start`,
                             `stop`,
                             `battery_level_start_kwh`,
-                            `battery_charge_kw`,
+                            ROUND(`solar_gross_kw`-`grid_kw`-`load_house_kw`,3) AS `battery_charge_kw`,
                             `grid_kw`,
                             `load_house_kw`,
                             `solar_gross_kw`,

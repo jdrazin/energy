@@ -218,14 +218,14 @@ class EnergyCost extends Root
                 throw new Exception($message);
             }
         }
-        $slots['starts']                     = $starts;
-        $slots['stops']                      = $stops;
-        $slots['load_house_kws']             = $load_house_kws;
-        $slots['solar_kws']                  = $solar_gross_kws;
-        $slots['import_gbp_per_kwhs']        = $import_gbp_per_kwhs;
-        $slots['export_gbp_per_kwhs']        = $export_gbp_per_kwhs;
-        $slots['import_gbp_per_days']        = $import_gbp_per_days;
-        $slots['export_gbp_per_days']        = $export_gbp_per_days;
+        $slots['starts']              = $starts;
+        $slots['stops']               = $stops;
+        $slots['load_house_kws']      = $load_house_kws;
+        $slots['solar_kws']           = $solar_gross_kws;
+        $slots['import_gbp_per_kwhs'] = $import_gbp_per_kwhs;
+        $slots['export_gbp_per_kwhs'] = $export_gbp_per_kwhs;
+        $slots['import_gbp_per_days'] = $import_gbp_per_days;
+        $slots['export_gbp_per_days'] = $export_gbp_per_days;
         return $slots;
     }
 
@@ -300,7 +300,7 @@ class EnergyCost extends Root
         $slices['battery_charge_kws']         = $battery_charge_kws;
         $slices['grid_kws']                   = $grid_kws;
         $slices['load_house_kws']             = $load_house_kws;
-        $slices['solar_kws']                  = $solar_gross_kws;
+        $slices['solar_gross_kws']            = $solar_gross_kws;
         $slices['import_gbp_per_kwhs']        = $import_gbp_per_kwhs;
         $slices['export_gbp_per_kwhs']        = $export_gbp_per_kwhs;
         $slices['import_gbp_per_days']        = $import_gbp_per_days;

@@ -417,6 +417,9 @@ class EnergyCost extends Root
                     $slice_solution['abs_charge_w'] = abs(1000.0 * $charge_kw);
                     return $slice_solution;
                 }
+                default: {
+                    throw new Exception('Bad type');
+                }
             }
         }
     }

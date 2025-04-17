@@ -335,7 +335,7 @@ class EnergyCost extends Root
 
                     // set first 2 slices to current load and solar powers
                     $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];
-                    $this->solar_gross_kws[0] = $this->solar_gross_kws[1] = $this->parameters['solar_kw'];
+                    $this->solar_gross_kws[0] = $this->solar_gross_kws[1] = $this->parameters['solar_gross_kw'];
                     break;
                 }
             }

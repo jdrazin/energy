@@ -331,7 +331,7 @@ class EnergyCost extends Root
                 case 'slices': {
                     $slices                = $this->slices();                          // get house load from db (excludes EV)
                     $this->load_house_kws  = $slices['load_house_kws'];                // house load (excludes EV)
-                    $this->solar_gross_kws = $slices['solar_kws'];                     // gross solar forecast (excludes grid clipping)
+                    $this->solar_gross_kws = $slices['solar_gross_kws'];              // gross solar forecast (excludes grid clipping)
 
                     // set first 2 slices to current load and solar powers
                     $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];

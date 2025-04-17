@@ -198,7 +198,7 @@ while i < number_slots:
     solar_gross_kws  .append(float(sys.argv[index]))
     i+= 1
 
-# load initial guesses
+# load initial charge_kws guesses
 index += 1
 X = []
 i = 0

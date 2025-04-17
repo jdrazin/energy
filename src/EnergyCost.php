@@ -365,7 +365,7 @@ class EnergyCost extends Root
                 break;
             }
         }
-        $command = $this->command();
+        $command = $this->command($charge_kws);                                   // make optimize command line using parameters and first guesses
         $this->costs['raw'] = $this->costCLI($command, $charge_kws);
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
@@ -489,7 +489,7 @@ class EnergyCost extends Root
         }
         return $problem;
     }
-    private function command(): string {
+    private function command($first_guess_charge_kws): string {
         //
         // make CLI command string
         //
@@ -540,6 +540,10 @@ class EnergyCost extends Root
         $command .= 'solar_gross_kws= ';
         for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
             $command .= $this->solar_gross_kws[$slot_slice] . ' ';
+        }
+        $command .= 'first_guess_charge_kws= ';
+        for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
+            $command .= $first_guess_charge_kws[$slot_slice] . ' ';
         }
         return $command;
     }

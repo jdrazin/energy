@@ -7,7 +7,7 @@ use Exception;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG_MINIMISER         = false;
+    const bool      DEBUG_MINIMISER         = true;
 
     const string    PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
@@ -22,8 +22,8 @@ class EnergyCost extends Root
                                                                      'slices' => 'problem_slices.json'
                                                 ],
                                                 'DEBUG'       => [
-                                                                    'slots'  => 'problem_debug_slots.json',
-                                                                    'slices' => 'problem_debug_slices.json'
+                                                                    'slots'  => 'problem_slots_debug.json',
+                                                                    'slices' => 'problem_slices_debug.json'
                                                                  ]
                                               ],
                     OPTIMISATION_LOG        = [
@@ -344,8 +344,8 @@ class EnergyCost extends Root
             }
         }
         else { // use debug JSON and make slot arrays as necessary
-           $this->problem         = json_decode(file_get_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']]), true);
-           $this->problem         = $this->makeSlotsArrays(json_decode(file_get_contents(self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']]), true));
+           $problem_pathname      = self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
+           $this->problem         = json_decode(file_get_contents($problem_pathname, true), true);
            $this->load_house_kws  = $this->problem['load_house_kws'];            // get total house load from problem
            $this->solar_gross_kws = $this->problem['solar_gross_kws'];           // get solar forecast (excludes grid clipping) from problem
         }
@@ -473,30 +473,6 @@ class EnergyCost extends Root
         $slice_solution = $slot_solution;
         $slice_solution['abs_charge_w'] = (int) abs(1000.0 * $charge_kw);
         return $slice_solution;
-    }
-    private function makeSlotsArrays($problem): array {
-        $number_slots_slices = $problem['number_slots_slices'];
-        foreach (self::HOURLY_WEIGHTED_PARAMETER_NAMES as $parameter_name) {
-            if ($parameter_array = $problem[$parameter_name . '_weights'] ?? false) {
-                $weight_acc = 0.0;
-                $weights    = [];
-                $weight     = 0.0;
-                for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
-                    $weight = $parameter_array[$slot_slice/2] ?? $weight;
-                    $weights[$slot_slice++] = $weight;
-                    $weights[$slot_slice  ] = $weight;
-                    $weight_acc += $weight;
-                }
-                if (isset($problem[$parameter_name])) {
-                    $value = $problem[$parameter_name];
-                    foreach ($weights as $slot => $weight) {
-                      $weights[$slot] = round(0.5 * $number_slots_slices * $value * $weight / $weight_acc, 3);
-                    }
-                }
-                $problem[$parameter_name] = $weights;
-            }
-        }
-        return $problem;
     }
     private function command($first_guess_charge_kws): string {
         //

@@ -470,14 +470,8 @@ class EnergyCost extends Root
          return $slot_solution;
     }
     private function sliceSolution($slot_solution, $charge_kw): array {
-        $abs_charge_w = abs(1000.0 * $charge_kw);
-        $slice_solution = [
-            'id'                    => $id,
-            'mode'                  => $mode,
-            'abs_charge_w'          => $abs_charge_w,
-            'target_level_percent'  => null,
-            'message'               => $mode . ($mode == 'ECO' ? '' : '@' . $abs_charge_w . 'W') . ' to ' . $target_level_percent . '%'
-        ];
+        $slice_solution = $slot_solution;
+        $slice_solution['abs_charge_w'] = (int) abs(1000.0 * $charge_kw);
         return $slice_solution;
     }
     private function makeSlotsArrays($problem): array {

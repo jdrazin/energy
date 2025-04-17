@@ -7,16 +7,11 @@ use Exception;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG_MINIMISER         = true;
+    const bool      DEBUG_MINIMISER         = false;
 
     const string    PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
 
-    const array     HOURLY_WEIGHTED_PARAMETER_NAMES = [
-                                                        'load_house_kws',
-                                                        'import_gbp_per_kwhs',
-                                                        'export_gbp_per_kwhs'
-                                                      ],
-                    JSON_PROBLEM            = [
+    const array     JSON_PROBLEM            = [
                                                 'OPERATIONAL' => [
                                                                      'slots'  => 'problem_slots.json',
                                                                      'slices' => 'problem_slices.json'
@@ -94,11 +89,12 @@ class EnergyCost extends Root
                     $this->number_slices_per_slot = DbSlots::SLOT_DURATION_MINUTES/self::SLICE_DURATION_MINUTES;
                     $this->slices                 = $this->slices();                 // make slices for this/next slot
                 }
-                $loadImportExports                = $this->loadImportExport();
+                $loadSolarImportExports           = $this->loadSolarImportExports();
             }
             else {
-                $loadImportExports      = [
+                $loadSolarImportExports      = [
                                               'load_house_kws'      => [],
+                                              'solar_gross_kws'     => [],
                                               'import_gbp_per_kwhs' => [],
                                               'export_gbp_per_kwhs' => [],
                                               'import_gbp_per_days' => [],
@@ -128,11 +124,12 @@ class EnergyCost extends Root
                                             'batteryEnergyInitialKwh'                 => $batteryLevelInitialKwh,
                                             'slotSliceDurationHour'                   => $this->slot_slice_duration_hour,
                                             'number_slots_slices'                     => $this->number_slots_slices,
-                                            'import_gbp_per_days'                     => $loadImportExports['import_gbp_per_days'],
-                                            'export_gbp_per_days'                     => $loadImportExports['export_gbp_per_days'],
-                                            'import_gbp_per_kwhs'                     => $loadImportExports['import_gbp_per_kwhs'],
-                                            'export_gbp_per_kwhs'                     => $loadImportExports['export_gbp_per_kwhs'],
-                                            'load_house_kws'                          => $loadImportExports['load_house_kws'],
+                                            'import_gbp_per_days'                     => $loadSolarImportExports['import_gbp_per_days'],
+                                            'export_gbp_per_days'                     => $loadSolarImportExports['export_gbp_per_days'],
+                                            'import_gbp_per_kwhs'                     => $loadSolarImportExports['import_gbp_per_kwhs'],
+                                            'export_gbp_per_kwhs'                     => $loadSolarImportExports['export_gbp_per_kwhs'],
+                                            'load_house_kws'                          => $loadSolarImportExports['load_house_kws'],
+                                            'solar_gross_kws'                         => $loadSolarImportExports['solar_gross_kws'],
                                           ];
         }
         else { // instantiate from config
@@ -346,8 +343,8 @@ class EnergyCost extends Root
         else { // use debug JSON and make slot arrays as necessary
            $problem_pathname      = self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
            $this->problem         = json_decode(file_get_contents($problem_pathname, true), true);
-           $this->load_house_kws  = $this->problem['load_house_kws'];            // get total house load from problem
-           $this->solar_gross_kws = $this->problem['solar_gross_kws'];           // get solar forecast (excludes grid clipping) from problem
+           $this->load_house_kws  = $this->problem['load_house_kws'];                   // get total house load from problem
+           $this->solar_gross_kws = $this->problem['solar_gross_kws'];                  // get solar forecast (excludes grid clipping) from problem
         }
         $this->costs = [];
         switch ($this->parameters['type']) {
@@ -742,10 +739,11 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function loadImportExport(): array { // get load, import and export tariffs for each slot/slice
+    private function loadSolarImportExports(): array { // get load, import and export tariffs for each slot/slice
         switch ($this->parameters['type']) {
             case ('slots'): {
                 $sql = 'SELECT      `load_house_kw`,
+                                    `solar_gross_kw`,
                                     `import_gbp_per_kwh`,
                                     `export_gbp_per_kwh`,
                                     `import_gbp_per_day`,
@@ -758,44 +756,48 @@ class EnergyCost extends Root
                 $id = $this->tariff_combination['id'];
                 if (!($stmt = $this->mysqli->prepare($sql)) ||
                     !$stmt->bind_param('i', $id) ||
-                    !$stmt->bind_result($load_house_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
+                    !$stmt->bind_result($load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
                     !$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                     $this->logDb('MESSAGE', $message, null, 'ERROR');
                     throw new Exception($message);
                 }
-                $load_house_kw = [];
-                $import_gbp_per_kwh = [];
-                $export_gbp_per_kwh = [];
+                $load_house_kws       = [];
+                $solar_gross_kws      = [];
+                $import_gbp_per_kwhs  = [];
+                $export_gbp_per_kwhs  = [];
                 while ($stmt->fetch()) {
                     $load_house_kws[]      = $load_house_kw;
+                    $solar_gross_kws[]     = $solar_gross_kw;
                     $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
                     $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
                 }
-                $load_import_export = [
-                                            'load_house_kws'        => $load_house_kws,
-                                            'import_gbp_per_kwhs'   => $import_gbp_per_kwhs,
-                                            'export_gbp_per_kwhs'   => $export_gbp_per_kwhs,
-                                            'import_gbp_per_days'   => $import_gbp_per_day,
-                                            'export_gbp_per_days'   => $export_gbp_per_day
-                                        ];
+                $load_solar_import_export = [
+                                                'load_house_kws'        => $load_house_kws,
+                                                'solar_gross_kws'       => $solar_gross_kws,
+                                                'import_gbp_per_kwhs'   => $import_gbp_per_kwhs,
+                                                'export_gbp_per_kwhs'   => $export_gbp_per_kwhs,
+                                                'import_gbp_per_days'   => $import_gbp_per_day,
+                                                'export_gbp_per_days'   => $export_gbp_per_day
+                                            ];
                 break;
             }
             case ('slices'): {
-                $load_import_export = [
-                                            'load_house_kws'        => $this->slices['load_house_kws'],
-                                            'import_gbp_per_kwhs'   => $this->slices['import_gbp_per_kwhs'],
-                                            'export_gbp_per_kwhs'   => $this->slices['export_gbp_per_kwhs'],
-                                            'import_gbp_per_days'   => end($this->slices['import_gbp_per_days']),
-                                            'export_gbp_per_days'   => end($this->slices['export_gbp_per_days'])
-                                       ];
+                $load_solar_import_export = [
+                                                'load_house_kws'        => $this->slices['load_house_kws'],
+                                                'solar_gross_kws'       => $this->slices['solar_gross_kws'],
+                                                'import_gbp_per_kwhs'   => $this->slices['import_gbp_per_kwhs'],
+                                                'export_gbp_per_kwhs'   => $this->slices['export_gbp_per_kwhs'],
+                                                'import_gbp_per_days'   => end($this->slices['import_gbp_per_days']),
+                                                'export_gbp_per_days'   => end($this->slices['export_gbp_per_days'])
+                                           ];
                 break;
             }
             default: {
-                $load_import_export = [];
+                $load_solar_import_export = [];
             }
         }
-        return $load_import_export;
+        return $load_solar_import_export;
     }
 
     private function parameter_name_value($parameter_name): string {  // make parameter substring

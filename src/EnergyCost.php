@@ -408,14 +408,14 @@ class EnergyCost extends Root
             switch ($this->parameters['type']) {
                 case 'slots': {
                     $this->insertOptimumChargeGridKw($optimum_charge_kws);                    // insert for each slot: grid and battery discharge energies (kWh)
-                    $slot_solution = $this->slotSolution();                                   // make slot solution
+                    $slot_solution = $this->slotSolution();
                     $this->insertSlotNextDayCostEstimates($slot_solution['id']);
                     return $slot_solution;
                 }
                 case 'slices': {
                     $this->insertSliceChargekW($charge_kw = round($optimum_charge_kws[0], 3));
-                    $slice_solution['abs_charge_w'] = abs(1000.0 * $charge_kw);
-                    return $slice_solution;
+                    $slot_solution = $this->slotSolution();
+                    return $this->sliceSolution($slot_solution, $charge_kw);
                 }
                 default: {
                     throw new Exception('Bad type');
@@ -458,15 +458,27 @@ class EnergyCost extends Root
         else {
             $mode = $battery_charge_kw < 0.0 ? 'DISCHARGE' : 'CHARGE';
         }
-        return [
+        $slot_solution = [
+                         'id'                    => $id,
+                         'start'                 => $start,
+                         'stop'                  => $stop,
+                         'mode'                  => $mode,
+                         'abs_charge_w'          => $abs_charge_w,
+                         'target_level_percent'  => $target_level_percent,
+                         'message'               => $mode . ($mode == 'ECO' ? '' : '@' . $abs_charge_w . 'W') . ' to ' . $target_level_percent . '%'
+                         ];
+         return $slot_solution;
+    }
+    private function sliceSolution($slot_solution, $charge_kw): array {
+        $abs_charge_w = abs(1000.0 * $charge_kw);
+        $slice_solution = [
             'id'                    => $id,
-            'start'                 => $start,
-            'stop'                  => $stop,
             'mode'                  => $mode,
             'abs_charge_w'          => $abs_charge_w,
-            'target_level_percent'  => $target_level_percent,
+            'target_level_percent'  => null,
             'message'               => $mode . ($mode == 'ECO' ? '' : '@' . $abs_charge_w . 'W') . ' to ' . $target_level_percent . '%'
-            ];
+        ];
+        return $slice_solution;
     }
     private function makeSlotsArrays($problem): array {
         $number_slots_slices = $problem['number_slots_slices'];
@@ -852,8 +864,7 @@ class EnergyCost extends Root
      * @throws Exception
      */
     private function insertSliceChargekW($optimum_charge_kw): void {
-        $sql = 'INSERT INTO `slice_solutions` (`slot_solution`, `charge_kw`) VALUES ((SELECT MAX(`id`)
-                          FROM `slot_solutions`), ?)';
+        $sql = 'INSERT INTO `slice_solutions` (`charge_kw`) VALUES (?)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('d',  $optimum_charge_kw) ||
             !$stmt->execute()) {

@@ -405,17 +405,17 @@ class EnergyCost extends Root
                 $this->logDb('MESSAGE', $message, null, 'FATAL');
                 throw new Exception($message);
             }
-            $slot_solution = $this->slotSolution();                                   // make slot solution
             switch ($this->parameters['type']) {
                 case 'slots': {
                     $this->insertOptimumChargeGridKw($optimum_charge_kws);                    // insert for each slot: grid and battery discharge energies (kWh)
+                    $slot_solution = $this->slotSolution();                                   // make slot solution
                     $this->insertSlotNextDayCostEstimates($slot_solution['id']);
                     return $slot_solution;
                 }
                 case 'slices': {
                     $this->insertSliceChargekW($charge_kw = round($optimum_charge_kws[0], 3));
-                    $slot_solution['abs_charge_w'] = abs(1000.0 * $charge_kw);
-                    return $slot_solution;
+                    $slice_solution['abs_charge_w'] = abs(1000.0 * $charge_kw);
+                    return $slice_solution;
                 }
             }
         }

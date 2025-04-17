@@ -119,11 +119,9 @@ class Energy extends Root
         if (!$this->authenticate()) {
             return false;
         }
-        $sql = 'SELECT   CONCAT(`slo`.`message`, \' at \', DATE_FORMAT(CONVERT_TZ(`slo`.`stop`, \'UTC\', ?), \'%H:%i\'), \'hrs\', IF(`sli`.`charge_kw`, CONCAT(\', now: \', ROUND(1000.0*ABS(`sli`.`charge_kw`)), \'W at \', DATE_FORMAT(CONVERT_TZ(`sli`.`timestamp`, \'UTC\', ?), \'%H:%i\'), \'hrs\'), \'\'))
-                  FROM  `slice_solutions` `sli`
-                  JOIN  `slot_solutions` `slo` ON `slo`.`id` = `sli`.`slot_solution`
-                  WHERE `sli`.`id` = (SELECT MAX(`id`)
-                                        FROM `slice_solutions`)';
+        $sql = "SELECT   CONCAT(`message`, ' at ', DATE_FORMAT(CONVERT_TZ(`stop`, 'UTC', 'Europe/London'), '%H:%i'), 'hrs', ', now: ')
+                    FROM  `slot_solutions` 
+                    WHERE `id` = (SELECT MAX(`id`) FROM `slot_solutions`)";
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ss', $this->config['time']['zone'], $this->config['time']['zone']) ||
             !$stmt->bind_result($slot_solution) ||

@@ -4,13 +4,11 @@
 import math
 import sys
 import json
-
 import numpy as np
 import scipy
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
 from scipy.optimize import LinearConstraint
-from scipy.optimize import NonlinearConstraint
 
 SUM_CHARGE_TOLERANCE_KWH = 0.1
 

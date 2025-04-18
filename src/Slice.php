@@ -5,6 +5,8 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class Slice extends Root
 {
+    const int SLICE_STALE_DAYS = 1;
+
     public function __construct()
     {
         parent::__construct();
@@ -30,6 +32,21 @@ class Slice extends Root
         $command = (new EnergyCost($parameters))->minimise(); // minimise energy cost
         if (GIVENERGY_ENABLE) {
             $givenergy->control($command);
+        }
+        $this->trim();
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function trim(): void {
+        $sql = 'DELETE FROM `slices`
+                  WHERE `timestamp` < NOW() - INTERVAL ' . self::SLICE_STALE_DAYS . ' DAY';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
     }
 }

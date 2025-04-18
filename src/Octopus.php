@@ -56,7 +56,7 @@ class Octopus extends Root
     public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', '', null, 'NOTICE');
         if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
-            $db_slots  = new DbSlots();                                          // make day slots
+            $db_slots  = new Slot();                                              // make day slots
             $values    = new Values();
             $givenergy = new GivEnergy();
             $givenergy->getData();                                                // grid, load_house, solar (yesterday, today) > `values`
@@ -122,13 +122,13 @@ class Octopus extends Root
         $next_slot_start         = (new DateTime($start));
         $next_slot_start_hour    = (int) $next_slot_start->format('H');
         $next_slot_start_minutes = (int) $next_slot_start->format('i');
-        if ($next_slot_start_minutes+60*$next_slot_start_hour < DbSlots::class::DURATION_MINUTES) { // log forecast for the day if
+        if ($next_slot_start_minutes+60*$next_slot_start_hour < Slot::class::DURATION_MINUTES) { // log forecast for the day if
             $sql = 'INSERT INTO `costs` (`date`, `tariff_combination`, `type`, `grid_cost_raw_gbp`, `grid_cost_optimised_gbp`)
                                 (SELECT   DATE(`start`) AS `date`,
                                                `tariff_combination`,
                                                \'FORECAST\',
-                                                ROUND(SUM((`load_house_kw`-`solar_gross_kw`)*IF(`load_house_kw`-`solar_gross_kw` > 0, `import_gbp_per_kwh`, `export_gbp_per_kwh`))+SUM(`import_gbp_per_day`+`export_gbp_per_day`)/' . DbSlots::SLOTS_PER_DAY . ', 2) AS `grid_cost_raw_gbp`,
-                                                ROUND(SUM(`grid_kw`*IF(`grid_kw` < 0, `import_gbp_per_kwh`, `export_gbp_per_kwh`))+SUM(`import_gbp_per_day`+`export_gbp_per_day`)/' . DbSlots::SLOTS_PER_DAY . ', 2) AS `grid_cost_optimised_gbp`
+                                                ROUND(SUM((`load_house_kw`-`solar_gross_kw`)*IF(`load_house_kw`-`solar_gross_kw` > 0, `import_gbp_per_kwh`, `export_gbp_per_kwh`))+SUM(`import_gbp_per_day`+`export_gbp_per_day`)/' . Slot::SLOTS_PER_DAY . ', 2) AS `grid_cost_raw_gbp`,
+                                                ROUND(SUM(`grid_kw`*IF(`grid_kw` < 0, `import_gbp_per_kwh`, `export_gbp_per_kwh`))+SUM(`import_gbp_per_day`+`export_gbp_per_day`)/' . Slot::SLOTS_PER_DAY . ', 2) AS `grid_cost_optimised_gbp`
                                         FROM `slots`
                                         WHERE NOT `final` AND
                                               `slot` BETWEEN 0 AND 48
@@ -582,7 +582,7 @@ class Octopus extends Root
             foreach ($slots as $slot => $v) {       // returns averages for graphing purposes, about START times (i.e. slot_start_time - 15mins TO slot_start_time + 15mins
                 $power_w = 0.0;
                 foreach ($power_elements as $power_element) {
-                    $power_w += $values->average($power_element[0], 'MEASURED', $v['start'], $v['stop'], -DbSlots::DURATION_MINUTES / 2) / $power_element[1];
+                    $power_w += $values->average($power_element[0], 'MEASURED', $v['start'], $v['stop'], -Slot::DURATION_MINUTES / 2) / $power_element[1];
                 }
                 $slots[$slot][$column] = $power_w;
             }

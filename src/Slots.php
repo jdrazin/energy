@@ -23,12 +23,12 @@ class Slots
         $hour = (int)$datetime_earliest->format('H');
         $minutes = (int)$datetime_earliest->format('i');
         $day_minutes = ($minutes + 60 * $hour);
-        $day_slot = (int)($day_minutes / DbSlots::DURATION_MINUTES);
-        if ($day_minutes % DbSlots::DURATION_MINUTES) {
+        $day_slot = (int)($day_minutes / Slot::DURATION_MINUTES);
+        if ($day_minutes % Slot::DURATION_MINUTES) {
             $day_slot++;
         }
         $datetime_earliest->setTime(0, 0);
-        $datetime_earliest->modify('+' . DbSlots::DURATION_MINUTES * $day_slot . ' minute');
+        $datetime_earliest->modify('+' . Slot::DURATION_MINUTES * $day_slot . ' minute');
         $this->datetime = $datetime_earliest;
         $this->until = $until;
     }
@@ -43,9 +43,9 @@ class Slots
          */
         $start = $this->datetime->format(Root::MYSQL_FORMAT_DATETIME);
         $start_unix_timestamp = $this->datetime->getTimestamp();
-        $this->datetime->modify('+' . DbSlots::DURATION_MINUTES / 2 . ' minute');
+        $this->datetime->modify('+' . Slot::DURATION_MINUTES / 2 . ' minute');
         $mid = $this->datetime->format(Root::MYSQL_FORMAT_DATETIME);
-        $this->datetime->modify('+' . DbSlots::DURATION_MINUTES / 2 . ' minute');
+        $this->datetime->modify('+' . Slot::DURATION_MINUTES / 2 . ' minute');
         $stop = $this->datetime->format(Root::MYSQL_FORMAT_DATETIME);
         $stop_unix_timestamp = $this->datetime->getTimestamp();
         return ($stop < $this->until) ? ['start' => $start,

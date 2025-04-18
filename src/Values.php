@@ -165,7 +165,7 @@ class Values extends Root
         $slots_offset = (2 * $interval->h) + ($interval->i / 30);
         $powers_kw = [];
         foreach ($this->db_slots->slots as $slot => $v) {
-            $day_slot = ($slot + $slots_offset) % DbSlots::SLOTS_PER_DAY; // convert forecast slot number to absolute day slot
+            $day_slot = ($slot + $slots_offset) % Slot::SLOTS_PER_DAY; // convert forecast slot number to absolute day slot
             $temperature_forecast_c = $this->forecast_latest('TEMPERATURE_EXTERNAL_C', $v['mid']);
             $power_kw = $this->electricLoadHeatingW($day_slot, $temperature_forecast_c) / 1000.0; // get average powers for this day slot at the forecast temperature
             $powers_kw[$slot] = $power_kw;
@@ -246,7 +246,7 @@ class Values extends Root
     {
         $slot--;
         if ($slot < 0) {
-            return DbSlots::SLOTS_PER_DAY - 1;
+            return Slot::SLOTS_PER_DAY - 1;
         } else {
             return $slot;
         }
@@ -255,7 +255,7 @@ class Values extends Root
     private function slot_increment(int $slot): int
     {
         $slot++;
-        return $slot % DbSlots::SLOTS_PER_DAY;
+        return $slot % Slot::SLOTS_PER_DAY;
     }
 
     private function updateSlotPowerskW($powers_kw, $column): void
@@ -307,7 +307,7 @@ class Values extends Root
             $start_hour = (int)$datetime_start->format('H');
             $start_minute = (int)$datetime_start->format('i');
             $start_minutes = $start_minute + (60 * $start_hour);
-            $stop_minutes = $start_minutes + DbSlots::DURATION_MINUTES;
+            $stop_minutes = $start_minutes + Slot::DURATION_MINUTES;
             if (!$stmt->execute() ||
                 !$stmt->fetch() ||
                 is_null($power_kw)) {

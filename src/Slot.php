@@ -4,7 +4,7 @@ use DateMalformedStringException;
 use DateTime;
 use Exception;
 
-class DbSlots extends Root
+class Slot extends Root
 {
     public const int    SLOTS_PER_DAY = 48,
                         DURATION_MINUTES = 30;

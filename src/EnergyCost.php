@@ -80,13 +80,13 @@ class EnergyCost extends Root
         $tariff_combination     = $parameters['tariff_combination']     ?? null;
         if (!is_null($batteryLevelInitialKwh) && !is_null($tariff_combination)) { // make json instantiate
             $this->tariff_combination       = $tariff_combination;
-            $this->slot_slice_duration_hour = $this->parameters['type'] == 'slots' ? (float)(DbSlots::DURATION_MINUTES / 60) : (float)(Slice::DURATION_MINUTES / 60);
-            $this->number_slots_slices      = $this->parameters['type'] == 'slots' ? 24*60 / DbSlots::DURATION_MINUTES       : DbSlots::DURATION_MINUTES / Slice::DURATION_MINUTES;
+            $this->slot_slice_duration_hour = $this->parameters['type'] == 'slots' ? (float)(Slot::DURATION_MINUTES / 60) : (float)(Slice::DURATION_MINUTES / 60);
+            $this->number_slots_slices      = $this->parameters['type'] == 'slots' ? 24*60 / Slot::DURATION_MINUTES       : Slot::DURATION_MINUTES / Slice::DURATION_MINUTES;
             if (!self::DEBUG_MINIMISER) {
                 $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;            //
                 $this->slots                   = $this->slots();                     // load slots data
                 if ($parameters['type'] == 'slices') {                               // type of minimisation: slots, slices
-                    $this->number_slices_per_slot = DbSlots::DURATION_MINUTES/Slice::DURATION_MINUTES;
+                    $this->number_slices_per_slot = Slot::DURATION_MINUTES/Slice::DURATION_MINUTES;
                     $this->slices                 = $this->slices();                 // make slices for this/next slot
                 }
                 $loadSolarImportExports           = $this->loadSolarImportExports();
@@ -827,7 +827,7 @@ class EnergyCost extends Root
         foreach ($optimum_charge_kws as $slot => $optimum_charge_kw) {
             $optimum_grid_kw         = $this->grid_kws[$slot];
             $stmt->execute();
-            $battery_level_start_kwh = $battery_level_start_kwh + $optimum_charge_kw * DbSlots::DURATION_MINUTES / 60;;
+            $battery_level_start_kwh = $battery_level_start_kwh + $optimum_charge_kw * Slot::DURATION_MINUTES / 60;;
         }
         $this->mysqli->commit();
     }

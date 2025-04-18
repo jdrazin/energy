@@ -3,7 +3,7 @@
 	error_reporting(E_ALL);
     require_once __DIR__ . '/../Root.php';
     require_once __DIR__ . '/../Slots.php';
-    require_once __DIR__ . '/../DbSlots.php';
+    require_once __DIR__ . '/../Slot.php';
 
 
     $slots = new Slots('2024-04-03 01:43:45');

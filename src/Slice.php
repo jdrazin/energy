@@ -40,7 +40,7 @@ class Slice extends Root
      * @throws Exception
      */
     private function trim(): void {
-        $sql = 'DELETE FROM `slices`
+        $sql = 'DELETE FROM `slice_solutions`
                   WHERE `timestamp` < NOW() - INTERVAL ' . self::SLICE_STALE_DAYS . ' DAY';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {

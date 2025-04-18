@@ -604,9 +604,9 @@ class EnergyCost extends Root
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $solar_gross_kws[]                          = (float) $this->strip();
         }
-        return $this->dayCostGbp($charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws);
+        return $this->costFunction($charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws);
     }
-    private function dayCostGbp($battery_charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws): array {
+    private function costFunction($battery_charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws): array {
         /*
          * calculate cost components: does not include standing costs
          */

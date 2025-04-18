@@ -5,7 +5,8 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class Slice extends Root
 {
-    const int SLICE_SOLUTIIONS_DB_MAX_AGE_DAY = 1;
+    const int    DURATION_MINUTES = 2,
+                 DB_MAX_AGE_DAY = 1;
 
     public function __construct()
     {
@@ -41,7 +42,7 @@ class Slice extends Root
      */
     private function trimSliceSolutions(): void {
         $sql = 'DELETE FROM `slice_solutions`
-                  WHERE `timestamp` < NOW() - INTERVAL ' . self::SLICE_SOLUTIIONS_DB_MAX_AGE_DAY . ' DAY';
+                  WHERE `timestamp` < NOW() - INTERVAL ' . self::DB_MAX_AGE_DAY . ' DAY';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

@@ -119,7 +119,16 @@ class Energy extends Root
         if (!$this->authenticate()) {
             return false;
         }
-        $sql = "SELECT   CONCAT(`message`, ' at ', DATE_FORMAT(CONVERT_TZ(`stop`, 'UTC', ?), '%H:%i'), 'hrs', ', now: ')
+        $sql = "SELECT   CONCAT(`message`,
+                                ' at ', 
+                                DATE_FORMAT(CONVERT_TZ(`stop`, 'UTC', ?), '%H:%i'), 
+                                'hrs', 
+                                ' (now ',
+                                 (SELECT ROUND(1000.0 * ABS(`charge_kw`))
+                                    FROM `slice_solutions`
+                                    WHERE `id` = (SELECT MAX(`id`) 
+                                                    FROM `slice_solutions`)), 
+                                'W)'                                                                )
                     FROM  `slot_solutions` 
                     WHERE `id` = (SELECT MAX(`id`) FROM `slot_solutions`)";
         if (!($stmt = $this->mysqli->prepare($sql)) ||

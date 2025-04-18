@@ -1,11 +1,11 @@
 #
-# Powell cost optimiser, see https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_powell.html#fmin-powell
+# trust-constr cost optimiser, see https://docs.scipy.org/doc/scipy/reference/optimize.minimize-trustconstr.html
 #
 import math
 import sys
 import json
+
 import numpy as np
-import scipy
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
 from scipy.optimize import LinearConstraint
@@ -258,3 +258,4 @@ output = {
     "optimum_charge_kws":   result.x.tolist(),
     "energyCost":           result.fun
 }
+print(json.dumps(output))

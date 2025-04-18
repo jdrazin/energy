@@ -105,7 +105,7 @@ class Octopus extends Root
      */
     private function trimSlotSolutions(): void {
         $sql = 'DELETE FROM `slot_solutions`
-                    WHERE `timestamp` + INTERVAL ' . self::SLOT_SOLUTIIONS_DB_MAX_AGE_DAY . ' DAY < NOW()';
+                    WHERE `timestamp` + INTERVAL ' . self::SLOT_SOLUTIONS_DB_MAX_AGE_DAY . ' DAY < NOW()';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

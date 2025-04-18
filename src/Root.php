@@ -5,8 +5,7 @@ use DateTimeZone;
 use Exception;
 use mysqli;
 
-class Root
-{
+class Root {
     public const string     EARLIEST_DATE = '2024-08-01 00:00:00',
                             COMMENT_STRING = '#';
 
@@ -20,7 +19,7 @@ class Root
                             JSON_MAX_DEPTH = 10,
                             LOG_MAX_CHARS = 255,
                             CUBIC_SPLINE_MULTIPLE = 8,
-                            SLOT_SOLUTIIONS_DB_MAX_AGE_DAY = 30;
+                            SLOT_SOLUTIONS_DB_MAX_AGE_DAY = 30;
     private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
     public array            $apis = [], $config = [];
     protected               mysqli $mysqli;

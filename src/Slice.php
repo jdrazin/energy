@@ -5,8 +5,8 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class Slice extends Root
 {
-    const int    DURATION_MINUTES = 2,
-                 DB_MAX_AGE_DAY = 1;
+    const int    DB_MAX_AGE_DAY = 1,
+                 DURATION_MINUTES = 2;
 
     public function __construct()
     {

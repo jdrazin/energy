@@ -244,7 +244,7 @@ cost = costFunction(X0)
 
 # optimise
 # result = minimize(dayCostGbp, X0, method='powell', bounds=boundData, options={'disp': 0, 'ftol': 1E-14, 'maxiter': 1000000}) # Powell
-result = minimize(costFunction, X0, method='trust-constr', constraints=[linearConstraints], bounds=boundData, options={'verbose': 1, 'disp': 0, 'maxiter': 1000000})
+result = minimize(costFunction, X0, method='trust-constr', constraints=[linearConstraints], bounds=boundData, options={'verbose': 0, 'disp': 0, 'maxiter': 1000000})
 
 elapsed_s = time.time() - start_time
 

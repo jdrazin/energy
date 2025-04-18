@@ -33,13 +33,13 @@ class Slice extends Root
         if (GIVENERGY_ENABLE) {
             $givenergy->control($command);
         }
-        $this->trim();
+        $this->trimSliceSolutions();
     }
 
     /**
      * @throws Exception
      */
-    private function trim(): void {
+    private function trimSliceSolutions(): void {
         $sql = 'DELETE FROM `slice_solutions`
                   WHERE `timestamp` < NOW() - INTERVAL ' . self::SLICE_STALE_DAYS . ' DAY';
         if (!($stmt = $this->mysqli->prepare($sql)) ||

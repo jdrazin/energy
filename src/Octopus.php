@@ -96,14 +96,14 @@ class Octopus extends Root
         } else {
             (new EnergyCost(null, null))->minimise();      // minimise energy cost
         }
-        $this->trimDb();
+        $this->trimSlotSolutions();
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null,  null,'NOTICE');
     }
 
     /**
      * @throws Exception
      */
-    private function trimDb(): void {
+    private function trimSlotSolutions(): void {
         $sql = 'DELETE FROM `slot_solutions`
                     WHERE `timestamp` + INTERVAL ' . self::SLOT_SOLUTIIONS_DB_MAX_AGE_DAY . ' DAY < NOW()';
         if (!($stmt = $this->mysqli->prepare($sql)) ||

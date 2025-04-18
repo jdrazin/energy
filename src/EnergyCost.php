@@ -9,9 +9,7 @@ class EnergyCost extends Root
 {
     const bool      DEBUG_MINIMISER         = false;
 
-    const string    PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/optimize.py';
-
-    const array     JSON_PROBLEM            = [
+    const array    JSON_PROBLEM            = [
                                                 'OPERATIONAL' => [
                                                                      'slots'  => 'problem_slots.json',
                                                                      'slices' => 'problem_slices.json'
@@ -24,6 +22,10 @@ class EnergyCost extends Root
                     OPTIMISATION_LOG        = [
                                                 'slots'  => '/var/www/html/energy/test/optimisation_slots.log',
                                                 'slices' => '/var/www/html/energy/test/optimisation_slices.log'
+                                              ],
+                    PYTHON_OPTIMIZER_SCRIPT = [
+                                                'slots'     => 'python3 /var/www/html/energy/src/optimizeCharge.py',
+                                                'slices'    => 'python3 /var/www/html/energy/src/optimizeChargeConstrained.py'
                                               ];
 
     const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5;
@@ -475,7 +477,7 @@ class EnergyCost extends Root
         //
         // make CLI command string
         //
-        $command = self::PYTHON_SCRIPT_COMMAND . ' ';
+        $command = self::PYTHON_OPTIMIZER_SCRIPT[$this->parameters['type']] . ' ';
         $command .= $this->parameter_name_value('solarGenerationLimitKw');
         $command .= $this->parameter_name_value('batteryCapacityKwh');
         $command .= $this->parameter_name_value('batteryOneWayEfficiency');

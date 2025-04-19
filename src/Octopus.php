@@ -634,20 +634,8 @@ class Octopus extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-
         // sleep until beginning of next slot start, then commit
-        $sql = 'SELECT TIMESTAMPDIFF(SECOND, NOW(), ?)';
-        unset($stmt);
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('s', $next_slot_start) ||
-            !$stmt->bind_result($wait_to_next_slot_start_seconds) ||
-            !$stmt->execute() ||
-            !$stmt->fetch() ||
-            is_null($wait_to_next_slot_start_seconds)) {
-                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
-        }
+        $wait_to_next_slot_start_seconds = (new DateTime($next_slot_start))->getTimestamp() - (new DateTime())->getTimestamp();
         if ($wait_to_next_slot_start_seconds < 0) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'sleep to next slot is negative: ' . $wait_to_next_slot_start_seconds . 's');
             $this->logDb('MESSAGE', $message, null, 'WARNING');

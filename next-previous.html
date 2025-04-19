@@ -123,7 +123,7 @@
         var tariffCombinations = new google.visualization.DataTable();
         tariffCombinations.addColumn('datetime',    'Starting');
         tariffCombinations.addColumn('string',      'Tariff combination [import, export]');
-        tariffCombinations.addColumn('string',      'Result');
+ //       tariffCombinations.addColumn('string',      'Result');
         tariffCombinations.addColumn('number',      'Grid: raw (GBP)');
         tariffCombinations.addColumn('number',      'Grid: optimised (GBP)');
         tariffCombinations.addColumn('number',      'Grid: saving (GBP)');
@@ -133,7 +133,7 @@
         var row;
         for (var item = 1; item < data.length; item++) {
             row = data[item];
-            tariffCombinations.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]]);
+            tariffCombinations.addRow([new Date(1000*row[0]), row[1], row[2], row[3], row[4], row[5], row[6], row[7]]);
         }
         var table = new google.visualization.Table(document.getElementById('table_tariff_combinations'));
         var options = {

@@ -198,9 +198,6 @@ class Root {
         $stmt->bind_param('ssss', $event, $message, $text, $urgency);
         $stmt->execute();
         $mysqli->commit();
-        unset($stmt);
-        $mysqli->close();
-        unset($mysqli);
     }
 
     /**

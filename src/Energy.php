@@ -84,7 +84,6 @@ class Energy extends Root
         }
         $sql = 'SELECT  UNIX_TIMESTAMP(`s`.`start`) AS `start`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`, CONVERT(IF((`tc`.`active` IS NULL), \'\', \' *ACTIVE*\') USING utf8mb4), \' (\', `tc`.`id`, \')\') AS `tariff [import, export]`,
-                        `tc`.`result`,
                         ROUND(((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`), 2) AS `raw grid (GBP)`,
                         ROUND(((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`), 2) AS `optimised grid (GBP)`,
                         ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)), 2) AS `grid saving (GBP)`,

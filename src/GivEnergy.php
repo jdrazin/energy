@@ -58,9 +58,6 @@ class GivEnergy extends Root
                                             'Pause Battery' => 'Pause Charge & Discharge',
                                             ],
                         PRESET_CHARGE_DISCHARGE_BLOCKS = [
-            /*                                'CHARGE' => [   2 => [  'start'                 => '00:00',
-                                                                    'stop'                  => '00:00',
-                                                                    'target_level_percent'  => self::UPPER_SOC_LIMIT_PERCENT]], */
                                             'CHARGE'    => [],
                                             'DISCHARGE' => []
                                         ],

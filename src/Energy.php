@@ -97,7 +97,7 @@ class Energy extends Root
                     JOIN `slots`               `s`  ON `s`.`id` = `sndce`.`slot`
                     ORDER BY ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)), 2) DESC';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($start, $result, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent) ||
+            !$stmt->bind_result($start, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -106,7 +106,7 @@ class Energy extends Root
         $tariff_combinations = [];
         $tariff_combinations[] = ['Starting', 'Tariff combination [import, export]', 'Result', 'Grid: raw (£)', 'Grid: optimised (£)', 'Grid: saving (£)', 'Net saving (£)', 'Grid: saving (%)', 'Wear (%)'];
         while ($stmt->fetch()) {
-            $tariff_combinations[] = [$start, $result, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent];
+            $tariff_combinations[] = [$start, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent];
         }
         return json_encode($tariff_combinations, JSON_PRETTY_PRINT);
     }

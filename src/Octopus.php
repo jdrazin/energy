@@ -35,6 +35,7 @@ class Octopus extends Root
                                     'load_house_kw'           => [['LOAD_HOUSE_W',      +1000.0]],
                                     'battery_level_start_kwh' => [['BATTERY_LEVEL_KWH',  1.0]]
                                 ];
+    const int MAX_WAIT_TO_NEXT_SLOT_SECONDS = 180;
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api;
 
@@ -558,6 +559,8 @@ class Octopus extends Root
                 'stop'  => $stop
             ];
          }
+        $next_slot_start = $stop; // next slot starts at end of last previous slot
+
         // make time slot rows for previous day
         $sql = 'INSERT IGNORE INTO `slots` (`slot`, `start`, `stop`, `tariff_combination`)
                     SELECT `slot`  - 48,
@@ -631,6 +634,30 @@ class Octopus extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
+
+        // sleep until beginning of next slot start, then commit
+        $sql = 'SELECT TIMESTAMPDIFF(SECOND, ?, NOW())';
+        unset($stmt);
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('s', $next_slot_start) ||
+            !$stmt->bind_result($wait_to_next_slot_start_seconds) ||
+            !$stmt->execute() ||
+            !$stmt->fetch() ||
+            is_null($wait_to_next_slot_start_seconds)) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
+        }
+        if ($wait_to_next_slot_start_seconds < 0) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'sleep to next slot is negative: ' . $wait_to_next_slot_start_seconds . 's');
+            $this->logDb('MESSAGE', $message, null, 'WARNING');
+            $wait_to_next_slot_start_seconds = 0;
+        }
+        elseif($wait_to_next_slot_start_seconds > self::MAX_WAIT_TO_NEXT_SLOT_SECONDS) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'sleep to next slot too high: ' . $wait_to_next_slot_start_seconds . 's');
+            $this->logDb('MESSAGE', $message, null, 'WARNING');
+        }
+        sleep($wait_to_next_slot_start_seconds);
         $this->mysqli->commit();
     }
 }

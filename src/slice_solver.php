@@ -16,7 +16,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const   PID_FOLDER                  = '/var/www/html/energy/pids/',
-        DEBUG                       = false,         // disable cron and semaphore single thread control
+        DEBUG                       = true,         // disable cron and semaphore single thread control
         ARGS                        = ['CRON' => 1],
         INITIALISE_ON_EXCEPTION     = false,
         EMAIL_NOTIFICATION_ON_ERROR = false,

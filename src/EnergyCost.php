@@ -443,9 +443,9 @@ class EnergyCost extends Root
             !$stmt->bind_result($id, $start, $stop, $battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
         $abs_charge_w = round(1000.0 * abs($battery_charge_kw));
         $battery_level_target_kwh = $battery_level_start_kwh + (($battery_charge_kw * (float) Slot::DURATION_MINUTES) / 60.0);

@@ -73,7 +73,7 @@ class GivEnergy extends Root
                                             'Enable Eco Mode'                           => 1,               // Set Eco mode, defaults to ON
                                             'AC Charge Enable'                          => 1,               // Activate battery charge timer settings, defaults to OFF
                                             'Enable DC Discharge'                       => 1,               // Enables battery discharge timer settings, defaults to OFF
-                                            'AC Charge Upper % Limit'                   => 95,              // Sets upper limit, defaults to 100%
+                                            'AC Charge Upper % Limit'                   => 100,             // Sets upper limit, defaults to 100%
                                             'Battery Reserve % Limit'                   => 5,               // Set reserve limit, defaults to 4%
                                             'Battery Charge Power'                      => 6000,            // Set battery charge power, defaults to 6000W
                                             'Battery Discharge Power'                   => 6000,            // Set battery discharge power, defaults to 6000W

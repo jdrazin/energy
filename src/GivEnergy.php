@@ -571,9 +571,9 @@ class GivEnergy extends Root
             $this->clear_preset_charge_discharge_blocks();
         }
         $mode                   = $command['mode']                    ?? null;
-        $start                  = $this->UTCToLocalTime($command['datetime_start'], $this->local_timezone,'H:i') ?? null;
-        $stop                   = $this->UTCToLocalTime($command['datetime_stop' ], $this->local_timezone,'H:i') ?? null;
-        $abs_charge_power_w     = $command['abs_charge_power_w']      ?? null;
+        $start                  = $this->UTCToLocalTime($command['start'], $this->local_timezone,'H:i') ?? null;
+        $stop                   = $this->UTCToLocalTime($command['stop' ], $this->local_timezone,'H:i') ?? null;
+        $abs_charge_power_w     = $command['abs_charge_w']            ?? null;
         $target_level_percent   = $command['target_level_percent']    ?? null;
         $message                = $command['message']                 ?? 'no context';
         if (GIVENERGY_ENABLE) {
@@ -589,10 +589,10 @@ class GivEnergy extends Root
                     $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
                         $mode,
                         [
-                            'start' => $start,
-                            'stop' => $stop,
-                            'abs_charge_power_w' => $abs_charge_power_w,
-                            'target_level_percent' => $target_level_percent
+                            'start'                 => $start,
+                            'stop'                  => $stop,
+                            'abs_charge_power_w'    => $abs_charge_power_w,
+                            'target_level_percent'  => $target_level_percent
                         ],
                         __FUNCTION__);
                     $this->clear_slot($mode == 'CHARGE' ? 'DC Discharge' : 'AC Charge');  // clear other slot direction
@@ -604,8 +604,8 @@ class GivEnergy extends Root
                     $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
                         'CHARGE',
                         [
-                            'start' => '00:00',
-                            'stop'  => '00:00',
+                            'start'                 => '00:00',
+                            'stop'                  => '00:00',
                             'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Charge Power'],
                             'target_level_percent'  => self::POST_DEFAULTS['AC Charge Upper % Limit']
                         ],
@@ -613,8 +613,8 @@ class GivEnergy extends Root
                     $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,
                         'DISCHARGE',
                         [
-                            'start' => '00:00',
-                            'stop'  => '00:00',
+                            'start'                 => '00:00',
+                            'stop'                  => '00:00',
                             'abs_charge_power_w'    => self::POST_DEFAULTS['Battery Discharge Power'],
                             'target_level_percent'  => self::POST_DEFAULTS['Battery Cutoff % Limit']
                         ],

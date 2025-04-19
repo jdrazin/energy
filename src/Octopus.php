@@ -572,7 +572,6 @@ class Octopus extends Root
                             `tariff_combination` = ? AND
                              NOT `final`
                       ORDER BY `slot`';
-        unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ii', $tariff_combination['id'], $tariff_combination['id']) ||
             !$stmt->execute()) {
@@ -593,7 +592,6 @@ class Octopus extends Root
                       SET   `' . $column . '` = ?
                       WHERE `slot`            = ? AND
                             NOT `final`';
-            unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_param('di', $value, $slot)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -626,7 +624,6 @@ class Octopus extends Root
                                               `export_gbp_per_day`        = `s`.`export_gbp_per_day`,
                                               `load_non_heating_kw`       = `s`.`load_non_heating_kw`,
                                               `load_heating_kw`           = `s`.`load_heating_kw`';
-        unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination['id']) ||
             !$stmt->execute()) {
@@ -636,8 +633,7 @@ class Octopus extends Root
         }
 
         // sleep until beginning of next slot start, then commit
-        $sql = 'SELECT TIMESTAMPDIFF(SECOND, ?, NOW())';
-        unset($stmt);
+        $sql = 'SELECT TIMESTAMPDIFF(SECOND, NOW(), ?)';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('s', $next_slot_start) ||
             !$stmt->bind_result($wait_to_next_slot_start_seconds) ||

@@ -249,7 +249,7 @@ class EnergyCost extends Root
                             `export_gbp_per_day`
                    FROM     `slots`
                    WHERE    `tariff_combination` = ? AND
-                             NOT `final` AND
+                            `final` AND
                              ? BETWEEN `start` AND `stop`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('is', $this->tariff_combination['id'], $datetime_string) ||

@@ -437,7 +437,7 @@ class EnergyCost extends Root
                     FROM        `slots`
                     WHERE       `slot` = 0 AND
                                 `tariff_combination` = ? AND
-                                NOT `final`';
+                                `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
             !$stmt->bind_result($id, $start, $stop, $battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw) ||
@@ -448,7 +448,8 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         $abs_charge_w = round(1000.0 * abs($battery_charge_kw));
-        $target_level_percent = min(100, max(0, (int) round(100.0 * ($battery_level_start_kwh + $battery_charge_kw * $this->slot_slice_duration_hour) / $this->batteryCapacityKwh)));
+        $battery_level_target_kwh = $battery_level_start_kwh + (($battery_charge_kw * (float) Slot::DURATION_MINUTES) / 60.0);
+        $target_level_percent = min(100, max(0, (int) round((100.0 * $battery_level_target_kwh / $this->batteryCapacityKwh))));
         if (abs($grid_kw) < self::ABS_ECO_GRID_THRESHOLD_KW) {
             $mode = 'ECO';
         }

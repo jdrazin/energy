@@ -437,7 +437,7 @@ class EnergyCost extends Root
                     FROM        `slots`
                     WHERE       `slot` = 0 AND
                                 `tariff_combination` = ? AND
-                                `final`';
+                                NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $tariff_combination_id) ||
             !$stmt->bind_result($id, $start, $stop, $battery_level_start_kwh, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw) ||

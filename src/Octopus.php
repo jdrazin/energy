@@ -544,7 +544,6 @@ class Octopus extends Root
                   WHERE `slot` >= 1 AND
                          NOT `final`
                   ORDER BY `slot`';
-        unset($stmt);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($slot, $start, $stop) ||
             !$stmt->execute()) {

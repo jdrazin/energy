@@ -138,14 +138,14 @@ class Energy extends Root
 
         // get latest slice
         unset($stmt);
-        $sql = "SELECT ROUND(1000.0 * ABS(`charge_kw`)) AS `slice_charge_w`,
-                       DATE_FORMAT(CONVERT_TZ(`timestamp`, 'UTC', 'Europe/London'), '%H:%i') AS `timestamp`
+        $sql = "SELECT `charge_kw`,
+                       DATE_FORMAT(CONVERT_TZ(`timestamp`, 'UTC', ?), '%H:%i') AS `timestamp`
                     FROM `slice_solutions`
                     WHERE `id` = (SELECT MAX(`id`) 
                                     FROM `slice_solutions`)";
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-      //      !$stmt->bind_param('s', $this->config['time']['zone']) ||
-            !$stmt->bind_result($slice_charge_w, $timestamp) ||
+            !$stmt->bind_param('s', $this->config['time']['zone']) ||
+            !$stmt->bind_result($slice_charge_kw, $slice_timestamp) ||
             !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -154,7 +154,23 @@ class Energy extends Root
         if (!$stmt->fetch()) {
             return false;
         }
-        return 'Previous and next 24hrs: ' . $slot_solution_message . ' at ' . $slot_solution_stop . 'hrs';
+        $message = $slot_solution_message . ' at ' . $slot_solution_stop;
+        switch ($mode) {
+            case 'CHARGE':
+            case 'DISCHARGE': {
+                $charge_text = ($slice_charge_kw < 0 ? 'DISCHARGE' : 'CHARGE') . '@' . ROUND(1000.0 * abs($slice_charge_kw)) . 'W at ' . $slice_timestamp . ')';
+                $message .= ' (now ' . $charge_text;
+                break;
+            }
+            case 'ECO':
+            case 'IDLE': {
+                break;
+            }
+            default: {
+            }
+        }
+
+        return $message;
     }
 
     /**

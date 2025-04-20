@@ -118,32 +118,43 @@ class Energy extends Root
         if (!$this->authenticate()) {
             return false;
         }
-        $sql = "SELECT   CONCAT(`message`,
-                                ' at ', 
-                                DATE_FORMAT(CONVERT_TZ(`stop`, 'UTC', ?), '%H:%i'), 
-                                'hrs', 
-                                ' (now ',
-                                 (SELECT ROUND(1000.0 * ABS(`charge_kw`))
-                                    FROM `slice_solutions`
-                                    WHERE `id` = (SELECT MAX(`id`) 
-                                                    FROM `slice_solutions`)), 
-                                'W)'                                                                )
+        // get slot message component
+        $sql = "SELECT   `message`,
+                         `mode`,
+                         DATE_FORMAT(CONVERT_TZ(`stop`, 'UTC', ?), '%H:%i') AS `stop`
                     FROM  `slot_solutions` 
                     WHERE `id` = (SELECT MAX(`id`) FROM `slot_solutions`)";
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('s', $this->config['time']['zone']) ||
-            !$stmt->bind_result($slot_solution) ||
+            !$stmt->bind_result($slot_solution_message, $mode, $slot_solution_stop) ||
             !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
         if (!$stmt->fetch()) {
             return false;
         }
-        else {
-            return $slot_solution;
+
+        // get latest slice
+        unset($stmt);
+        $sql = "SELECT ROUND(1000.0 * ABS(`charge_kw`)) AS `slice_charge_w`,
+                       DATE_FORMAT(CONVERT_TZ(`timestamp`, 'UTC', 'Europe/London'), '%H:%i') AS `timestamp`
+                    FROM `slice_solutions`
+                    WHERE `id` = (SELECT MAX(`id`) 
+                                    FROM `slice_solutions`)";
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+      //      !$stmt->bind_param('s', $this->config['time']['zone']) ||
+            !$stmt->bind_result($slice_charge_w, $timestamp) ||
+            !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
+        if (!$stmt->fetch()) {
+            return false;
+        }
+        return 'Previous and next 24hrs: ' . $slot_solution_message . ' at ' . $slot_solution_stop . 'hrs';
     }
 
     /**

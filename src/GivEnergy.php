@@ -340,8 +340,7 @@ class GivEnergy extends Root
     /**
      * @throws GuzzleException|Exception
      */
-    private function getEVChargerData($start, $stop): array
-    {
+    private function getEVChargerData($start, $stop): array {
         $url = $this->api['base_url'] . '/ev-charger/' . $this->api['ev_charger_uuid'] . '/meter-data/';
         $headers = [
                         'Authorization' => 'Bearer ' . $this->api['api_token'],
@@ -374,44 +373,6 @@ class GivEnergy extends Root
         }
         while ($response_data['links']['next']);
         return $data_points;
-    }
-
-    /**
-     * @throws DateMalformedStringException
-     * @throws GuzzleException
-     * @throws Exception
-     */
-    public function evLatestPowerW(): float
-    {
-        $time = new DateTime();
-        $time_now = $time->format(Root::MYSQL_FORMAT_DATETIME);
-        $time_window_start = $time->modify('-' . self::EV_TIME_WINDOW_MINUTES . ' minute')->format(Root::MYSQL_FORMAT_DATETIME);
-        if (!($latest_ev_data = $this->getEVChargerData($time_window_start, $time_now))) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No EV data');
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        // choose last EV power reading that exists
-        $power_w = null;
-        foreach ($latest_ev_data as $latest_ev_datum) {
-            if ($measurements = $latest_ev_datum['measurements'] ?? []) {
-                foreach ($measurements as $measurement) {
-                    foreach (self::EV_MEASURANDS as $measurand) {
-                        if (isset($measurement['measurand']) &&
-                            ($measurement['measurand'] == $measurand) &&
-                            isset($measurement['value'])) {
-                            $power_w = $measurement['value'];
-                        }
-                    }
-                }
-            }
-        }
-        if (is_null($power_w)) {
-            $power_w = 0;
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No EV data, using 0W');
-            $this->logDb('MESSAGE', $message, null, 'WARNING');
-        }
-        return $power_w;
     }
 
     /**

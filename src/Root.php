@@ -20,7 +20,7 @@ class Root {
                             LOG_MAX_CHARS = 255,
                             CUBIC_SPLINE_MULTIPLE = 8,
                             SLOT_SOLUTIONS_DB_MAX_AGE_DAY = 30;
-    private const array     INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
+    protected const array   INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
     public array            $apis = [], $config = [];
     protected               mysqli $mysqli;
     protected string        $class;

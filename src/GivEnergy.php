@@ -361,16 +361,16 @@ class GivEnergy extends Root
         $page = 1;
         do {                                                    // keep loading until last page
             $query['page'] = $page++;
-            $response  = $client->get($url, ['headers' => $headers, 'query' => $query]);
-            if ((($code = $response->getStatusCode())/100) == 2) {
-                $response_data = json_decode((string) $response->getBody(), true);
-                $data_points   = array_merge($data_points, $response_data['data']);
+            try {
+                $response  = $client->get($url, ['headers' => $headers, 'query' => $query]);
             }
-            else {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response:' . $code . ', returning empty data');
+            catch (GuzzleException $e) {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response code:' . $e->getCode() . ', returning empty data');
                 $this->logDb('MESSAGE', $message, null, 'WARNING');
                 return [];
             }
+            $response_data = json_decode((string) $response->getBody(), true);
+            $data_points   = array_merge($data_points, $response_data['data']);
         }
         while ($response_data['links']['next']);
         return $data_points;

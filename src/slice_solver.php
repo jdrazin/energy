@@ -20,7 +20,7 @@ const   PID_FOLDER                  = '/var/www/html/energy/pids/',
         ARGS                        = ['CRON' => 1],
         INITIALISE_ON_EXCEPTION     = false,
         EMAIL_NOTIFICATION_ON_ERROR = false,
-        GIVENERGY_ENABLE            = true;
+        GIVENERGY_ENABLE            = false;
 
 try {
     if (!DEBUG) {

@@ -338,7 +338,7 @@ class GivEnergy extends Root
     }
 
     /**
-     * @throws GuzzleException
+     * @throws GuzzleException|Exception
      */
     private function getEVChargerData($start, $stop): array
     {

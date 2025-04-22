@@ -350,8 +350,8 @@ class GivEnergy extends Root
                     ];
         $data_points = [];
         $client = new Client();
-        $query = [  'start_time'    => $start,
-                    'end_time'      => $stop];
+        $query = [  'start_time' => $start,
+                    'end_time'   => $stop];
         foreach (self::EV_METER_IDS as $meter_id) {
             $query['meter_ids[' . $meter_id . ']'] = $meter_id;
         }
@@ -361,10 +361,18 @@ class GivEnergy extends Root
         $page = 1;
         do {                                                    // keep loading until last page
             $query['page'] = $page++;
-            $response = $client->get($url, ['headers' => $headers, 'query' => $query]);
-            $response_data = json_decode((string)$response->getBody(), true);
-            $data_points = array_merge($data_points, $response_data['data']);
-        } while ($response_data['links']['next']);
+            $response  = $client->get($url, ['headers' => $headers, 'query' => $query]);
+            if ((($code = $response->getStatusCode())/100) == 2) {
+                $response_data = json_decode((string) $response->getBody(), true);
+                $data_points   = array_merge($data_points, $response_data['data']);
+            }
+            else {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response:' . $code . ', returning empty data');
+                $this->logDb('MESSAGE', $message, null, 'WARNING');
+                return [];
+            }
+        }
+        while ($response_data['links']['next']);
         return $data_points;
     }
 

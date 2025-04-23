@@ -338,7 +338,7 @@ class GivEnergy extends Root
     }
 
     /**
-     * @throws GuzzleException|Exception
+     * @throws Exception
      */
     private function getEVChargerData($start, $stop): array {
         $url = $this->api['base_url'] . '/ev-charger/' . $this->api['ev_charger_uuid'] . '/meter-data/';
@@ -477,7 +477,7 @@ class GivEnergy extends Root
         $battery_charge_now_w   = $this->batteryChargeNowW($battery);
         $timestamp_now          = (new DateTime())->getTimestamp();        // extrapolate battery level to beginning of next slot
         $time_duration_s        = $timestamp_start - $timestamp_now;
-        if ($time_duration_s < 0 && !EnergyCost::DEBUG_MINIMISER) {
+        if ($time_duration_s < 0 && !DEBUG_MINIMISER) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'time to start must be positive: ' . $time_duration_s);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);

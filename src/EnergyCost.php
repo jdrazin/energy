@@ -376,13 +376,16 @@ class EnergyCost extends Root
             $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
-            $pathname_json_problem = self::DEBUG_PATH . self::JSON_PROBLEM[DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
+            $success = $result['success'] ?? false;
+
+            // write to debug if DEBUG_MINIMISER set or convergence fails
+            $pathname_json_problem = self::DEBUG_PATH . self::JSON_PROBLEM[(DEBUG_MINIMISER || !$success) ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
             if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_json_problem, $json_problem)) {
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
                 $this->logDb('MESSAGE', $message, null, 'FATAL');
                 throw new Exception($message);
             }
-            if (!($result['success'] ?? false)) {
+            if (!$success) {
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
                 $this->logDb('MESSAGE', $message, $text, 'FATAL');
                 throw new Exception($message);

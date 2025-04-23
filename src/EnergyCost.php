@@ -372,7 +372,7 @@ class EnergyCost extends Root
             return [];
         }
         else { // calculate optimised cost elements using CLI command
-            $this->costs['optimised'] = $this->costCLI($command, $optimum_charge_kws);
+            $this->costs['optimised']   = $this->costCLI($command, $optimum_charge_kws);
             $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;

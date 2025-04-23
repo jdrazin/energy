@@ -56,7 +56,7 @@ class Octopus extends Root
      */
     public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', '', null, 'NOTICE');
-        if (!EnergyCost::DEBUG_MINIMISER) {                                       // bypass empirical data if in DEBUG mode
+        if (!DEBUG_MINIMISER) {                                                   // bypass empirical data if in DEBUG mode
             $db_slots  = new Slot();                                              // make day slots
             $values    = new Values();
             $givenergy = new GivEnergy();
@@ -95,7 +95,12 @@ class Octopus extends Root
             }
             $this->logForecast($db_slots->slots[0]['start']);                        // log forecast to costs
         } else {
-            (new EnergyCost(null, null))->minimise();      // minimise energy cost
+            $parameters = [
+                'type'                   => 'slots',
+                'batteryLevelInitialKwh' => null,
+                'tariff_combination'     => null
+            ];
+            (new EnergyCost($parameters))->minimise();      // minimise energy cost
         }
         $this->trimSlotSolutions();
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'STOP', null,  null,'NOTICE');

@@ -356,18 +356,13 @@ class EnergyCost extends Root
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
         $text   = $command . PHP_EOL . $output . PHP_EOL;
-        if (!($result['success'] ?? false)) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
-            $this->logDb('MESSAGE', $message, $text, 'FATAL');
-            throw new Exception($message);
-        }
         if (!$command ||
             !file_put_contents(self::OPTIMISATION_LOG[$this->parameters['type']], $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
         }
-        $optimum_charge_kws = $result['optimum_charge_kws']; // solution charge rates
+        $optimum_charge_kws = $result['optimum_charge_kws'] ?? null; // solution charge rates
         if (DEBUG_MINIMISER) {
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
@@ -390,6 +385,11 @@ class EnergyCost extends Root
             if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_json_problem, $json_problem)) {
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
                 $this->logDb('MESSAGE', $message, null, 'FATAL');
+                throw new Exception($message);
+            }
+            if (!($result['success'] ?? false)) {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
+                $this->logDb('MESSAGE', $message, $text, 'FATAL');
                 throw new Exception($message);
             }
             switch ($this->parameters['type']) {

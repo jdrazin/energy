@@ -7,8 +7,6 @@ use Exception;
 
 class EnergyCost extends Root
 {
-    const bool      DEBUG_MINIMISER         = false;
-
     const array    JSON_PROBLEM            = [
                                                 'OPERATIONAL' => [
                                                                      'slots'  => 'problem_slots.json',
@@ -57,8 +55,7 @@ class EnergyCost extends Root
                     $batteryWearEnergyNormalisationCoefficient,
                     $batteryWearPowerNormalisationCoefficient;
 
-    private array   $parameters,
-                    $problem,
+    private array   $problem,
                     $load_house_kws,        // house load, excluding EV
                     $solar_gross_kws,       // gross solar generation, excludes dynamic grid power clipping
                     $grid_kws,
@@ -66,6 +63,8 @@ class EnergyCost extends Root
                     $costs,
                     $slots,
                     $slices;
+
+    private ?array $parameters;
 
     public string   $string;
     private int     $number_slots_slices, $number_slices_per_slot;
@@ -76,14 +75,13 @@ class EnergyCost extends Root
     public function __construct($parameters) {
         parent::__construct();
         $this->parameters = $parameters;
-        $batteryLevelInitialKwh = $parameters['batteryLevelInitialKwh'] ?? null;
-        $tariff_combination     = $parameters['tariff_combination']     ?? null;
-        if (!is_null($batteryLevelInitialKwh) && !is_null($tariff_combination)) { // make json instantiate
-            $this->tariff_combination       = $tariff_combination;
-            $this->slot_slice_duration_hour = $this->parameters['type'] == 'slots' ? (float)(Slot::DURATION_MINUTES / 60) : (float)(Slice::DURATION_MINUTES / 60);
-            $this->number_slots_slices      = $this->parameters['type'] == 'slots' ? 24*60 / Slot::DURATION_MINUTES       : Slot::DURATION_MINUTES / Slice::DURATION_MINUTES;
-            if (!self::DEBUG_MINIMISER) {
-                $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;            //
+        if (!is_null($batteryLevelInitialKwh = $parameters['batteryLevelInitialKwh']) &&
+            !is_null($tariff_combination     = $parameters['tariff_combination'])) { // make json instantiate
+            $this->tariff_combination        = $tariff_combination;
+            $this->slot_slice_duration_hour  = $this->parameters['type'] == 'slots' ? (float)(Slot::DURATION_MINUTES / 60) : (float)(Slice::DURATION_MINUTES / 60);
+            $this->number_slots_slices       = $this->parameters['type'] == 'slots' ? 24*60 / Slot::DURATION_MINUTES       : Slot::DURATION_MINUTES / Slice::DURATION_MINUTES;
+            if (!DEBUG_MINIMISER) {
+                $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;
                 $this->slots                   = $this->slots();                     // load slots data
                 if ($parameters['type'] == 'slices') {                               // type of minimisation: slots, slices
                     $this->number_slices_per_slot = Slot::DURATION_MINUTES/Slice::DURATION_MINUTES;
@@ -319,51 +317,42 @@ class EnergyCost extends Root
         //
         // convex, non-smooth, exact cost
         //
-        if (!self::DEBUG_MINIMISER) {
+        if (!DEBUG_MINIMISER) {
             switch ($this->parameters['type']) {
                 case 'slots': {
                     (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
-                    $slots                 = $this->slots();                           // get house load from db (excludes EV)
-                    $this->load_house_kws  = $slots['load_house_kws'];                 // house load (excludes EV)
-                    $this->solar_gross_kws = $slots['solar_kws'];                      // gross solar forecast (excludes grid clipping)
+                    $slots                  = $this->slots();                         // get house load from db (excludes EV)
+                    $this->load_house_kws   = $slots['load_house_kws'];               // house load (excludes EV)
+                    $this->solar_gross_kws  = $slots['solar_kws'];                    // gross solar forecast (excludes grid clipping)
+                    $first_guess_charge_kws = [];
+                    foreach ($this->load_house_kws as $slot => $load_house_kw) {      // first guess zero charge
+                        $first_guess_charge_kws[$slot] = 0.0;
+                    }
                     break;
                 }
                 case 'slices': {
-                    $slices                = $this->slices();                          // get house load from db (excludes EV)
-                    $this->load_house_kws  = $slices['load_house_kws'];                // house load (excludes EV)
+                    $slices                = $this->slices();                         // get house load from db (excludes EV)
+                    $this->load_house_kws  = $slices['load_house_kws'];               // house load (excludes EV)
                     $this->solar_gross_kws = $slices['solar_gross_kws'];              // gross solar forecast (excludes grid clipping)
 
                     // set first 2 slices to current load and solar powers
                     $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];
                     $this->solar_gross_kws[0] = $this->solar_gross_kws[1] = $this->parameters['solar_gross_kw'];
+                    $first_guess_charge_kws   = $this->slices['battery_charge_kws'];    // use slot solution as first guess
                     break;
                 }
             }
         }
         else { // use debug JSON and make slot arrays as necessary
-           $problem_pathname      = self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
-           $this->problem         = json_decode(file_get_contents($problem_pathname, true), true);
-           $this->load_house_kws  = $this->problem['load_house_kws'];                   // get total house load from problem
-           $this->solar_gross_kws = $this->problem['solar_gross_kws'];                  // get solar forecast (excludes grid clipping) from problem
+           $problem_pathname       = self::DEBUG_PATH . self::JSON_PROBLEM[DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
+           $this->problem          = json_decode(file_get_contents($problem_pathname, true), true);
+           $this->load_house_kws   = $this->problem['load_house_kws'];            // get total house load from problem
+           $this->solar_gross_kws  = $this->problem['solar_gross_kws'];           // get solar forecast (excludes grid clipping) from problem
+           $first_guess_charge_kws = $this->problem['first_guess_charge_kws'];    // first guess
         }
         $this->costs = [];
-        switch ($this->parameters['type']) {
-            case 'slots':
-            {
-                $charge_kws = [];
-                foreach ($this->load_house_kws as $slot => $load_house_kw) {     // first guess zero charge
-                    $charge_kws[$slot] = 0.0;
-                }
-                break;
-            }
-            case 'slices':
-            {
-                $charge_kws = $this->slices['battery_charge_kws'];               // use slot solution
-                break;
-            }
-        }
-        $command = $this->command($charge_kws);                                   // make optimize command line using parameters and first guesses
-        $this->costs['raw'] = $this->costCLI($command, $charge_kws);
+        $command = $this->command($first_guess_charge_kws);                       // make optimize command line using parameters and first guesses
+        $this->costs['raw'] = $this->costCLI($command, $first_guess_charge_kws);
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python
         $text   = $command . PHP_EOL . $output . PHP_EOL;
@@ -379,7 +368,7 @@ class EnergyCost extends Root
             throw new Exception($message);
         }
         $optimum_charge_kws = $result['optimum_charge_kws']; // solution charge rates
-        if (self::DEBUG_MINIMISER) {
+        if (DEBUG_MINIMISER) {
             echo PHP_EOL;
             echo 'grid_kw        raw,   optimised' . PHP_EOL;
             foreach ($this->grid_kws as $k => $v) {
@@ -395,8 +384,9 @@ class EnergyCost extends Root
             echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
             echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
             echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-            $this->problem['optimum_charge_kws'] = $optimum_charge_kws;
-            $pathname_json_problem = self::DEBUG_PATH . self::JSON_PROBLEM[self::DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
+            $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
+            $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
+            $pathname_json_problem = self::DEBUG_PATH . self::JSON_PROBLEM[DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
             if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_json_problem, $json_problem)) {
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
                 $this->logDb('MESSAGE', $message, null, 'FATAL');

@@ -491,17 +491,14 @@ class EnergyCost extends Root
         $command .= $this->parameter_name_value('number_slots_slices');
 
         $number_slots_slices = $this->problem['number_slots_slices'];
-        if ($this->parameters['type'] == 'slots') {
-            $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
-            $export_gbp_per_kwhs = $this->problem['export_gbp_per_kwhs'];}
-        else {
-            $import_gbp_per_kwhs = $this->slices['import_gbp_per_kwhs'];
-            $export_gbp_per_kwhs = $this->slices['export_gbp_per_kwhs'];
-        }
+
+        $import_gbp_per_kwhs = $this->problem['import_gbp_per_kwhs'];
         $command .= 'import_gbp_per_kwhs= ';
         for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
             $command .= $import_gbp_per_kwhs[$slot_slice] . ' ';
         }
+
+        $export_gbp_per_kwhs = $this->problem['export_gbp_per_kwhs'];
         $command .= 'export_gbp_per_kwhs= ';
         for ($slot_slice = 0; $slot_slice < $number_slots_slices; $slot_slice++) {
             $command .= $export_gbp_per_kwhs[$slot_slice] . ' ';

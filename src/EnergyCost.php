@@ -375,10 +375,6 @@ class EnergyCost extends Root
             // calculate optimised cost elements using CLI command
             $this->costs['optimised'] = $this->costCLI($command, $optimum_charge_kws);
             $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
-            echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-            echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-            echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-            echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
             $pathname_json_problem = self::DEBUG_PATH . self::JSON_PROBLEM[DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
@@ -392,6 +388,10 @@ class EnergyCost extends Root
                 $this->logDb('MESSAGE', $message, $text, 'FATAL');
                 throw new Exception($message);
             }
+            echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+            echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+            echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+            echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
             switch ($this->parameters['type']) {
                 case 'slots': {
                     $this->insertOptimumChargeGridKw($optimum_charge_kws);                    // insert for each slot: grid and battery discharge energies (kWh)

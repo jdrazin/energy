@@ -7,17 +7,7 @@ use Exception;
 
 class EnergyCost extends Root
 {
-    const array    JSON_PROBLEM            = [
-                                                'OPERATIONAL' => [
-                                                                     'slots'  => 'problem_slots.json',
-                                                                     'slices' => 'problem_slices.json'
-                                                ],
-                                                'DEBUG'       => [
-                                                                    'slots'  => 'problem_slots_debug.json',
-                                                                    'slices' => 'problem_slices_debug.json'
-                                                                 ]
-                                              ],
-                    OPTIMISATION_LOG        = [
+    const array    OPTIMISATION_LOG        = [
                                                 'slots'  => '/var/www/html/energy/test/optimisation_slots.log',
                                                 'slices' => '/var/www/html/energy/test/optimisation_slices.log'
                                               ],
@@ -344,8 +334,8 @@ class EnergyCost extends Root
             }
         }
         else { // use debug JSON and make slot arrays as necessary
-           $problem_pathname       = self::DEBUG_PATH . self::JSON_PROBLEM[DEBUG_MINIMISER ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
-           $this->problem          = json_decode(file_get_contents($problem_pathname, true), true);
+           $pathname_problem       = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . (DEBUG_MINIMISER ? '_debug' : '') . '.json';
+           $this->problem          = json_decode(file_get_contents($pathname_problem, true), true);
            $this->load_house_kws   = $this->problem['load_house_kws'];            // get total house load from problem
            $this->solar_gross_kws  = $this->problem['solar_gross_kws'];           // get solar forecast (excludes grid clipping) from problem
            $first_guess_charge_kws = $this->problem['first_guess_charge_kws'];    // first guess
@@ -377,16 +367,19 @@ class EnergyCost extends Root
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
             $success = $result['success'] ?? false;
-
-            // write to debug if DEBUG_MINIMISER set or convergence fails
-            $pathname_json_problem = self::DEBUG_PATH . self::JSON_PROBLEM[(DEBUG_MINIMISER || !$success) ? 'DEBUG' : 'OPERATIONAL'][$this->parameters['type']];
-            if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_json_problem, $json_problem)) {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
-                $this->logDb('MESSAGE', $message, null, 'FATAL');
-                throw new Exception($message);
-            }
-            if (!$success) {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure');
+            if (!$success) {                                                                    // if convergence fails write command and problem to debug
+                $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
+                if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
+                  $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
+                  $this->logDb('MESSAGE', $message, null, 'FATAL');
+                  throw new Exception($message);
+                }
+                if (!file_put_contents(self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt', $command)) {
+                    $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command');
+                    $this->logDb('MESSAGE', $message, null, 'FATAL');
+                    throw new Exception($message);
+                }
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure: see failed problem and command');
                 $this->logDb('MESSAGE', $message, $text, 'FATAL');
                 throw new Exception($message);
             }

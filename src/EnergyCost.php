@@ -361,17 +361,15 @@ class EnergyCost extends Root
             }
             return [];
         }
-        else { // calculate optimised cost elements using CLI command
-            $this->costs['optimised']   = $this->costCLI($command, $optimum_charge_kws);
-            $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
+        else {
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
             if (!($result['success'] ?? false)) {                                              // if convergence fails write command and problem to debug
                 $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
                 if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
-                  $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
-                  $this->logDb('MESSAGE', $message, null, 'FATAL');
-                  throw new Exception($message);
+                    $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
+                    $this->logDb('MESSAGE', $message, null, 'FATAL');
+                    throw new Exception($message);
                 }
                 if (!file_put_contents(self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt', $command)) {
                     $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command');
@@ -382,6 +380,8 @@ class EnergyCost extends Root
                 $this->logDb('MESSAGE', $message, $text, 'FATAL');
                 throw new Exception($message);
             }
+            $this->costs['optimised'] = $this->costCLI($command, $optimum_charge_kws);       // calculate optimised cost elements using CLI command
+            $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
             echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
             echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
             echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;

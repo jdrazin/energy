@@ -366,8 +366,7 @@ class EnergyCost extends Root
             $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
-            $success = $result['success'] ?? false;
-            if (!$success) {                                                                    // if convergence fails write command and problem to debug
+            if (!($result['success'] ?? false)) {                                              // if convergence fails write command and problem to debug
                 $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
                 if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
                   $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');

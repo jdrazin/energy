@@ -23,7 +23,6 @@ const   PID_FOLDER                  = '/var/www/html/energy/pids/',
         EMAIL_NOTIFICATION_ON_ERROR = false,
         GIVENERGY_ENABLE            = false;
 
-
 try {
     if (!DEBUG) {
         $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';

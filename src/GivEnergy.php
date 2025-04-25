@@ -35,8 +35,7 @@ class GivEnergy extends Root
                         EV_POWER_ACTIVE_IMPORT_UNIT   = 5,   // kW
                         EV_METER_ID                   = 0,
                         UPPER_SOC_LIMIT_PERCENT       = 95,
-                        LOWER_SOC_LIMIT_PERCENT       = 5,
-                        EV_TIME_WINDOW_MINUTES        = 10;
+                        LOWER_SOC_LIMIT_PERCENT       = 5;
 
     private const array ENTITIES_BATTERY_AIO = [
                                                 'SOLAR_W'                => ['solar',       'power'],

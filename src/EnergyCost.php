@@ -7,16 +7,15 @@ use Exception;
 
 class EnergyCost extends Root
 {
-    const array    OPTIMISATION_LOG        = [
-                                                'slots'  => '/var/www/html/energy/test/optimisation_slots.log',
-                                                'slices' => '/var/www/html/energy/test/optimisation_slices.log'
-                                              ],
-                    PYTHON_OPTIMIZER_SCRIPT = [
-                                                'slots'     => 'python3 /var/www/html/energy/src/optimizeCharge.py',
-                                                'slices'    => 'python3 /var/www/html/energy/src/optimizeChargeConstrained.py'
+    const array    PYTHON_OPTIMIZER_SCRIPT_NAME = [
+                                                'slots'  => 'optimizeCharge.py',
+                                                'slices' => 'optimizeChargeConstrained.py'
                                               ];
 
     const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5;
+
+    const string    OPTIMISATION_LOG_PATHNAME_BASE = '/var/www/html/energy/test/optimisation_',
+                    PYTHON_OPTIMIZER_SCRIPT_BASE   = 'python3 /var/www/html/energy/src/';
 
     // setup parameters
     public    float $solarGenerationLimitKw,
@@ -51,8 +50,8 @@ class EnergyCost extends Root
                     $grid_kws,
                     $tariff_combination,
                     $costs,
-                    $slots,
-                    $slices;
+                    $slots_db,
+                    $slices_db;
 
     private ?array $parameters;
 
@@ -72,10 +71,13 @@ class EnergyCost extends Root
             $this->number_slots_slices       = $this->parameters['type'] == 'slots' ? 24*60 / Slot::DURATION_MINUTES       : Slot::DURATION_MINUTES / Slice::DURATION_MINUTES;
             if (!DEBUG_MINIMISER) {
                 $this->batteryEnergyInitialKwh = $batteryLevelInitialKwh;
-                $this->slots                   = $this->slots();                     // load slots data
-                if ($parameters['type'] == 'slices') {                               // type of minimisation: slots, slices
+                if ($parameters['type'] == 'slots') {
+                    $this->slots_db = $this->slots_db(false);                      // load intermediate (non-final) slots parameter data
+                }
+                else {                                                                  // type of minimisation: slots, slices
+                    $this->slots_db = $this->slots_db(true);                       // load final slots solution
                     $this->number_slices_per_slot = Slot::DURATION_MINUTES/Slice::DURATION_MINUTES;
-                    $this->slices                 = $this->slices();                 // make slices for this/next slot
+                    $this->slices_db              = $this->slices_db();                 // make slices for this/next slot
                 }
                 $loadSolarImportExports           = $this->loadSolarImportExports();
             }
@@ -155,7 +157,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function slots(): array {
+    private function slots_db($final): array {
         /*
          * get house load
          */
@@ -169,10 +171,10 @@ class EnergyCost extends Root
                             `export_gbp_per_day`
                    FROM     `slots`
                    WHERE    `tariff_combination` = ? AND
-                             NOT `final`
+                            `final`              = ?
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('i', $this->tariff_combination['id']) ||
+            !$stmt->bind_param('ii', $this->tariff_combination['id'], $final) ||
             !$stmt->bind_result($start, $stop, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -220,7 +222,7 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function slices(): array {  // return slices from the first/seconds slot starting at current time
+    private function slices_db(): array {  // return slices from the first/seconds slot starting at current time
         /*
          * get house load
          */
@@ -311,24 +313,22 @@ class EnergyCost extends Root
             switch ($this->parameters['type']) {
                 case 'slots': {
                     (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
-                    $slots                  = $this->slots();                         // get house load from db (excludes EV)
-                    $this->load_house_kws   = $slots['load_house_kws'];               // house load (excludes EV)
-                    $this->solar_gross_kws  = $slots['solar_kws'];                    // gross solar forecast (excludes grid clipping)
+                    $this->load_house_kws   = $this->slots_db['load_house_kws'];         // house load (excludes EV)
+                    $this->solar_gross_kws  = $this->slots_db['solar_kws'];              // gross solar forecast (excludes grid clipping)
                     $first_guess_charge_kws = [];
-                    foreach ($this->load_house_kws as $slot => $load_house_kw) {      // first guess zero charge
+                    foreach ($this->load_house_kws as $slot => $load_house_kw) {         // first guess zero charge
                         $first_guess_charge_kws[$slot] = 0.0;
                     }
                     break;
                 }
                 case 'slices': {
-                    $slices                = $this->slices();                         // get house load from db (excludes EV)
-                    $this->load_house_kws  = $slices['load_house_kws'];               // house load (excludes EV)
-                    $this->solar_gross_kws = $slices['solar_gross_kws'];              // gross solar forecast (excludes grid clipping)
+                    $this->load_house_kws  = $this->slices_db['load_house_kws'];         // house load (excludes EV)
+                    $this->solar_gross_kws = $this->slices_db['solar_gross_kws'];        // gross solar forecast (excludes grid clipping)
 
                     // set first 2 slices to current load and solar powers
                     $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];
                     $this->solar_gross_kws[0] = $this->solar_gross_kws[1] = $this->parameters['solar_gross_kw'];
-                    $first_guess_charge_kws   = $this->slices['battery_charge_kws'];    // use slot solution as first guess
+                    $first_guess_charge_kws   = $this->slices_db['battery_charge_kws'];   // use slot solution as first guess
                     break;
                 }
             }
@@ -347,7 +347,7 @@ class EnergyCost extends Root
         $result = json_decode($output, true);                           // decode JSON output from Python
         $text   = $command . PHP_EOL . $output . PHP_EOL;
         if (!$command ||
-            !file_put_contents(self::OPTIMISATION_LOG[$this->parameters['type']], $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
+            !file_put_contents(self::OPTIMISATION_LOG_PATHNAME_BASE . $this->parameters['type'] . '.log', $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
@@ -460,7 +460,7 @@ class EnergyCost extends Root
         //
         // make CLI command string
         //
-        $command = self::PYTHON_OPTIMIZER_SCRIPT[$this->parameters['type']] . ' ';
+        $command = self::PYTHON_OPTIMIZER_SCRIPT_BASE . self::PYTHON_OPTIMIZER_SCRIPT_NAME[$this->parameters['type']] . ' ';
         $command .= $this->parameter_name_value('solarGenerationLimitKw');
         $command .= $this->parameter_name_value('batteryCapacityKwh');
         $command .= $this->parameter_name_value('batteryOneWayEfficiency');
@@ -766,12 +766,12 @@ class EnergyCost extends Root
             }
             case ('slices'): {
                 $load_solar_import_export = [
-                                                'load_house_kws'        => $this->slices['load_house_kws'],
-                                                'solar_gross_kws'       => $this->slices['solar_gross_kws'],
-                                                'import_gbp_per_kwhs'   => $this->slices['import_gbp_per_kwhs'],
-                                                'export_gbp_per_kwhs'   => $this->slices['export_gbp_per_kwhs'],
-                                                'import_gbp_per_days'   => end($this->slices['import_gbp_per_days']),
-                                                'export_gbp_per_days'   => end($this->slices['export_gbp_per_days'])
+                                                'load_house_kws'        => $this->slices_db['load_house_kws'],
+                                                'solar_gross_kws'       => $this->slices_db['solar_gross_kws'],
+                                                'import_gbp_per_kwhs'   => $this->slices_db['import_gbp_per_kwhs'],
+                                                'export_gbp_per_kwhs'   => $this->slices_db['export_gbp_per_kwhs'],
+                                                'import_gbp_per_days'   => end($this->slices_db['import_gbp_per_days']),
+                                                'export_gbp_per_days'   => end($this->slices_db['export_gbp_per_days'])
                                            ];
                 break;
             }

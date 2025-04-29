@@ -432,8 +432,10 @@ class Root {
         }
     }
 
-    public function forecast_average_latest($entity, $start, $stop): float
-    { // returns average of forecast points in slot since from
+    /**
+     * @throws Exception
+     */
+    public function forecast_average_latest($entity, $start, $stop): float { // returns average of forecast points in slot since from
         $sql = 'SELECT    AVG(`value`) AS `value`
                    FROM   `values`
                    WHERE  `entity` = ? AND

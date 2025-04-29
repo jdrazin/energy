@@ -67,14 +67,14 @@ class Octopus extends Root
             (new MetOffice())->forecast();                                        // get temperature forecast
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
-            $tariff_combinations = $this->tariffCombinations();                                 // get tariff combinations of interest, starting with active combination
+            $tariff_combinations = $this->tariffCombinations();                                         // get tariff combinations of interest, starting with active combination
             foreach ($tariff_combinations as $tariff_combination) {
                 if (($tariff_combination['active']) || !ACTIVE_TARIFF_COMBINATION_ONLY) {
                     if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
-                        $db_slots->makeDbSlotsNext24hrs($tariff_combination);       // make slots for this tariff combination
+                        $db_slots->makeDbSlotsNext24hrs($tariff_combination);                           // make slots for this tariff combination
                         $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);
-                        $this->makeSlotRates($db_slots->slots, $tariff_combination, false);  // make tariffs
-                        $values->estimatePowers($db_slots, $tariff_combination);      // forecast slot solar, heating, non-heating and load powers
+                        $this->makeSlotRates($db_slots->slots, $tariff_combination, false);        // make tariffs
+                        $values->estimatePowers($db_slots, $tariff_combination);                        // forecast slot solar, heating, non-heating and load powers
 
                         // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
                         $timestamp_start = (new DateTime($next_day_slots[0]['start']))->getTimestamp(); // beginning of slot 0

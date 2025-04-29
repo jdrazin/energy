@@ -115,9 +115,9 @@ class Values extends Root
         $this->updateSlotPowerskW($powers_kw, 'solar_gross_kw');
     }
 
-    public function average($entity, $type, $start, $stop, $offset_minutes): ?float
+    public function average($entity, $type, $start, $stop, $offset_minutes): float
     {
-        $sql = 'SELECT   AVG(`value`)
+        $sql = 'SELECT   IFNULL(AVG(`value`), 0.0)
                   FROM   `values`
                   WHERE  `entity` = ? AND
                          `type`   = ? AND

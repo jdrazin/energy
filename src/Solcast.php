@@ -104,9 +104,9 @@ class Solcast extends Root
                 throw new Exception('bad Solcast value(s)');
             }
         }
-        $this->insertPowers(['data'             => $data,
-                             'time_earliest'    => $time_earliest->format(Root::MYSQL_FORMAT_DATETIME),
-                             'time_latest'      => $time_latest->format(Root::MYSQL_FORMAT_DATETIME)],
+        $this->insertPowers(['data'          => $data,
+                             'time_earliest' => $time_earliest->format(Root::MYSQL_FORMAT_DATETIME),
+                             'time_latest'   => $time_latest->format(Root::MYSQL_FORMAT_DATETIME)],
                             null);
     }
 

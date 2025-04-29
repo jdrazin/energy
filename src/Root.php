@@ -421,9 +421,9 @@ class Root {
             !$stmt->bind_result($value) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
         if (is_null($value)) {
             throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "no $entity latest forecast found for datetime=$datetime"));
@@ -444,9 +444,9 @@ class Root {
             !$stmt->bind_result($value) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
         if (is_null($value)) {
             throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "no $entity average latest forecast: start=$start, stop=$stop"));

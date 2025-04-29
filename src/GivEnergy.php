@@ -248,7 +248,7 @@ class GivEnergy extends Root
     public function getData(): void {
         // load latest GivEnergy ecosystem data into db
         $this->getBattery();
-        $this->getEVCharger();
+        $this->getEVChargerLast24hrs();
         $this->swapPercentToKwh();
     }
 
@@ -305,11 +305,11 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    private function getEVCharger(): void        // get ev charger
+    private function getEVChargerLast24hrs(): void        // get ev charger
     {
-        $now = (new DateTime())->format(Root::MYSQL_FORMAT_DATETIME);
-        $datetime = new DateTime($this->latestValueDatetime('LOAD_EV_W', 'MEASURED', self::EARLIEST_DATE));
-        $slots = new Slots($datetime->format(Root::MYSQL_FORMAT_DATETIME), $now);
+        $now   = (new DateTime())->format(Root::MYSQL_FORMAT_DATETIME);
+        $from  = (new DateTime())->modify('-1 day');
+        $slots = new Slots($from->format(Root::MYSQL_FORMAT_DATETIME), $now);
         while ($slot = $slots->next_slot()) { // get data points for every slot until now
             $this->insertPointsEVCharger($this->getEVChargerData($slot['start'], $slot['stop']));
         }
@@ -343,8 +343,8 @@ class GivEnergy extends Root
         $url = $this->api['base_url'] . '/ev-charger/' . $this->api['ev_charger_uuid'] . '/meter-data/';
         $headers = [
                         'Authorization' => 'Bearer ' . $this->api['api_token'],
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json'
+                        'Content-Type'  => 'application/json',
+                        'Accept'        => 'application/json'
                     ];
         $data_points = [];
         $client = new Client();

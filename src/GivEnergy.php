@@ -186,7 +186,7 @@ class GivEnergy extends Root
      */
     private function delete_proxy_settings(): void
     {
-        $sql = 'TRUNCATE TABLE `proxy_settings`';
+        $sql = 'DELETE FROM `proxy_settings`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {

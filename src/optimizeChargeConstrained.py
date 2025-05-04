@@ -238,13 +238,14 @@ lowerBoundLinearConstraints = np.full(1, sumX - SUM_CHARGE_TOLERANCE_KWH)
 upperBoundLinearConstraints = np.full(1, sumX + SUM_CHARGE_TOLERANCE_KWH)
 matrixLinearConstraints     = np.ones((1, number_slots))
 linearConstraints           = LinearConstraint(matrixLinearConstraints, lowerBoundLinearConstraints, upperBoundLinearConstraints)
+hessZero                    = lambda x: np.zeros((number_slots, number_slots))
 
 # get cost
 cost = costFunction(X0)
 
 # optimise
 # result = minimize(dayCostGbp, X0, method='powell', bounds=boundData, options={'disp': 0, 'ftol': 1E-14, 'maxiter': 1000000}) # Powell
-result = minimize(costFunction, X0, method='trust-constr', constraints=[linearConstraints], bounds=boundData, options={'verbose': 0, 'disp': 0, 'maxiter': 1000000})
+result = minimize(costFunction, X0, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hessZero, options={'verbose': 0, 'disp': 0, 'maxiter': 1000000})
 
 elapsed_s = time.time() - start_time
 

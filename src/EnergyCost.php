@@ -332,16 +332,18 @@ class EnergyCost extends Root
                     break;
                 }
             }
+            $command = $this->command($first_guess_charge_kws);                           // make optimize command line using parameters and first guesses
         }
         else { // use debug JSON and make slot arrays as necessary
-           $pathname_problem       = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . (DEBUG_MINIMISER ? '_debug' : '') . '.json';
+           $pathname_problem       = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
            $this->problem          = json_decode(file_get_contents($pathname_problem, true), true);
-           $this->load_house_kws   = $this->problem['load_house_kws'];            // get total house load from problem
-           $this->solar_gross_kws  = $this->problem['solar_gross_kws'];           // get solar forecast (excludes grid clipping) from problem
-           $first_guess_charge_kws = $this->problem['first_guess_charge_kws'];    // first guess
+           $this->load_house_kws   = $this->problem['load_house_kws'];                    // get total house load from problem
+           $this->solar_gross_kws  = $this->problem['solar_gross_kws'];                   // get solar forecast (excludes grid clipping) from problem
+           $first_guess_charge_kws = $this->problem['first_guess_charge_kws'];            // first guess
+           $pathname_command      = self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt';
+           $command               = file_get_contents($pathname_command, true);
         }
         $this->costs = [];
-        $command = $this->command($first_guess_charge_kws);                       // make optimize command line using parameters and first guesses
         $this->costs['raw'] = $this->costCLI($command, $first_guess_charge_kws);
         $output = shell_exec($command);                                           // execute Python command and capture output
         $result = json_decode($output, true);                           // decode JSON output from Python

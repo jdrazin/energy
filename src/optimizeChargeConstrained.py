@@ -219,14 +219,23 @@ while i < number_slots:
 # load initial charge_kws first guesses
 index += 1
 X0 = []
-i = 0
 sumX = 0.0
+i = 0
 while i < number_slots:
     index += 1
     x_element = float(sys.argv[index])
     sumX += x_element
     X0.append(x_element)
     i+= 1
+
+# load average of first guesses
+if 1:
+    X0 = []
+    i = 0
+    x = sumX / number_slots
+    while i < number_slots:
+        X0.append(x)
+        i+= 1
 
 # define the bounds
 index += 1

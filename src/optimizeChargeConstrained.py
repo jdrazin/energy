@@ -244,7 +244,7 @@ lowerBoundLinearConstraints = np.full(1, sumX - SUM_CHARGE_TOLERANCE_KWH)
 upperBoundLinearConstraints = np.full(1, sumX + SUM_CHARGE_TOLERANCE_KWH)
 matrixLinearConstraints     = np.ones((1, number_slots))
 linearConstraints           = LinearConstraint(matrixLinearConstraints, lowerBoundLinearConstraints, upperBoundLinearConstraints)
-hessZero                    = lambda x: np.zeros((number_slots, number_slots))
+# hessZero                    = lambda x: np.zeros((number_slots, number_slots))
 
 # get cost
 cost = costFunction(X0)

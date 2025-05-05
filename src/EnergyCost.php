@@ -366,7 +366,7 @@ class EnergyCost extends Root
         else {
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
-            if (!($result['success'] ?? false)) {                                              // if convergence fails write command and problem to debug
+            if (!(($converged = $result['converged']) ?? false)) {                           // if not converged write command and problem to debug
                 $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
                 if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
                     $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
@@ -379,8 +379,10 @@ class EnergyCost extends Root
                     throw new Exception($message);
                 }
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure: see failed problem and command');
-                $this->logDb('MESSAGE', $message, $text, 'FATAL');
-                throw new Exception($message);
+                $this->logDb('MESSAGE', $message, $text, 'WARNING');
+                if ($this->parameters['type'] == 'slots') {                                  // halt if failed to convergence on slot solution
+                    throw new Exception($message);
+                }
             }
             $this->costs['optimised'] = $this->costCLI($command, $optimum_charge_kws);       // calculate optimised cost elements using CLI command
             $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
@@ -396,7 +398,8 @@ class EnergyCost extends Root
                     return $slot_solution;
                 }
                 case 'slices': {
-                    $this->insertSliceChargekW($charge_kw = round($optimum_charge_kws[0], 3));
+                    // use slice_solution if converged, otherwise use slot solution
+                    $this->insertSliceChargekW($charge_kw = $converged ? round($optimum_charge_kws[0], 3) : $first_guess_charge_kws[0]);
                     $slot_solution = $this->slotSolution();
                     return $this->sliceSolution($slot_solution, $charge_kw);
                 }

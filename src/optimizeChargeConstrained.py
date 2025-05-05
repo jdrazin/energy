@@ -9,6 +9,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
 from scipy.optimize import LinearConstraint
+from scipy.optimize._numdiff import approx_derivative
 
 SUM_CHARGE_TOLERANCE_KWH = 0.1
 
@@ -121,6 +122,11 @@ def wearPerKwh(x, x_min, x_max, wear_cost_average, constant_coefficient, exponen
 def normalisationCoefficient(constant_coefficient, exponential_coefficient, activation, x_min, x_max):
     normalisation_coefficient = 12.0/(1.0+(11.0*constant_coefficient)+(24.0*exponential_coefficient*activation/(x_max - x_min)))
     return normalisation_coefficient
+
+def hess_numeric(fun):
+    def hess(x):
+        return approx_derivative(lambda y: approx_derivative(fun, y, method='2-point'), x, method='2-point')
+    return hess
 
 # get cpu time
 import time
@@ -244,8 +250,8 @@ hessZero                    = lambda x: np.zeros((number_slots, number_slots))
 cost = costFunction(X0)
 
 # optimise
-# result = minimize(dayCostGbp, X0, method='powell', bounds=boundData, options={'disp': 0, 'ftol': 1E-14, 'maxiter': 1000000}) # Powell
-result = minimize(costFunction, X0, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hessZero, options={'verbose': 0, 'disp': 0, 'maxiter': 1000000})
+X0     = np.array(X0, dtype=np.float64) # force 64 bit on Raspberry Pi scipy implementation
+result = minimize(costFunction, X0, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hess_numeric(costFunction) ,options={'verbose': 0, 'disp': 0, 'maxiter': 10000})
 
 elapsed_s = time.time() - start_time
 

@@ -266,7 +266,7 @@ elapsed_s = time.time() - start_time
 
 # output result as json
 output = {
-    "success":              result.success,
+    "converged":            result.success,
     "elapsed_s":            elapsed_s,
     "evaluations":          result.nfev,
     "status":               result.status,

@@ -345,8 +345,8 @@ class EnergyCost extends Root
         }
         $this->costs = [];
         $this->costs['raw'] = $this->costCLI($command, $first_guess_charge_kws);
-        $output = shell_exec($command);                                           // execute Python command and capture output
-        $result = json_decode($output, true);                           // decode JSON output from Python
+        $output = shell_exec($command);                                                     // execute Python command and capture output
+        $result = json_decode($output, true);                                     // decode JSON output from Python
         $text   = $command . PHP_EOL . $output . PHP_EOL;
         if (!$command ||
             !file_put_contents(self::OPTIMISATION_LOG_PATHNAME_BASE . $this->parameters['type'] . '.log', $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {

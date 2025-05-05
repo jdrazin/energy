@@ -228,7 +228,7 @@ while i < number_slots:
     X0.append(x_element)
     i+= 1
 
-# load average of first guesses
+# if 1: replace first guesses with their average
 if 1:
     X0 = []
     i = 0

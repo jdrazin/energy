@@ -385,7 +385,7 @@ class EnergyCost extends Root
                     $this->logDb('MESSAGE', $message, null, 'FATAL');
                     throw new Exception($message);
                 }
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Convergence failure: see failed problem and command');
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $this->parameters['type'] . ' convergence failure: see failed problem and command');
                 $this->logDb('MESSAGE', $message, $text, 'WARNING');
                 if ($this->parameters['type'] == 'slots') {                                  // halt if failed to convergence on slot solution
                     throw new Exception($message);

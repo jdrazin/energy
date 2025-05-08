@@ -163,6 +163,8 @@ class EnergyCost extends Root
          */
         $sql = 'SELECT      `start`,
                             `stop`,
+                            `battery_charge_kw`,
+                            `grid_kw`,
                             `load_house_kw`,
                             `solar_gross_kw`,
                             `import_gbp_per_kwh`,
@@ -175,7 +177,7 @@ class EnergyCost extends Root
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ii', $this->tariff_combination['id'], $final) ||
-            !$stmt->bind_result($start, $stop, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
+            !$stmt->bind_result($start, $stop, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -183,6 +185,8 @@ class EnergyCost extends Root
         }
         $starts                     = [];
         $stops                      = [];
+        $battery_charge_kw          = [];
+        $grid_kw                    = [];
         $slots                      = [];
         $load_house_kws             = [];
         $solar_gross_kws            = [];
@@ -190,26 +194,29 @@ class EnergyCost extends Root
         $export_gbp_per_kwh         = [];
         $import_gbp_per_day         = [];
         $export_gbp_per_day         = [];
-        while ($stmt->fetch()) {
-            // throw exception if slots problem paramter null
+        while ($stmt->fetch()) { // throw exception if slots problem paramter null
             if (is_null($load_house_kw) || is_null($solar_gross_kw) || is_null($import_gbp_per_kwh) || is_null($export_gbp_per_kwh) || is_null($import_gbp_per_day) || is_null($export_gbp_per_day)) {
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'null value');
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
             else {
-                $starts[] = $start;
-                $stops[] = $stop;
-                $load_house_kws[] = $load_house_kw;
-                $solar_gross_kws[] = $solar_gross_kw;
-                $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
-                $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
-                $import_gbp_per_days[] = $import_gbp_per_day;
-                $export_gbp_per_days[] = $export_gbp_per_day;
+                $starts[]               = $start;
+                $stops[]                = $stop;
+                $battery_charge_kw[]    = $battery_charge_kw;
+                $grid_kw[]              = $grid_kw;
+                $load_house_kws[]       = $load_house_kw;
+                $solar_gross_kws[]      = $solar_gross_kw;
+                $import_gbp_per_kwhs[]  = $import_gbp_per_kwh;
+                $export_gbp_per_kwhs[]  = $export_gbp_per_kwh;
+                $import_gbp_per_days[]  = $import_gbp_per_day;
+                $export_gbp_per_days[]  = $export_gbp_per_day;
             }
         }
         $slots['starts']              = $starts;
         $slots['stops']               = $stops;
+        $slots['battery_charge_kw']   = $battery_charge_kw;
+        $slots['grid_kw']             = $grid_kw;
         $slots['load_house_kws']      = $load_house_kws;
         $slots['solar_kws']           = $solar_gross_kws;
         $slots['import_gbp_per_kwhs'] = $import_gbp_per_kwhs;

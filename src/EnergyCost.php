@@ -185,8 +185,8 @@ class EnergyCost extends Root
         }
         $starts                     = [];
         $stops                      = [];
-        $battery_charge_kw          = [];
-        $grid_kw                    = [];
+        $battery_charge_kws         = [];
+        $grid_kws                   = [];
         $slots                      = [];
         $load_house_kws             = [];
         $solar_gross_kws            = [];
@@ -203,8 +203,8 @@ class EnergyCost extends Root
             else {
                 $starts[]               = $start;
                 $stops[]                = $stop;
-                $battery_charge_kw[]    = $battery_charge_kw;
-                $grid_kw[]              = $grid_kw;
+                $battery_charge_kws[]   = $battery_charge_kw;
+                $grid_kws[]             = $grid_kw;
                 $load_house_kws[]       = $load_house_kw;
                 $solar_gross_kws[]      = $solar_gross_kw;
                 $import_gbp_per_kwhs[]  = $import_gbp_per_kwh;
@@ -215,8 +215,8 @@ class EnergyCost extends Root
         }
         $slots['starts']              = $starts;
         $slots['stops']               = $stops;
-        $slots['battery_charge_kw']   = $battery_charge_kw;
-        $slots['grid_kw']             = $grid_kw;
+        $slots['battery_charge_kws']  = $battery_charge_kws;
+        $slots['grid_kws']            = $grid_kws;
         $slots['load_house_kws']      = $load_house_kws;
         $slots['solar_kws']           = $solar_gross_kws;
         $slots['import_gbp_per_kwhs'] = $import_gbp_per_kwhs;

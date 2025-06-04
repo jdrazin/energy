@@ -32,8 +32,11 @@ class Solcast extends Root
      */
     public function getSolarActualForecast(): void
     {
-        // forecasting most needed to determine overnight battery depletion, so don't request between dawn and dusk
+        // forecasting most needed to determine overnight battery depletion
         if (($hour = (int) (new DateTime())->format('H')) < self::REQUEST_BEFORE_UTC_HOURS || $hour >= self::REQUEST_AFTER_UTC_HOURS) {
+            return;                     // don't request between dawn and dusk
+        }
+        else {
             $made_successful_request = false;
             if ($this->skipRequest()) { // skip request if called recently
                 $this->requestResult(false); // update timestamp for failed request

@@ -426,7 +426,8 @@ class Root {
                 throw new Exception($message);
         }
         if (is_null($value)) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "no $entity latest forecast found for datetime=$datetime"));
+            $this->logDb('MESSAGE', "no $entity latest forecast found for datetime=$datetime, returning ZERO", null, 'WARNING');
+            return 0.0;
         } else {
             return $value;
         }
@@ -451,7 +452,8 @@ class Root {
                 throw new Exception($message);
         }
         if (is_null($value)) {
-            throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, "no $entity average latest forecast: start=$start, stop=$stop"));
+            $this->logDb('MESSAGE', "no $entity average latest forecast: start=$start, stop=$stop, returning ZERO", null, 'WARNING');
+            return 0.0;
         } else {
             return $value;
         }

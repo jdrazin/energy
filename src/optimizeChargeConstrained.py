@@ -256,7 +256,7 @@ linearConstraints           = LinearConstraint(matrixLinearConstraints, lowerBou
 # hessZero                    = lambda x: np.zeros((number_slots, number_slots))
 
 # get cost
-cost = costFunction(X0)
+energyCostGuess = costFunction(X0)
 
 # optimise
 X0     = np.array(X0, dtype=np.float64) # force 64 bit on Raspberry Pi scipy implementation
@@ -272,6 +272,7 @@ output = {
     "status":               result.status,
     "message":              result.message,
     "optimum_charge_kws":   result.x.tolist(),
-    "energyCost":           result.fun
+    "energyCostGuess":      energyCostGuess,
+    "energyCostSolution":   result.fun
 }
 print(json.dumps(output))

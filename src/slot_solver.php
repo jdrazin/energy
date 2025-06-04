@@ -64,7 +64,7 @@ try {
     if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !DEBUG) || !$cron) {
         if (REPLACE_WITH_STUB) {
             $octopus = (new Octopus());
-            $octopus->makeActiveTariffCombinationDbSlotsLast24hrs();
+            $octopus->makeActiveTariffCombinationDbSlotsLast24hrs(); // todo
             $octopus->slots_make_cubic_splines();
         }
         else {

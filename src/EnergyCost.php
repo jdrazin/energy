@@ -361,6 +361,8 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
         }
+        $energyCostGuess    = $result['energyCostGuess']    ?? null; // solution charge rates
+        $energyCostSolution = $result['energyCostSolution'] ?? null; // solution charge rates
         $optimum_charge_kws = $result['optimum_charge_kws'] ?? null; // solution charge rates
         if (DEBUG_MINIMISER) {
             echo PHP_EOL;

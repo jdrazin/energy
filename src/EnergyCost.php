@@ -177,7 +177,7 @@ class EnergyCost extends Root
                    ORDER BY `slot`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ii', $this->tariff_combination['id'], $final) ||
-            !$stmt->bind_result($start, $stop, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
+            !$stmt->bind_result($id, $start, $stop, $battery_charge_kw, $grid_kw, $load_house_kw, $solar_gross_kw, $import_gbp_per_kwh, $export_gbp_per_kwh, $import_gbp_per_day, $export_gbp_per_day) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -201,16 +201,16 @@ class EnergyCost extends Root
                 throw new Exception($message);
             }
             else {
-                $starts[]               = $start;
-                $stops[]                = $stop;
-                $battery_charge_kws[]   = $battery_charge_kw;
-                $grid_kws[]             = $grid_kw;
-                $load_house_kws[]       = $load_house_kw;
-                $solar_gross_kws[]      = $solar_gross_kw;
-                $import_gbp_per_kwhs[]  = $import_gbp_per_kwh;
-                $export_gbp_per_kwhs[]  = $export_gbp_per_kwh;
-                $import_gbp_per_days[]  = $import_gbp_per_day;
-                $export_gbp_per_days[]  = $export_gbp_per_day;
+                $starts[]              = $start;
+                $stops[]               = $stop;
+                $battery_charge_kws[]  = $battery_charge_kw;
+                $grid_kws[]            = $grid_kw;
+                $load_house_kws[]      = $load_house_kw;
+                $solar_gross_kws[]     = $solar_gross_kw;
+                $import_gbp_per_kwhs[] = $import_gbp_per_kwh;
+                $export_gbp_per_kwhs[] = $export_gbp_per_kwh;
+                $import_gbp_per_days[] = $import_gbp_per_day;
+                $export_gbp_per_days[] = $export_gbp_per_day;
             }
         }
         $slots['starts']              = $starts;
@@ -256,18 +256,18 @@ class EnergyCost extends Root
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
         }
-        $starts                     = [];
-        $stops                      = [];
-        $slices                     = [];
-        $battery_level_start_kwhs   = [];
-        $battery_charge_kws         = [];
-        $grid_kws                   = [];
-        $load_house_kws             = [];
-        $solar_gross_kws            = [];
-        $import_gbp_per_kwh         = [];
-        $export_gbp_per_kwh         = [];
-        $import_gbp_per_day         = [];
-        $export_gbp_per_day         = [];
+        $slots                    = [];
+        $starts                   = [];
+        $slices                   = [];
+        $battery_level_start_kwhs = [];
+        $battery_charge_kws       = [];
+        $grid_kws                 = [];
+        $load_house_kws           = [];
+        $solar_gross_kws          = [];
+        $import_gbp_per_kwh       = [];
+        $export_gbp_per_kwh       = [];
+        $import_gbp_per_day       = [];
+        $export_gbp_per_day       = [];
         $datetime = new DateTime();
         for ($slice = 0; $slice < $this->number_slices_per_slot; $slice++) {
             $datetime_string = $datetime->format(self::MYSQL_FORMAT_DATETIME);
@@ -276,7 +276,6 @@ class EnergyCost extends Root
             // throw exception if slices problem paramter null
             if (!is_null($battery_level_start_kwh) && !is_null($battery_charge_kw) && !is_null($grid_kw) && !is_null($load_house_kw) && !is_null($solar_gross_kw) && !is_null($import_gbp_per_kwh) && !is_null($export_gbp_per_kwh) && !is_null($import_gbp_per_day) && !is_null($export_gbp_per_day)) {
                 $starts[]                   = $datetime_string;
-                $stops[]                    = $stop;
                 $battery_level_start_kwhs[] = $battery_level_start_kwh;
                 $battery_charge_kws[]       = $battery_charge_kw;
                 $grid_kws[]                 = $grid_kw;
@@ -294,8 +293,8 @@ class EnergyCost extends Root
                 throw new Exception($message);
             }
         }
+        $slices['slots']                    = $slots;
         $slices['starts']                   = $starts;
-        $slices['stops']                    = $stops;
         $slices['battery_level_start_kwhs'] = $battery_level_start_kwhs;
         $slices['battery_charge_kws']       = $battery_charge_kws;
         $slices['grid_kws']                 = $grid_kws;
@@ -338,11 +337,7 @@ class EnergyCost extends Root
                     // set first 2 slices to current load and solar powers
                     $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];
                     $this->solar_gross_kws[0] = $this->solar_gross_kws[1] = $this->parameters['solar_gross_kw'];
-                    $starts                   = $this->slices_db['starts'];
-                    $battery_charge_kws       = $this->slices_db['battery_charge_kws'];
-                    foreach ($starts as $slice => $start) {          // use slot solution as first guess
-                        $first_guess_charge_kws[$slice] = 0.0;
-                    }
+                    $first_guess_charge_kws   = $this->slices_db['battery_charge_kws'];
                     break;
                 }
             }

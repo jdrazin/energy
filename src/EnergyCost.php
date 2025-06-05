@@ -407,9 +407,9 @@ class EnergyCost extends Root
                     return $slot_solution;
                 }
                 case 'slices': {
-                    // use slice_solution if converged, otherwise use slot solution
-                    $charge_kw = $converged ? round($optimum_charge_kws[0], 3) : $first_guess_charge_kws[0];
-                    $this->insertSliceChargekW($converged ? $charge_kw : null);
+                    // use slice_solution if available, otherwise use slot solution
+                    $charge_kw = $use_solution ? round($optimum_charge_kws[0], 3) : $first_guess_charge_kws[0];
+                    $this->insertSliceChargekW($use_solution ? $charge_kw : null);
                     return $this->sliceSolution($this->slotSolution(), $charge_kw);
                 }
                 default: {

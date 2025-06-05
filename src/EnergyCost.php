@@ -361,44 +361,44 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
         }
-        $energyCostGuess    = $result['energyCostGuess']    ?? null; // solution charge rates
-        $energyCostSolution = $result['energyCostSolution'] ?? null; // solution charge rates
+        $energyCostGuess    = $result['energyCostGuess']    ?? null; // cost, first guess
+        $energyCostSolution = $result['energyCostSolution'] ?? null; // cost, solution
         $optimum_charge_kws = $result['optimum_charge_kws'] ?? null; // solution charge rates
-        if (DEBUG_MINIMISER) {
-            echo PHP_EOL;
-            echo 'grid_kw        raw,   optimised' . PHP_EOL;
-            foreach ($this->grid_kws as $k => $v) {
-                echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->grid_kws[$k], 3) . ', ' . round($optimum_charge_kws[$k], 3) . PHP_EOL;
+
+        if ($converged = $result['converged'] ?? false) { // write out problem and log warning if not converged
+            $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
+            if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
+                $this->logDb('MESSAGE', $message, null, 'FATAL');
+                throw new Exception($message);
             }
-            return [];
+            if (!file_put_contents(self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt', $command)) {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command');
+                $this->logDb('MESSAGE', $message, null, 'FATAL');
+                throw new Exception($message);
+            }
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $this->parameters['type'] . ' convergence failure: see failed problem and command');
+            $this->logDb('MESSAGE', $message, $text, 'WARNING');
         }
-        else {
-            $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
-            $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
-            if (!(($converged = $result['converged']) ?? false)) {                           // if not converged write command and problem to debug
-                $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
-                if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
-                    $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
-                    $this->logDb('MESSAGE', $message, null, 'FATAL');
-                    throw new Exception($message);
-                }
-                if (!file_put_contents(self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt', $command)) {
-                    $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command');
-                    $this->logDb('MESSAGE', $message, null, 'FATAL');
-                    throw new Exception($message);
-                }
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $this->parameters['type'] . ' convergence failure: see failed problem and command');
-                $this->logDb('MESSAGE', $message, $text, 'WARNING');
-                if ($this->parameters['type'] == 'slots') {                                  // halt if failed to convergence on slot solution
-                    throw new Exception($message);
-                }
+        if (!DEBUG_MINIMISER) {      // use solution if non-null and has converged or is better than first guess
+            $use_solution = !is_null($optimum_charge_kws) && ($converged || ((!is_null($energyCostGuess) && !is_null($energyCostSolution)) && ($energyCostSolution < $energyCostGuess)));
+            if (!$use_solution && ($this->parameters['type'] == 'slots')) {  // halt if no slot solution
+                throw new Exception('No slot solution');
             }
-            $this->costs['optimised'] = $this->costCLI($command, $optimum_charge_kws);       // calculate optimised cost elements using CLI command
-            $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
-            echo 'Php    raw cost:            ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-            echo 'Python optimised cost:      ' . round($result['energyCost']                  +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-            echo 'Php    optimised cost:      ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-            echo 'Php    optimised grid_cost: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+            if (DEBUG) {
+                $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
+                $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
+                $this->costs['optimised'] = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
+                $standing_costs_gbp_per_day = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
+                echo 'Total costs: ' . PHP_EOL;
+                echo 'Python, guess:     ' . round($energyCostGuess                       +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo 'Php,    guess:     ' . round($this->costs['raw']['cost']            +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo 'Python, optimised: ' . round($energyCostSolution                    +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo 'Php,    optimised: ' . round($this->costs['optimised']['cost']      +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo PHP_EOL;
+                echo 'Grid cost, optimised: ' . round($this->costs['optimised']['cost_grid'] +$standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo PHP_EOL;
+            }
             switch ($this->parameters['type']) {
                 case 'slots': {
                     $this->insertOptimumChargeGridKw($optimum_charge_kws);                    // insert for each slot: grid and battery discharge energies (kWh)
@@ -416,6 +416,14 @@ class EnergyCost extends Root
                     throw new Exception('Bad type');
                 }
             }
+        }
+        else {
+                echo PHP_EOL;
+                echo 'grid_kw        raw,   optimised' . PHP_EOL;
+                foreach ($this->grid_kws as $k => $v) {
+                    echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->grid_kws[$k], 3) . ', ' . round($optimum_charge_kws[$k], 3) . PHP_EOL;
+                }
+                return [];
         }
     }
 

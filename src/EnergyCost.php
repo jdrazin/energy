@@ -824,17 +824,16 @@ class EnergyCost extends Root
                             `tariff_combination`      = ? AND
                             NOT `final`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('dddii',  $battery_level_start_kwh, $optimum_charge_kw, $slot, $tariff_combination_id) ||
+            !$stmt->bind_param('dddii',  $battery_level_start_kwh, $battery_charge_kw, $slot, $tariff_combination_id) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
         $battery_level_start_kwh = $this->batteryEnergyInitialKwh;
-        foreach ($optimum_charge_kws as $slot => $optimum_charge_kw) {
-            $optimum_grid_kw          = $this->grid_kws[$slot] + $optimum_charge_kw;
+        foreach ($optimum_charge_kws as $slot => $battery_charge_kw) {
             $stmt->execute();
-            $battery_level_start_kwh += $optimum_charge_kw * Slot::DURATION_MINUTES / 60;
+            $battery_level_start_kwh += $battery_charge_kw * Slot::DURATION_MINUTES / 60;
         }
         $this->mysqli->commit();
     }

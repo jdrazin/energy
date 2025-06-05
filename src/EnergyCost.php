@@ -331,13 +331,13 @@ class EnergyCost extends Root
                     break;
                 }
                 case 'slices': {
-                    $this->load_house_kws  = $this->slices_db['load_house_kws'];         // house load (excludes EV)
-                    $this->solar_gross_kws = $this->slices_db['solar_gross_kws'];        // gross solar forecast (excludes grid clipping)
+                    $this->load_house_kws   = $this->slices_db['load_house_kws'];         // house load (excludes EV)
+                    $this->solar_gross_kws  = $this->slices_db['solar_gross_kws'];        // gross solar forecast (excludes grid clipping)
+                    $first_guess_charge_kws = $this->slices_db['battery_charge_kws'];     // first guess slice solution to slot solution
 
                     // set first 2 slices to current load and solar powers
                     $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];
                     $this->solar_gross_kws[0] = $this->solar_gross_kws[1] = $this->parameters['solar_gross_kw'];
-                    $first_guess_charge_kws   = $this->slices_db['battery_charge_kws'];
                     break;
                 }
             }

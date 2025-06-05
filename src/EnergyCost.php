@@ -819,7 +819,7 @@ class EnergyCost extends Root
         $sql = 'UPDATE      `slots`
                    SET      `battery_level_start_kwh` = ROUND(?, 3),
                             `battery_charge_kw`       = ROUND(?, 3),
-                            `grid_kw`                 = ROUND(`battery_charge_kw` + `solar_gross_kw` - `load_house_kw`, 3)
+                            `grid_kw`                 = ROUND(`solar_gross_kw` - `load_house_kw` - `battery_charge_kw`, 3)
                    WHERE    `slot`                    = ? AND
                             `tariff_combination`      = ? AND
                             NOT `final`';

@@ -365,7 +365,7 @@ class EnergyCost extends Root
         $energyCostSolution = $result['energyCostSolution'] ?? null; // cost, solution
         $optimum_charge_kws = $result['optimum_charge_kws'] ?? null; // solution charge rates
 
-        if ($converged = $result['converged'] ?? false) { // write out problem and log warning if not converged
+        if (!($converged = $result['converged'] ?? false)) { // write out problem and log warning if not converged
             $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
             if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
                 $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');

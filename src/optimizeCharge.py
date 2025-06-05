@@ -225,7 +225,7 @@ epoch      = time.asctime(obj)
 start_time = time.time()
 
 # get cost
-cost = dayCostGbp(X)
+energyCostGuess = dayCostGbp(X)
 
 # optimise
 #result    = minimize(dayCostGbp, Xs, method="Nelder-Mead", options={'disp': 0, 'adaptive': 1, 'fatol': 1E-14, 'maxiter': 1000000}) # Nelder-Mead

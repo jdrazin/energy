@@ -325,15 +325,15 @@ class EnergyCost extends Root
                     (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
                     $this->load_house_kws  = $this->slots_db['load_house_kws'];         // house load (excludes EV)
                     $this->solar_gross_kws = $this->slots_db['solar_kws'];              // gross solar forecast (excludes grid clipping)
-                    foreach ($this->load_house_kws as $slot => $load_house_kw) {         // first guess zero charge
+                    foreach ($this->load_house_kws as $slot => $load_house_kw) {        // first guess zero charge
                         $first_guess_charge_kws[$slot] = 0.0;
                     }
                     break;
                 }
                 case 'slices': {
-                    $this->load_house_kws   = $this->slices_db['load_house_kws'];         // house load (excludes EV)
-                    $this->solar_gross_kws  = $this->slices_db['solar_gross_kws'];        // gross solar forecast (excludes grid clipping)
-                    $first_guess_charge_kws = $this->slices_db['battery_charge_kws'];     // first guess slice solution to slot solution
+                    $this->load_house_kws   = $this->slices_db['load_house_kws'];       // house load (excludes EV)
+                    $this->solar_gross_kws  = $this->slices_db['solar_gross_kws'];      // gross solar forecast (excludes grid clipping)
+                    $first_guess_charge_kws = $this->slices_db['battery_charge_kws'];   // first guess slice solution to slot solution
 
                     // set first 2 slices to current load and solar powers
                     $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];
@@ -341,7 +341,7 @@ class EnergyCost extends Root
                     break;
                 }
             }
-            $command = $this->command($first_guess_charge_kws);                           // make optimize command line using parameters and first guesses
+            $command = $this->command($first_guess_charge_kws);                          // make optimize command line using parameters and first guesses
         }
         else { // use debug JSON and make slot arrays as necessary
            $pathname_problem       = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
@@ -349,8 +349,8 @@ class EnergyCost extends Root
            $this->load_house_kws   = $this->problem['load_house_kws'];                    // get total house load from problem
            $this->solar_gross_kws  = $this->problem['solar_gross_kws'];                   // get solar forecast (excludes grid clipping) from problem
            $first_guess_charge_kws = $this->problem['first_guess_charge_kws'];            // first guess
-           $pathname_command      = self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt';
-           $command               = file_get_contents($pathname_command, true);
+           $pathname_command       = self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt';
+           $command                = file_get_contents($pathname_command, true);
         }
         $this->costs = [];
         $this->costs['raw'] = $this->costCLI($command, $first_guess_charge_kws);

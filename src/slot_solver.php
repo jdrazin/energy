@@ -42,7 +42,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const PID_FOLDER                     = '/var/www/html/energy/pids/',
-      DEBUG                          = false,  // disable cron and semaphore single thread control
+      DEBUG                          = true,  // disable cron and semaphore single thread control
       DEBUG_MINIMISER                = false,
       ARGS                           = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION        = false,
@@ -61,7 +61,8 @@ try {
             file_put_contents($pid_filename, getmypid());
         }
     }
-    if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !DEBUG) || !$cron) {
+    $cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron');
+    if (($cron && !DEBUG) || !$cron) {
         if (REPLACE_WITH_STUB) {
             $octopus = (new Octopus());
             $octopus->makeActiveTariffCombinationDbSlotsLast24hrs(); // todo

@@ -260,7 +260,7 @@ energyCostGuess = costFunction(X0)
 
 # optimise
 X0     = np.array(X0, dtype=np.float64) # force 64 bit on Raspberry Pi scipy implementation
-result = minimize(costFunction, X0, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hess_numeric(costFunction), options={'verbose': 0, 'disp': 0, 'maxiter': 10000})
+result = minimize(costFunction, X0, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hess_numeric(costFunction), options={'verbose': 0, 'disp': 0, 'maxiter': 1000})
 
 elapsed_s = time.time() - start_time
 

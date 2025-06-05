@@ -241,6 +241,7 @@ output = {
     "status":               result.status,
     "message":              result.message,
     "optimum_charge_kws":   result.x.tolist(),
-    "energyCost":           result.fun
+    "energyCostGuess":      energyCostGuess,
+    "energyCostSolution":   result.fun
 }
 print(json.dumps(output))

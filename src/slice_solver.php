@@ -34,7 +34,8 @@ try {
             file_put_contents($pid_filename, getmypid());
         }
     }
-    if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && !DEBUG) || !$cron) {
+    $cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron');
+    if (($cron && !DEBUG) || !$cron) {
         (new Slice())->command();
     }
     if (!DEBUG) {

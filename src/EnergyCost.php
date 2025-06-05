@@ -400,14 +400,13 @@ class EnergyCost extends Root
                 echo PHP_EOL;
             }
             switch ($this->parameters['type']) {
-                case 'slots': {
-                    $this->insertOptimumChargeGridKw($optimum_charge_kws);                    // insert for each slot: grid and battery discharge energies (kWh)
+                case 'slots': { // insert for each slot: grid and battery discharge energies (kWh)
+                    $this->insertOptimumChargeGridKw($optimum_charge_kws);
                     $slot_solution = $this->slotSolution();
                     $this->insertSlotNextDayCostEstimates($slot_solution['id']);
                     return $slot_solution;
                 }
-                case 'slices': {
-                    // use slice_solution if available, otherwise use slot solution
+                case 'slices': { // use slice_solution if available, otherwise use slot solution
                     $charge_kw = $use_solution ? round($optimum_charge_kws[0], 3) : $first_guess_charge_kws[0];
                     $this->insertSliceChargekW($use_solution ? $charge_kw : null);
                     return $this->sliceSolution($this->slotSolution(), $charge_kw);

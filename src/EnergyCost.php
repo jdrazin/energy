@@ -323,8 +323,8 @@ class EnergyCost extends Root
             switch ($this->parameters['type']) {
                 case 'slots': {
                     (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
-                    $this->load_house_kws   = $this->slots_db['load_house_kws'];         // house load (excludes EV)
-                    $this->solar_gross_kws  = $this->slots_db['solar_kws'];              // gross solar forecast (excludes grid clipping)
+                    $this->load_house_kws  = $this->slots_db['load_house_kws'];         // house load (excludes EV)
+                    $this->solar_gross_kws = $this->slots_db['solar_kws'];              // gross solar forecast (excludes grid clipping)
                     foreach ($this->load_house_kws as $slot => $load_house_kw) {         // first guess zero charge
                         $first_guess_charge_kws[$slot] = 0.0;
                     }

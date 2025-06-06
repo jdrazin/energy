@@ -286,24 +286,23 @@ class EnergyCost extends Root
                 $import_gbp_per_days[]      = $import_gbp_per_day;
                 $export_gbp_per_days[]      = $export_gbp_per_day;
                 $datetime->modify('+' . Slice::DURATION_MINUTES . ' minute');
+                $slices['slots']                    = $slots;
+                $slices['starts']                   = $starts;
+                $slices['battery_level_start_kwhs'] = $battery_level_start_kwhs;
+                $slices['battery_charge_kws']       = $battery_charge_kws;
+                $slices['grid_kws']                 = $grid_kws;
+                $slices['load_house_kws']           = $load_house_kws;
+                $slices['solar_gross_kws']          = $solar_gross_kws;
+                $slices['import_gbp_per_kwhs']      = $import_gbp_per_kwhs;
+                $slices['export_gbp_per_kwhs']      = $export_gbp_per_kwhs;
+                $slices['import_gbp_per_days']      = $import_gbp_per_days;
+                $slices['export_gbp_per_days']      = $export_gbp_per_days;
             }
             else {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'null value');
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'no slices or null value');
+                $this->logDb('MESSAGE', $message, null, 'WARNING');
             }
         }
-        $slices['slots']                    = $slots;
-        $slices['starts']                   = $starts;
-        $slices['battery_level_start_kwhs'] = $battery_level_start_kwhs;
-        $slices['battery_charge_kws']       = $battery_charge_kws;
-        $slices['grid_kws']                 = $grid_kws;
-        $slices['load_house_kws']           = $load_house_kws;
-        $slices['solar_gross_kws']          = $solar_gross_kws;
-        $slices['import_gbp_per_kwhs']      = $import_gbp_per_kwhs;
-        $slices['export_gbp_per_kwhs']      = $export_gbp_per_kwhs;
-        $slices['import_gbp_per_days']      = $import_gbp_per_days;
-        $slices['export_gbp_per_days']      = $export_gbp_per_days;
         return $slices;
     }
 
@@ -331,6 +330,9 @@ class EnergyCost extends Root
                     break;
                 }
                 case 'slices': {
+                    if (empty($this->slices_db)) {
+                        return $this->sliceSolution($this->slotSolution(), 0.0); // skip with zero charge if slices not found
+                    }
                     $this->load_house_kws   = $this->slices_db['load_house_kws'];       // house load (excludes EV)
                     $this->solar_gross_kws  = $this->slices_db['solar_gross_kws'];      // gross solar forecast (excludes grid clipping)
                     $first_guess_charge_kws = $this->slices_db['battery_charge_kws'];   // first guess slice solution to slot solution

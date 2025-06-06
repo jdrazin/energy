@@ -543,68 +543,67 @@ class EnergyCost extends Root
         // excludes standing costs
         //
         $this->string = $command;
-        $this->strip();
-        $this->strip(); // removes PYTHON_SCRIPT_COMMAND
-        $this->strip();
-        $this->solarGenerationLimitKw                   = (float) $this->strip();
-        $this->strip();
-        $this->batteryCapacityKwh                       = (float) $this->strip();
-        $this->strip();
-        $this->batteryOneWayEfficiency                  = (float) $this->strip();
-        $this->strip();
+        $this->strip(' '); $this->strip(' '); // removes PYTHON_SCRIPT_COMMAND
+        $this->strip('=');
+        $this->solarGenerationLimitKw                   = (float) $this->strip(' ');
+        $this->strip('=');
+        $this->batteryCapacityKwh                       = (float) $this->strip(' ');
+        $this->strip('=');
+        $this->batteryOneWayEfficiency                  = (float) $this->strip(' ');
+        $this->strip('=');
         $this->batteryWearEnergyCostAverageGbpPerKwh    = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryWearEnergyConstantCoefficient     = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryWearEnergyExponentialCoefficient  = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryWearEnergyActivationKwh           = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryWearPowerCostAverageGbpPerKwh     = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryWearPowerConstantCoefficient      = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryWearPowerExponentialCoefficient   = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryWearPowerActivationKw             = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryMaxChargeKw                       = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryMaxDischargeKw                    = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->importLimitKw                            = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->exportLimitKw                            = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->gridWearPowerCostAverageGbpPerKwh        = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->gridWearPowerConstantCoefficient         = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->gridWearPowerExponentialCoefficient      = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->gridWearPowerActivationKw                = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
         $this->batteryEnergyInitialKwh                  = (float) $this->strip();
-        $this->strip();
-        $this->slotSliceDurationHour                         = (float) $this->strip();
-        $this->strip();
+        $this->strip('=');
+        $this->slotSliceDurationHour                    = (float) $this->strip();
+        $this->strip('=');
         $this->number_slots_slices                      = (int)   $this->strip();
-        $this->strip();
+        $this->strip('=');
         $import_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $import_gbp_per_kws[]                       = (float) $this->strip();
         }
-        $this->strip();
+        $this->strip('=');
         $export_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $export_gbp_per_kws[]                       = (float) $this->strip();
         }
-        $this->strip();
+        $this->strip('=');
         $load_house_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $load_house_kws[]                           = (float) $this->strip();
         }
-        $this->strip();
+        $this->strip('=');
         $solar_gross_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $solar_gross_kws[]                          = (float) $this->strip();
@@ -853,10 +852,10 @@ class EnergyCost extends Root
         $this->mysqli->commit();
     }
 
-    private function strip(): string
+    private function strip($char): string
     {
-        $pos = strpos($this->string, ' ');
-        $argument = substr($this->string, 0, $pos);
+        $pos          = strpos($this->string, $char);
+        $argument     = substr($this->string, 0, $pos);
         $this->string = substr($this->string, $pos + 1);
         return $argument;
     }

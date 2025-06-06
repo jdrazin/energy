@@ -47,7 +47,6 @@ const PID_FOLDER                     = '/var/www/html/energy/pids/',
       ARGS                           = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION        = false,
       EMAIL_NOTIFICATION_ON_ERROR    = false,
-      REPLACE_WITH_STUB              = false,
       ACTIVE_TARIFF_COMBINATION_ONLY = false;
 
 try {
@@ -63,14 +62,7 @@ try {
     }
     $cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron');
     if (($cron && !DEBUG) || !$cron) {
-        if (REPLACE_WITH_STUB) {
-            $octopus = (new Octopus());
-            $octopus->makeActiveTariffCombinationDbSlotsLast24hrs(); // todo
-            $octopus->slots_make_cubic_splines();
-        }
-        else {
-           (new Octopus())->traverseTariffs($cron);       // traverse all tariffs
-        }
+        (new Octopus())->traverseTariffs($cron);       // traverse all tariffs
     }
     if (!DEBUG) {
         if (!unlink($pid_filename)) {

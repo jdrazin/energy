@@ -6,6 +6,11 @@ import sys
 import json
 from scipy.optimize import minimize
 
+def value(index):
+    string = sys.argv[index]
+    pos    = string.find('=')+1
+    return string[pos:]
+
 # define energy cost
 def dayCostGbp(X):
     # X unknowns:
@@ -117,50 +122,50 @@ def normalisationCoefficient(constant_coefficient, exponential_coefficient, acti
     return normalisation_coefficient
 
 # constants
-index =  2
-solarGenerationLimitKw                      = float(sys.argv[index])
-index += 2
-batteryCapacityKwh                          = float(sys.argv[index])
-index += 2
-batteryOneWayEfficiency                     = float(sys.argv[index])
-index += 2
-batteryWearEnergyCostAverageGbpPerKwh       = float(sys.argv[index])
-index += 2
-batteryWearEnergyConstantCoefficient        = float(sys.argv[index])
-index += 2
-batteryWearEnergyExponentialCoefficient     = float(sys.argv[index])
-index += 2
-batteryWearEnergyActivationKwh              = float(sys.argv[index])
-index += 2
-batteryWearPowerCostAverageGbpPerKwh        = float(sys.argv[index])
-index += 2
-batteryWearPowerConstantCoefficient         = float(sys.argv[index])
-index += 2
-batteryWearPowerExponentialCoefficient      = float(sys.argv[index])
-index += 2
-batteryWearPowerActivationKw                = float(sys.argv[index])
-index += 2
-batteryMaxChargeRateKw                      = float(sys.argv[index])
-index += 2
-batteryMaxDischargeRateKw                   = float(sys.argv[index])
-index += 2
-importLimitKw                               = float(sys.argv[index])
-index += 2
-exportLimitKw                               = float(sys.argv[index])
-index += 2
-gridWearPowerCostAverageGbpPerKwh           = float(sys.argv[index])
-index += 2
-gridWearPowerConstantCoefficient            = float(sys.argv[index])
-index += 2
-gridWearPowerExponentialCoefficient         = float(sys.argv[index])
-index += 2
-gridWearPowerActivationKw                   = float(sys.argv[index])
-index += 2
-batteryEnergyInitialKwh                     = float(sys.argv[index])
-index += 2
-slotSliceDurationHour                       = float(sys.argv[index])
-index += 2
-number_slots                                = int  (sys.argv[index])
+index =  1
+solarGenerationLimitKw                      = float(value(index))
+index += 1
+batteryCapacityKwh                          = float(value(index))
+index += 1
+batteryOneWayEfficiency                     = float(value(index))
+index += 1
+batteryWearEnergyCostAverageGbpPerKwh       = float(value(index))
+index += 1
+batteryWearEnergyConstantCoefficient        = float(value(index))
+index += 1
+batteryWearEnergyExponentialCoefficient     = float(value(index))
+index += 1
+batteryWearEnergyActivationKwh              = float(value(index))
+index += 1
+batteryWearPowerCostAverageGbpPerKwh        = float(value(index))
+index += 1
+batteryWearPowerConstantCoefficient         = float(value(index))
+index += 1
+batteryWearPowerExponentialCoefficient      = float(value(index))
+index += 1
+batteryWearPowerActivationKw                = float(value(index))
+index += 1
+batteryMaxChargeRateKw                      = float(value(index))
+index += 1
+batteryMaxDischargeRateKw                   = float(value(index))
+index += 1
+importLimitKw                               = float(value(index))
+index += 1
+exportLimitKw                               = float(value(index))
+index += 1
+gridWearPowerCostAverageGbpPerKwh           = float(value(index))
+index += 1
+gridWearPowerConstantCoefficient            = float(value(index))
+index += 1
+gridWearPowerExponentialCoefficient         = float(value(index))
+index += 1
+gridWearPowerActivationKw                   = float(value(index))
+index += 1
+batteryEnergyInitialKwh                     = float(value(index))
+index += 1
+slotSliceDurationHour                       = float(value(index))
+index += 1
+number_slots                                = int  (value(index))
 
 # load import_gbp_per_kwhs
 index += 1

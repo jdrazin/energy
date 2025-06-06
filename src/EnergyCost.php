@@ -808,7 +808,7 @@ class EnergyCost extends Root
     }
 
     private function parameter_name_value($parameter_name): string {  // make parameter substring
-        return $parameter_name . '= ' . $this->problem[$parameter_name] . ' ';
+        return $parameter_name . '=' . $this->problem[$parameter_name] . ' ';
     }
 
     /**

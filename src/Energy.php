@@ -82,7 +82,7 @@ class Energy extends Root
         if (!$this->authenticate()) {
             return false;
         }
-        $sql = 'SELECT  UNIX_TIMESTAMP(`s`.`start`) AS `start`,
+        $sql = 'SELECT  UNIX_TIMESTAMP(`sndce`.`timestamp`) AS `start`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`, CONVERT(IF((`tc`.`active` IS NULL), \'\', \' *ACTIVE*\') USING utf8mb4), \' (\', `tc`.`id`, \')\') AS `tariff [import, export]`,
                         ROUND(((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`), 2) AS `raw grid (GBP)`,
                         ROUND(((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`), 2) AS `optimised grid (GBP)`,
@@ -94,7 +94,6 @@ class Energy extends Root
                     JOIN `tariff_combinations` `tc` ON `sndce`.`tariff_combination` = `tc`.`id`
                     JOIN `tariff_imports`      `ti` ON `ti`   .`id`                 = `tc`.`import`
                     JOIN `tariff_exports`      `te` ON `te`   .`id`                 = `tc`.`export`
-                    JOIN `slots`               `s`  ON `s`.`id` = `sndce`.`slot`
                     ORDER BY ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)), 2) DESC';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($start, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent) ||

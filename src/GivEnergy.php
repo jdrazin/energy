@@ -423,9 +423,14 @@ class GivEnergy extends Root
             if ($point['meter_id'] == self::EV_METER_ID) {
                 $datetime = $point['timestamp'];
                 $measurements = $point['measurements'];
-                if (is_null($power_w = $this->power_w($measurements)) || !$stmt->execute()) {
+                if (is_null($power_w = $this->power_w($measurements))) {
+                    $this->logDb('MESSAGE', 'null EV charger power treated as zero', var_export($measurements, true), 'WARNING');
+                    $power_w = 0.0;
+                }
+                if (!$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', 'failed to insert: ' . $message, var_export($measurements, true), 'WARNING');
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
+                    throw new Exception($message);
                 }
             }
         }

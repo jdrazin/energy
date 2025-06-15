@@ -865,24 +865,24 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function insertSlotNextDayCostEstimates($slot): void     {
-        $standing               = ($this->problem['import_gbp_per_days'] ?? 0.0) + ($this->problem['export_gbp_per_days'] ?? 0.0);
-        $raw                    = $this->costs['raw'];
-        $raw_import             = round($raw['cost_import'], 3);
-        $raw_export             = round($raw['cost_export'], 3);
-        $raw_import_kwh         = round($raw['import_kwh'], 3);
-        $raw_export_kwh         = round($raw['export_kwh'], 3);
-        $optimised              = $this->costs['optimised'];
-        $optimised_import       = round($optimised['cost_import'], 3);
-        $optimised_export       = round($optimised['cost_export'], 3);
-        $optimised_wear         = round($optimised['cost_wear'], 3);
-        $optimised_import_kwh   = round($optimised['import_kwh'], 3);
-        $optimised_export_kwh   = round($optimised['export_kwh'], 3);
-        $tariff_combination_id  = $this->tariff_combination['id'];
-        $sql = 'INSERT IGNORE INTO `slot_next_day_cost_estimates` (`slot`, `tariff_combination`, `standing`, `raw_import`, `raw_export`, `raw_import_kwh`, `raw_export_kwh`, `optimised_import`, `optimised_export`, `optimised_wear`, `optimised_import_kwh`, `optimised_export_kwh`)
-                                                           VALUES (?,       ?,                   ?,          ?,            ?,            ?,                ?,                ?,                  ?,                  ?,                ?,                      ?                     )';
+    private function insertSlotNextDayCostEstimates(): void     {
+        $standing              = ($this->problem['import_gbp_per_days'] ?? 0.0) + ($this->problem['export_gbp_per_days'] ?? 0.0);
+        $raw                   = $this->costs['raw'];
+        $raw_import            = round($raw['cost_import'], 3);
+        $raw_export            = round($raw['cost_export'], 3);
+        $raw_import_kwh        = round($raw['import_kwh'], 3);
+        $raw_export_kwh        = round($raw['export_kwh'], 3);
+        $optimised             = $this->costs['optimised'];
+        $optimised_import      = round($optimised['cost_import'], 3);
+        $optimised_export      = round($optimised['cost_export'], 3);
+        $optimised_wear        = round($optimised['cost_wear'], 3);
+        $optimised_import_kwh  = round($optimised['import_kwh'], 3);
+        $optimised_export_kwh  = round($optimised['export_kwh'], 3);
+        $tariff_combination_id = $this->tariff_combination['id'];
+        $sql = 'INSERT IGNORE INTO `slot_next_day_cost_estimates` (`tariff_combination`, `standing`, `raw_import`, `raw_export`, `raw_import_kwh`, `raw_export_kwh`, `optimised_import`, `optimised_export`, `optimised_wear`, `optimised_import_kwh`, `optimised_export_kwh`)
+                                                           VALUES (?,                   ?,          ?,            ?,            ?,                ?,                ?,                  ?,                  ?,                ?,                      ?                     )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iidddddddddd', $slot, $tariff_combination_id, $standing, $raw_import, $raw_export, $raw_import_kwh, $raw_export_kwh, $optimised_import, $optimised_export, $optimised_wear, $optimised_import_kwh, $optimised_export_kwh) ||
+            !$stmt->bind_param('idddddddddd', $tariff_combination_id, $standing, $raw_import, $raw_export, $raw_import_kwh, $raw_export_kwh, $optimised_import, $optimised_export, $optimised_wear, $optimised_import_kwh, $optimised_export_kwh) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');

@@ -34,13 +34,13 @@ def dayCostGbp(X):
                                                                         batteryWearPowerActivationKw,
                                                                        -batteryMaxDischargeRateKw,
                                                                         batteryMaxChargeRateKw)
-    grid_import_gbp       = 0.0
-    grid_export_gbp       = 0.0
-    wear_gbp       = 0.0
+    import_gbp            = 0.0
+    export_gbp            = 0.0
+    wear_gbp              = 0.0
     power_out_of_spec_gbp = 0.0
-    import_kwh             = 0.0
-    export_kwh             = 0.0
-    slot_count             = 0
+    import_kwh            = 0.0
+    export_kwh            = 0.0
+    slot_count            = 0
     while slot_count < number_slots:
         tariff_import_per_kwh = tariffImportPerKwhs[slot_count]
         tariff_export_per_kwh = tariffExportPerKwhs[slot_count]
@@ -72,10 +72,10 @@ def dayCostGbp(X):
         # grid
         if grid_kwh > 0.0:
             export_kwh       += grid_kwh
-            grid_export_gbp -= tariff_export_per_kwh * grid_kwh
+            export_gbp -= tariff_export_per_kwh * grid_kwh
         else:
             import_kwh       += -grid_kwh
-            grid_import_gbp -= tariff_import_per_kwh * grid_kwh
+            import_gbp -= tariff_import_per_kwh * grid_kwh
 
         # battery
         if battery_charge_kw > 0.0:
@@ -106,7 +106,7 @@ def dayCostGbp(X):
         cost_energy_average_per_kwh_acc += 0.5 * (tariff_import_per_kwh + tariff_export_per_kwh) # accumulate average energy cost
         slot_count += 1
     energy_level_change_gbp = (batteryEnergyInitialKwh - battery_level_kwh) * cost_energy_average_per_kwh_acc / number_slots
-    total_gbp = grid_import_gbp + grid_export_gbp + wear_gbp + power_out_of_spec_gbp + energy_level_change_gbp
+    total_gbp = import_gbp + export_gbp + wear_gbp + power_out_of_spec_gbp + energy_level_change_gbp
     return total_gbp
 
 # define wear function

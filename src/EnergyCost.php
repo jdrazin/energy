@@ -353,7 +353,7 @@ class EnergyCost extends Root
                     break;
                 }
             }
-            $command = $this->command($first_guess_charge_kws);                          // make optimize command line using parameters and first guesses
+            $command = $this->command($this->problem['first_guess_charge_kws'] = $first_guess_charge_kws); // make optimize command line using parameters and first guesses
         }
         else { // use debug JSON and make slot arrays as necessary
            $suffix                 = DEBUG_MINIMISER_USE_FAIL ? 'fail' : 'last_ok';
@@ -412,7 +412,7 @@ class EnergyCost extends Root
                 case 'slots': { // insert for each slot: grid and battery discharge energies (kWh)
                     $this->insertOptimumChargeGridKw($optimum_charge_kws);
                     $slot_solution = $this->slotSolution();
-                    $this->insertSlotNextDayCostEstimates($slot_solution['id']);
+                    $this->insertSlotNextDayCostEstimates();
                     return $slot_solution;
                 }
                 case 'slices': { // use slice_solution if available, otherwise use slot solution
@@ -435,7 +435,10 @@ class EnergyCost extends Root
         }
     }
 
-    private function write_problem_command($command, $suffix): void
+    /**
+     * @throws Exception
+     */
+    private function write_problem_command($command, $suffix): void // writes problem and python optimiser command to files
     {
         $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_' . $suffix . '.json';
         if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {

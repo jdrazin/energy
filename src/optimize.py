@@ -34,10 +34,10 @@ def dayCostGbp(X):
                                                                         batteryWearPowerActivationKw,
                                                                        -batteryMaxDischargeRateKw,
                                                                         batteryMaxChargeRateKw)
-    cost_grid_import       = 0.0
-    cost_grid_export       = 0.0
-    cost_energy_wear       = 0.0
-    cost_power_out_of_spec = 0.0
+    grid_import_gbp       = 0.0
+    grid_export_gbp       = 0.0
+    wear_gbp       = 0.0
+    power_out_of_spec_gbp = 0.0
     import_kwh             = 0.0
     export_kwh             = 0.0
     slot_count             = 0
@@ -72,10 +72,10 @@ def dayCostGbp(X):
         # grid
         if grid_kwh > 0.0:
             export_kwh       += grid_kwh
-            cost_grid_export -= tariff_export_per_kwh * grid_kwh
+            grid_export_gbp -= tariff_export_per_kwh * grid_kwh
         else:
             import_kwh       += -grid_kwh
-            cost_grid_import -= tariff_import_per_kwh * grid_kwh
+            grid_import_gbp -= tariff_import_per_kwh * grid_kwh
 
         # battery
         if battery_charge_kw > 0.0:
@@ -84,7 +84,7 @@ def dayCostGbp(X):
             battery_level_kwh += battery_charge_kwh / batteryOneWayEfficiency
 
         # operational and out of spec wear
-        cost_energy_wear            += wearPerKwh        ( battery_level_kwh,
+        wear_gbp            += wearPerKwh        ( battery_level_kwh,
                                                            0.0,
                                                            batteryCapacityKwh,
                                                            batteryWearEnergyCostAverageGbpPerKwh,
@@ -94,7 +94,7 @@ def dayCostGbp(X):
                                                            batteryEnergyNormalisationCoefficient) * abs(battery_charge_kwh)
 
         # battery charge/discharge power out of spec
-        cost_power_out_of_spec      += wearPerKwh       (  battery_charge_kw,
+        power_out_of_spec_gbp      += wearPerKwh       (  battery_charge_kw,
                                                           -batteryMaxDischargeRateKw,
                                                            batteryMaxChargeRateKw,
                                                            batteryWearPowerCostAverageGbpPerKwh,
@@ -105,9 +105,9 @@ def dayCostGbp(X):
 
         cost_energy_average_per_kwh_acc += 0.5 * (tariff_import_per_kwh + tariff_export_per_kwh) # accumulate average energy cost
         slot_count += 1
-    cost_energy_level_change = (batteryEnergyInitialKwh - battery_level_kwh) * cost_energy_average_per_kwh_acc / number_slots
-    day_cost_gbp = cost_grid_import + cost_grid_export + cost_energy_wear + cost_power_out_of_spec + cost_energy_level_change
-    return day_cost_gbp
+    energy_level_change_gbp = (batteryEnergyInitialKwh - battery_level_kwh) * cost_energy_average_per_kwh_acc / number_slots
+    total_gbp = grid_import_gbp + grid_export_gbp + wear_gbp + power_out_of_spec_gbp + energy_level_change_gbp
+    return total_gbp
 
 # define wear function
 def wearPerKwh(x, x_min, x_max, wear_cost_average, constant_coefficient, exponential_coefficient, activation, normalisation_coefficient):

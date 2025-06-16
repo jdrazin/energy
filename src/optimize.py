@@ -127,6 +127,12 @@ def normalisationCoefficient(constant_coefficient, exponential_coefficient, acti
     normalisation_coefficient = 12.0/(1.0+(11.0*constant_coefficient)+(24.0*exponential_coefficient*activation/(x_max - x_min)))
     return normalisation_coefficient
 
+
+def hess_numeric(fun):
+    def hess(x):
+        return approx_derivative(lambda y: approx_derivative(fun, y, method='2-point'), x, method='2-point')
+    return hess
+
 # constants
 index =  1
 solarGenerationLimitKw                      = float(value(index))
@@ -269,8 +275,7 @@ else: # constrained optimisation
   lowerBoundLinearConstraints = np.full(1, sumX - SUM_CHARGE_TOLERANCE_KWH)
   upperBoundLinearConstraints = np.full(1, sumX + SUM_CHARGE_TOLERANCE_KWH)
   matrixLinearConstraints = np.ones((1, number_slots))
-  linearConstraints = LinearConstraint(matrixLinearConstraints, lowerBoundLinearConstraints,
-                                       upperBoundLinearConstraints)
+  linearConstraints = LinearConstraint(matrixLinearConstraints, lowerBoundLinearConstraints, upperBoundLinearConstraints)
   # hessZero                    = lambda x: np.zeros((number_slots, number_slots))
   # optimise
   X = np.array(X, dtype=np.float64)  # force 64 bit on Raspberry Pi scipy implementation

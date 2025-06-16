@@ -356,12 +356,13 @@ class EnergyCost extends Root
             $command = $this->command($first_guess_charge_kws);                          // make optimize command line using parameters and first guesses
         }
         else { // use debug JSON and make slot arrays as necessary
-           $pathname_problem       = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
+           $suffix                 = DEBUG_MINIMISER_USE_FAIL ? 'fail' : 'last_ok';
+           $pathname_problem       = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_' . $suffix . '.json';
            $this->problem          = json_decode(file_get_contents($pathname_problem, true), true);
            $this->load_house_kws   = $this->problem['load_house_kws'];                    // get total house load from problem
            $this->solar_gross_kws  = $this->problem['solar_gross_kws'];                   // get solar forecast (excludes grid clipping) from problem
            $first_guess_charge_kws = $this->problem['first_guess_charge_kws'];            // first guess
-           $pathname_command       = self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt';
+           $pathname_command       = self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt';
            $command                = file_get_contents($pathname_command, true);
         }
         $this->costs = [];
@@ -379,19 +380,12 @@ class EnergyCost extends Root
         $energyCostSolution = $result['energyCostSolution'] ?? null; // cost, solution
         $optimum_charge_kws = $result['optimum_charge_kws'] ?? null; // solution charge rates
         if (!($converged = $result['converged'] ?? false)) { // write out problem and log warning if not converged
-            $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
-            if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
-                $this->logDb('MESSAGE', $message, null, 'FATAL');
-                throw new Exception($message);
-            }
-            if (!file_put_contents(self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt', $command)) {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command');
-                $this->logDb('MESSAGE', $message, null, 'FATAL');
-                throw new Exception($message);
-            }
+            $this->write_problem_command($command, 'fail');
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $this->parameters['type'] . ' convergence failure: see failed problem and command');
             $this->logDb('MESSAGE', $message, $text, 'WARNING');
+        }
+        else {
+            $this->write_problem_command($command, 'last_ok');
         }
         if (!DEBUG_MINIMISER) {      // use solution if non-null and has converged or is better than first guess
             $use_solution = !is_null($optimum_charge_kws) && ($converged || ((!is_null($energyCostGuess) && !is_null($energyCostSolution)) && ($energyCostSolution < $energyCostGuess)));
@@ -438,6 +432,21 @@ class EnergyCost extends Root
                     echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->grid_kws[$k], 3) . ', ' . round($optimum_charge_kws[$k], 3) . PHP_EOL;
                 }
                 return [];
+        }
+    }
+
+    private function write_problem_command($command, $suffix): void
+    {
+        $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_' . $suffix . '.json';
+        if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
+            $this->logDb('MESSAGE', $message, null, 'FATAL');
+            throw new Exception($message);
+        }
+        if (!file_put_contents(self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt', $command)) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command');
+            $this->logDb('MESSAGE', $message, null, 'FATAL');
+            throw new Exception($message);
         }
     }
 

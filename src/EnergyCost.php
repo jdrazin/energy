@@ -54,7 +54,7 @@ class EnergyCost extends Root
     private ?array $parameters;
 
     public string   $string;
-    private int     $number_slots_slices, $number_slices_per_slot;
+    private int     $number_slots_slices, $optimizer, $number_slices_per_slot;
 
     /**
      * @throws Exception
@@ -601,6 +601,8 @@ class EnergyCost extends Root
         $this->strip('=');
         $this->number_slots_slices                      = (int)   $this->strip(' ');
         $this->strip('=');
+        $this->optimizer                                = (int)   $this->strip(' ');
+        $this->strip('=');
         $import_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $import_gbp_per_kws[]                       = (float) $this->strip(' ');
@@ -640,9 +642,9 @@ class EnergyCost extends Root
             $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
             $battery_charge_kw     = $battery_charge_kws[$slot_count];
             $load_house_kw         = $load_house_kws[$slot_count];
-            $solar_clipped_kw      = min($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw);       // clip solar to generation limit
+            $solar_clipped_kw      = min($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw);     // clip solar to generation limit
             $grid_kw               = $solar_clipped_kw - $load_house_kw - $battery_charge_kw;
-            $grid_kw               = min($grid_kw, $this->exportLimitKw);                                     // clip grid export to limit
+            $grid_kw               = min($grid_kw, $this->exportLimitKw);                                   // clip grid export to limit
             if ($solar_clipped_kw - $load_house_kw < 0.0) {                                                 // tie export to battery discharge limit when no net solar
                 $grid_kw = min($grid_kw, $this->batteryMaxDischargeKw);
             }

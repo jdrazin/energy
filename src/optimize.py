@@ -279,7 +279,7 @@ else: # constrained optimisation
   # hessZero                    = lambda x: np.zeros((number_slots, number_slots))
   # optimise
   X = np.array(X, dtype=np.float64)  # force 64 bit on Raspberry Pi scipy implementation
-  result = minimize(dayCostGbp, X, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hess_numeric(costFunction), options={'verbose': 0, 'disp': 0, 'maxiter': 1000})
+  result = minimize(dayCostGbp, X, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hess_numeric(dayCostGbp), options={'verbose': 0, 'disp': 0, 'maxiter': 1000})
 output = { # output result as json
     "converged": result.success,
     "elapsed_s": time.time() - start_time,

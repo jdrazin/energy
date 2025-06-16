@@ -631,8 +631,8 @@ class EnergyCost extends Root
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;          // battery level at beginning of day
         $this->makeNormalisationCoefficients();
-        $grid_import_gbp       = 0.0;
-        $grid_export_gbp       = 0.0;
+        $import_gbp       = 0.0;
+        $export_gbp       = 0.0;
         $wear_gbp       = 0.0;
         $power_out_of_spec_gbp = 0.0;
         $import_kwh             = 0.0;
@@ -655,10 +655,10 @@ class EnergyCost extends Root
             // grid
             if ($grid_kwh > 0.0) {
                 $export_kwh       += $grid_kwh;
-                $grid_export_gbp -= $tariff_export_per_kwh * $grid_kwh;
+                $export_gbp -= $tariff_export_per_kwh * $grid_kwh;
             } else {
                 $import_kwh       += -$grid_kwh;
-                $grid_import_gbp -= $tariff_import_per_kwh * $grid_kwh;
+                $import_gbp -= $tariff_import_per_kwh * $grid_kwh;
             }
 
             // battery
@@ -690,12 +690,12 @@ class EnergyCost extends Root
             $cost_energy_average_per_kwh_acc += 0.5 * ($tariff_import_per_kwh + $tariff_export_per_kwh);    // accumulate average energy cost
         }
         $energy_level_change_gbp = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots_slices);
-        $total_gbp = $grid_import_gbp + $grid_export_gbp + $wear_gbp + $power_out_of_spec_gbp + $energy_level_change_gbp;
+        $total_gbp = $import_gbp + $export_gbp + $wear_gbp + $power_out_of_spec_gbp + $energy_level_change_gbp;
         return [
                     'total_gbp'  => $total_gbp,
-                    'grid_gbp'   => $grid_import_gbp+$grid_export_gbp,
-                    'import_gbp' => $grid_import_gbp,
-                    'export_gbp' => $grid_export_gbp,
+                    'grid_gbp'   => $import_gbp+$export_gbp,
+                    'import_gbp' => $import_gbp,
+                    'export_gbp' => $export_gbp,
                     'wear_gbp'   => $wear_gbp,
                     'import_kwh' => $import_kwh,
                     'export_kwh' => $export_kwh

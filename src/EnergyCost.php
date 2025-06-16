@@ -615,21 +615,25 @@ class EnergyCost extends Root
         $this->strip('=');
         $this->optimizer                                = (int)   $this->strip(' ');
         $this->strip('=');
+        $this->strip(' ');
         $import_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $import_gbp_per_kws[]                       = (float) $this->strip(' ');
         }
         $this->strip('=');
+        $this->strip(' ');
         $export_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $export_gbp_per_kws[]                       = (float) $this->strip(' ');
         }
         $this->strip('=');
+        $this->strip(' ');
         $load_house_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $load_house_kws[]                           = (float) $this->strip(' ');
         }
         $this->strip('=');
+        $this->strip(' ');
         $solar_gross_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $solar_gross_kws[]                          = (float) $this->strip(' ');
@@ -643,10 +647,10 @@ class EnergyCost extends Root
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;          // battery level at beginning of day
         $this->makeNormalisationCoefficients();
-        $import_gbp       = 0.0;
-        $export_gbp       = 0.0;
-        $wear_gbp       = 0.0;
-        $power_out_of_spec_gbp = 0.0;
+        $import_gbp             = 0.0;
+        $export_gbp             = 0.0;
+        $wear_gbp               = 0.0;
+        $power_out_of_spec_gbp  = 0.0;
         $import_kwh             = 0.0;
         $export_kwh             = 0.0;
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {

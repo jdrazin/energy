@@ -378,7 +378,6 @@ class EnergyCost extends Root
         $energyCostGuess    = $result['energyCostGuess']    ?? null; // cost, first guess
         $energyCostSolution = $result['energyCostSolution'] ?? null; // cost, solution
         $optimum_charge_kws = $result['optimum_charge_kws'] ?? null; // solution charge rates
-
         if (!($converged = $result['converged'] ?? false)) { // write out problem and log warning if not converged
             $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
             if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
@@ -670,13 +669,13 @@ class EnergyCost extends Root
 
             // operational and out of spec wear
             $wear_gbp      += $this->wearPerKwh(   $battery_level_kwh,
-                                                           0.0,
-                                                           $this->batteryCapacityKwh,
-                                                           $this->batteryWearEnergyCostAverageGbpPerKwh,
-                                                           $this->batteryWearEnergyConstantCoefficient,
-                                                           $this->batteryWearEnergyExponentialCoefficient,
-                                                           $this->batteryWearEnergyActivationKwh,
-                                                           $this->batteryWearEnergyNormalisationCoefficient)*abs($battery_charge_kwh);
+                                                   0.0,
+                                                   $this->batteryCapacityKwh,
+                                                   $this->batteryWearEnergyCostAverageGbpPerKwh,
+                                                   $this->batteryWearEnergyConstantCoefficient,
+                                                   $this->batteryWearEnergyExponentialCoefficient,
+                                                   $this->batteryWearEnergyActivationKwh,
+                                                   $this->batteryWearEnergyNormalisationCoefficient)*abs($battery_charge_kwh);
             // battery charge/discharge power out of spec
             $power_out_of_spec_gbp += $this->wearPerKwh(   $battery_charge_kw,
                                                            -$this->batteryMaxDischargeKw,

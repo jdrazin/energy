@@ -116,10 +116,6 @@ class EnergyCost extends Root
                                             'batteryMaxDischargeKw'                   => $this->config['battery']['max_discharge_kw'],
                                             'importLimitKw'                           => $this->config['energy']['grid']['import']['limit_kw'],
                                             'exportLimitKw'                           => $this->config['energy']['grid']['export']['limit_kw'],
-                                            'gridWearPowerCostAverageGbpPerKwh'       => $this->config['energy']['grid']['wear']['power']['cost_average_gbp_per_kwh'],
-                                            'gridWearPowerConstantCoefficient'        => $this->config['energy']['grid']['wear']['power']['constant_coefficient'],
-                                            'gridWearPowerExponentialCoefficient'     => $this->config['energy']['grid']['wear']['power']['exponential_coefficient'],
-                                            'gridWearPowerActivationKw'               => $this->config['energy']['grid']['wear']['power']['activation_kw'],
                                             'batteryEnergyInitialKwh'                 => $batteryLevelInitialKwh,
                                             'slotSliceDurationHour'                   => $this->slot_slice_duration_hour,
                                             'number_slots_slices'                     => $this->number_slots_slices,
@@ -156,10 +152,6 @@ class EnergyCost extends Root
             $this->importLimitKw                            = (float) $this->config['energy']['grid']['import']['limit_kw'];
             $this->exportLimitKw                            = (float) $this->config['energy']['grid']['export']['limit_kw'];
 
-            $this->gridWearPowerCostAverageGbpPerKwh        = (float) $this->config['energy']['grid']['wear']['power']['cost_average_gbp_per_kwh'];
-            $this->gridWearPowerConstantCoefficient         = (float) $this->config['energy']['grid']['wear']['power']['constant_coefficient'];
-            $this->gridWearPowerExponentialCoefficient      = (float) $this->config['energy']['grid']['wear']['power']['exponential_coefficient'];
-            $this->gridWearPowerActivationKw                = (float) $this->config['energy']['grid']['wear']['power']['activation_kw'];
             $this->batteryEnergyInitialKwh                  = (float) $batteryLevelInitialKwh;
         }
     }
@@ -524,10 +516,6 @@ class EnergyCost extends Root
         $command .= $this->parameter_name_value('batteryMaxDischargeKw');
         $command .= $this->parameter_name_value('importLimitKw');
         $command .= $this->parameter_name_value('exportLimitKw');
-        $command .= $this->parameter_name_value('gridWearPowerCostAverageGbpPerKwh');
-        $command .= $this->parameter_name_value('gridWearPowerConstantCoefficient');
-        $command .= $this->parameter_name_value('gridWearPowerExponentialCoefficient');
-        $command .= $this->parameter_name_value('gridWearPowerActivationKw');
         $command .= $this->parameter_name_value('batteryEnergyInitialKwh');
         $command .= $this->parameter_name_value('slotSliceDurationHour');
         $command .= $this->parameter_name_value('number_slots_slices');
@@ -598,14 +586,6 @@ class EnergyCost extends Root
         $this->importLimitKw                            = (float) $this->strip(' ');
         $this->strip('=');
         $this->exportLimitKw                            = (float) $this->strip(' ');
-        $this->strip('=');
-        $this->gridWearPowerCostAverageGbpPerKwh        = (float) $this->strip(' ');
-        $this->strip('=');
-        $this->gridWearPowerConstantCoefficient         = (float) $this->strip(' ');
-        $this->strip('=');
-        $this->gridWearPowerExponentialCoefficient      = (float) $this->strip(' ');
-        $this->strip('=');
-        $this->gridWearPowerActivationKw                = (float) $this->strip(' ');
         $this->strip('=');
         $this->batteryEnergyInitialKwh                  = (float) $this->strip(' ');
         $this->strip('=');

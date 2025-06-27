@@ -11,8 +11,8 @@ class Npv
 
     function __construct($config)
     {
-        $this->name = $config['name'];
-        $this->discount_factor_pa = 1.0 + $config['discount_rate_pa'];
+        $this->name = $config['name'] ?? '';
+        $this->discount_factor_pa = 1.0 + ($config['discount_rate_pa'] ?? 0.0);
         $this->value_gbp = 0.0;
     }
 

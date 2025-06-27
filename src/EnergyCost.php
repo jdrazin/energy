@@ -7,15 +7,13 @@ use Exception;
 
 class EnergyCost extends Root
 {
-    const array    PYTHON_OPTIMIZER_SCRIPT_NAME = [
-                                                'slots'  => 'optimizeCharge.py',
-                                                'slices' => 'optimizeChargeConstrained.py'
-                                              ];
-
+    const int       OPTIMIZE_UNCONSTRAINED = 0,
+                    OPTIMIZE_CONSTRAINED = 1;
     const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5;
 
     const string    OPTIMISATION_LOG_PATHNAME_BASE = '/var/www/html/energy/test/optimisation_',
-                    PYTHON_OPTIMIZER_SCRIPT_BASE   = 'python3 /var/www/html/energy/src/';
+                    PYTHON_OPTIMIZER_SCRIPT_BASE   = 'python3 /var/www/html/energy/src/',
+                    PYTHON_OPTIMIZER               = 'optimize.py';
 
     // setup parameters
     public    float $solarGenerationLimitKw,
@@ -56,7 +54,7 @@ class EnergyCost extends Root
     private ?array $parameters;
 
     public string   $string;
-    private int     $number_slots_slices, $number_slices_per_slot;
+    private int     $number_slots_slices, $optimizer, $number_slices_per_slot;
 
     /**
      * @throws Exception
@@ -91,6 +89,17 @@ class EnergyCost extends Root
                                               'export_gbp_per_days' => []
                                           ];
             }
+            switch ($this->parameters['type']) {
+                case 'slots': {
+                    $optimizer = self::OPTIMIZE_UNCONSTRAINED;
+                    break;
+                }
+                case 'slices': {
+                    $optimizer = self::OPTIMIZE_CONSTRAINED;
+                    break;
+                }
+                default: {}
+            }
             $this->problem              = [
                                             'solarGenerationLimitKw'                  => $this->config['solar_pv']['inverter']['power_threshold_kw'],
                                             'batteryCapacityKwh'                      => $this->config['battery']['initial_raw_capacity_kwh'],
@@ -107,13 +116,10 @@ class EnergyCost extends Root
                                             'batteryMaxDischargeKw'                   => $this->config['battery']['max_discharge_kw'],
                                             'importLimitKw'                           => $this->config['energy']['grid']['import']['limit_kw'],
                                             'exportLimitKw'                           => $this->config['energy']['grid']['export']['limit_kw'],
-                                            'gridWearPowerCostAverageGbpPerKwh'       => $this->config['energy']['grid']['wear']['power']['cost_average_gbp_per_kwh'],
-                                            'gridWearPowerConstantCoefficient'        => $this->config['energy']['grid']['wear']['power']['constant_coefficient'],
-                                            'gridWearPowerExponentialCoefficient'     => $this->config['energy']['grid']['wear']['power']['exponential_coefficient'],
-                                            'gridWearPowerActivationKw'               => $this->config['energy']['grid']['wear']['power']['activation_kw'],
                                             'batteryEnergyInitialKwh'                 => $batteryLevelInitialKwh,
                                             'slotSliceDurationHour'                   => $this->slot_slice_duration_hour,
                                             'number_slots_slices'                     => $this->number_slots_slices,
+                                            'optimizer'                               => $optimizer,
                                             'import_gbp_per_days'                     => $loadSolarImportExports['import_gbp_per_days'],
                                             'export_gbp_per_days'                     => $loadSolarImportExports['export_gbp_per_days'],
                                             'import_gbp_per_kwhs'                     => $loadSolarImportExports['import_gbp_per_kwhs'],
@@ -146,10 +152,6 @@ class EnergyCost extends Root
             $this->importLimitKw                            = (float) $this->config['energy']['grid']['import']['limit_kw'];
             $this->exportLimitKw                            = (float) $this->config['energy']['grid']['export']['limit_kw'];
 
-            $this->gridWearPowerCostAverageGbpPerKwh        = (float) $this->config['energy']['grid']['wear']['power']['cost_average_gbp_per_kwh'];
-            $this->gridWearPowerConstantCoefficient         = (float) $this->config['energy']['grid']['wear']['power']['constant_coefficient'];
-            $this->gridWearPowerExponentialCoefficient      = (float) $this->config['energy']['grid']['wear']['power']['exponential_coefficient'];
-            $this->gridWearPowerActivationKw                = (float) $this->config['energy']['grid']['wear']['power']['activation_kw'];
             $this->batteryEnergyInitialKwh                  = (float) $batteryLevelInitialKwh;
         }
     }
@@ -343,15 +345,16 @@ class EnergyCost extends Root
                     break;
                 }
             }
-            $command = $this->command($first_guess_charge_kws);                          // make optimize command line using parameters and first guesses
+            $command = $this->command($this->problem['first_guess_charge_kws'] = $first_guess_charge_kws); // make optimize command line using parameters and first guesses
         }
         else { // use debug JSON and make slot arrays as necessary
-           $pathname_problem       = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
+           $suffix                 = DEBUG_MINIMISER_USE_FAIL ? 'fail' : 'last_ok';
+           $pathname_problem       = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_' . $suffix . '.json';
            $this->problem          = json_decode(file_get_contents($pathname_problem, true), true);
            $this->load_house_kws   = $this->problem['load_house_kws'];                    // get total house load from problem
            $this->solar_gross_kws  = $this->problem['solar_gross_kws'];                   // get solar forecast (excludes grid clipping) from problem
            $first_guess_charge_kws = $this->problem['first_guess_charge_kws'];            // first guess
-           $pathname_command       = self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt';
+           $pathname_command       = self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt';
            $command                = file_get_contents($pathname_command, true);
         }
         $this->costs = [];
@@ -368,21 +371,13 @@ class EnergyCost extends Root
         $energyCostGuess    = $result['energyCostGuess']    ?? null; // cost, first guess
         $energyCostSolution = $result['energyCostSolution'] ?? null; // cost, solution
         $optimum_charge_kws = $result['optimum_charge_kws'] ?? null; // solution charge rates
-
         if (!($converged = $result['converged'] ?? false)) { // write out problem and log warning if not converged
-            $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_fail.json';
-            if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
-                $this->logDb('MESSAGE', $message, null, 'FATAL');
-                throw new Exception($message);
-            }
-            if (!file_put_contents(self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_fail.txt', $command)) {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command');
-                $this->logDb('MESSAGE', $message, null, 'FATAL');
-                throw new Exception($message);
-            }
+            $this->write_problem_command($command, 'fail');
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $this->parameters['type'] . ' convergence failure: see failed problem and command');
             $this->logDb('MESSAGE', $message, $text, 'WARNING');
+        }
+        else {
+            $this->write_problem_command($command, 'last_ok');
         }
         if (!DEBUG_MINIMISER) {      // use solution if non-null and has converged or is better than first guess
             $use_solution = !is_null($optimum_charge_kws) && ($converged || ((!is_null($energyCostGuess) && !is_null($energyCostSolution)) && ($energyCostSolution < $energyCostGuess)));
@@ -397,19 +392,19 @@ class EnergyCost extends Root
                 echo ucfirst(ltrim(($converged ? '' : 'NOT ') . 'converged, ' . ($use_solution ? '' : 'NOT ') . 'usable'                        . PHP_EOL));
                 $indent = '   ';
                 echo 'Total costs: '                                                                                                                  . PHP_EOL;
-                echo $indent . 'Python, guess:     ' . round($energyCostGuess                  + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-                echo $indent . 'Php,    guess:     ' . round($this->costs['raw']['cost']       + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-                echo $indent . 'Python, optimised: ' . round($energyCostSolution               + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-                echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['cost'] + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Python, guess:     ' . round($energyCostGuess                       + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Php,    guess:     ' . round($this->costs['raw']['total_gbp']       + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Python, optimised: ' . round($energyCostSolution                    + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
                 echo PHP_EOL;
-                echo 'Grid cost, optimised: ' . round($this->costs['optimised']['cost_grid']   + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']   + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
                 echo PHP_EOL;
             }
             switch ($this->parameters['type']) {
                 case 'slots': { // insert for each slot: grid and battery discharge energies (kWh)
                     $this->insertOptimumChargeGridKw($optimum_charge_kws);
                     $slot_solution = $this->slotSolution();
-                    $this->insertSlotNextDayCostEstimates($slot_solution['id']);
+                    $this->insertSlotNextDayCostEstimates();
                     return $slot_solution;
                 }
                 case 'slices': { // use slice_solution if available, otherwise use slot solution
@@ -429,6 +424,24 @@ class EnergyCost extends Root
                     echo sprintf("%5.1f", (float)$k/2.0) . ':             ' . round($this->grid_kws[$k], 3) . ', ' . round($optimum_charge_kws[$k], 3) . PHP_EOL;
                 }
                 return [];
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function write_problem_command($command, $suffix): void // writes problem and python optimiser command to files
+    {
+        $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_' . $suffix . '.json';
+        if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
+            $this->logDb('MESSAGE', $message, null, 'FATAL');
+            throw new Exception($message);
+        }
+        if (!file_put_contents(self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt', $command)) {
+            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command');
+            $this->logDb('MESSAGE', $message, null, 'FATAL');
+            throw new Exception($message);
         }
     }
 
@@ -487,7 +500,7 @@ class EnergyCost extends Root
         //
         // make CLI command string
         //
-        $command = self::PYTHON_OPTIMIZER_SCRIPT_BASE . self::PYTHON_OPTIMIZER_SCRIPT_NAME[$this->parameters['type']] . ' ';
+        $command = self::PYTHON_OPTIMIZER_SCRIPT_BASE . self::PYTHON_OPTIMIZER . ' ';
         $command .= $this->parameter_name_value('solarGenerationLimitKw');
         $command .= $this->parameter_name_value('batteryCapacityKwh');
         $command .= $this->parameter_name_value('batteryOneWayEfficiency');
@@ -503,13 +516,10 @@ class EnergyCost extends Root
         $command .= $this->parameter_name_value('batteryMaxDischargeKw');
         $command .= $this->parameter_name_value('importLimitKw');
         $command .= $this->parameter_name_value('exportLimitKw');
-        $command .= $this->parameter_name_value('gridWearPowerCostAverageGbpPerKwh');
-        $command .= $this->parameter_name_value('gridWearPowerConstantCoefficient');
-        $command .= $this->parameter_name_value('gridWearPowerExponentialCoefficient');
-        $command .= $this->parameter_name_value('gridWearPowerActivationKw');
         $command .= $this->parameter_name_value('batteryEnergyInitialKwh');
         $command .= $this->parameter_name_value('slotSliceDurationHour');
         $command .= $this->parameter_name_value('number_slots_slices');
+        $command .= $this->parameter_name_value('optimizer');
 
         $number_slots_slices = $this->problem['number_slots_slices'];
 
@@ -577,52 +587,50 @@ class EnergyCost extends Root
         $this->strip('=');
         $this->exportLimitKw                            = (float) $this->strip(' ');
         $this->strip('=');
-        $this->gridWearPowerCostAverageGbpPerKwh        = (float) $this->strip(' ');
-        $this->strip('=');
-        $this->gridWearPowerConstantCoefficient         = (float) $this->strip(' ');
-        $this->strip('=');
-        $this->gridWearPowerExponentialCoefficient      = (float) $this->strip(' ');
-        $this->strip('=');
-        $this->gridWearPowerActivationKw                = (float) $this->strip(' ');
-        $this->strip('=');
         $this->batteryEnergyInitialKwh                  = (float) $this->strip(' ');
         $this->strip('=');
         $this->slotSliceDurationHour                    = (float) $this->strip(' ');
         $this->strip('=');
         $this->number_slots_slices                      = (int)   $this->strip(' ');
         $this->strip('=');
+        $this->optimizer                                = (int)   $this->strip(' ');
+        $this->strip('=');
+        $this->strip(' ');
         $import_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $import_gbp_per_kws[]                       = (float) $this->strip(' ');
         }
         $this->strip('=');
+        $this->strip(' ');
         $export_gbp_per_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $export_gbp_per_kws[]                       = (float) $this->strip(' ');
         }
         $this->strip('=');
+        $this->strip(' ');
         $load_house_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $load_house_kws[]                           = (float) $this->strip(' ');
         }
         $this->strip('=');
+        $this->strip(' ');
         $solar_gross_kws = [];
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
             $solar_gross_kws[]                          = (float) $this->strip(' ');
         }
-        return $this->costFunction($charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws);
+        return $this->dayCostGbp($charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws);
     }
-    private function costFunction($battery_charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws): array {
+    private function dayCostGbp($battery_charge_kws, $import_gbp_per_kws, $export_gbp_per_kws, $load_house_kws, $solar_gross_kws): array {
         /*
          * calculate cost components: does not include standing costs
          */
         $cost_energy_average_per_kwh_acc = 0.0;                       // accumulator for calculating average energy cost
         $battery_level_kwh = $this->batteryEnergyInitialKwh;          // battery level at beginning of day
         $this->makeNormalisationCoefficients();
-        $cost_grid_import       = 0.0;
-        $cost_grid_export       = 0.0;
-        $cost_energy_wear       = 0.0;
-        $cost_power_out_of_spec = 0.0;
+        $import_gbp             = 0.0;
+        $export_gbp             = 0.0;
+        $wear_gbp               = 0.0;
+        $power_out_of_spec_gbp  = 0.0;
         $import_kwh             = 0.0;
         $export_kwh             = 0.0;
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
@@ -630,9 +638,9 @@ class EnergyCost extends Root
             $tariff_export_per_kwh = $export_gbp_per_kws[$slot_count];
             $battery_charge_kw     = $battery_charge_kws[$slot_count];
             $load_house_kw         = $load_house_kws[$slot_count];
-            $solar_clipped_kw      = min($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw);       // clip solar to generation limit
+            $solar_clipped_kw      = min($solar_gross_kws[$slot_count], $this->solarGenerationLimitKw);     // clip solar to generation limit
             $grid_kw               = $solar_clipped_kw - $load_house_kw - $battery_charge_kw;
-            $grid_kw               = min($grid_kw, $this->exportLimitKw);                                     // clip grid export to limit
+            $grid_kw               = min($grid_kw, $this->exportLimitKw);                                   // clip grid export to limit
             if ($solar_clipped_kw - $load_house_kw < 0.0) {                                                 // tie export to battery discharge limit when no net solar
                 $grid_kw = min($grid_kw, $this->batteryMaxDischargeKw);
             }
@@ -643,10 +651,10 @@ class EnergyCost extends Root
             // grid
             if ($grid_kwh > 0.0) {
                 $export_kwh       += $grid_kwh;
-                $cost_grid_export -= $tariff_export_per_kwh * $grid_kwh;
+                $export_gbp -= $tariff_export_per_kwh * $grid_kwh;
             } else {
                 $import_kwh       += -$grid_kwh;
-                $cost_grid_import -= $tariff_import_per_kwh * $grid_kwh;
+                $import_gbp -= $tariff_import_per_kwh * $grid_kwh;
             }
 
             // battery
@@ -658,16 +666,16 @@ class EnergyCost extends Root
             }
 
             // operational and out of spec wear
-            $cost_energy_wear      += $this->wearPerKwh(   $battery_level_kwh,
-                                                           0.0,
-                                                           $this->batteryCapacityKwh,
-                                                           $this->batteryWearEnergyCostAverageGbpPerKwh,
-                                                           $this->batteryWearEnergyConstantCoefficient,
-                                                           $this->batteryWearEnergyExponentialCoefficient,
-                                                           $this->batteryWearEnergyActivationKwh,
-                                                           $this->batteryWearEnergyNormalisationCoefficient)*abs($battery_charge_kwh);
+            $wear_gbp      += $this->wearPerKwh(   $battery_level_kwh,
+                                                   0.0,
+                                                   $this->batteryCapacityKwh,
+                                                   $this->batteryWearEnergyCostAverageGbpPerKwh,
+                                                   $this->batteryWearEnergyConstantCoefficient,
+                                                   $this->batteryWearEnergyExponentialCoefficient,
+                                                   $this->batteryWearEnergyActivationKwh,
+                                                   $this->batteryWearEnergyNormalisationCoefficient)*abs($battery_charge_kwh);
             // battery charge/discharge power out of spec
-            $cost_power_out_of_spec += $this->wearPerKwh(   $battery_charge_kw,
+            $power_out_of_spec_gbp += $this->wearPerKwh(   $battery_charge_kw,
                                                            -$this->batteryMaxDischargeKw,
                                                             $this->batteryMaxChargeKw,
                                                             $this->batteryWearPowerCostAverageGbpPerKwh,
@@ -677,16 +685,16 @@ class EnergyCost extends Root
                                                             $this->batteryWearPowerNormalisationCoefficient)*abs($battery_charge_kwh);
             $cost_energy_average_per_kwh_acc += 0.5 * ($tariff_import_per_kwh + $tariff_export_per_kwh);    // accumulate average energy cost
         }
-        $cost_energy_level_change = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots_slices);
-        $cost = $cost_grid_import + $cost_grid_export + $cost_energy_wear + $cost_power_out_of_spec + $cost_energy_level_change;
+        $energy_level_change_gbp = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots_slices);
+        $total_gbp = $import_gbp + $export_gbp + $wear_gbp + $power_out_of_spec_gbp + $energy_level_change_gbp;
         return [
-                    'cost'          => $cost,
-                    'cost_grid'     => $cost_grid_import+$cost_grid_export,
-                    'cost_import'   => $cost_grid_import,
-                    'cost_export'   => $cost_grid_export,
-                    'cost_wear'     => $cost_energy_wear,
-                    'import_kwh'    => $import_kwh,
-                    'export_kwh'    => $export_kwh
+                    'total_gbp'  => $total_gbp,
+                    'grid_gbp'   => $import_gbp+$export_gbp,
+                    'import_gbp' => $import_gbp,
+                    'export_gbp' => $export_gbp,
+                    'wear_gbp'   => $wear_gbp,
+                    'import_kwh' => $import_kwh,
+                    'export_kwh' => $export_kwh
         ];
     }
     private function wearPerKwh($x, $x_min, $x_max, $wear_cost_average, $constant_coefficient, $exponential_coefficient, $activation, $normalisation_coefficient): float {
@@ -865,24 +873,24 @@ class EnergyCost extends Root
     /**
      * @throws Exception
      */
-    private function insertSlotNextDayCostEstimates($slot): void     {
-        $standing               = ($this->problem['import_gbp_per_days'] ?? 0.0) + ($this->problem['export_gbp_per_days'] ?? 0.0);
-        $raw                    = $this->costs['raw'];
-        $raw_import             = round($raw['cost_import'], 3);
-        $raw_export             = round($raw['cost_export'], 3);
-        $raw_import_kwh         = round($raw['import_kwh'], 3);
-        $raw_export_kwh         = round($raw['export_kwh'], 3);
-        $optimised              = $this->costs['optimised'];
-        $optimised_import       = round($optimised['cost_import'], 3);
-        $optimised_export       = round($optimised['cost_export'], 3);
-        $optimised_wear         = round($optimised['cost_wear'], 3);
-        $optimised_import_kwh   = round($optimised['import_kwh'], 3);
-        $optimised_export_kwh   = round($optimised['export_kwh'], 3);
-        $tariff_combination_id  = $this->tariff_combination['id'];
-        $sql = 'INSERT IGNORE INTO `slot_next_day_cost_estimates` (`slot`, `tariff_combination`, `standing`, `raw_import`, `raw_export`, `raw_import_kwh`, `raw_export_kwh`, `optimised_import`, `optimised_export`, `optimised_wear`, `optimised_import_kwh`, `optimised_export_kwh`)
-                                                           VALUES (?,       ?,                   ?,          ?,            ?,            ?,                ?,                ?,                  ?,                  ?,                ?,                      ?                     )';
+    private function insertSlotNextDayCostEstimates(): void     {
+        $standing              = ($this->problem['import_gbp_per_days'] ?? 0.0) + ($this->problem['export_gbp_per_days'] ?? 0.0);
+        $raw                   = $this->costs['raw'];
+        $raw_import            = round($raw['import_gbp'], 3);
+        $raw_export            = round($raw['export_gbp'], 3);
+        $raw_import_kwh        = round($raw['import_kwh'], 3);
+        $raw_export_kwh        = round($raw['export_kwh'], 3);
+        $optimised             = $this->costs['optimised'];
+        $optimised_import      = round($optimised['import_gbp'], 3);
+        $optimised_export      = round($optimised['export_gbp'], 3);
+        $optimised_wear        = round($optimised['wear_gbp'], 3);
+        $optimised_import_kwh  = round($optimised['import_kwh'], 3);
+        $optimised_export_kwh  = round($optimised['export_kwh'], 3);
+        $tariff_combination_id = $this->tariff_combination['id'];
+        $sql = 'INSERT IGNORE INTO `slot_next_day_cost_estimates` (`tariff_combination`, `standing`, `raw_import`, `raw_export`, `raw_import_kwh`, `raw_export_kwh`, `optimised_import`, `optimised_export`, `optimised_wear`, `optimised_import_kwh`, `optimised_export_kwh`)
+                                                           VALUES (?,                   ?,          ?,            ?,            ?,                ?,                ?,                  ?,                  ?,                ?,                      ?                     )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iidddddddddd', $slot, $tariff_combination_id, $standing, $raw_import, $raw_export, $raw_import_kwh, $raw_export_kwh, $optimised_import, $optimised_export, $optimised_wear, $optimised_import_kwh, $optimised_export_kwh) ||
+            !$stmt->bind_param('idddddddddd', $tariff_combination_id, $standing, $raw_import, $raw_export, $raw_import_kwh, $raw_export_kwh, $optimised_import, $optimised_export, $optimised_wear, $optimised_import_kwh, $optimised_export_kwh) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');

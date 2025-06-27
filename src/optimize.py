@@ -1,10 +1,9 @@
 #
-# trust-constr cost optimiser, see https://docs.scipy.org/doc/scipy/reference/optimize.minimize-trustconstr.html
+# Powell cost optimiser, see https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_powell.html#fmin-powell
 #
 import math
 import sys
 import json
-
 import numpy as np
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
@@ -19,7 +18,7 @@ def value(index):
     return string[pos:]
 
 # define energy cost
-def costFunction(X):
+def dayCostGbp(X):
     # X unknowns:
     #   grid_kw:         X[0            ... number_slots-1]
     #   solar_clip_kw:   X[number_slots ... 2*number_slots-1]
@@ -33,15 +32,15 @@ def costFunction(X):
     batteryPowerNormalisationCoefficient  = normalisationCoefficient(   batteryWearPowerConstantCoefficient,
                                                                         batteryWearPowerExponentialCoefficient,
                                                                         batteryWearPowerActivationKw,
-                                                                        -batteryMaxDischargeRateKw,
+                                                                       -batteryMaxDischargeRateKw,
                                                                         batteryMaxChargeRateKw)
-    cost_grid_import       = 0.0
-    cost_grid_export       = 0.0
-    cost_energy_wear       = 0.0
-    cost_power_out_of_spec = 0.0
-    import_kwh             = 0.0
-    export_kwh             = 0.0
-    slot_count             = 0
+    import_gbp            = 0.0
+    export_gbp            = 0.0
+    wear_gbp              = 0.0
+    power_out_of_spec_gbp = 0.0
+    import_kwh            = 0.0
+    export_kwh            = 0.0
+    slot_count            = 0
     while slot_count < number_slots:
         tariff_import_per_kwh = tariffImportPerKwhs[slot_count]
         tariff_export_per_kwh = tariffExportPerKwhs[slot_count]
@@ -73,10 +72,10 @@ def costFunction(X):
         # grid
         if grid_kwh > 0.0:
             export_kwh       += grid_kwh
-            cost_grid_export -= tariff_export_per_kwh * grid_kwh
+            export_gbp -= tariff_export_per_kwh * grid_kwh
         else:
             import_kwh       += -grid_kwh
-            cost_grid_import -= tariff_import_per_kwh * grid_kwh
+            import_gbp -= tariff_import_per_kwh * grid_kwh
 
         # battery
         if battery_charge_kw > 0.0:
@@ -85,7 +84,7 @@ def costFunction(X):
             battery_level_kwh += battery_charge_kwh / batteryOneWayEfficiency
 
         # operational and out of spec wear
-        cost_energy_wear            += wearPerKwh        ( battery_level_kwh,
+        wear_gbp            += wearPerKwh        ( battery_level_kwh,
                                                            0.0,
                                                            batteryCapacityKwh,
                                                            batteryWearEnergyCostAverageGbpPerKwh,
@@ -95,8 +94,8 @@ def costFunction(X):
                                                            batteryEnergyNormalisationCoefficient) * abs(battery_charge_kwh)
 
         # battery charge/discharge power out of spec
-        cost_power_out_of_spec      += wearPerKwh       (  battery_charge_kw,
-                                                           -batteryMaxDischargeRateKw,
+        power_out_of_spec_gbp      += wearPerKwh       (  battery_charge_kw,
+                                                          -batteryMaxDischargeRateKw,
                                                            batteryMaxChargeRateKw,
                                                            batteryWearPowerCostAverageGbpPerKwh,
                                                            batteryWearPowerConstantCoefficient,
@@ -106,9 +105,9 @@ def costFunction(X):
 
         cost_energy_average_per_kwh_acc += 0.5 * (tariff_import_per_kwh + tariff_export_per_kwh) # accumulate average energy cost
         slot_count += 1
-    cost_energy_level_change = (batteryEnergyInitialKwh - battery_level_kwh) * cost_energy_average_per_kwh_acc / number_slots
-    day_cost_gbp = cost_grid_import + cost_grid_export + cost_energy_wear + cost_power_out_of_spec + cost_energy_level_change
-    return day_cost_gbp
+    energy_level_change_gbp = (batteryEnergyInitialKwh - battery_level_kwh) * cost_energy_average_per_kwh_acc / number_slots
+    total_gbp = import_gbp + export_gbp + wear_gbp + power_out_of_spec_gbp + energy_level_change_gbp
+    return total_gbp
 
 # define wear function
 def wearPerKwh(x, x_min, x_max, wear_cost_average, constant_coefficient, exponential_coefficient, activation, normalisation_coefficient):
@@ -128,16 +127,11 @@ def normalisationCoefficient(constant_coefficient, exponential_coefficient, acti
     normalisation_coefficient = 12.0/(1.0+(11.0*constant_coefficient)+(24.0*exponential_coefficient*activation/(x_max - x_min)))
     return normalisation_coefficient
 
+
 def hess_numeric(fun):
     def hess(x):
         return approx_derivative(lambda y: approx_derivative(fun, y, method='2-point'), x, method='2-point')
     return hess
-
-# get cpu time
-import time
-obj        = time.gmtime(0)
-epoch      = time.asctime(obj)
-start_time = time.time()
 
 # constants
 index =  1
@@ -171,19 +165,13 @@ importLimitKw                               = float(value(index))
 index += 1
 exportLimitKw                               = float(value(index))
 index += 1
-gridWearPowerCostAverageGbpPerKwh           = float(value(index))
-index += 1
-gridWearPowerConstantCoefficient            = float(value(index))
-index += 1
-gridWearPowerExponentialCoefficient         = float(value(index))
-index += 1
-gridWearPowerActivationKw                   = float(value(index))
-index += 1
 batteryEnergyInitialKwh                     = float(value(index))
 index += 1
 slotSliceDurationHour                       = float(value(index))
 index += 1
 number_slots                                = int  (value(index))
+index += 1
+optimiser                                   = int  (value(index))
 
 # load import_gbp_per_kwhs
 index += 1
@@ -221,63 +209,77 @@ while i < number_slots:
     solar_gross_kws  .append(float(sys.argv[index]))
     i+= 1
 
-# load initial charge_kws first guesses
+# load initial charge_kws guesses
 index += 1
-X0 = []
+X = []
 sumX = 0.0
 i = 0
 while i < number_slots:
     index += 1
     x_element = float(sys.argv[index])
     sumX += x_element
-    X0.append(x_element)
+    X.append(x_element)
     i+= 1
 
-# if 1: replace first guesses with their average
-if 1:
-    X0 = []
-    i = 0
-    x = sumX / number_slots
-    while i < number_slots:
-        X0.append(x)
-        i+= 1
-
-# define the bounds
-index += 1
-lowerBounds = []
-upperBounds = []
-i = 0
-while i < number_slots:
-    lowerBounds.append(-batteryMaxDischargeRateKw)
-    upperBounds.append(+batteryMaxChargeRateKw)
-    i+= 1
-boundData = Bounds(lowerBounds, upperBounds)
-
-#define the linear constraints
-lowerBoundLinearConstraints = np.full(1, sumX - SUM_CHARGE_TOLERANCE_KWH)
-upperBoundLinearConstraints = np.full(1, sumX + SUM_CHARGE_TOLERANCE_KWH)
-matrixLinearConstraints     = np.ones((1, number_slots))
-linearConstraints           = LinearConstraint(matrixLinearConstraints, lowerBoundLinearConstraints, upperBoundLinearConstraints)
-# hessZero                    = lambda x: np.zeros((number_slots, number_slots))
+# get cpu time
+import time
+obj        = time.gmtime(0)
+epoch      = time.asctime(obj)
+start_time = time.time()
 
 # get cost
-energyCostGuess = costFunction(X0)
+energyCostGuess = dayCostGbp(X)
 
 # optimise
-X0     = np.array(X0, dtype=np.float64) # force 64 bit on Raspberry Pi scipy implementation
-result = minimize(costFunction, X0, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hess_numeric(costFunction), options={'verbose': 0, 'disp': 0, 'maxiter': 1000})
+if optimiser == 0: # unconstrained optimisation
+  # load charge min, max boundary pairs
+  index += 1
+  bounds = []
+  i = 0
+  while i < number_slots:
+    charge_min_kw = -batteryMaxDischargeRateKw
+    charge_max_kw = +batteryMaxChargeRateKw
+    i += 1
+    bound = (charge_min_kw, charge_max_kw)
+    bounds.append(bound)
+  result = minimize(dayCostGbp, X, method='powell', bounds=bounds, options={'disp': 0, 'ftol': 1E-14, 'maxiter': 1000000})  # Powell
+  elapsed_s = time.time() - start_time
+else: # constrained optimisation
+  # replace first guesses with average
+  X = []
+  i = 0
+  x = sumX / number_slots
+  while i < number_slots:
+    X.append(x)
+    i+= 1
+  # define the bounds
+  index += 1
+  lowerBounds = []
+  upperBounds = []
+  i = 0
+  while i < number_slots:
+      lowerBounds.append(-batteryMaxDischargeRateKw)
+      upperBounds.append(+batteryMaxChargeRateKw)
+      i += 1
+  boundData = Bounds(lowerBounds, upperBounds)
 
-elapsed_s = time.time() - start_time
-
-# output result as json
-output = {
-    "converged":            result.success,
-    "elapsed_s":            elapsed_s,
-    "evaluations":          result.nfev,
-    "status":               result.status,
-    "message":              result.message,
-    "optimum_charge_kws":   result.x.tolist(),
-    "energyCostGuess":      energyCostGuess,
-    "energyCostSolution":   result.fun
-}
+  # define the linear constraints
+  lowerBoundLinearConstraints = np.full(1, sumX - SUM_CHARGE_TOLERANCE_KWH)
+  upperBoundLinearConstraints = np.full(1, sumX + SUM_CHARGE_TOLERANCE_KWH)
+  matrixLinearConstraints = np.ones((1, number_slots))
+  linearConstraints = LinearConstraint(matrixLinearConstraints, lowerBoundLinearConstraints, upperBoundLinearConstraints)
+  # hessZero                    = lambda x: np.zeros((number_slots, number_slots))
+  # optimise
+  X = np.array(X, dtype=np.float64)  # force 64 bit on Raspberry Pi scipy implementation
+  result = minimize(dayCostGbp, X, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hess_numeric(dayCostGbp), options={'verbose': 0, 'disp': 0, 'maxiter': 1000})
+output = { # output result as json
+    "converged": result.success,
+    "elapsed_s": time.time() - start_time,
+    "evaluations": result.nfev,
+    "status": result.status,
+    "message": result.message,
+    "optimum_charge_kws": result.x.tolist(),
+    "energyCostGuess": energyCostGuess,
+    "energyCostSolution": result.fun
+  }
 print(json.dumps(output))

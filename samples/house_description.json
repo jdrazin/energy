@@ -354,8 +354,17 @@
         },
         "limit_kw": 8.5
       },
+      "#": "https://agile.octopushome.net/historical-data",
       "inflation_real_pa": 0.0,
-      "standing_gbp_per_day": 0.6127
+      "standing_gbp_per_day": 0.6127,
+      "wear": {
+        "power": {
+          "cost_average_gbp_per_kwh": 0.03,
+          "constant_coefficient": 0.0,
+          "exponential_coefficient": 25.0,
+          "activation_kw": 0.1
+        }
+      }
     }
   },
   "permute": [

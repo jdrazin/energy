@@ -13,7 +13,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const     DEBUG                             = false,
-          PID_FOLDER                        = '/var/www/html/energy/',
+          PID_FOLDER                        = '/var/www/html/energy/pids/',
           CONFIG_JSON                       = 'config.json',
           JSON_PROJECTION_ID                = 0,
           TEST_PROJECTION_ID                = 3116783309,

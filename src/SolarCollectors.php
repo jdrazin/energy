@@ -42,18 +42,14 @@ class SolarCollectors extends Component
             $key = 0;
             foreach ($component['collectors'] as $collector_name => $collector_parameters) {
                 if ($collector_parameters && $collector_parameters['active'] ?? true) {
-                    $this->collectors[$key] = $collector_name;
-
+                    $this->collectors[$key]    = $collector_name;
                     $this->panels_number[$key] = $collector_parameters['panels_number'] ?? null;
-
                     $area = $this->overlay($this->area, $collector_parameters['area'] ?? []);
                     $orientation = $area['orientation'] ?? [];
                     $this->orientation_type[$key] = $orientation['type'] ?? self::DEFAULTS['type'];
                     $this->azimuth_degrees[$key] = $orientation['azimuth_degrees'] ?? self::DEFAULTS['azimuth_degrees'];
                     $this->tilt_degrees[$key] = $orientation['tilt_degrees'] ?? self::DEFAULTS['tilt_degrees'];
-
-                    $this->shading_factor[$key] = $collector_parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? 1.0);
-
+                    $this->shading_factor[$key] = $collector_parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
                     if ($this->panels) {
                         if (!($panel_name = $collector_parameters['panel'] ?? false) ||
                             !($panel = $this->panels[$panel_name] ?? false)) {

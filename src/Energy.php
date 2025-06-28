@@ -466,8 +466,8 @@ class Energy extends Root
         $boiler        = $permutation['boiler'];
         $solar_pv      = $permutation['solar_pv'];
         $solar_thermal = $permutation['solar_thermal'];
-        $sql = 'INSERT INTO `permutations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
-			                        VALUES (?,            ?,              ?,         ?,       ?,            ?,        ?,          ?,               NOW(),   NULL  )';
+        $sql = 'INSERT IGNORE INTO `permutations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
+			                               VALUES (?,            ?,              ?,         ?,       ?,            ?,        ?,          ?,               NOW(),   NULL  )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('isiiiiii', $projection_id, $permutation_acronym, $battery, $heat_pump, $insulation, $boiler, $solar_pv, $solar_thermal) ||
             !$stmt->execute()) {
@@ -632,9 +632,14 @@ class Energy extends Root
                 }
             }
             // heat hot water tank if necessary
-            if ($solar_thermal->active && ($hotwater_tank->temperature_c < $hotwater_tank->target_temperature_c)) {                                                 // heat hotwater from solar thermal if necessary                                                                          // top up with solar thermal
-                $solar_hotwater_j = $solar_thermal->transfer_consume_j($temperature_internal_room_c, $time)['transfer'];
-                $hotwater_tank->transfer_consume_j($solar_hotwater_j, $temp_climate_c);
+            if ($solar_thermal->active) {
+                $solar_thermal_hotwater_j = $solar_thermal->transfer_consume_j($temperature_internal_room_c, $time)['transfer'];                                    // generated solar thermal energy
+                if ($hotwater_tank->temperature_c < $hotwater_tank->target_temperature_c) {                                                                         // heat hot water tank from solar thermal if necessary                                                                          // top up with solar thermal
+                    $solar_thermal_hotwater_j -= $hotwater_tank->transfer_consume_j($solar_thermal_hotwater_j, $temp_climate_c);                                    // deduct hot water consumption from solar thermal generation
+                }
+            }
+            else {
+                $solar_thermal_hotwater_j = 0.0;
             }
             if ($hotwater_tank->temperature_c < $hotwater_tank->target_temperature_c) {
                 if ($heatpump->active) {                  // use heat pump

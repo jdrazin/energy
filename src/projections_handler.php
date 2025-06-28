@@ -13,7 +13,8 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const     DEBUG                             = false,
-          PID_FOLDER                        = '/var/www/html/energy/pids/',
+          FOLDER_PID                        = '/var/www/html/energy/pids/',
+          FOLDER_TEST                       = '/var/www/html/energy/test/',
           CONFIG_JSON                       = 'config.json',
           JSON_PROJECTION_ID                = 0,
           TEST_PROJECTION_ID                = 3116783309,
@@ -24,7 +25,7 @@ const     DEBUG                             = false,
           MODE                              = 'cron';
 
 try {
-    $pid_filename = PID_FOLDER . basename(__FILE__, '.php') . '.pid';
+    $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
     if (DEBUG) {
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
@@ -38,7 +39,7 @@ try {
         switch (MODE) {
             case 'json': {
                 (new Energy(null))->deleteProjection(JSON_PROJECTION_ID);
-                $config_json = file_get_contents(PID_FOLDER . CONFIG_JSON);
+                $config_json = file_get_contents(FOLDER_TEST . CONFIG_JSON);
                 (new Energy(null))->permute(JSON_PROJECTION_ID, json_decode($config_json, true));
                 break;
             }

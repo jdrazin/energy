@@ -88,10 +88,10 @@ class SolarCollectors extends Component
                     $collector_maintenance_pa_gbp = $collector_maintenance_base_pa_gbp + $collector_maintenance_panels_pa_gbp;
                     $this->value_maintenance_per_timestep_gbp -= $collector_maintenance_pa_gbp * $time->step_s / (\Src\Energy::DAYS_PER_YEAR * \Src\Energy::HOURS_PER_DAY * \Src\Energy::SECONDS_PER_HOUR);
 
-                    $this->solar[$key] = new Solar($location, $area['orientation']);
-                    $this->thermal[$key] = new ThermalInertia($initial_temperature,
-                        $panel['thermal_inertia_m2_second_per_w_celsius'],
-                        $time);
+                    $this->solar[$key]   = new Solar($location, $area['orientation']);
+
+                    // ThermalInertia used to estimate panel temperature as function of solar power and time, required to estimate thermally induced efficiency losses
+                    $this->thermal[$key]  = new ThermalInertia($initial_temperature, $panel['thermal_inertia_m2_second_per_w_celsius'], $time);
                     $this->inverter[$key] = new Inverter($collector_parameters['inverter'] ?? null, $time, $npv);
                 }
                 $key++;

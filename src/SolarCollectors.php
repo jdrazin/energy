@@ -6,10 +6,10 @@ class SolarCollectors extends Component
 
     const   DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS = 1000.0,
             TEMPERATURE_TARGET_INCREMENT_CELSIUS_M2_PER_W = 50 / 900,
-            DEFAULTS = ['type'              => 'tilted',
-                        'azimuth_degrees'   => 180.0,
-                        'tilt_degrees'      => 35.0,
-                        'border_m'          => 0.2];
+            DEFAULTS = ['type'            => 'tilted',
+                        'azimuth_degrees' => 180.0,
+                        'tilt_degrees'    => 35.0,
+                        'border_m'        => 0.2];
 
     public array    $cost, $area, $orientation_type, $azimuth_degrees, $panels_number, $power_max_w,
                     $tilt_degrees, $shading_factor, $efficiency, $efficiency_temperature_reference_c, $efficiency_per_c, $efficiency_pa, $solar, $thermal,

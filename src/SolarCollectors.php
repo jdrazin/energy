@@ -7,15 +7,15 @@ use Energy;
 class SolarCollectors extends Component
 {
 
-    const TEMPERATURE_TARGET_INCREMENT_CELSIUS_M2_PER_W = 50 / 900,
-        DEFAULTS = ['type' => 'tilted',
-        'azimuth_degrees' => 180.0,
-        'tilt_degrees' => 35.0,
-        'border_m' => 0.2];
+    const   TEMPERATURE_TARGET_INCREMENT_CELSIUS_M2_PER_W = 50 / 900,
+            DEFAULTS = ['type'              => 'tilted',
+                        'azimuth_degrees'   => 180.0,
+                        'tilt_degrees'      => 35.0,
+                        'border_m'          => 0.2];
 
-    public array $cost, $area, $orientation_type, $azimuth_degrees, $panels_number, $power_max_w,
-        $tilt_degrees, $shading_factor, $efficiency, $efficiency_temperature_reference_c, $efficiency_per_c, $efficiency_pa, $solar, $thermal,
-        $inverter, $output_kwh, $lifetime_years, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
+    public array    $cost, $area, $orientation_type, $azimuth_degrees, $panels_number, $power_max_w,
+                    $tilt_degrees, $shading_factor, $efficiency, $efficiency_temperature_reference_c, $efficiency_per_c, $efficiency_pa, $solar, $thermal,
+                    $inverter, $output_kwh, $lifetime_years, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
     private array $panels, $panels_area_m2;
 
     public function __construct($component, $location, $initial_temperature, $time, $npv)

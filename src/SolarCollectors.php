@@ -202,6 +202,7 @@ class SolarCollectors extends Component
         return max($oanels_a, $oanels_b);
     }
 
+    // returns elevated panel surface temperature over climate temperature due to total solar radiation
     public function temperature_target($temperature_climate, $key): float
     {
         return $temperature_climate + self::TEMPERATURE_TARGET_INCREMENT_CELSIUS_M2_PER_W * $this->solar[$key]->total_insolation_cloud_time_w_per_m2;

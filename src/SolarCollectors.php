@@ -126,7 +126,7 @@ class SolarCollectors extends Component
     {
         if (!$this->active) {
             $transfer_consume_j = ['transfer' => 0.0,
-                'consume' => 0.0];
+                                   'consume'  => 0.0];
         } else {
             $transfer_j = 0.0;
             $collector_j = [];

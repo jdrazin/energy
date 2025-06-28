@@ -15,14 +15,14 @@ ini_set('mysql.connect_timeout','36000');
 const     DEBUG                             = false,
           FOLDER_PID                        = '/var/www/html/energy/pids/',
           FOLDER_TEST                       = '/var/www/html/energy/test/',
-          CONFIG_JSON                       = 'config.json',
+          CONFIG_JSON                       = 'test.config.json',
           JSON_PROJECTION_ID                = 0,
           TEST_PROJECTION_ID                = 3116783309,
           USE_CRONTAB                       = true,
           ARGS                              = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION           = true,
           EMAIL_NOTIFICATION_ON_ERROR       = false,
-          MODE                              = 'cron';
+          MODE                              = 'json';
 
 try {
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';

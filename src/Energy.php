@@ -635,7 +635,7 @@ class Energy extends Root
             if ($solar_thermal->active) {
                 $solar_thermal_hotwater_j = $solar_thermal->transfer_consume_j($temperature_internal_room_c, $time)['transfer'];                                    // generated solar thermal energy
                 if ($hotwater_tank->temperature_c < $hotwater_tank->target_temperature_c) {                                                                         // heat hot water tank from solar thermal if necessary                                                                          // top up with solar thermal
-                    $solar_thermal_hotwater_j -= $hotwater_tank->transfer_consume_j($solar_thermal_hotwater_j, $temp_climate_c);                                    // deduct hot water consumption from solar thermal generation
+                    $solar_thermal_hotwater_j -= $hotwater_tank->transfer_consume_j($solar_thermal_hotwater_j, $temp_climate_c)['consume'];                         // deduct hot water consumption from solar thermal generation
                 }
             }
             else {

@@ -88,7 +88,7 @@ class SolarCollectors extends Component
 
                     $this->solar[$key]   = new Solar($location, $area['orientation']);
 
-                    // ThermalInertia used to estimate panel temperature as function of solar power and time, required to estimate thermally induced efficiency losses
+                    // ThermalInertia used to estimate panel temperature as function of solar power and time (required to estimate solar_pv thermally induced efficiency losses)
                     $thermal_inertia_m2_second_per_w_celsius = $panel['thermal_inertia_m2_second_per_w_celsius'] ?? self::DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS;
                     $this->thermal[$key]  = new ThermalInertia($initial_temperature, $thermal_inertia_m2_second_per_w_celsius, $time);
                     $this->inverter[$key] = new Inverter($collector_parameters['inverter'] ?? null, $time, $npv);

@@ -660,13 +660,16 @@ class Energy extends Root
             }
             // satisfy space heating-cooling demand
             $demand_thermal_space_heating_j                     = $demand_space_heating_thermal->demand_j($time)*$insulation->space_heating_demand_factor;          // get space heating energy demand
+            if ($solar_thermal_hotwater_j > 0.0) {
+                $demand_thermal_space_heating_j                -= $solar_thermal_hotwater_j;                                                                        // use remaining solar thermal (if any) for space heating
+            }
             if ($heatpump->active) {                                                                                                                                // use heatpump if available
                 if ($demand_thermal_space_heating_j >= 0.0     && $heatpump->heat) {                                                                                // heating
                     $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j, $temperature_internal_room_c - $temp_climate_c, $time);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
                     $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];
                 }
-                elseif ($demand_thermal_space_heating_j <  0.0  && $heatpump->cool) {                                                                               // cooling
+                elseif ($demand_thermal_space_heating_j <  0.0 && $heatpump->cool) {                                                                               // cooling
                     $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j, $temp_climate_c - $temperature_internal_room_c, $time);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
                     $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];

@@ -12,7 +12,7 @@ class ThermalInertia
         $this->thermal_inertial_seconds_per_c = $thermal_inertial_seconds_per_c;
     }
 
-    public function time_update($temperature_target): void
+    public function time_update($temperature_target): void // adjust panel temperature towards target temperature as function of time step width and thermal inertia
     {
         $this->temperature_c = $this->temperature_c + $this->step_s * ($temperature_target - $this->temperature_c) / $this->thermal_inertial_seconds_per_c;
     }

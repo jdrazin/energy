@@ -47,9 +47,9 @@ class SolarCollectors extends Component
                     $area = $this->overlay($this->area, $collector_parameters['area'] ?? []);
                     $orientation = $area['orientation'] ?? [];
                     $this->orientation_type[$key] = $orientation['type'] ?? self::DEFAULTS['type'];
-                    $this->azimuth_degrees[$key] = $orientation['azimuth_degrees'] ?? self::DEFAULTS['azimuth_degrees'];
-                    $this->tilt_degrees[$key] = $orientation['tilt_degrees'] ?? self::DEFAULTS['tilt_degrees'];
-                    $this->shading_factor[$key] = $collector_parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
+                    $this->azimuth_degrees[$key]  = $orientation['azimuth_degrees'] ?? self::DEFAULTS['azimuth_degrees'];
+                    $this->tilt_degrees[$key]     = $orientation['tilt_degrees'] ?? self::DEFAULTS['tilt_degrees'];
+                    $this->shading_factor[$key]   = $collector_parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
                     if ($this->panels) {
                         if (!($panel_name = $collector_parameters['panel'] ?? false) ||
                             !($panel = $this->panels[$panel_name] ?? false)) {

@@ -54,6 +54,10 @@ class Root {
             }
         }
     }
+
+    /**
+     * @throws Exception
+     */
     public function mysqli(): mysqli {
         $mysql = $this->apis['MySQL'];
         if (!(($mysqli = new mysqli($mysql['host'],
@@ -61,7 +65,7 @@ class Root {
                                     $mysql['password'],
                                     $mysql['database'])) &&
             $mysqli->autocommit(false))) {
-            throw new Exception('bad mysql database');
+                throw new Exception('bad mysql database');
         }
         return $mysqli;
     }

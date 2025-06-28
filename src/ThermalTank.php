@@ -59,7 +59,6 @@ class ThermalTank extends Component
                 }
             }
         }
-
     }
 
     public function decay($temperature_ambient_c): void

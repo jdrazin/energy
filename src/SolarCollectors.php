@@ -20,7 +20,9 @@ class SolarCollectors extends Component
     {
         parent::__construct($component, $time, $npv);
         if ($component['active']) {
-            $this->cost = $component['cost'] ?? [];
+            $this->cost = ['install_gbp'        => 0.0,
+                           'maintenance_pa_gbp' => 0.0];
+            $this->sum_value($this->cost, $component, 'cost'); // sun cost components
             $this->area = $component['area'] ?? [];
             $panels     = $component['panels'] ?? [];
             $shading_factor = $this->area['shading_factor'] ?? 1.0;
@@ -30,25 +32,17 @@ class SolarCollectors extends Component
                     $this->panels[$k] = $panel;
                 }
             }
-            $this->value_install_gbp                  = -$this->value($this->cost, 'install_gbp');
-            $this->value_maintenance_per_timestep_gbp = -$this->value($this->cost, 'maintenance_pa_gbp') * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
-
             $this->collectors = [];
             $this->collectors_value_install_gbp = [];
             $this->collectors_value_maintenance_per_timestep_gbp = [];
             $key = 0;
-            foreach ($component['collectors'] as $collector_name => $collector_parameters) {
-                if ($collector_parameters && $collector_parameters['active'] ?? true) {
-                    $this->collectors[$key]    = $collector_name;
-                    $this->panels_number[$key] = $collector_parameters['panels_number'] ?? null;
-                    $area = $this->overlay($this->area, $collector_parameters['area'] ?? []);
-                    $orientation = $area['orientation'] ?? [];
-                    $this->orientation_type[$key] = $orientation['type'] ?? self::DEFAULTS['type'];
-                    $this->azimuth_degrees[$key]  = $orientation['azimuth_degrees'] ?? self::DEFAULTS['azimuth_degrees'];
-                    $this->tilt_degrees[$key]     = $orientation['tilt_degrees'] ?? self::DEFAULTS['tilt_degrees'];
-                    $this->shading_factor[$key]   = $collector_parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
+            foreach ($component['collectors'] as $collector_name => $parameters) {
+                if ($parameters && $parameters['active'] ?? true) {
+                    $this->collectors[$key]     = $collector_name;
+                    $this->panels_number[$key]  = $parameters['panels_number'] ?? null;
+                    $this->shading_factor[$key] = $parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
                     if ($this->panels) {
-                        if (!($panel_name = $collector_parameters['panel'] ?? false) ||
+                        if (!($panel_name = $parameters['panel'] ?? false) ||
                             !($panel = $this->panels[$panel_name] ?? false)) {
                             echo 'Panel not found: ' . $panel_name . PHP_EOL;
                             exit(1);
@@ -56,29 +50,19 @@ class SolarCollectors extends Component
                     } else {
                         $panel = $component['panel'];
                     }
-                    $cost_maintenance_per_panel_gbp = $panel['cost']['maintenance_per_panel_pa_gbp'] ?? 0.0;
-                    $this->collector_parameters($key, $area, $panel);
-
-                    $cost                       = $this->overlay($this->cost, $collector_parameters['cost'] ?? []);
-                    $cost_panels_install_gbp    = $this->value($cost, 'install_gbp');
-                    $cost_panels_gbp            = $panel['cost']['per_panel_gbp'] ?? 0.0 * $this->panels_number[$key];
-                    $cost_collector             = $cost_panels_install_gbp + $cost_panels_gbp;
-                    $this->value_install_gbp   -= $cost_collector;
-
-                    $collector_maintenance_base_pa_gbp          = $this->value($cost, 'maintenance_pa_gbp');
-                    $collector_maintenance_panels_pa_gbp        = $cost_maintenance_per_panel_gbp * $this->panels_number[$key];
-                    $collector_maintenance_pa_gbp               = $collector_maintenance_base_pa_gbp + $collector_maintenance_panels_pa_gbp;
-                    $this->value_maintenance_per_timestep_gbp -= $collector_maintenance_pa_gbp * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
-
-                    $this->solar[$key]   = new Solar($location, $area['orientation']);
+                    $this->make_collector_parameters($key, $parameters, $panel);
+                    $this->sum_value($this->cost, $parameters, 'cost'); // sun cost components
 
                     // ThermalInertia used to estimate panel temperature as function of solar power and time (required to estimate solar_pv thermally induced efficiency losses)
                     $thermal_inertia_m2_second_per_w_celsius = $panel['thermal_inertia_m2_second_per_w_celsius'] ?? self::DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS;
                     $this->thermal[$key]  = new ThermalInertia($initial_temperature, $thermal_inertia_m2_second_per_w_celsius, $time);
-                    $this->inverter[$key] = new Inverter($collector_parameters['inverter'] ?? null, $time, $npv);
+                    $this->inverter[$key] = new Inverter($parameters['inverter'] ?? null, $time, $npv);
+                    $this->solar[$key]    = new Solar($location, $parameters['area']['orientation']);
                 }
                 $key++;
             }
+            $this->value_install_gbp                  = $this->cost['install_gbp'];
+            $this->value_maintenance_per_timestep_gbp = $this->cost['maintenance_pa_gbp'] * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
             $this->output_kwh = $this->zero_output();
         }
     }
@@ -151,35 +135,39 @@ class SolarCollectors extends Component
         return $transfer_consume_j;
     } // $time->fraction_year > 0.475 && $time->fraction_day > 0.5
 
-    public function collector_parameters($key, $area, $panel): void {   // find max panels that fit footprint
-        $dimension_footprint_axis_tilt_m  = $area['dimensions_footprint_axis']['tilt_m'];
-        $dimension_footprint_axis_other_m = $area['dimensions_footprint_axis']['other_m'];
-        $border_m                         = $area['border_m'] ?? self::DEFAULTS['border_m'];
-        $this->power_max_w[$key]          = $panel['power_max_w'] ?? null;
-        $efficiency                       = $panel['efficiency'] ?? 1.0;
-        $panel_width_m                    = $panel['width_m'];
-        $panel_height_m                   = $panel['height_m'];
-        $dim_a_m = ($dimension_footprint_axis_other_m / cos(deg2rad($this->tilt_degrees[$key]))) - 2 * $border_m;
-        $dim_b_m = $dimension_footprint_axis_tilt_m - 2 * $border_m;
-        if (is_null($this->panels_number[$key])) {                 // calculate number of panels from area if not already declared
-            $panels_number = $this->max_panel($dim_a_m, $dim_b_m, $panel_width_m, $panel_height_m);
-            $this->panels_number[$key] = $panels_number;
-        } else {
-            $panels_number = $this->panels_number[$key];
+    public function make_collector_parameters($key, $parameters, $panel): void {   // find max panels that fit footprint
+        $panel_width_m  = $panel['width_m'];
+        $panel_height_m = $panel['height_m'];
+        if ($parameters['panels_number'] ?? 0) {
+            $panels_number = $parameters['panels_number'];
+        }
+        elseif (isset($parameters['area'])) {
+            $area = $parameters['area'];
+            $dimension_footprint_axis_tilt_m  = $area['dimensions_footprint_axis']['tilt_m'];
+            $dimension_footprint_axis_other_m = $area['dimensions_footprint_axis']['other_m'];
+            $border_m                         = $area['border_m'] ?? self::DEFAULTS['border_m'];
+            $orientation                      = $area['orientation'] ?? [];
+            $this->orientation_type[$key]     = $orientation['type'] ?? self::DEFAULTS['type'];
+            $this->azimuth_degrees[$key]      = $orientation['azimuth_degrees'] ?? self::DEFAULTS['azimuth_degrees'];
+            $this->tilt_degrees[$key]         = $orientation['tilt_degrees'] ?? self::DEFAULTS['tilt_degrees'];
+
+            $dim_a_m                          = ($dimension_footprint_axis_other_m / cos(deg2rad($this->tilt_degrees[$key]))) - 2 * $border_m;
+            $dim_b_m                          = $dimension_footprint_axis_tilt_m - 2 * $border_m;
+            $panels_number                    = $this->max_panel($dim_a_m, $dim_b_m, $panel_width_m, $panel_height_m);
         }
         $this->panels_area_m2[$key]                     = $panels_number * $panel_width_m * $panel_height_m;
-        $this->efficiency[$key]                         = ($efficiency['percent'] ?? 1.0) / 100.0;
+        $this->power_max_w[$key]                        = $panel['power_max_w'] ?? null;
+        $this->lifetime_years[$key]                     = $panel['lifetime_years'] ?? 100.0;
+        $this->panels_number[$key]                      = $panels_number;
+        $efficiency                                     = $panel['efficiency'] ?? 1.0;
+        $this->efficiency[$key]                         =  ($efficiency['percent'] ?? 1.0) / 100.0;
         $this->efficiency_per_c[$key]                   = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
         $this->efficiency_pa[$key]                      = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
-        $this->efficiency_temperature_reference_c[$key] = $efficiency['temperature_reference_celsius'] ?? 20.0;
-        $this->lifetime_years[$key]                     = $panel['lifetime_years'] ?? 100.0;
+        $this->efficiency_temperature_reference_c[$key] =   $efficiency['temperature_reference_celsius'] ?? 20.0;
     }
 
-    public function efficiency() {
 
-    }
-
-    private function max_panel($d_a, $d_b, $p_a, $p_b)
+    private function max_panel($d_a, $d_b, $p_a, $p_b) // calculate msx number of panels from area
     {
         // a orientation
         $panels_a_x = intval($d_a / $p_a);

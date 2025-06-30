@@ -10,7 +10,6 @@ class Component extends Root // extends Root
     public Npv $npv;
 
     public function __construct($component, $time, $npv) {
-     //   parent::__construct();
         $this->name = $component['name'] ?? $this->strip_namespace(__NAMESPACE__,__CLASS__);
         if ($this->active = $component['active'] ?? true) {
             $this->time_units = $time->units;

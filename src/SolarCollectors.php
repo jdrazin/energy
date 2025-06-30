@@ -58,13 +58,7 @@ class SolarCollectors extends Component
                     }
                     $cost_per_panel_gbp = $panel['cost']['per_panel_gbp'] ?? 0.0;
                     $cost_maintenance_per_panel_gbp = $panel['cost']['maintenance_per_panel_pa_gbp'] ?? 0.0;
-                    $this->unit_collector_area($key,
-                        $area['dimensions_footprint_axis']['tilt_m'],
-                        $area['dimensions_footprint_axis']['other_m'],
-                        $area['border_m'] ?? self::DEFAULTS['border_m'],
-                        $panel['width_m'],
-                        $panel['height_m']);
-
+                    $this->unit_collector_area($key, $area, $panel);
                     $this->power_max_w[$key] = $panel['power_max_w'] ?? null;
 
                     $efficiency = $panel['efficiency'] ?? 1.0;
@@ -166,13 +160,12 @@ class SolarCollectors extends Component
         return $transfer_consume_j;
     } // $time->fraction_year > 0.475 && $time->fraction_day > 0.5
 
-    public function unit_collector_area($key,
-                                        $dimension_footprint_axis_tilt_m,
-                                        $dimension_footprint_axis_other_m,
-                                        $border_m,
-                                        $panel_width_m,
-                                        $panel_height_m): void
-    {   // find max panels that fit footprint
+    public function unit_collector_area($key, $area, $panel): void {   // find max panels that fit footprint
+        $dimension_footprint_axis_tilt_m  = $area['dimensions_footprint_axis']['tilt_m'];
+        $dimension_footprint_axis_other_m = $area['dimensions_footprint_axis']['other_m'];
+        $border_m                         = $area['border_m'] ?? self::DEFAULTS['border_m'];
+        $panel_width_m                    = $panel['width_m'];
+        $panel_height_m                   = $panel['height_m'];
         $dim_a_m = ($dimension_footprint_axis_other_m / cos(deg2rad($this->tilt_degrees[$key]))) - 2 * $border_m;
         $dim_b_m = $dimension_footprint_axis_tilt_m - 2 * $border_m;
         if (is_null($this->panels_number[$key])) {                 // calculate number of panels from area if not already declared

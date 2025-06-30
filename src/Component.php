@@ -24,6 +24,13 @@ class Component extends Root // extends Root
         }
     }
 
+    public function value_maintenance($time): void
+    {
+        if ($this->active) {
+            $this->npv->value_gbp($time, $this->value_maintenance_per_timestep_gbp);
+        }
+    }
+
     public function value($array_value, $name): float {
         // return value as sum of array or value
         if (isset($array_value[$name])) {

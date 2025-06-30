@@ -58,15 +58,7 @@ class SolarCollectors extends Component
                     }
                     $cost_per_panel_gbp = $panel['cost']['per_panel_gbp'] ?? 0.0;
                     $cost_maintenance_per_panel_gbp = $panel['cost']['maintenance_per_panel_pa_gbp'] ?? 0.0;
-                    $this->unit_collector_area($key, $area, $panel);
-                    $this->power_max_w[$key] = $panel['power_max_w'] ?? null;
-
-                    $efficiency = $panel['efficiency'] ?? 1.0;
-                    $this->efficiency[$key] = ($efficiency['percent'] ?? 1.0) / 100.0;
-                    $this->efficiency_per_c[$key] = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
-                    $this->efficiency_pa[$key] = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
-                    $this->efficiency_temperature_reference_c[$key] = $efficiency['temperature_reference_celsius'] ?? 20.0;
-                    $this->lifetime_years[$key] = $panel['lifetime_years'] ?? 100.0;
+                    $this->collector_parameters($key, $area, $panel);
 
                     $cost = $this->overlay($this->cost, $collector_parameters['cost'] ?? []);
                     $cost_panels_install_gbp = $this->value($cost, 'install_gbp');
@@ -160,10 +152,12 @@ class SolarCollectors extends Component
         return $transfer_consume_j;
     } // $time->fraction_year > 0.475 && $time->fraction_day > 0.5
 
-    public function unit_collector_area($key, $area, $panel): void {   // find max panels that fit footprint
+    public function collector_parameters($key, $area, $panel): void {   // find max panels that fit footprint
         $dimension_footprint_axis_tilt_m  = $area['dimensions_footprint_axis']['tilt_m'];
         $dimension_footprint_axis_other_m = $area['dimensions_footprint_axis']['other_m'];
         $border_m                         = $area['border_m'] ?? self::DEFAULTS['border_m'];
+        $this->power_max_w[$key]          = $panel['power_max_w'] ?? null;
+        $efficiency                       = $panel['efficiency'] ?? 1.0;
         $panel_width_m                    = $panel['width_m'];
         $panel_height_m                   = $panel['height_m'];
         $dim_a_m = ($dimension_footprint_axis_other_m / cos(deg2rad($this->tilt_degrees[$key]))) - 2 * $border_m;
@@ -175,6 +169,16 @@ class SolarCollectors extends Component
             $panels_number = $this->panels_number[$key];
         }
         $this->panels_area_m2[$key] = $panels_number * $panel_width_m * $panel_height_m;
+
+        $this->efficiency[$key] = ($efficiency['percent'] ?? 1.0) / 100.0;
+        $this->efficiency_per_c[$key] = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
+        $this->efficiency_pa[$key] = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
+        $this->efficiency_temperature_reference_c[$key] = $efficiency['temperature_reference_celsius'] ?? 20.0;
+        $this->lifetime_years[$key] = $panel['lifetime_years'] ?? 100.0;
+    }
+
+    public function efficiency() {
+
     }
 
     private function max_panel($d_a, $d_b, $p_a, $p_b)

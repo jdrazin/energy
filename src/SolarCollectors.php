@@ -30,9 +30,8 @@ class SolarCollectors extends Component
                     $this->panels[$k] = $panel;
                 }
             }
-            $this->value_install_gbp = -$this->value($this->cost, 'install_gbp');
-            $maintenance_pa_gbp = $this->value($this->cost, 'maintenance_pa_gbp');
-            $this->value_maintenance_per_timestep_gbp = -($maintenance_pa_gbp * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR));
+            $this->value_install_gbp                  = -$this->value($this->cost, 'install_gbp');
+            $this->value_maintenance_per_timestep_gbp = -($this->value($this->cost, 'maintenance_pa_gbp') * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR));
 
             $this->collectors = [];
             $this->collectors_value_install_gbp = [];

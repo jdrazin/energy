@@ -56,19 +56,18 @@ class SolarCollectors extends Component
                     } else {
                         $panel = $component['panel'];
                     }
-                    $cost_per_panel_gbp = $panel['cost']['per_panel_gbp'] ?? 0.0;
                     $cost_maintenance_per_panel_gbp = $panel['cost']['maintenance_per_panel_pa_gbp'] ?? 0.0;
                     $this->collector_parameters($key, $area, $panel);
 
-                    $cost = $this->overlay($this->cost, $collector_parameters['cost'] ?? []);
-                    $cost_panels_install_gbp = $this->value($cost, 'install_gbp');
-                    $cost_panels_gbp = $cost_per_panel_gbp * $this->panels_number[$key];
-                    $cost_collector = $cost_panels_install_gbp + $cost_panels_gbp;
-                    $this->value_install_gbp -= $cost_collector;
+                    $cost                       = $this->overlay($this->cost, $collector_parameters['cost'] ?? []);
+                    $cost_panels_install_gbp    = $this->value($cost, 'install_gbp');
+                    $cost_panels_gbp            = $panel['cost']['per_panel_gbp'] ?? 0.0 * $this->panels_number[$key];
+                    $cost_collector             = $cost_panels_install_gbp + $cost_panels_gbp;
+                    $this->value_install_gbp   -= $cost_collector;
 
-                    $collector_maintenance_base_pa_gbp = $this->value($cost, 'maintenance_pa_gbp');
-                    $collector_maintenance_panels_pa_gbp = $cost_maintenance_per_panel_gbp * $this->panels_number[$key];
-                    $collector_maintenance_pa_gbp = $collector_maintenance_base_pa_gbp + $collector_maintenance_panels_pa_gbp;
+                    $collector_maintenance_base_pa_gbp          = $this->value($cost, 'maintenance_pa_gbp');
+                    $collector_maintenance_panels_pa_gbp        = $cost_maintenance_per_panel_gbp * $this->panels_number[$key];
+                    $collector_maintenance_pa_gbp               = $collector_maintenance_base_pa_gbp + $collector_maintenance_panels_pa_gbp;
                     $this->value_maintenance_per_timestep_gbp -= $collector_maintenance_pa_gbp * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
 
                     $this->solar[$key]   = new Solar($location, $area['orientation']);
@@ -168,13 +167,12 @@ class SolarCollectors extends Component
         } else {
             $panels_number = $this->panels_number[$key];
         }
-        $this->panels_area_m2[$key] = $panels_number * $panel_width_m * $panel_height_m;
-
-        $this->efficiency[$key] = ($efficiency['percent'] ?? 1.0) / 100.0;
-        $this->efficiency_per_c[$key] = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
-        $this->efficiency_pa[$key] = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
+        $this->panels_area_m2[$key]                     = $panels_number * $panel_width_m * $panel_height_m;
+        $this->efficiency[$key]                         = ($efficiency['percent'] ?? 1.0) / 100.0;
+        $this->efficiency_per_c[$key]                   = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
+        $this->efficiency_pa[$key]                      = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
         $this->efficiency_temperature_reference_c[$key] = $efficiency['temperature_reference_celsius'] ?? 20.0;
-        $this->lifetime_years[$key] = $panel['lifetime_years'] ?? 100.0;
+        $this->lifetime_years[$key]                     = $panel['lifetime_years'] ?? 100.0;
     }
 
     public function efficiency() {

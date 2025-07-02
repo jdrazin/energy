@@ -29,9 +29,10 @@ if (!DEBUG) {
         file_put_contents($pid_filename, getmypid());
     }
 }
-if ($message = trim($argv[ARGS['MESSAGE']] ?? '') && !DEBUG) {
+if (($message = trim($argv[ARGS['MESSAGE']] ?? '')) && !DEBUG) {
     $root = new Root();
     $root->logDb('MESSAGE', $message, null,'NOTICE');
+    echo 'Logged to db: ' . $message . PHP_EOL;
 }
 if (!DEBUG) {
     if (!unlink($pid_filename)) {

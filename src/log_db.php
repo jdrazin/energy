@@ -29,7 +29,7 @@ if (!DEBUG) {
         file_put_contents($pid_filename, getmypid());
     }
 }
-if ($message = trim($argv[ARGS['MESSAGE']]) && !DEBUG) {
+if ($message = trim($argv[ARGS['MESSAGE']] ?? '') && !DEBUG) {
     $root = new Root();
     $root->logDb('MESSAGE', $message, null,'NOTICE');
 }

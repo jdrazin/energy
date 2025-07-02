@@ -14,6 +14,7 @@ See https://renewable-visions.com/
 
 # System
 * Ubuntu 22.04
+* Apache 2
 * MySQL 8
 * PHP 8.3+
 

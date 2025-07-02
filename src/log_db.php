@@ -9,7 +9,6 @@ require_once __DIR__ . '/../vendor/autoload.php';
  * log message to db
  *
  */
-
 error_reporting(E_ALL);
 set_time_limit(36000);
 ini_set('mysql.connect_timeout', '36000');

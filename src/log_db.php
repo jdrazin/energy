@@ -16,7 +16,10 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const FOLDER_PID = '/var/www/html/energy/pids/',
-      ARGS       = ['MESSAGE' => 1],
+      ARGS       = [
+                    'MESSAGE' => 1,
+                    'URGENCY' => 2
+                    ],
       DEBUG      = false;  // disable cron and semaphore single thread control
 
 if (!DEBUG) {
@@ -30,8 +33,9 @@ if (!DEBUG) {
     }
 }
 if (($message = trim($argv[ARGS['MESSAGE']] ?? '')) && !DEBUG) {
+    $urgency = strtoupper(trim($argv[ARGS['URGENCY']]  ?? 'FATAL'));
     $root = new Root();
-    $root->logDb('MESSAGE', $message, null,'NOTICE');
+    $root->logDb('MESSAGE', $message, null,$urgency);
     echo 'Logged to db: ' . $message . PHP_EOL;
 }
 if (!DEBUG) {

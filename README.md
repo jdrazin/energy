@@ -8,6 +8,11 @@ See https://renewable-visions.com/
 # How to use
 
 ## Requirements
+# Hardware
+* Raspberry Pi 5
+* 8GB RAM
+
+# System
 * Ubuntu 22.04
 * MySQL 8
 * PHP 8.3+

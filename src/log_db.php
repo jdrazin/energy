@@ -35,7 +35,7 @@ if (!DEBUG) {
 if (($message = trim($argv[ARGS['MESSAGE']] ?? '')) && !DEBUG) {
     $urgency = strtoupper(trim($argv[ARGS['URGENCY']]  ?? 'FATAL'));
     $root = new Root();
-    $root->logDb('MESSAGE', $message, null,$urgency);
+    $root->logDb('MESSAGE', $message, null, $urgency);
     echo 'Logged to db: ' . $message . PHP_EOL;
 }
 if (!DEBUG) {

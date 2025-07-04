@@ -20,7 +20,6 @@ class SolarCollectors extends Component
     {
         parent::__construct($component, $time, $npv);
         if ($component['active']) {
-            $this->sum_value($this->cost, $component, 'cost'); // sun cost components
             $this->area = $component['area'] ?? [];
             $panels     = $component['panels'] ?? [];
             $shading_factor = $this->area['shading_factor'] ?? 1.0;

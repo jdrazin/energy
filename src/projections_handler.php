@@ -12,7 +12,7 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time',    '36000');
 ini_set('mysql.connect_timeout', '36000');
 
-const     DEBUG                       = false,
+const     DEBUG                       = true,
           FOLDER_PID                  = '/var/www/html/energy/pids/',
           FOLDER_TEST                 = '/var/www/html/energy/test/',
           CONFIG_JSON                 = 'test.config.json',
@@ -22,11 +22,11 @@ const     DEBUG                       = false,
           ARGS                        = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION     = true,
           EMAIL_NOTIFICATION_ON_ERROR = false,
-          MODE                        = 'cron';
+          MODE                        = 'json';
 
 try {
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
-    if (DEBUG) {
+    if (!DEBUG) {
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
             exit(1);
@@ -72,18 +72,18 @@ catch (exception $e) {
                                   'bodyAlt'   => strip_tags($message)]);
     }
     $root = new Root();
-    $root->logDb('MESSAGE', $message, 'FATAL');
+    $root->logDb('MESSAGE', $message, null, 'FATAL');
     echo $message . PHP_EOL;
     if (INITIALISE_ON_EXCEPTION) {
-        $root->logDb('MESSAGE', 'Attempting to initialise ...', 'NOTICE');
+        $root->logDb('MESSAGE', 'Attempting to initialise ...',null, 'NOTICE');
         (new GivEnergy())->initialise();
-        $root->logDb('MESSAGE', '... initialise done', 'NOTICE');
+        $root->logDb('MESSAGE', '... initialise done', null, 'NOTICE');
     }
     exit(1);
 }
 catch (GuzzleException $e) {
     $message = $e->getMessage();
-    (new Root())->logDb('MESSAGE', $message, 'FATAL');
+    (new Root())->logDb('MESSAGE', $message, null, 'FATAL');
     echo $message . PHP_EOL;
     exit(1);
 }

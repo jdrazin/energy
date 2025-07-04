@@ -11,7 +11,7 @@ class SolarCollectors extends Component
                         'tilt_degrees'    => 35.0,
                         'border_m'        => 0.2];
 
-    public array    $cost, $area, $orientation_type, $azimuth_degrees, $panels_number, $power_max_w,
+    public array    $area, $orientation_type, $azimuth_degrees, $panels_number, $power_max_w,
                     $tilt_degrees, $shading_factor, $efficiency, $efficiency_temperature_reference_c, $efficiency_per_c, $efficiency_pa, $solar, $thermal,
                     $inverter, $output_kwh, $lifetime_years, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
     private array $panels, $panels_area_m2;
@@ -20,8 +20,6 @@ class SolarCollectors extends Component
     {
         parent::__construct($component, $time, $npv);
         if ($component['active']) {
-            $this->cost = ['install_gbp'        => 0.0,
-                           'maintenance_pa_gbp' => 0.0];
             $this->sum_value($this->cost, $component, 'cost'); // sun cost components
             $this->area = $component['area'] ?? [];
             $panels     = $component['panels'] ?? [];

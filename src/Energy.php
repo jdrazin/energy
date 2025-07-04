@@ -370,7 +370,7 @@ class Energy extends Root
                     $this->logDb('MESSAGE', $message, null, 'ERROR');
                     throw new Exception($message);
                 }
-                return 'Projection is ' . ($count ? : 'next') . ' in queue. Please come back later.';
+                return 'Projection is ' . ($count ? : 'next') . ' in queue. Come back shortly.';
             }
             case 'IN_PROGRESS': {
                 return 'Projection in progress ...';

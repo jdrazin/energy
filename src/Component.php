@@ -12,6 +12,11 @@ class Component extends Root // extends Root
     public function __construct($component, $time, $npv) {
         $this->name = $component['name'] ?? $this->strip_namespace(__NAMESPACE__,__CLASS__);
         if ($this->active = $component['active'] ?? true) {
+            $this->cost = [
+                            'install_gbp'          => 0.0,
+                            'maintenance_pa_gbp'   => 0.0,
+                            'standing_gbp_per_day' => 0.0
+                          ];
             $this->sum_value($this->cost, $component, 'cost'); // sun cost components
             $this->time_units = $time->units;
             $this->npv = new Npv($npv);

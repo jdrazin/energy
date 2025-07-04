@@ -56,7 +56,7 @@ try {
             }
         }
     }
-    if (DEBUG) {
+    if (!DEBUG) {
         if (!unlink($pid_filename)) {
             throw new Exception('Cannot delete semaphore');
         }

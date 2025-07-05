@@ -21,7 +21,6 @@
       "90": 1.0,
       "100": 0.95
     },
-    "performance_factor": 1.0,
     "#": "https://www.researchgate.net/figure/COP-of-the-air-to-water-heat-pump-with-different-load-side-inlet-temperatures-Based-on_fig1_326114264",
     "output_kw": 10.0,
     "thermal_sink": {

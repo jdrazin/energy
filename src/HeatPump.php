@@ -53,8 +53,8 @@ class HeatPump extends Component
             $element_temp = (float)$temp_delta_c;
             if ($element_temp > $temperature_delta_c) {
                 $dividend = ($temperature_delta_c - $temp_lo) * ($element_cop - $cop_lo);
-                $divisor = $element_temp - $temp_lo;
-                return 1.0 + ($this->performance_factor * (($cop_lo + ($dividend / $divisor)) - 1.0));
+                $divisor  = $element_temp - $temp_lo;
+                return $cop_lo + ($dividend / $divisor);
             }
             $temp_lo = $element_temp;
             $cop_lo = $element_cop;

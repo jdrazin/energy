@@ -48,7 +48,7 @@
   },
   "solar_pv": {
     "name": "solar pv",
-    "active": false,
+    "active": true,
     "cost": {
       "install_gbp": 19000.0,
       "maintenance_pa_gbp": 200.0
@@ -58,22 +58,42 @@
       "border_m": 0.2
     },
     "panels": [{
-      "panel": "AIKO 455W",
-      "#": "AIK-A-MAH54-445-AB Gen 2 All Black",
-      "width_m": 1.134,
-      "height_m": 1.722,
-      "efficiency": {
-        "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
-        "source": "",
-        "percent": 23.1,
-        "loss_percent_pa": 0.3,
-        "loss_percent_per_celsius": 0.29,
-        "temperature_reference_celsius": 25
+        "panel": "AIKO 455W",
+        "#": "AIK-A-MAH54-445-AB Gen 2 All Black",
+        "cost_install_per_unit_gbp" : 100.0,
+        "width_m": 1.134,
+        "height_m": 1.722,
+        "efficiency": {
+          "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
+          "source": "",
+          "percent": 23.1,
+          "loss_percent_pa": 0.3,
+          "loss_percent_per_celsius": 0.29,
+          "temperature_reference_celsius": 25
+        },
+        "power_max_w": 455.0,
+        "lifetime_years": 25,
+        "thermal_inertia_m2_second_per_w_celsius": 1000
       },
-      "power_max_w": 455.0,
-      "lifetime_years": 25,
-      "thermal_inertia_m2_second_per_w_celsius": 1000
-    }
+      {
+        "panel": "Jinko 485W",
+        "cost": {
+          "per_panel_gbp": 123.0,
+          "maintenance_per_panel_pa_gbp": 5.00
+        },
+        "width_m": 1.134,
+        "height_m": 1.722,
+        "efficiency": {
+          "source": "",
+          "percent": 23.1,
+          "loss_percent_pa": 0.3,
+          "loss_percent_per_celsius": 0.29,
+          "temperature_reference_celsius": 25
+        },
+        "power_max_w": 485.0,
+        "lifetime_years": 25,
+        "thermal_inertia_m2_second_per_w_celsius": 1000
+      }
     ],
     "inverter": {
       "name": "inverter",
@@ -353,8 +373,5 @@
     "timestep_seconds": 216
   },
   "permute": [
-    "solar_pv",
-    "battery",
-    "heat_pump"
   ]
 }

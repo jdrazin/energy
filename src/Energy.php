@@ -596,8 +596,24 @@ class Energy extends Root
                 $components_active[] = $component;
             }
         }
+        if ($heatpump->active && !is_null($heatpump->scop)) {                                                                                                        // normalize scop to stated scope over 1 year
+            while ($time->next_timestep()) {
+                $temp_climate_c = (new Climate())->temperature_time($time);	                                                                                         // get average climate temperature for day of year, time of day
+                $demand_thermal_hotwater_j                 = $demand_hotwater_thermal->demand_j($time);                                                              // hot water energy demand
+                $heatpump_transfer_consume_j  = $heatpump->transfer_consume_j($heatpump->max_output_j, $hotwater_tank->temperature_c - $temp_climate_c, $time); // get energy from heat pump
+                $supply_electric_j           -= $heatpump_transfer_consume_j['consume'];                                                                             // consume electricity
+
+                $demand_thermal_space_heating_j             = $demand_space_heating_thermal->demand_j($time)*$insulation->space_heating_demand_factor;               // get space heating energy demand
+                $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j, $temperature_internal_room_c - $temp_climate_c, $time);
+                $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
+                $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];
+                if ($time->year_end()) {
+                    break;
+                }
+            }
+        }
         $this->install($components_active, $time);                                                                                                                  // get install costs
-        $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $permutation, $permutation_acronym);             // summarise year 0
+        $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $permutation, $permutation_acronym); // summarise year 0
         $export_limit_j = 1000.0*$time->step_s*$supply_electric->export_limit_kw;
         while ($time->next_timestep()) {                                                                                                                            // timestep through years 0 ... N-1
             $this->value_maintenance($components_active, $time);                                                                                                    // add timestep component maintenance costs

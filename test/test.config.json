@@ -3,7 +3,7 @@
   "email": "jonathan@drazin.net",
   "heat_pump": {
     "name": "heatpump ASHP",
-    "active": false,
+    "active": true,
     "heat": true,
     "cool": false,
     "scop": 4.0,

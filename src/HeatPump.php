@@ -4,7 +4,7 @@ namespace Src;
 class HeatPump extends Component
 {
 
-    public float $heat, $cool, $max_output_j, $performance_factor, $energy_background_step_j;
+    public float $heat, $cool, $max_output_j, $energy_background_step_j, $scop;
     public array $cops, $kwh;
 
     public function __construct($component, $time, $npv)
@@ -12,9 +12,9 @@ class HeatPump extends Component
         parent::__construct($component, $time, $npv);
         if ($this->active) {
             $this->cops = $component['cops'];
-            ksort($this->cops);                                                             // ensure cops data are in temperature order
+            ksort($this->cops);  // ensure cops data are in temperature order
+            $this->scop = ($component['scop'] ?? null);
             $this->max_output_j = 1000 * ($component['output_kw'] ?? 0.0) * $this->step_s;
-            $this->performance_factor = ($component['performance_factor'] ?? 1.0);
             $this->energy_background_step_j = ($component['power_background_w'] ?? 0.0) * $this->step_s;
             $this->heat = ($component['heat'] ?? true);
             $this->cool = ($component['cool'] ?? false);

@@ -6,6 +6,7 @@
     "active": false,
     "heat": true,
     "cool": false,
+    "scop": 4.0,
     "cops": {
       "0": 5.1,
       "5": 5.0,
@@ -60,7 +61,9 @@
     "panels": [{
         "panel": "AIKO 455W",
         "#": "AIK-A-MAH54-445-AB Gen 2 All Black",
-        "cost_install_per_unit_gbp" : 100.0,
+      "cost": {
+        "per_panel_gbp": 100.0
+      },
         "width_m": 1.134,
         "height_m": 1.722,
         "efficiency": {

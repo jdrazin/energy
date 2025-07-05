@@ -44,7 +44,8 @@ class SolarCollectors extends Component
                             exit(1);
                         }
                         elseif ($panels_number = $parameters['panels_number'] ?? 0) {
-                            $this->value_install_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost_install_per_unit_gbp'] ?? 0.0);
+                            $this->value_install_gbp                  += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_gbp']    ?? 0.0);
+                            $this->value_maintenance_per_timestep_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_pa_gbp'] ?? 0.0) * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
                         }
                     } else {
                         $panel = $component['panel'];

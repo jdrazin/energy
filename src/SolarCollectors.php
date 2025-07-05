@@ -43,7 +43,7 @@ class SolarCollectors extends Component
                             echo 'Panel not found: ' . $panel_name . PHP_EOL;
                             exit(1);
                         }
-                        if ($panels_number = $parameters['panels_number'] ?? 0) {
+                        elseif ($panels_number = $parameters['panels_number'] ?? 0) {
                             $this->value_install_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost_install_per_unit_gbp'] ?? 0.0);
                         }
                     } else {

@@ -22,7 +22,7 @@ const     DEBUG                       = true,
           ARGS                        = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION     = true,
           EMAIL_NOTIFICATION_ON_ERROR = false,
-          MODE                        = 'cron';
+          MODE                        = 'json';
 
 try {
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';

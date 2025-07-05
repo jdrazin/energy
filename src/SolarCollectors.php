@@ -36,13 +36,15 @@ class SolarCollectors extends Component
             foreach ($component['collectors'] as $collector_name => $parameters) {
                 if ($parameters && $parameters['active'] ?? true) {
                     $this->collectors[$key]     = $collector_name;
-                    $this->panels_number[$key]  = $parameters['panels_number'] ?? null;
                     $this->shading_factor[$key] = $parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
                     if ($this->panels) {
                         if (!($panel_name = $parameters['panel'] ?? false) ||
                             !($panel = $this->panels[$panel_name] ?? false)) {
                             echo 'Panel not found: ' . $panel_name . PHP_EOL;
                             exit(1);
+                        }
+                        if ($panels_number = $parameters['panels_number'] ?? 0) {
+                            $this->value_install_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost_install_per_unit_gbp'] ?? 0.0);
                         }
                     } else {
                         $panel = $component['panel'];
@@ -58,8 +60,8 @@ class SolarCollectors extends Component
                 }
                 $key++;
             }
-            $this->value_install_gbp                  = -$this->cost['install_gbp'];
-            $this->value_maintenance_per_timestep_gbp = -$this->cost['maintenance_pa_gbp'] * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+            $this->value_install_gbp                  += -$this->cost['install_gbp'];
+            $this->value_maintenance_per_timestep_gbp += -$this->cost['maintenance_pa_gbp'] * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
             $this->output_kwh = $this->zero_output();
         }
     }

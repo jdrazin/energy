@@ -636,8 +636,7 @@ class Energy extends Root
             $demand_thermal_hotwater_j                 = $demand_hotwater_thermal->demand_j($time);                                                                 // hot water energy demand
             if ($demand_thermal_hotwater_j > 0.0) {
                 $hotwater_tank_transfer_consume_j      = $hotwater_tank->transfer_consume_j(-$demand_thermal_hotwater_j, $temperature_internal_room_c);             // try to satisfy demand from hotwater tank;
-                $demand_thermal_hotwater_j            += $hotwater_tank_transfer_consume_j['transfer'];
-                if ($demand_thermal_hotwater_j > 0.0) {                                                                                                             // insufficient energy in hotwater tank, get from elsewhere
+                if (($demand_thermal_hotwater_j += $hotwater_tank_transfer_consume_j['transfer']) > 0.0) {                                                          // if insufficient energy in hotwater tank, get from elsewhere
                     if ($boiler->active) {                                                                                                                          // else use boiler if available
                         $boiler_transfer_consume_j     = $boiler->transfer_consume_j($demand_thermal_hotwater_j);
                         $supply_boiler_j              -= $boiler_transfer_consume_j['consume'];

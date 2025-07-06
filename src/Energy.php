@@ -565,7 +565,7 @@ class Energy extends Root
      * @throws Exception
      */
     function simulate($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym): void {
-        if (($config['heat_pump']['active'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {
+        if (($config['heat_pump']['active'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
             $results = $this->traverse_years($projection_id, $config, 1, $permutation, $permutation_acronym, 1.0);
             $cop_factor = $scop/$results['scop'];
         }
@@ -653,7 +653,10 @@ class Energy extends Root
             }
             if ($hotwater_tank->temperature_c < $hotwater_tank->target_temperature_c) {
                 if ($heatpump->active) {                  // use heat pump
-                    $heatpump_transfer_consume_j         = $heatpump->transfer_consume_j($heatpump->max_output_j, $hotwater_tank->temperature_c - $temp_climate_c, $time); // get energy from heat pump
+                    $heatpump_transfer_consume_j         = $heatpump->transfer_consume_j($heatpump->max_output_j,                                                   // get energy from heat pump
+                                                                             $hotwater_tank->temperature_c - $temp_climate_c,
+                                                                                        $time,
+                                                                                        $cop_factor);
                     $supply_electric_j                  -= $heatpump_transfer_consume_j['consume'];                                                                 // consumes electricity
                     $hotwater_tank->transfer_consume_j($heatpump_transfer_consume_j['transfer'], $temperature_internal_room_c);                                     // put energy in hotwater tank
                 }
@@ -675,12 +678,18 @@ class Energy extends Root
             }
             if ($heatpump->active) {                                                                                                                                // use heatpump if available
                 if ($demand_thermal_space_heating_j >= 0.0     && $heatpump->heat) {                                                                                // heating
-                    $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j, $temperature_internal_room_c - $temp_climate_c, $time);
+                    $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j,
+                                                                                    $temperature_internal_room_c - $temp_climate_c,
+                                                                                               $time,
+                                                                                               $cop_factor);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
                     $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];
                 }
                 elseif ($demand_thermal_space_heating_j <  0.0 && $heatpump->cool) {                                                                               // cooling
-                    $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j, $temp_climate_c - $temperature_internal_room_c, $time);
+                    $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j,
+                                                                                     $temp_climate_c - $temperature_internal_room_c,
+                                                                                                $time,
+                                                                                                $cop_factor);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
                     $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];
                 }

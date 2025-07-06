@@ -565,7 +565,7 @@ class Energy extends Root
      * @throws Exception
      */
     function simulate($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym): void {
-        if ($scop = $config['heat_pump']['scop'] ?? false) {
+        if (($config['heat_pump']['active'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {
             $results = $this->traverse_years($projection_id, $config, 1, $permutation, $permutation_acronym, 1.0);
             $cop_factor = $scop/$results['scop'];
         }

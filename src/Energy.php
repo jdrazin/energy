@@ -565,6 +565,17 @@ class Energy extends Root
      * @throws Exception
      */
     function simulate($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym): void {
+        if ($scop = $config['heat_pump']['scop'] ?? false) {
+            $results = $this->traverse_years($projection_id, $config, 1, $permutation, $permutation_acronym, 1.0);
+            $cop_factor = $scop/$results['scop'];
+        }
+        $this->traverse_years($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym, $cop_factor);
+    }
+
+    /**
+     * @throws Exception
+     */
+    function traverse_years($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym, $cop_factor): array {
         $npv                            = $config['npv'];
         $time                           = new Time($config['time']['start'], $max_project_duration_years, $config['time']['timestep_seconds'], $this->time_units);
         $this->step_s                   = $time->step_s;
@@ -594,22 +605,6 @@ class Energy extends Root
         foreach ($components as $component) {
             if ($component->active) {
                 $components_active[] = $component;
-            }
-        }
-        if ($heatpump->active && !is_null($heatpump->scop)) {                                                                                                        // normalize scop to stated scope over 1 year
-            while ($time->next_timestep()) {
-                $temp_climate_c = (new Climate())->temperature_time($time);	                                                                                         // get average climate temperature for day of year, time of day
-                $demand_thermal_hotwater_j                 = $demand_hotwater_thermal->demand_j($time);                                                              // hot water energy demand
-                $heatpump_transfer_consume_j  = $heatpump->transfer_consume_j($heatpump->max_output_j, $hotwater_tank->temperature_c - $temp_climate_c, $time); // get energy from heat pump
-                $supply_electric_j           -= $heatpump_transfer_consume_j['consume'];                                                                             // consume electricity
-
-                $demand_thermal_space_heating_j             = $demand_space_heating_thermal->demand_j($time)*$insulation->space_heating_demand_factor;               // get space heating energy demand
-                $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j, $temperature_internal_room_c - $temp_climate_c, $time);
-                $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
-                $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];
-                if ($time->year_end()) {
-                    break;
-                }
             }
         }
         $this->install($components_active, $time);                                                                                                                  // get install costs
@@ -721,6 +716,7 @@ class Energy extends Root
                 $results = $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym);  // summarise year at year end
             }
         }
+        return $results;
     }
 
     /**

@@ -23,13 +23,13 @@ class HeatPump extends Component
         }
     }
 
-    public function transfer_consume_j($request_transfer_consume_j, $temp_delta_c, $time): array
+    public function transfer_consume_j($request_transfer_consume_j, $temp_delta_c, $time, $cop_factor): array
     {
         if (!$this->active || !$request_transfer_consume_j) {
             $transfer_consume_j = ['transfer' => 0.0,
                                    'consume'  => 0.0];
         } else {
-            $cop = $this->cop($temp_delta_c);
+            $cop = $this->cop($temp_delta_c)*$cop_factor;
             $transfer_cap_j = min($request_transfer_consume_j, $this->max_output_j);        // cap transfer at heatpump capacity
             $consumed_cap_j = $this->energy_background_step_j + ($transfer_cap_j / $cop);
             $transfer_consume_j = ['transfer' => $transfer_cap_j,

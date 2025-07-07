@@ -69,7 +69,7 @@ class HeatPump extends Component
             $array[$time_unit] = [];
             for ($time_unit_value = 0; $time_unit_value < $number_unit_values; $time_unit_value++) {
                 $array[$time_unit][$time_unit_value] = ['transfer_kwh' => 0.0,
-                    'consume_kwh' => 0.0];
+                                                        'consume_kwh' => 0.0];
             }
         }
         return $array;

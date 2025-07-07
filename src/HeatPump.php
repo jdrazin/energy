@@ -14,8 +14,9 @@ class HeatPump extends Component
             $this->cops = $component['cops'];
             ksort($this->cops);  // ensure cops data are in temperature order
             $this->scop = $component['scop'] ?? null;
-            $this->max_output_j = 1000 * ($component['output_kw'] ?? 0.0) * $this->step_s;
-            $this->energy_background_step_j = ($component['power_background_w'] ?? 0.0) * $this->step_s;
+            $power = $component['power'];
+            $this->max_output_j = 1000 * ($power['output_kw'] ?? 0.0) * $this->step_s;
+            $this->energy_background_step_j = ($power['background_w'] ?? 0.0) * $this->step_s;
             $this->heat = ($component['heat'] ?? true);
             $this->cool = ($component['cool'] ?? false);
             $this->kwh = $this->zeroKwh();

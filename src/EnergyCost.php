@@ -887,16 +887,16 @@ class EnergyCost extends Root
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'INSERT INTO `slot_next_day_cost_estimates` (`tariff_combination`, `standing`, `raw_import`, `raw_export`, `raw_import_kwh`, `raw_export_kwh`, `optimised_import`, `optimised_export`, `optimised_wear`, `optimised_import_kwh`, `optimised_export_kwh`)
                                                     VALUES (?,                   ?,          ?,            ?,            ?,                ?,                ?,                  ?,                  ?,                ?,                      ?                     )
-                 ON DUPLICATE KEY `standing`                = ?, 
-                                  `raw_import`              = ?,
-                                  `raw_export`              = ?,
-                                  `raw_import_kwh`          = ?,
-                                  `raw_export_kwh`          = ?, 
-                                  `optimised_import`        = ?, 
-                                  `optimised_export`        = ?, 
-                                  `optimised_wear`          = ?, 
-                                  `optimised_import_kwh`    = ?, 
-                                  `optimised_export_kwh`    = ?';
+                 ON DUPLICATE KEY UPDATE  `standing`                = ?, 
+                                          `raw_import`              = ?,
+                                          `raw_export`              = ?,
+                                          `raw_import_kwh`          = ?,
+                                          `raw_export_kwh`          = ?, 
+                                          `optimised_import`        = ?, 
+                                          `optimised_export`        = ?, 
+                                          `optimised_wear`          = ?, 
+                                          `optimised_import_kwh`    = ?, 
+                                          `optimised_export_kwh`    = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('idddddddddddddddddddd', $tariff_combination_id, $standing, $raw_import, $raw_export, $raw_import_kwh, $raw_export_kwh, $optimised_import, $optimised_export, $optimised_wear, $optimised_import_kwh, $optimised_export_kwh,
                                                                                                $standing, $raw_import, $raw_export, $raw_import_kwh, $raw_export_kwh, $optimised_import, $optimised_export, $optimised_wear, $optimised_import_kwh, $optimised_export_kwh) ||

@@ -872,7 +872,6 @@ class EnergyCost extends Root
      * @throws Exception
      */
     private function insertSlotNextDayCostEstimates(): void     {
-        $standing              = ($this->problem['import_gbp_per_days'] ?? 0.0) + ($this->problem['export_gbp_per_days'] ?? 0.0);
         $raw                   = $this->costs['raw'];
         $raw_import            = round($raw['import_gbp'], 3);
         $raw_export            = round($raw['export_gbp'], 3);
@@ -884,6 +883,7 @@ class EnergyCost extends Root
         $optimised_wear        = round($optimised['wear_gbp'], 3);
         $optimised_import_kwh  = round($optimised['import_kwh'], 3);
         $optimised_export_kwh  = round($optimised['export_kwh'], 3);
+        $standing              = $this->costs['standing_gbp_per_day'];
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'INSERT IGNORE INTO `slot_next_day_cost_estimates` (`tariff_combination`, `standing`, `raw_import`, `raw_export`, `raw_import_kwh`, `raw_export_kwh`, `optimised_import`, `optimised_export`, `optimised_wear`, `optimised_import_kwh`, `optimised_export_kwh`)
                                                            VALUES (?,                   ?,          ?,            ?,            ?,                ?,                ?,                  ?,                  ?,                ?,                      ?                     )';

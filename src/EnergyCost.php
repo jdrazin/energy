@@ -382,18 +382,19 @@ class EnergyCost extends Root
             }
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
-            $this->costs['optimised']                = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
-            $standing_costs_gbp_per_day              = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
+            $optimised                               = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
+            $optimised['standing_costs_gbp_per_day'] = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
+            $this->costs['optimised']                = $optimised;
             if (DEBUG) {
                 echo ucfirst(ltrim(($converged ? '' : 'NOT ') . 'converged, ' . ($use_solution ? '' : 'NOT ') . 'usable'                        . PHP_EOL));
                 $indent = '   ';
                 echo 'Total costs: '                                                                                                                  . PHP_EOL;
-                echo $indent . 'Python, guess:     ' . round($energyCostGuess                       + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-                echo $indent . 'Php,    guess:     ' . round($this->costs['raw']['total_gbp']       + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-                echo $indent . 'Python, optimised: ' . round($energyCostSolution                    + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
-                echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Python, guess:     ' . round($energyCostGuess                       + $optimised['standing_costs_gbp_per_day'],4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Php,    guess:     ' . round($this->costs['raw']['total_gbp']       + $optimised['standing_costs_gbp_per_day'],4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Python, optimised: ' . round($energyCostSolution                    + $optimised['standing_costs_gbp_per_day'],4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $optimised['standing_costs_gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo PHP_EOL;
-                echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']   + $standing_costs_gbp_per_day,4) . ' GBP' . PHP_EOL;
+                echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']         + $optimised['standing_costs_gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo PHP_EOL;
             }
             switch ($this->parameters['type']) {

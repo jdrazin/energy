@@ -626,7 +626,7 @@ class EnergyCost extends Root
         $import_gbp             = 0.0;
         $export_gbp             = 0.0;
         $wear_gbp               = 0.0;
-        $power_out_of_spec_gbp  = 0.0;
+        $out_of_spec_gbp  = 0.0;
         $import_kwh             = 0.0;
         $export_kwh             = 0.0;
         for ($slot_count = 0; $slot_count < $this->number_slots_slices; $slot_count++) {
@@ -671,7 +671,7 @@ class EnergyCost extends Root
                                                    $this->batteryWearEnergyActivationKwh,
                                                    $this->batteryWearEnergyNormalisationCoefficient)*abs($battery_charge_kwh);
             // battery charge/discharge power out of spec
-            $power_out_of_spec_gbp += $this->wearPerKwh(   $battery_charge_kw,
+            $out_of_spec_gbp += $this->wearPerKwh(   $battery_charge_kw,
                                                            -$this->batteryMaxDischargeKw,
                                                             $this->batteryMaxChargeKw,
                                                             $this->batteryWearPowerCostAverageGbpPerKwh,
@@ -681,16 +681,18 @@ class EnergyCost extends Root
                                                             $this->batteryWearPowerNormalisationCoefficient)*abs($battery_charge_kwh);
             $cost_energy_average_per_kwh_acc += 0.5 * ($tariff_import_per_kwh + $tariff_export_per_kwh);    // accumulate average energy cost
         }
-        $energy_level_change_gbp = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots_slices);
-        $total_gbp = $import_gbp + $export_gbp + $wear_gbp + $power_out_of_spec_gbp + $energy_level_change_gbp;
+        $level_change_gbp = ($this->batteryEnergyInitialKwh - $battery_level_kwh) * $cost_energy_average_per_kwh_acc / ((float) $this->number_slots_slices);
+        $total_gbp = $import_gbp + $export_gbp + $wear_gbp + $out_of_spec_gbp + $level_change_gbp;
         return [
-                    'total_gbp'  => $total_gbp,
-                    'grid_gbp'   => $import_gbp+$export_gbp,
-                    'import_gbp' => $import_gbp,
-                    'export_gbp' => $export_gbp,
-                    'wear_gbp'   => $wear_gbp,
-                    'import_kwh' => $import_kwh,
-                    'export_kwh' => $export_kwh
+                    'total_gbp'         => $total_gbp,
+                    'grid_gbp'          => $import_gbp+$export_gbp,
+                    'import_gbp'        => $import_gbp,
+                    'export_gbp'        => $export_gbp,
+                    'wear_gbp'          => $wear_gbp,
+                    'out_of_spec_gbp'   => $out_of_spec_gbp,
+                    'level_change_gbp'  => $level_change_gbp,
+                    'import_kwh'        => $import_kwh,
+                    'export_kwh'        => $export_kwh
         ];
     }
     private function wearPerKwh($x, $x_min, $x_max, $wear_cost_average, $constant_coefficient, $exponential_coefficient, $activation, $normalisation_coefficient): float {

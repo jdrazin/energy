@@ -22,12 +22,9 @@
       "100": 0.95
     },
     "#": "https://www.researchgate.net/figure/COP-of-the-air-to-water-heat-pump-with-different-load-side-inlet-temperatures-Based-on_fig1_326114264",
-    "output_kw": 10.0,
-    "thermal_sink": {
-      "volume_m3": 0.001,
-      "half_life_days": 0.0001,
-      "cost_install_gbp": 0,
-      "initial_temp_celsius": 10
+    "power": {
+      "output_kw": 10.0,
+      "background_w": 20
     },
     "cost": {
       "install_gbp": 16287.0,
@@ -371,9 +368,10 @@
   "time": {
     "zone": "GB",
     "start": "2025-01-01 00:00:00",
-    "max_project_duration_years": 25,
+    "max_project_duration_years": 5,
     "timestep_seconds": 216
   },
   "permute": [
+
   ]
 }

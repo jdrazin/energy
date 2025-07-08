@@ -385,16 +385,16 @@ class EnergyCost extends Root
             $this->costs['optimised']                = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
             $this->costs['standing_gbp_per_day']     = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
             if (DEBUG) {
-                echo ucfirst(ltrim(($converged ? '' : 'NOT ') . 'converged, ' . ($use_solution ? '' : 'NOT ') . 'usable'                        . PHP_EOL));
+                echo ucfirst(ltrim(($converged ? '' : 'NOT ') . 'converged, ' . ($use_solution ? '' : 'NOT ') . 'usable'                                        . PHP_EOL));
                 $indent = '   ';
-                echo 'Total costs: '                                                                                                                  . PHP_EOL;
+                echo 'Total costs: '                                                                                                                                . PHP_EOL;
                 echo $indent . 'Python, guess:     ' . round($energyCostGuess                       + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo $indent . 'Php,    guess:     ' . round($this->costs['raw']['total_gbp']       + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo $indent . 'Python, optimised: ' . round($energyCostSolution                    + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
-                echo PHP_EOL;
+                echo                                                                                                                                                  PHP_EOL;
                 echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']         + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
-                echo PHP_EOL;
+                echo                                                                                                                                                  PHP_EOL;
             }
             switch ($this->parameters['type']) {
                 case 'slots': { // insert for each slot: grid and battery discharge energies (kWh)

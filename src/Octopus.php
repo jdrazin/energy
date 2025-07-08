@@ -67,7 +67,7 @@ class Octopus extends Root
             (new MetOffice())->forecast();                                        // get temperature forecast
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
-            $tariff_combinations = $this->tariffCombinations();                                         // get tariff combinations of interest, starting with active combination
+            $tariff_combinations = $this->tariffCombinations();                   // get tariff combinations of interest, starting with active combination
             foreach ($tariff_combinations as $tariff_combination) {
                 if (($tariff_combination['active']) || !ACTIVE_TARIFF_COMBINATION_ONLY) {
                     if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
@@ -651,5 +651,19 @@ class Octopus extends Root
            sleep($wait_to_next_slot_start_seconds);
         }
         $this->mysqli->commit();
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function truncateSlotNextDayCostEstimates(): void     {
+        $sql = 'TRUNCATE `slot_next_day_cost_estimates`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
     }
 }

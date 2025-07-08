@@ -85,10 +85,10 @@ class Octopus extends Root
                                         'tariff_combination'     => $tariff_combination
                                       ];
                         $slot_solution = (new EnergyCost($parameters))->minimise(); // minimise energy cost
-                        if ($tariff_combination['active']) {                                            // make battery command
-                            $this->log($slot_solution);                                                 // log slot command
-                            $this->makeActiveTariffCombinationDbSlotsLast24hrs($tariff_combination);    // make historic slots for last 24 hours
-                            $this->slots_make_cubic_splines();                                          // generate cubic splines
+                        $this->makeActiveTariffCombinationDbSlotsLast24hrs($tariff_combination);    // make historic slots for last 24 hours
+                        if ($tariff_combination['active']) {                                        // make battery command
+                            $this->log($slot_solution);                                             // log slot command
+                            $this->slots_make_cubic_splines();                                      // generate cubic splines
                         }
                     }
                 }

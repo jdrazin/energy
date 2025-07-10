@@ -566,8 +566,13 @@ class Energy extends Root
      */
     function simulate($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym): void {
         if (($config['heat_pump']['active'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
+            echo 'Calibrating SCOP: ';
             $results = $this->traverse_years($projection_id, $config, 1, $permutation, $permutation_acronym, 1.0);
+            echo PHP_EOL;
             $cop_factor = $scop/$results['scop'];
+        }
+        else {
+            $cop_factor = 1.0;
         }
         $this->traverse_years($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym, $cop_factor);
     }

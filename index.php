@@ -23,6 +23,13 @@ $app->addRoutingMiddleware();
  * @param LoggerInterface|null  $logger -> Optional PSR-3 Logger
  *
  */
+$app->get('/info', function (Request $request, Response $response) {
+    ob_start();
+    phpinfo();
+    $phpinfo = ob_get_clean();
+    $response->getBody()->write($phpinfo);
+    return $response->withHeader('Content-Type', 'text/html');
+});
 $app->get('/control/slots', function (Request $request, Response $response) {
     $energy = new Energy(null);
     $cubic_spline = isset($_GET['cubic_spline']) && $_GET['cubic_spline'];

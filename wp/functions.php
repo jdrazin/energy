@@ -1,10 +1,19 @@
-add_action('rest_api_init', function () {
-register_rest_route('my-namespace/v1', '/proxy', [
-'methods' => 'POST',
-'callback' => 'my_proxy_handler',
-'permission_callback' => '__return_true', // adjust for authentication if needed
-]);
-});
+<?php
+
+add_action(
+    'rest_api_init',
+    function () {
+        register_rest_route(
+                                'my-namespace/v1',
+                                '/proxy',
+                                [
+                                    'methods'             => 'POST',
+                                    'callback'            => 'my_proxy_handler',
+                                    'permission_callback' => '__return_true',       // adjust for authentication if needed
+                                ]
+                            );
+    }
+);
 
 function my_proxy_handler(WP_REST_Request $request) {
 $json_data = $request->get_json_params(); // Extract the JSON body

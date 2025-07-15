@@ -16,20 +16,19 @@ add_action(
 );
 
 function my_proxy_handler(WP_REST_Request $request) {
-    $json_data = $request->get_json_params(); // Extract the JSON body
-
-    $external_url = 'https://external-site.com/api/endpoint'; // Replace with your target
-
-    $response = wp_remote_post(
-                                $external_url,
-                                [
-                                    'headers' => [
-                                    'Content-Type' => 'application/json',
-                                ],
-                                'body'          => json_encode($json_data),
-                                'timeout'       => 15,
-                                'sslverify'     => true // set to false ONLY for dev or self-signed certs
-    ]);
+    $json_data  = $request->get_json_params(); // Extract the JSON body
+    $url        = 'https://88.202.150.174:8444/projection';
+    $response   = wp_remote_post(
+                                    $url,
+                                    [
+                                        'headers'       =>  [
+                                                                'Content-Type' => 'application/json',
+                                                            ],
+                                        'body'          =>  json_encode($json_data),
+                                        'timeout'       =>  15,
+                                        'sslverify'     =>  true // set to false ONLY for dev or self-signed certs
+                                    ]
+                                );
 
     if (is_wp_error($response)) {
         return new WP_REST_Response(

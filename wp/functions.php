@@ -51,7 +51,10 @@ function my_proxy_handler(WP_REST_Request $request) {
 
 // see https://chatgpt.com/c/686e5472-1464-800d-8714-eaf45f049053
 
-add_action('init', 'redirect_json_post_to_external');
+add_action  (
+                'init',
+                'redirect_json_post_to_external'
+            );
 
 function redirect_json_post_to_external() {
 //    $url = 'https://www.drazin.net:8444/projection';

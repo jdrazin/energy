@@ -4,8 +4,8 @@ add_action(
     'rest_api_init',
     function () {
         register_rest_route(
-                                'my-namespace/v1',
-                                '/proxy',
+                                'projections',                                      // route_namespace: first URL segment after core prefix
+                                '/proxy',                                           // route :          base URL for route you are adding
                                 [
                                     'methods'             => 'POST',
                                     'callback'            => 'my_proxy_handler',

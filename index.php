@@ -76,20 +76,19 @@ $app->post('/projections', function (Request $request, Response $response) {  //
     $crc32  = crc32($config_json);
     $config = json_decode($config_json, true);
     $energy = new Energy(null);
-    $body   = [];
     if (($projection_id = $energy->submitProjection($crc32, $config)) === false) {
-        $body['message'] = 'You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/';
-        $json_body = json_encode($body, JSON_PRETTY_PRINT);
-        $response->getBody()->write($json_body);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+        $code    = 401;
+        $message = 'You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/';
     }
     else {
-        $email = $config['email'] ?? false;
-        $body['message'] = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
-        $body['message'] = '';
-        $json_body = json_encode($body, JSON_PRETTY_PRINT);
-        $response->getBody()->write($json_body);
-        return $response->withHeader('Content-Type', 'application/json');
+        $code    = 200;
+        $email   = $config['email'] ?? false;
+        $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
     }
+    $body               = [];
+    $body['message']    = $message;
+    $json_body          = json_encode($body, JSON_PRETTY_PRINT);
+    $response->getBody()->write($json_body);
+    return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
 });
 $app->run();

@@ -81,7 +81,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
         $message = 'You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/';
     }
     else {
-        $code    = 200;
+        $code    = 201;
         $email   = $config['email'] ?? false;
         $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
     }

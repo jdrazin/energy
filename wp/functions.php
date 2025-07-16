@@ -1,41 +1,28 @@
 <?php
 
-add_action(
-    'rest_api_init',
-    function () {
-        register_rest_route(
-                                'projections',                                      // route_namespace: first URL segment after core prefix
-                                '/proxy',                                           // route :          base URL for route you are adding
-                                [
-                                    'methods'             => 'POST',
-                                    'callback'            => 'my_proxy_handler',
-                                    'permission_callback' => '__return_true',       // adjust for authentication if needed
-                                ]
-                            );
-    }
-);
-
 function my_proxy_handler(WP_REST_Request $request) {
-    $json_data  = $request->get_json_params(); // Extract the JSON body
+    $json_body  = $request->get_json_params(); // Extract the JSON body
+//  $url        = 'https://www.drazin.net:8444/projections';  // site does not reliably resolve IP address
     $url        = 'https://88.202.150.174:8444/projections';
     $response   = wp_remote_post(
-                                    $url,
-                                    [
-                                        'headers'       =>  [
-                                                                'Content-Type' => 'application/json',
-                                                            ],
-                                        'body'          =>  json_encode($json_data),
-                                        'timeout'       =>  15,
-                                        'sslverify'     =>  true // set to false ONLY for dev or self-signed certs
-                                    ]
-                                );
+        $url,
+        [
+            'headers'       =>  [
+                'Content-Type' => 'application/json',
+            ],
+            'body'          =>  json_encode($json_body),
+            'timeout'       =>  15,
+            'sslverify'     =>  false // set to false ONLY for dev or self-signed certs
+        ]
+    );
 
     if (is_wp_error($response)) {
         return new WP_REST_Response(
-                                    [
-                                        'error' => $response->get_error_message()
-                                    ],
-                                    500);
+            [
+                'error' => $response->get_error_message(),
+                'url'   => $url
+            ],
+            500);
     }
     $body       = wp_remote_retrieve_body($response);
     $code       = wp_remote_retrieve_response_code($response);
@@ -46,6 +33,7 @@ function my_proxy_handler(WP_REST_Request $request) {
         $headers
     );
 }
+
 
 /*
 

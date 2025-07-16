@@ -8,6 +8,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
 use Slim\Factory\AppFactory;
 
+const SERVER_EXTERNAL_IP_ADDRESS_PORT = "88.202.150.174:8444";
+
 // see slim 4 documentation: https://www.slimframework.com/docs/v4/
 $app = AppFactory::create();
 $app->addRoutingMiddleware();
@@ -79,8 +81,10 @@ $app->post('/projections', function (Request $request, Response $response) {  //
         return $response->withStatus(401);
     }
     $email = $config['email'] ?? false;
-    return  $response
-            ->getBody()
-            ->write('Get your result at: https://www.drazin.net:8444/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : ''));
+    $body  = [];
+    $body['message'] = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
+    $response->getBody()->write(json_encode($body));
+    return $response->withHeader('Content-Type', 'application/json');
+
 });
 $app->run();

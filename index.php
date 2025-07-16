@@ -84,6 +84,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
         $code    = 201;
         $email   = $config['email'] ?? false;
         $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
+        $message .= ' Error handling is work in progress, so you may not get an adequate explanation if your simulation fails.';
     }
     $body               = [];
     $body['message']    = $message;

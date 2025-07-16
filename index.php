@@ -3,8 +3,6 @@ declare(strict_types=1);
 namespace Src;
 require_once __DIR__ . '/vendor/autoload.php';
 
-use DateTime;
-use DateTimeZone;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
@@ -71,15 +69,15 @@ $app->get('/projections/projection', function (Request $request, Response $respo
     $response->getBody()->write($projection);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->post('/projections', function (Request $request, Response $response) {
+$app->post('/projections', function (Request $request, Response $response) {  // submit json
     $config_json = (string) $request->getBody();
-    $config  = json_decode($config_json, true);
-    $energy  = new Energy(null);
-    $email   = $config['email']   ?? false;
-    $comment = ($config[Root::COMMENT_STRING] ?? '') . ' (' . (new DateTime("now", new DateTimeZone("UTC")))->format('j M Y H:i:s') . ')';
-    if (($projection_id = $energy->submitProjection($config_json, $email, $comment)) === false) {
+    $crc32  = crc32($config_json);
+    $config = json_decode($config_json, true);
+    $energy = new Energy(null);
+    if (($projection_id = $energy->submitProjection($crc32, $config)) === false) {
         return $response->withStatus(401);
     }
+    $email = $config['email'] ?? false;
     $response->getBody()->write('Get your result at: https://www.drazin.net:8444/projection.html?id=' . $projection_id . ' ' .
                                  ($email ? ' Will e-mail you when ready at ' . $email . '.' : ''));
     return $response;

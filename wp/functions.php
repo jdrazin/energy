@@ -17,7 +17,7 @@ add_action(
 
 function my_proxy_handler(WP_REST_Request $request) {
     $json_data  = $request->get_json_params(); // Extract the JSON body
-    $url        = 'https://88.202.150.174:8444/projection';
+    $url        = 'https://88.202.150.174:8444/projections';
     $response   = wp_remote_post(
                                     $url,
                                     [

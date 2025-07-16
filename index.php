@@ -83,11 +83,13 @@ $app->post('/projections', function (Request $request, Response $response) {  //
         $response->getBody()->write($json_body);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
     }
-    $email = $config['email'] ?? false;
-    $body['message'] = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
-    $json_body = json_encode($body, JSON_PRETTY_PRINT);
-    $response->getBody()->write($json_body);
-    return $response->withHeader('Content-Type', 'application/json');
-
+    else {
+        $email = $config['email'] ?? false;
+        $body['message'] = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
+        $body['message'] = '';
+        $json_body = json_encode($body, JSON_PRETTY_PRINT);
+        $response->getBody()->write($json_body);
+        return $response->withHeader('Content-Type', 'application/json');
+    }
 });
 $app->run();

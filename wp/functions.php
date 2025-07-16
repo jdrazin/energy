@@ -1,5 +1,22 @@
 <?php
 
+// see https://chatgpt.com/c/686e5472-1464-800d-8714-eaf45f049053
+
+add_action(
+    'rest_api_init',
+    function () {
+        register_rest_route(
+            'api',                                      // route_namespace: first URL segment after core prefix
+            '/projection',                                           // route :          base URL for route you are adding
+            [
+                'methods'             => 'POST',
+                'callback'            => 'my_proxy_handler',
+                'permission_callback' => '__return_true',       // adjust for authentication if needed
+            ]
+        );
+    }
+);
+
 function my_proxy_handler(WP_REST_Request $request) {
     $json_body  = $request->get_json_params(); // Extract the JSON body
 //  $url        = 'https://www.drazin.net:8444/projections';  // site does not reliably resolve IP address
@@ -33,7 +50,6 @@ function my_proxy_handler(WP_REST_Request $request) {
         $headers
     );
 }
-
 
 /*
 

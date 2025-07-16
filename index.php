@@ -83,7 +83,8 @@ $app->post('/projections', function (Request $request, Response $response) {  //
     $email = $config['email'] ?? false;
     $body  = [];
     $body['message'] = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
-    $response->getBody()->write(json_encode($body));
+    $json_body = json_encode($body, JSON_PRETTY_PRINT);
+    $response->getBody()->write($json_body);
     return $response->withHeader('Content-Type', 'application/json');
 
 });

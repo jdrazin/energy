@@ -131,10 +131,10 @@ class Root {
         }
     }
 
-    protected function authenticate(): bool {  // attempts to authenticate against BasicAuth username:password or token
-        $username = $_SERVER['PHP_AUTH_USER']   ?? '';
-        $password = $_SERVER['PHP_AUTH_PW']     ?? '';
-        $token    = $_GET['token']              ?? '';
+    protected function authenticate(string $token): bool {  // attempts to authenticate against BasicAuth username:password or token
+        $username = $_SERVER['PHP_AUTH_USER'] ?? '';
+        $password = $_SERVER['PHP_AUTH_PW']   ?? '';
+        $token    = $token ? : $_GET['token'] ?? '';
         $sql = 'SELECT EXISTS (SELECT  `username`
                                  FROM  `users`
                                  WHERE (CRC32(`username`) = CRC32(?) AND CRC32(`password`) = CRC32(?)) OR 
@@ -147,8 +147,7 @@ class Root {
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        $basic_auth = $stmt->fetch() && $exists;
-        return $basic_auth;
+        return $stmt->fetch() && $exists;
     }
 
     protected function strip_namespace($namespace, $class): string {

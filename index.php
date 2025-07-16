@@ -75,10 +75,8 @@ $app->post('/projections', function (Request $request, Response $response) {  //
     $config = json_decode($config_json, true);
     $energy = new Energy(null);
     if (($projection_id = $energy->submitProjection($crc32, $config)) === false) {
-        return $response
-            ->getBody()
-            ->write('You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/')
-            ->withStatus(401);
+        $response->getBody()->write('You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/');
+        return $response->withStatus(401);
     }
     $email = $config['email'] ?? false;
     return  $response

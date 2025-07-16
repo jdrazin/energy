@@ -1,5 +1,7 @@
 <?php
 namespace Src;
+use DateTime;
+use DateTimeZone;
 use Exception;
 
 class Energy extends Root
@@ -203,8 +205,9 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function submitProjection($config_json, $email, $comment): bool|int {
-        if (!$this->authenticate()) {
+    public function submitProjection($crc32, $config): bool|int {
+        $comment = ($config[Root::COMMENT_STRING] ?? '') . ' (' . (new DateTime("now", new DateTimeZone("UTC")))->format('j M Y H:i:s') . ')';
+        if (!$this->authenticate($config['token'] ?? false)) {
             return false;
         }
         $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
@@ -213,16 +216,15 @@ class Energy extends Root
                                              `response`  = NULL,
                                              `status`    = \'IN_QUEUE\',
                                              `submitted` = NOW()';
-        $projection = crc32($config_json . $email);
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('issss', $projection, $config_json, $email, $comment, $config_json) ||
+            !$stmt->bind_param('issss', $crc32, $config_json, $email, $comment, $config_json) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        return $projection;
+        return $crc32;
     }
 
     /**

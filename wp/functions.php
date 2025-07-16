@@ -40,9 +40,9 @@ function my_proxy_handler(WP_REST_Request $request) {
             ],
             500);
     }
-    $body       = wp_remote_retrieve_body($response);
-    $code       = wp_remote_retrieve_response_code($response);
-    $headers    = wp_remote_retrieve_headers($response);
+    $body    = wp_remote_retrieve_body($response);
+    $code    = wp_remote_retrieve_response_code($response);
+    $headers = wp_remote_retrieve_headers($response);
     return new WP_REST_Response(
         json_decode($body, true), // re-decode JSON (or return raw body)
         $code,

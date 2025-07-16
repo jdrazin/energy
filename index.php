@@ -75,13 +75,14 @@ $app->post('/projections', function (Request $request, Response $response) {  //
     $config = json_decode($config_json, true);
     $energy = new Energy(null);
     if (($projection_id = $energy->submitProjection($crc32, $config)) === false) {
-        $response->getBody()->write('You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/');
-        $response->withStatus(401);
-        return $response;
+        return $response
+            ->getBody()
+            ->write('You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/')
+            ->withStatus(401);
     }
     $email = $config['email'] ?? false;
-    $response->getBody()->write('Get your result at: https://www.drazin.net:8444/projection.html?id=' . $projection_id . ' ' .
-                                 ($email ? ' Will e-mail you when ready at ' . $email . '.' : ''));
-    return $response;
+    return  $response
+            ->getBody()
+            ->write('Get your result at: https://www.drazin.net:8444/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : ''));
 });
 $app->run();

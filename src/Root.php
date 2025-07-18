@@ -9,17 +9,17 @@ class Root {
     public const string     EARLIEST_DATE = '2024-08-01 00:00:00',
                             COMMENT_STRING = '#';
 
-    const string            APIS_PATH = '/home/jdrazin/.energy/apis.json',
-                            DEBUG_PATH = '/var/www/html/energy/debug/',
-                            CONFIG_PATH = '/var/www/html/energy/config.json',
-                            MYSQL_FORMAT_DATETIME = 'Y-m-d H:i:s',
-                            MYSQL_FORMAT_DATE = 'Y-m-d';
-    protected const int     SECONDS_PER_HOUR = 3600,
-                            SECONDS_PER_MINUTE = 60,
-                            JSON_MAX_DEPTH = 10,
-                            LOG_MAX_CHARS = 255,
-                            CUBIC_SPLINE_MULTIPLE = 8,
-                            SLOT_SOLUTIONS_DB_MAX_AGE_DAY = 30;
+    const string            APIS_PATH                       = '/home/jdrazin/.energy/apis.json',
+                            CONFIG_PATH                     = '/home/jdrazin/.energy/.json',
+                            DEBUG_PATH                      = '/var/www/html/energy/debug/',
+                            MYSQL_FORMAT_DATETIME           = 'Y-m-d H:i:s',
+                            MYSQL_FORMAT_DATE               = 'Y-m-d';
+    protected const int     SECONDS_PER_HOUR                = 3600,
+                            SECONDS_PER_MINUTE              = 60,
+                            JSON_MAX_DEPTH                  = 10,
+                            LOG_MAX_CHARS                   = 255,
+                            CUBIC_SPLINE_MULTIPLE           = 8,
+                            SLOT_SOLUTIONS_DB_MAX_AGE_DAY   = 30;
     protected const array   INEQUALITIES = ['>' => 'ASC', '<' => 'DESC'];
     public array            $apis = [], $config = [];
     protected               mysqli $mysqli;

@@ -17,8 +17,8 @@ const     DEBUG                       = true,
           TEST_PROJECTION_ID          = 2596199295,
           ARGS                        = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION     = true,
-          EMAIL_NOTIFICATION_ON_ERROR = false,
-          MODE                        = 'id';
+          EMAIL_NOTIFICATION_ON_ERROR = false;
+
 
 try {
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
@@ -31,7 +31,7 @@ try {
             file_put_contents($pid_filename, getmypid());
         }
     }
-    if ((MODE == 'cron') && (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) { // handle as cron
+    if (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron') { // handle as cron
         (new Energy(null, false))->processNextProjection(null);
     }
     else {

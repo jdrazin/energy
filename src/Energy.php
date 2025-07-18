@@ -12,7 +12,7 @@ class Energy extends Root
     const   int HOURS_PER_DAY                       = 24;
     const   int SECONDS_PER_HOUR                    = 3600;
     const   array COMPONENT_ACRONYMS                = [''              => 'none',
-                                                       'battery'       => 'BA',
+                                                       'battery'       => 'B',
                                                        'boiler'        => 'BO',
                                                        'heat_pump'     => 'HP',
                                                        'insulation'    => 'IN',

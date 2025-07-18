@@ -93,7 +93,6 @@ class Octopus extends Root
                     }
                 }
             }
-            $this->logForecast($db_slots->slots[0]['start']);                        // log forecast to costs
         } else {
             $parameters = [
                 'type'                   => 'slots',
@@ -119,36 +118,6 @@ class Octopus extends Root
             throw new Exception($message);
         }
         $this->mysqli->commit();
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function logForecast($start): void { // write costs
-        $next_slot_start         = (new DateTime($start));
-        $next_slot_start_hour    = (int) $next_slot_start->format('H');
-        $next_slot_start_minutes = (int) $next_slot_start->format('i');
-        if ($next_slot_start_minutes+60*$next_slot_start_hour < Slot::class::DURATION_MINUTES) { // log forecast for the day if
-            $sql = 'INSERT INTO `costs` (`date`, `tariff_combination`, `type`, `grid_cost_raw_gbp`, `grid_cost_optimised_gbp`)
-                                (SELECT   DATE(`start`) AS `date`,
-                                               `tariff_combination`,
-                                               \'FORECAST\',
-                                                ROUND(SUM((`load_house_kw`-`solar_gross_kw`)*IF(`load_house_kw`-`solar_gross_kw` > 0, `import_gbp_per_kwh`, `export_gbp_per_kwh`))+SUM(`import_gbp_per_day`+`export_gbp_per_day`)/' . Slot::SLOTS_PER_DAY . ', 2) AS `grid_cost_raw_gbp`,
-                                                ROUND(SUM(`grid_kw`*IF(`grid_kw` < 0, `import_gbp_per_kwh`, `export_gbp_per_kwh`))+SUM(`import_gbp_per_day`+`export_gbp_per_day`)/' . Slot::SLOTS_PER_DAY . ', 2) AS `grid_cost_optimised_gbp`
-                                        FROM `slots`
-                                        WHERE NOT `final` AND
-                                              `slot` BETWEEN 0 AND 48
-                                        GROUP BY `date`, `tariff_combination`) 
-                                ON DUPLICATE KEY UPDATE `grid_cost_raw_gbp`       = `grid_cost_raw_gbp`,
-                                                        `grid_cost_optimised_gbp` = `grid_cost_optimised_gbp`';
-            if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->execute() ||
-                !$this->mysqli->commit()) {
-                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
-            }
-        }
     }
 
     /**

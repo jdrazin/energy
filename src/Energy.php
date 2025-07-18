@@ -177,22 +177,22 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function permute($projection_id, $config): void  {
-        $config_permutations = new ParameterPermutations($config);
-        $permutations = $config_permutations->permutations;
-        foreach ($permutations as $key => $permutation) {
-            $config_permuted = $this->parameters_permuted($config, $permutation, $config_permutations->variables);
-            $permutation_acronym = $config_permuted['description'];
-            echo PHP_EOL . ($key+1) . ' of ' . count($permutations) . ' (' . $permutation_acronym . '): ';
-            $this->simulate($projection_id, $config_permuted['config'], $config['time']['max_project_duration_years'], $permutation, $permutation_acronym);
+    public function combine($projection_id, $config): void  {
+        $config_combinations = new ParameterCombinations($config);
+        $combinations = $config_combinations->combinations;
+        foreach ($combinations as $key => $combination) {
+            $config_combined = $this->parameters_combined($config, $combination, $config_combinations->variables);
+            $combination_acronym = $config_combined['description'];
+            echo PHP_EOL . ($key+1) . ' of ' . count($combinations) . ' (' . $combination_acronym . '): ';
+            $this->simulate($projection_id, $config_combined['config'], $config['time']['max_project_duration_years'], $combination, $combination_acronym);
         }
         echo PHP_EOL . 'Done' . PHP_EOL;
    }
 
-    private function parameters_permuted($config, $permutation, $variables): array {
+    private function parameters_combined($config, $combination, $variables): array {
         $description = '';
-        foreach (ParameterPermutations::PERMUTATION_ELEMENTS as $component_name) {
-            $value = (bool) $permutation[$component_name];
+        foreach (ParameterCombinations::COMBINATION_ELEMENTS as $component_name) {
+            $value = (bool) $combination[$component_name];
             $config[$component_name]['active'] = $value;
             if ($value && in_array($component_name, $variables)) {
                 $description .= self::COMPONENT_ACRONYMS[$component_name] . ', ';
@@ -205,7 +205,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function submitProjection($crc32, $config): bool|int {
+    public function submitProjection($crc32, $config, $config_json): bool|int {
         $comment = ($config[Root::COMMENT_STRING] ?? '') . ' (' . (new DateTime("now", new DateTimeZone("UTC")))->format('j M Y H:i:s') . ')';
         if (!$this->authenticate($config['token'] ?? false)) {
             return false;
@@ -270,7 +270,7 @@ class Energy extends Root
             $basetime_seconds = time();
             $this->projectionStatus($projection_id, 'IN_PROGRESS');
             $this->deleteProjection($projection_id);
-            $this->permute($projection_id, json_decode($request, true)); // process each permutation
+            $this->combine($projection_id, json_decode($request, true)); // process each combination
             $this->projectionStatus($projection_id, 'COMPLETED');
             $this->write_cpu_seconds($projection_id, time() - $basetime_seconds);
             $this->mysqli->commit();
@@ -305,7 +305,7 @@ class Energy extends Root
     }
 
     public function deleteProjection($projection_id): void  {
-        $sql = 'DELETE FROM `permutations`
+        $sql = 'DELETE FROM `combinations`
                   WHERE `projection` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
@@ -390,7 +390,7 @@ class Energy extends Root
         // get max duration
         $sql = 'SELECT  MAX(`duration_years`),  
                         COUNT(`duration_years`)
-                  FROM  `permutations`
+                  FROM  `combinations`
                   WHERE `projection` =  ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
@@ -404,7 +404,7 @@ class Energy extends Root
         if ($max_duration_years && $row_count) {
             // get acronyms
             $sql = 'SELECT DISTINCT `acronym`
-                       FROM         `permutations`
+                       FROM         `combinations`
                        WHERE        `projection` = ?';
             unset($stmt);
             if (!($stmt = $this->mysqli->prepare($sql)) ||
@@ -422,7 +422,7 @@ class Energy extends Root
             $sql = 'SELECT      `acronym`,
                                 `duration_years`,
                                 ROUND(`npv`/1000.0, 3)
-                       FROM     `permutations`
+                       FROM     `combinations`
                        WHERE    `projection` = ? AND
                                 `acronym`    = ?
                        ORDER BY `duration_years`';
@@ -461,17 +461,17 @@ class Energy extends Root
         return json_encode($projection, JSON_PRETTY_PRINT);
     }
 
-    private function permutationId($projection_id, $permutation, $permutation_acronym): int { // returns permutation id
-        $battery       = $permutation['battery'];
-        $heat_pump     = $permutation['heat_pump'];
-        $insulation    = $permutation['insulation'];
-        $boiler        = $permutation['boiler'];
-        $solar_pv      = $permutation['solar_pv'];
-        $solar_thermal = $permutation['solar_thermal'];
-        $sql = 'INSERT IGNORE INTO `permutations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
+    private function combinationId($projection_id, $combination, $combination_acronym): int { // returns combination id
+        $battery       = $combination['battery'];
+        $heat_pump     = $combination['heat_pump'];
+        $insulation    = $combination['insulation'];
+        $boiler        = $combination['boiler'];
+        $solar_pv      = $combination['solar_pv'];
+        $solar_thermal = $combination['solar_thermal'];
+        $sql = 'INSERT IGNORE INTO `combinations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
 			                               VALUES (?,            ?,              ?,         ?,       ?,            ?,        ?,          ?,               NOW(),   NULL  )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('isiiiiii', $projection_id, $permutation_acronym, $battery, $heat_pump, $insulation, $boiler, $solar_pv, $solar_thermal) ||
+            !$stmt->bind_param('isiiiiii', $projection_id, $combination_acronym, $battery, $heat_pump, $insulation, $boiler, $solar_pv, $solar_thermal) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -485,13 +485,13 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    private function updatePermutation($permutation_parameters, $projection, $results, $projection_duration_years): void { // add
+    private function updateCombination($combination_parameters, $projection, $results, $projection_duration_years): void { // add
         $id                 = $projection['newResultId'];
         $sum_gbp            = $results['npv_summary']['sum_gbp'];
-        $parameters_json    = json_encode($permutation_parameters, JSON_PRETTY_PRINT);
+        $parameters_json    = json_encode($combination_parameters, JSON_PRETTY_PRINT);
         $results_json       = json_encode($results, JSON_PRETTY_PRINT);
         unset($this->stmt);
-        $sql = 'UPDATE    `permutations`
+        $sql = 'UPDATE IGNORE `combinations`
                     SET   `duration_years` = ?,                    
                           `npv`            = ROUND(?),
                           `config`         = ?,
@@ -566,23 +566,23 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym): void {
+    function simulate($projection_id, $config, $max_project_duration_years, $combination, $combination_acronym): void {
         if (($config['heat_pump']['active'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
             echo 'Calibrating SCOP: ';
-            $results = $this->traverse_years($projection_id, $config, 1, $permutation, $permutation_acronym, 1.0);
+            $results = $this->traverse_years($projection_id, $config, 1, $combination, $combination_acronym, 1.0);
             echo PHP_EOL;
             $cop_factor = $scop/$results['scop'];
         }
         else {
             $cop_factor = 1.0;
         }
-        $this->traverse_years($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym, $cop_factor);
+        $this->traverse_years($projection_id, $config, $max_project_duration_years, $combination, $combination_acronym, $cop_factor);
     }
 
     /**
      * @throws Exception
      */
-    function traverse_years($projection_id, $config, $max_project_duration_years, $permutation, $permutation_acronym, $cop_factor): array {
+    function traverse_years($projection_id, $config, $max_project_duration_years, $combination, $combination_acronym, $cop_factor): array {
         $npv                            = $config['npv'];
         $time                           = new Time($config['time']['start'], $max_project_duration_years, $config['time']['timestep_seconds'], $this->time_units);
         $this->step_s                   = $time->step_s;
@@ -615,7 +615,7 @@ class Energy extends Root
             }
         }
         $this->install($components_active, $time);                                                                                                                  // get install costs
-        $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $permutation, $permutation_acronym); // summarise year 0
+        $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $combination, $combination_acronym); // summarise year 0
         $export_limit_j = 1000.0*$time->step_s*$supply_electric->export_limit_kw;
         while ($time->next_timestep()) {                                                                                                                            // timestep through years 0 ... N-1
             $this->value_maintenance($components_active, $time);                                                                                                    // add timestep component maintenance costs
@@ -729,7 +729,7 @@ class Energy extends Root
             $supply_boiler  ->transfer_consume_j($time, 'import',                                       $supply_boiler_j);                                  // import boiler fuel consumed
             $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
             if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
-                $results = $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym);  // summarise year at year end
+                $results = $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $combination, $combination_acronym);  // summarise year at year end
             }
         }
         return $results;
@@ -738,7 +738,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $permutation, $permutation_acronym): array {
+    public function year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $combination, $combination_acronym): array {
         echo ($time->year ? ', ' : '') . $time->year;
         $supply_electric->sum($time);
         $supply_boiler->sum($time);
@@ -749,10 +749,10 @@ class Energy extends Root
             $kwh = $heatpump->kwh['YEAR'][$time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;
         }
-        $result = ['newResultId' => $this->permutationId($projection_id, $permutation, $permutation_acronym),
-                   'permutation' => $permutation];
+        $result = ['newResultId' => $this->combinationId($projection_id, $combination, $combination_acronym),
+                   'combination' => $combination];
 
-        $this->updatePermutation($config, $result, $results, $time->year);  // end projection
+        $this->updateCombination($config, $result, $results, $time->year);  // end projection
         return $results;
     }
 

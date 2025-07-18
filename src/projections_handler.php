@@ -17,12 +17,12 @@ const     DEBUG                       = true,
           FOLDER_TEST                 = '/var/www/html/energy/test/',
           CONFIG_JSON                 = 'test.config.json',
           JSON_PROJECTION_ID          = 0,
-          TEST_PROJECTION_ID          = 3116783309,
+          TEST_PROJECTION_ID          = 473147727,
           USE_CRONTAB                 = true,
           ARGS                        = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION     = true,
           EMAIL_NOTIFICATION_ON_ERROR = false,
-          MODE                        = 'json';
+          MODE                        = 'id';
 
 try {
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
@@ -40,7 +40,7 @@ try {
             case 'json': {
                 (new Energy(null))->deleteProjection(JSON_PROJECTION_ID);
                 $config_json = file_get_contents(FOLDER_TEST . CONFIG_JSON);
-                (new Energy(null))->permute(JSON_PROJECTION_ID, json_decode($config_json, true));
+                (new Energy(null))->combine(JSON_PROJECTION_ID, json_decode($config_json, true));
                 break;
             }
             case 'id': {
@@ -74,11 +74,6 @@ catch (exception $e) {
     $root = new Root();
     $root->logDb('MESSAGE', $message, null, 'FATAL');
     echo $message . PHP_EOL;
-    if (INITIALISE_ON_EXCEPTION) {
-        $root->logDb('MESSAGE', 'Attempting to initialise ...',null, 'NOTICE');
-        (new GivEnergy())->initialise();
-        $root->logDb('MESSAGE', '... initialise done', null, 'NOTICE');
-    }
     exit(1);
 }
 catch (GuzzleException $e) {

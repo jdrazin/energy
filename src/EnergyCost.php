@@ -57,6 +57,7 @@ class EnergyCost extends Root
      */
     public function __construct($parameters) {
         parent::__construct();
+        $this->use_local_config();
         $this->parameters = $parameters;
         if (!is_null($batteryLevelInitialKwh = $parameters['batteryLevelInitialKwh']) &&
             !is_null($tariff_combination     = $parameters['tariff_combination'])) { // make json instantiate

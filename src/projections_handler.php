@@ -32,10 +32,10 @@ try {
         }
     }
     if (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron') { // handle as cron
-        (new Energy(null, false))->processNextProjection(null);
+        (new Energy())->processNextProjection(null);
     }
     else {
-        (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
+        (new Energy())->processNextProjection(TEST_PROJECTION_ID);
     }
     if (!DEBUG) {
         if (!unlink($pid_filename)) {

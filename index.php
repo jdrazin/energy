@@ -32,25 +32,36 @@ $app->get('/info', function (Request $request, Response $response) {
 });
 $app->get('/control/slots', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    $cubic_spline = isset($_GET['cubic_spline']) && $_GET['cubic_spline'];
-    if (($slots = $energy->slots($cubic_spline)) === false) {
+    $energy->use_local_config();
+    if (!$energy->authenticate(null)) {
         return $response->withStatus(401);
+    }
+    if (($slots = $energy->slots()) === false) {
+        return $response->withStatus(400);
     }
     $response->getBody()->write($slots);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->get('/control/tariff_combinations', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($tariff_combinations = $energy->tariff_combinations()) === false) {
+    $energy->use_local_config();
+    if (!$energy->authenticate(null)) {
         return $response->withStatus(401);
+    }
+    if (($tariff_combinations = $energy->tariff_combinations()) === false) {
+        return $response->withStatus(400);
     }
     $response->getBody()->write($tariff_combinations);
     return $response->withHeader('Content-Type', 'application/json')->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->get('/control/slot_solution', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($slot_solution = $energy->slot_solution()) === false) {
+    $energy->use_local_config();
+    if (!$energy->authenticate(null)) {
         return $response->withStatus(401);
+    }
+    if (($slot_solution = $energy->slot_solution()) === false) {
+        return $response->withStatus(400);
     }
     $response->getBody()->write($slot_solution);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');

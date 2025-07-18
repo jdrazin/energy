@@ -42,16 +42,13 @@ class Energy extends Root
         if (!is_null($config)) {
             $this->config = $config;
         }
-        parent::__construct($config);
+        parent::__construct();
     }
 
     /**
      * @throws Exception
      */
     public function slots(): bool|string {
-        if (!$this->authenticate()) {
-            return false;
-        }
         $sql = 'SELECT      `unix_timestamp`,
                             `load_house_kw`,
                             `previous_load_house_kw`,
@@ -116,7 +113,7 @@ class Energy extends Root
      * @throws Exception
      */
     public function slot_solution(): bool|string {
-        if (!$this->authenticate()) {
+        if (!$this->authenticate(null)) {
             return false;
         }
         // get slot message component

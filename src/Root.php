@@ -10,7 +10,7 @@ class Root {
                             COMMENT_STRING = '#';
 
     const string            APIS_PATH                       = '/home/jdrazin/.energy/apis.json',
-                            CONFIG_PATH                     = '/home/jdrazin/.energy/.json',
+                            CONFIG_PATH                     = '/home/jdrazin/.energy/config.json',
                             DEBUG_PATH                      = '/var/www/html/energy/debug/',
                             MYSQL_FORMAT_DATETIME           = 'Y-m-d H:i:s',
                             MYSQL_FORMAT_DATE               = 'Y-m-d';
@@ -49,7 +49,8 @@ class Root {
         $this->mysqli = $this->mysqli();                                                                        // get database handle
     }
 
-    public function use_local_config() {
+    public function use_local_config(): void
+    {
         if (!($this->config ?? false) && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&    // load config if not override
                 ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH))))) {
             throw new Exception('bad or missing config json: ' . $path);
@@ -132,7 +133,7 @@ class Root {
         }
     }
 
-    protected function authenticate(string $token): bool {  // attempts to authenticate against BasicAuth username:password or token
+    public function authenticate(?string $token): bool {  // attempts to authenticate against BasicAuth username:password or token
         $username = $_SERVER['PHP_AUTH_USER'] ?? '';
         $password = $_SERVER['PHP_AUTH_PW']   ?? '';
         $token    = $token ? : $_GET['token'] ?? '';

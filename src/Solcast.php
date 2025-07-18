@@ -21,6 +21,7 @@ class Solcast extends Root
     public function __construct()
     {
         parent::__construct();
+        $this->use_local_config();
         $this->class = $this->strip_namespace(__NAMESPACE__, __CLASS__);
         $this->api = $this->apis[$this->class];
     }

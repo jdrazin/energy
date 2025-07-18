@@ -72,19 +72,29 @@ $app->get('/projections/projection', function (Request $request, Response $respo
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->post('/projections', function (Request $request, Response $response) {  // submit json
-    $config_json = (string) $request->getBody();
-    $crc32  = crc32($config_json);
-    $config = json_decode($config_json, true);
-    $energy = new Energy(null);
-    if (($projection_id = $energy->submitProjection($crc32, $config, $config_json)) === false) {
-        $code    = 401;
-        $message = 'You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/';
+    if ($config_json = (string) $request->getBody()) {
+       $crc32  = crc32($config_json);
+        if ($config = json_decode($config_json, true)) {
+            $energy = new Energy($config);
+            if (($projection_id = $energy->submitProjection($crc32, $config, $config_json)) === false) {
+                $code    = 401;
+                $message = 'You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/';
+            }
+            else {
+                $code    = 201;
+                $email   = $config['email'] ?? false;
+                $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
+                $message .= ' Error handling is work in progress, so you may not get explanation if your simulation fails.';
+            }
+        }
+        else {
+            $code    = 400;
+            $message = 'Bad JSON';
+        }
     }
     else {
-        $code    = 201;
-        $email   = $config['email'] ?? false;
-        $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
-        $message .= ' Error handling is work in progress, so you may not get explanation if your simulation fails.';
+        $code    = 400;
+        $message = 'JSON body is missing';
     }
     $body               = [];
     $body['message']    = $message;

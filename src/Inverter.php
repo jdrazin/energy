@@ -9,7 +9,7 @@ class Inverter extends Component
     public function __construct($component, $time, $npv)
     {
         parent::__construct($component, $time, $npv);
-        if ($this->active) {
+        if ($this->include) {
             $this->power_efficiency = $component['power_efficiency'] ?? 1.0;
             $this->power_threshold_w = $component['power_threshold_w'] ?? 0.0;
         }
@@ -19,7 +19,7 @@ class Inverter extends Component
                                        $net_request              // flag tp transfer NET energy requested: requires additional energy consumed
     ): array
     {
-        if (!$this->active) {
+        if (!$this->include) {
             return ['transfer' => 0.0,
                 'consume' => 0.0];
         } else {

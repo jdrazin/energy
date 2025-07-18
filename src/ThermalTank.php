@@ -17,7 +17,7 @@ class ThermalTank extends Component
     public function __construct($component, $heat_pump, $time, $npv)
     {
         parent::__construct($component, $time, $npv);
-        if ($this->active) {
+        if ($this->include) {
             $this->immersion_w = 1000.0 * ($component['immersion_w'] ?? 0.0);
             $this->target_temperature_c = $component['target_temperature_c'] ?? 50.0;
             $this->capacity_c_per_joule = 1.0 / ($component['volume_m3'] * self::HEAT_CAPACITY_WATER_J_PER_M3_K);
@@ -32,7 +32,7 @@ class ThermalTank extends Component
 
     public function transfer_consume_j($request_consumed_j, $temperature_external_c): array
     {  // adds to (+ve) / subtracts from (-ve) tank
-        if (!$this->active) {
+        if (!$this->include) {
             return ['transfer' => 0.0,
                 'consume' => 0.0];
         } else {

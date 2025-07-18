@@ -10,7 +10,7 @@ class HeatPump extends Component
     public function __construct($component, $time, $npv)
     {
         parent::__construct($component, $time, $npv);
-        if ($this->active) {
+        if ($this->include) {
             $this->cops = $component['cops'];
             ksort($this->cops);  // ensure cops data are in temperature order
             $power = $component['power'];
@@ -25,7 +25,7 @@ class HeatPump extends Component
 
     public function transfer_consume_j($request_transfer_consume_j, $temp_delta_c, $time, $cop_factor): array
     {
-        if (!$this->active || !$request_transfer_consume_j) {
+        if (!$this->include || !$request_transfer_consume_j) {
             $transfer_consume_j = ['transfer' => 0.0,
                                    'consume'  => 0.0];
         } else {

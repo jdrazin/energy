@@ -19,7 +19,7 @@ class SolarCollectors extends Component
     public function __construct($component, $location, $initial_temperature, $time, $npv)
     {
         parent::__construct($component, $time, $npv);
-        if ($component['active']) {
+        if ($component['include']) {
             $this->area = $component['area'] ?? [];
             $panels     = $component['panels'] ?? [];
             $shading_factor = $this->area['shading_factor'] ?? 1.0;
@@ -34,7 +34,7 @@ class SolarCollectors extends Component
             $this->collectors_value_maintenance_per_timestep_gbp = [];
             $key = 0;
             foreach ($component['collectors'] as $collector_name => $parameters) {
-                if ($parameters && $parameters['active'] ?? true) {
+                if ($parameters && $parameters['include'] ?? true) {
                     $this->collectors[$key]     = $collector_name;
                     $this->shading_factor[$key] = $parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
                     if ($this->panels) {
@@ -90,7 +90,7 @@ class SolarCollectors extends Component
 
     public function transfer_consume_j($temperature_climate_c, $time): array
     {
-        if (!$this->active) {
+        if (!$this->include) {
             $transfer_consume_j = ['transfer' => 0.0,
                                    'consume'  => 0.0];
         } else {

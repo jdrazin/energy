@@ -14,7 +14,7 @@ class Boiler extends Component
     function __construct($component, $time, $npv)
     {
         parent::__construct($component, $time, $npv);
-        if ($this->active) {
+        if ($this->include) {
             $this->max_output_j = ($component['output_kw'] * 1000 ?? 0.0) * $this->step_s;
             $this->efficiency = $component['efficiency'] ?? 1.0;
         }
@@ -22,7 +22,7 @@ class Boiler extends Component
 
     public function transfer_consume_j($request_consumed_j): array
     {
-        if (!$this->active) {
+        if (!$this->include) {
             return ['transfer' => 0.0,
                 'consume' => 0.0];
         } elseif ($request_consumed_j > 0.0) {

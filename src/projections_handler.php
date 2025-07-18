@@ -14,14 +14,11 @@ ini_set('mysql.connect_timeout', '36000');
 
 const     DEBUG                       = true,
           FOLDER_PID                  = '/var/www/html/energy/pids/',
-          FOLDER_TEST                 = '/var/www/html/energy/test/',
-          CONFIG_JSON                 = 'test.config.json',
-          JSON_PROJECTION_ID          = 0,
-          TEST_PROJECTION_ID          = 2867885348,
+          TEST_PROJECTION_ID          = 2596199295,
           ARGS                        = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION     = true,
           EMAIL_NOTIFICATION_ON_ERROR = false,
-          MODE                        = 'cron';
+          MODE                        = 'id';
 
 try {
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
@@ -35,24 +32,10 @@ try {
         }
     }
     if ((MODE == 'cron') && (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) { // handle as cron
-        (new Energy(null))->processNextProjection(null);
+        (new Energy(null, false))->processNextProjection(null);
     }
     else {
-        switch (MODE) {
-            case 'json': {
-                (new Energy(null))->deleteProjection(JSON_PROJECTION_ID);
-                $config_json = file_get_contents(FOLDER_TEST . CONFIG_JSON);
-                (new Energy(null))->combine(JSON_PROJECTION_ID, json_decode($config_json, true));
-                break;
-            }
-            case 'id': {
-                (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
-                break;
-            }
-            default: {
-
-            }
-        }
+        (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
     }
     if (!DEBUG) {
         if (!unlink($pid_filename)) {

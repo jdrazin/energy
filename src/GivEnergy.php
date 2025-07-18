@@ -114,6 +114,7 @@ class GivEnergy extends Root
     public function __construct()
     {
         parent::__construct();
+        $this->use_local_config();
         $this->api            = $this->apis[$this->strip_namespace(__NAMESPACE__,__CLASS__)];
         $this->battery        = $this->config['battery'];
         $this->local_timezone = ($local_timezone = $this->local_timezone()) ? $local_timezone : $this->get_local_timezone();

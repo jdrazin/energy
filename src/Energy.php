@@ -42,7 +42,7 @@ class Energy extends Root
         if (!is_null($config)) {
             $this->config = $config;
         }
-        parent::__construct();
+        parent::__construct($config);
     }
 
     /**
@@ -193,7 +193,7 @@ class Energy extends Root
         $description = '';
         foreach (ParameterCombinations::COMBINATION_ELEMENTS as $component_name) {
             $value = (bool) $combination[$component_name];
-            $config[$component_name]['active'] = $value;
+            $config[$component_name]['include'] = $value;
             if ($value && in_array($component_name, $variables)) {
                 $description .= self::COMPONENT_ACRONYMS[$component_name] . ', ';
             }
@@ -510,13 +510,13 @@ class Energy extends Root
 
     private function consumption($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal): array {
         $consumption = [];
-        if ($heatpump->active) {
+        if ($heatpump->include) {
             $consumption['heatpump']      = ['annual' => $this->round_consumption($heatpump->kwh['YEAR'][0])];
         }
-        if ($solar_pv->active) {
+        if ($solar_pv->include) {
             $consumption['solar_pv']      = ['annual' => $this->round_consumption($solar_pv->output_kwh['YEAR'][0])];
         }
-        if ($solar_thermal->active) {
+        if ($solar_thermal->include) {
             $consumption['solar_thermal'] = ['annual' => $this->round_consumption($solar_thermal->output_kwh['YEAR'][0])];
         }
         for ($year = 0; $year < $time->year; $year++) {
@@ -557,7 +557,7 @@ class Energy extends Root
 
     function install($components, $time): void {
         foreach ($components as $component) {
-            if ($component->active && $component->value_install_gbp <> 0) {
+            if ($component->include && $component->value_install_gbp <> 0) {
                 $component->npv->value_gbp($time, $component->value_install_gbp);
             }
         }
@@ -567,7 +567,7 @@ class Energy extends Root
      * @throws Exception
      */
     function simulate($projection_id, $config, $max_project_duration_years, $combination, $combination_acronym): void {
-        if (($config['heat_pump']['active'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
+        if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
             echo 'Calibrating SCOP: ';
             $results = $this->traverse_years(true, $projection_id, $config, 1, $combination, $combination_acronym, 1.0);
             echo PHP_EOL;
@@ -610,7 +610,7 @@ class Energy extends Root
                         $insulation];
         $components_active = [];
         foreach ($components as $component) {
-            if ($component->active) {
+            if ($component->include) {
                 $components_active[] = $component;
             }
         }
@@ -625,12 +625,12 @@ class Energy extends Root
             $supply_boiler_j   = 0.0;				                                                                                                                // export: +ve, import: -ve
             $temp_climate_c = (new Climate())->temperature_time($time);	                                                                                            // get average climate temperature for day of year, time of day
             // battery
-            if ($battery->active && ($supply_electric->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak
+            if ($battery->include && ($supply_electric->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak
                 $to_battery_j       = $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate until full
                 $supply_electric_j -= $to_battery_j;
             }
             // solar pv
-            if ($solar_pv->active) {
+            if ($solar_pv->include) {
                 $solar_pv_j         = $solar_pv->transfer_consume_j($temp_climate_c, $time)['transfer'];                                                            // get solar electrical energy
                 $supply_electric_j += $solar_pv_j;				                                                                                                    // start electric balance: surplus (+), deficit (-)
             }
@@ -639,7 +639,7 @@ class Energy extends Root
             if ($demand_thermal_hotwater_j > 0.0) {
                 $hotwater_tank_transfer_consume_j      = $hotwater_tank->transfer_consume_j(-$demand_thermal_hotwater_j, $temperature_internal_room_c);             // try to satisfy demand from hotwater tank;
                 if (($demand_thermal_hotwater_j += $hotwater_tank_transfer_consume_j['transfer']) > 0.0) {                                                          // if insufficient energy in hotwater tank, get from elsewhere
-                    if ($boiler->active) {                                                                                                                          // else use boiler if available
+                    if ($boiler->include) {                                                                                                                          // else use boiler if available
                         $boiler_transfer_consume_j     = $boiler->transfer_consume_j($demand_thermal_hotwater_j);
                         $supply_boiler_j              -= $boiler_transfer_consume_j['consume'];
                     }
@@ -649,7 +649,7 @@ class Energy extends Root
                 }
             }
             // heat hot water tank if necessary
-            if ($solar_thermal->active) {
+            if ($solar_thermal->include) {
                 $solar_thermal_hotwater_j = $solar_thermal->transfer_consume_j($temperature_internal_room_c, $time)['transfer'];                                    // generated solar thermal energy
                 if ($hotwater_tank->temperature_c < $hotwater_tank->target_temperature_c) {                                                                         // heat hot water tank from solar thermal if necessary                                                                          // top up with solar thermal
                     $solar_thermal_hotwater_j -= $hotwater_tank->transfer_consume_j($solar_thermal_hotwater_j, $temp_climate_c)['consume'];                         // deduct hot water consumption from solar thermal generation
@@ -659,7 +659,7 @@ class Energy extends Root
                 $solar_thermal_hotwater_j = 0.0;
             }
             if ($hotwater_tank->temperature_c < $hotwater_tank->target_temperature_c) {
-                if ($heatpump->active) {                  // use heat pump
+                if ($heatpump->include) {                  // use heat pump
                     $heatpump_transfer_consume_j         = $heatpump->transfer_consume_j($heatpump->max_output_j,                                                   // get energy from heat pump
                                                                              $hotwater_tank->temperature_c - $temp_climate_c,
                                                                                         $time,
@@ -667,7 +667,7 @@ class Energy extends Root
                     $supply_electric_j                  -= $heatpump_transfer_consume_j['consume'];                                                                 // consumes electricity
                     $hotwater_tank->transfer_consume_j($heatpump_transfer_consume_j['transfer'], $temperature_internal_room_c);                                     // put energy in hotwater tank
                 }
-                elseif ($boiler->active) {                                                                                                                          // use boiler
+                elseif ($boiler->include) {                                                                                                                          // use boiler
                     $boiler_transfer_consume_j           = $boiler->transfer_consume_j($boiler->max_output_j);                                                      // get energy from boiler
                     $hotwater_transfer_consume_j         = $hotwater_tank->transfer_consume_j($boiler_transfer_consume_j['transfer'], $temperature_internal_room_c);// put energy in hotwater tank
                     $supply_boiler_j                    -= $hotwater_transfer_consume_j['consume'];                                                                 // consumes oil/gas
@@ -683,7 +683,7 @@ class Energy extends Root
             if ($solar_thermal_hotwater_j > 0.0) {
                 $demand_thermal_space_heating_j                -= $solar_thermal_hotwater_j;                                                                        // use remaining solar thermal (if any) for space heating
             }
-            if ($heatpump->active) {                                                                                                                                // use heatpump if available
+            if ($heatpump->include) {                                                                                                                                // use heatpump if available
                 if ($demand_thermal_space_heating_j >= 0.0     && $heatpump->heat) {                                                                                // heating
                     $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j,
                                                                                     $temperature_internal_room_c - $temp_climate_c,
@@ -702,7 +702,7 @@ class Energy extends Root
                 }
             }
             if ($demand_thermal_space_heating_j > 0.0) {
-                if ($boiler->active) {                                                                                                                              // use boiler if available and necessary
+                if ($boiler->include) {                                                                                                                              // use boiler if available and necessary
                     $boiler_transfer_consume_j              = $boiler->transfer_consume_j($demand_thermal_space_heating_j);
                     $supply_boiler_j                       -= $boiler_transfer_consume_j['consume'];
                 }
@@ -712,7 +712,7 @@ class Energy extends Root
             }
             $demand_electric_non_heating_j                  = $demand_non_heating_electric->demand_j($time);                                                        // electrical non-heating demand
             $supply_electric_j                             -= $demand_electric_non_heating_j;			                    	                                    // satisfy electric non-heating demand
-            if ($battery->active) {
+            if ($battery->include) {
                 if ($supply_electric->current_bands['export'] == 'peak') {                                                                                          // export peak time
                     $to_battery_j                           = $battery->transfer_consume_j(-1E9)['transfer'];                                        // discharge battery at max power until empty
                     $supply_electric_j                     -= $to_battery_j;
@@ -745,7 +745,7 @@ class Energy extends Root
         $consumption = self::consumption($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal);
         $results['npv_summary'] = self::npv_summary($components_active); // $results['npv_summary']['components']['13.5kWh battery'] is unset after $time->year == 8
         $results['consumption'] = $consumption;
-        if ($heatpump->active && $time->year) {
+        if ($heatpump->include && $time->year) {
             $kwh = $heatpump->kwh['YEAR'][$time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;
         }
@@ -762,7 +762,7 @@ class Energy extends Root
         $npv_components = [];
         $sum_gbp = 0.0;
         foreach ($components as $component) {
-            if ($component->active) {
+            if ($component->include) {
                 $name = $component->name;
                 if ($type = $component->type ?? false) {
                     $name .= ' (' . $type . ')';

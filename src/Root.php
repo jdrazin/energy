@@ -10,8 +10,8 @@ class Root {
                             COMMENT_STRING = '#';
 
     const string            APIS_PATH = '/home/jdrazin/.energy/apis.json',
-                            CONFIG_PATH = '/var/www/html/energy/config.json',
                             DEBUG_PATH = '/var/www/html/energy/debug/',
+                            CONFIG_PATH = '/var/www/html/energy/config.json',
                             MYSQL_FORMAT_DATETIME = 'Y-m-d H:i:s',
                             MYSQL_FORMAT_DATE = 'Y-m-d';
     protected const int     SECONDS_PER_HOUR = 3600,
@@ -46,12 +46,13 @@ class Root {
             ($this->apis = json_decode($api_text, true, self::JSON_MAX_DEPTH)))) {
             throw new Exception('bad or missing config json: ' . $path);
         }
-        else {
-            $this->mysqli = $this->mysqli();                                                                        // get database handle
-            if (!($this->config ?? false) && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&    // load config if not override
+        $this->mysqli = $this->mysqli();                                                                        // get database handle
+    }
+
+    public function use_local_config() {
+        if (!($this->config ?? false) && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&    // load config if not override
                 ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH))))) {
-                throw new Exception('bad or missing config json: ' . $path);
-            }
+            throw new Exception('bad or missing config json: ' . $path);
         }
     }
 

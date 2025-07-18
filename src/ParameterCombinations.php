@@ -18,7 +18,7 @@ class ParameterCombinations
                 $this->variables[] = $element_name;
                 $combinations_count *= 2;
             } else {
-                $this->fixed[$element_name] = $config[$element_name]['active'] ?? false;
+                $this->fixed[$element_name] = $config[$element_name]['include'] ?? false;
             }
         }
         $this->msb = count($this->variables) - 1;

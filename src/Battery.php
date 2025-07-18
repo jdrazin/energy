@@ -11,7 +11,7 @@ class Battery extends Component
     public function __construct($component, $time, $npv)
     {
         parent::__construct($component, $time, $npv);
-        if ($this->active) {
+        if ($this->include) {
             $this->one_way_efficiency           = sqrt(($component['round_trip_efficiency_percent'] ?? 100.0) / 100.0);
             $this->initial_raw_capacity_kwh     = $component['initial_raw_capacity_kwh'] ?? 0.0;
             $this->cycles_to_reduced_capacity   = $component['projection']['cycles_to_reduced_capacity'] ?? 1E9;

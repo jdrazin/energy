@@ -5,13 +5,13 @@ class Component extends Root // extends Root
 {
     public float $step_s, $value_install_gbp, $value_maintenance_per_timestep_gbp;
     public string $name;
-    public bool $active;
+    public bool $include;
     public array $cost, $time_units;
     public Npv $npv;
 
     public function __construct($component, $time, $npv) {
         $this->name = $component['name'] ?? $this->strip_namespace(__NAMESPACE__,__CLASS__);
-        if ($this->active = $component['active'] ?? true) {
+        if ($this->include = $component['include'] ?? true) {
             $this->cost = [
                             'install_gbp'          => 0.0,
                             'maintenance_pa_gbp'   => 0.0,
@@ -33,7 +33,7 @@ class Component extends Root // extends Root
 
     public function value_maintenance($time): void
     {
-        if ($this->active) {
+        if ($this->include) {
             $this->npv->value_gbp($time, $this->value_maintenance_per_timestep_gbp);
         }
     }

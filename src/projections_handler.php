@@ -18,7 +18,6 @@ const     DEBUG                       = true,
           CONFIG_JSON                 = 'test.config.json',
           JSON_PROJECTION_ID          = 0,
           TEST_PROJECTION_ID          = 473147727,
-          USE_CRONTAB                 = true,
           ARGS                        = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION     = true,
           EMAIL_NOTIFICATION_ON_ERROR = false,
@@ -35,7 +34,10 @@ try {
             file_put_contents($pid_filename, getmypid());
         }
     }
-    if ((($cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) && USE_CRONTAB) || !$cron) {
+    if ((MODE == 'cron') && (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron')) { // handle as cron
+        (new Energy(null))->processNextProjection(null);
+    }
+    else {
         switch (MODE) {
             case 'json': {
                 (new Energy(null))->deleteProjection(JSON_PROJECTION_ID);
@@ -45,10 +47,6 @@ try {
             }
             case 'id': {
                 (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
-                break;
-            }
-            case 'cron': {
-                (new Energy(null))->processNextProjection(null);
                 break;
             }
             default: {

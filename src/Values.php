@@ -9,15 +9,15 @@ use Exception;
 class Values extends Root
 {
 
-    const int   SLOT_DISTANCE_MAX = 12,
-                TEMPERATURE_DISTANCE_MAX = 2,
-                HISTORY_DAY_LIMIT = 14,
+    const int   SLOT_DISTANCE_MAX               = 12,
+                TEMPERATURE_DISTANCE_MAX        = 2,
+                HISTORY_DAY_LIMIT               = 14,
                 LATEST_AVERAGE_DURATION_MINUTES = 15;
 
-    const float MAX_POWER_W = 7500.0,
-                MIN_LIMIT_TEMPERATURE = 2.0,
-                MIN_POWER_W = 100.0,
-                MAX_LIMIT_TEMPERATURE = 21.0;
+    const float MAX_POWER_W                     = 7500.0,
+                MIN_LIMIT_TEMPERATURE           = 2.0,
+                MIN_POWER_W                     = 100.0,
+                MAX_LIMIT_TEMPERATURE           = 21.0;
 
     private array $power_w, $tariff_combination;
 
@@ -31,6 +31,7 @@ class Values extends Root
     public function __construct()
     {
         parent::__construct();
+        $this->use_local_config();
         $this->solar_pv_inverter_power_threshold_kw = $this->config['solar_pv']['inverter']['power_threshold_kw'];
     }
 

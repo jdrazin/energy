@@ -81,7 +81,7 @@ class Energy extends Root
      * @throws Exception
      */
     public function tariff_combinations(): bool|string {
-        if (!$this->authenticate()) {
+        if (!$this->authenticate(null)) { // to do: does authenticate() belong here?
             return false;
         }
         $sql = "SELECT  UNIX_TIMESTAMP(`sndce`.`timestamp`) AS `start`,
@@ -569,20 +569,20 @@ class Energy extends Root
     function simulate($projection_id, $config, $max_project_duration_years, $combination, $combination_acronym): void {
         if (($config['heat_pump']['active'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
             echo 'Calibrating SCOP: ';
-            $results = $this->traverse_years($projection_id, $config, 1, $combination, $combination_acronym, 1.0);
+            $results = $this->traverse_years(true, $projection_id, $config, 1, $combination, $combination_acronym, 1.0);
             echo PHP_EOL;
             $cop_factor = $scop/$results['scop'];
         }
         else {
             $cop_factor = 1.0;
         }
-        $this->traverse_years($projection_id, $config, $max_project_duration_years, $combination, $combination_acronym, $cop_factor);
+        $this->traverse_years(false, $projection_id, $config, $max_project_duration_years, $combination, $combination_acronym, $cop_factor);
     }
 
     /**
      * @throws Exception
      */
-    function traverse_years($projection_id, $config, $max_project_duration_years, $combination, $combination_acronym, $cop_factor): array {
+    function traverse_years($calibrating_scop, $projection_id, $config, $max_project_duration_years, $combination, $combination_acronym, $cop_factor): array {
         $npv                            = $config['npv'];
         $time                           = new Time($config['time']['start'], $max_project_duration_years, $config['time']['timestep_seconds'], $this->time_units);
         $this->step_s                   = $time->step_s;
@@ -615,7 +615,7 @@ class Energy extends Root
             }
         }
         $this->install($components_active, $time);                                                                                                                  // get install costs
-        $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $combination, $combination_acronym); // summarise year 0
+        $this->year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $combination, $combination_acronym); // summarise year 0
         $export_limit_j = 1000.0*$time->step_s*$supply_electric->export_limit_kw;
         while ($time->next_timestep()) {                                                                                                                            // timestep through years 0 ... N-1
             $this->value_maintenance($components_active, $time);                                                                                                    // add timestep component maintenance costs
@@ -729,7 +729,7 @@ class Energy extends Root
             $supply_boiler  ->transfer_consume_j($time, 'import',                                       $supply_boiler_j);                                  // import boiler fuel consumed
             $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
             if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
-                $results = $this->year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $combination, $combination_acronym);  // summarise year at year end
+                $results = $this->year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $combination, $combination_acronym);  // summarise year at year end
             }
         }
         return $results;
@@ -738,7 +738,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function year_summary($projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $combination, $combination_acronym): array {
+    public function year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $combination, $combination_acronym): array {
         echo ($time->year ? ', ' : '') . $time->year;
         $supply_electric->sum($time);
         $supply_boiler->sum($time);
@@ -749,10 +749,11 @@ class Energy extends Root
             $kwh = $heatpump->kwh['YEAR'][$time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;
         }
-        $result = ['newResultId' => $this->combinationId($projection_id, $combination, $combination_acronym),
-                   'combination' => $combination];
-
-        $this->updateCombination($config, $result, $results, $time->year);  // end projection
+        if (!$calibrating_scop) {
+            $result = ['newResultId' => $this->combinationId($projection_id, $combination, $combination_acronym),
+                       'combination' => $combination];
+            $this->updateCombination($config, $result, $results, $time->year);  // end projection
+        }
         return $results;
     }
 

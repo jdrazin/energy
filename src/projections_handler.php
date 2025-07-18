@@ -17,11 +17,11 @@ const     DEBUG                       = true,
           FOLDER_TEST                 = '/var/www/html/energy/test/',
           CONFIG_JSON                 = 'test.config.json',
           JSON_PROJECTION_ID          = 0,
-          TEST_PROJECTION_ID          = 473147727,
+          TEST_PROJECTION_ID          = 2867885348,
           ARGS                        = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION     = true,
           EMAIL_NOTIFICATION_ON_ERROR = false,
-          MODE                        = 'id';
+          MODE                        = 'cron';
 
 try {
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';

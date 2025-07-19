@@ -12,6 +12,9 @@
         google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
         google.charts.setOnLoadCallback(fetchTimeSeries);                       // set a callback to run when the Google Visualization API is loaded
     }
+    else {                                                                      // display error message
+
+    }
 
     function getText(url) {  // WARNING: synchronous
         var request = new XMLHttpRequest();

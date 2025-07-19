@@ -29,8 +29,8 @@ class SolarCollectors extends Component
                     $this->panels[$k] = $panel;
                 }
             }
-            $this->collectors = [];
-            $this->collectors_value_install_gbp = [];
+            $this->collectors                                    = [];
+            $this->collectors_value_install_gbp                  = [];
             $this->collectors_value_maintenance_per_timestep_gbp = [];
             $key = 0;
             foreach ($component['collectors'] as $collector_name => $parameters) {
@@ -61,8 +61,6 @@ class SolarCollectors extends Component
                 }
                 $key++;
             }
-            $this->value_install_gbp                  += -$this->cost['install_gbp'];
-            $this->value_maintenance_per_timestep_gbp += -$this->cost['maintenance_pa_gbp'] * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
             $this->output_kwh = $this->zero_output();
         }
     }

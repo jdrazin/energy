@@ -3,8 +3,8 @@
     <meta http-equiv="refresh" content="30">
     <!--Load the AJAX API-->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">                                          // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
-    const SERVER_PROJECTIONS = 'https://www.drazin.net:8444/projections/';            // Lenovo DRAZIN14 VM at 192.168.168.14
+    <script type="text/javascript">                                         // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
+    const SERVER_PROJECTIONS = 'https://www.drazin.net:8444/projections/';  // Lenovo DRAZIN14 VM at 192.168.168.14
     const id                 = '?id=' + encodeURIComponent(getParameterByName('id'));
     const projection         = getText(SERVER_PROJECTIONS + 'text' + id);
     google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
@@ -65,7 +65,7 @@
                 7: { lineWidth: 3, targetAxisIndex: 0},
             },
             vAxes: {
-                0: {title: 'Net present value (GBP 000s)' }
+                0: {title: 'Absolute NPV (GBP 000s)' }
             },
             colors: [
                 '#000000',
@@ -96,12 +96,12 @@
          * Google Line Chart curve fitting is rubbish, so consider cubic splines for future
          * see Python scipy/numpy library: https://pythonnumericalmethods.studentorg.berkeley.edu/notebooks/chapter17.03-Cubic-Spline-Interpolation.html
          */
-        var chart = new google.visualization.LineChart(document.getElementById('chart_time_series'));
+        var chart = new google.visualization.LineChart(document.getElementById('npv_chart_absolute'));
         chart.draw(timeSeries, options);
     }
     </script>
 </head>
 <body>
-<div id="chart_time_series"></div>
+<div id="npv_chart_absolute"></div>
 </body>
 </html>

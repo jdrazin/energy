@@ -270,6 +270,7 @@ class Energy extends Root
                 $this->deleteProjection($projection_id);
                 $this->combine($projection_id, json_decode($request, true)); // process each combination
                 $this->projectionStatus($projection_id, 'COMPLETED');
+                throw new Exception('How now brown cow');
             }
             catch (Exception $e) {
                 $message = $e->getMessage();
@@ -347,9 +348,10 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function get_text($projection_id): ?string {
+    public function get_text($projection_id, $type): ?string {
         // get acronyms
         $sql = 'SELECT  `status`,
+                        `error`,
                         `timestamp`,
                         UNIX_TIMESTAMP(`submitted`),
                         `comment`,
@@ -358,18 +360,28 @@ class Energy extends Root
                   WHERE `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
-            !$stmt->bind_result($status, $timestamp, $submitted_unix_timestamp, $comment, $cpu_seconds) ||
+            !$stmt->bind_result($status, $error, $timestamp, $submitted_unix_timestamp, $comment, $cpu_seconds) ||
             !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+            $error = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $error, null, 'ERROR');
+            throw new Exception($error);
         }
         $stmt->fetch();
         switch($status) {
             case 'COMPLETED':
             case 'NOTIFIED': {
-                return $comment . ' elapsed: ' . $cpu_seconds . 's';
+                switch ($type) {
+                    case 'error': {
+                        return $error;
+                    }
+                    case 'comment': {
+                        return $comment . ' elapsed: ' . $cpu_seconds . 's';
+                    }
+                    default: {
+                        throw new Exception('Bad text type');
+                    }
                 }
+            }
             case 'IN_QUEUE': {
                 $sql = 'SELECT  COUNT(`status`)
                           FROM  `projections`
@@ -381,9 +393,9 @@ class Energy extends Root
                     !$stmt->bind_result($count) ||
                     !$stmt->execute() ||
                     !$stmt->fetch()) {
-                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, null, 'ERROR');
-                    throw new Exception($message);
+                    $error = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $error, null, 'ERROR');
+                    throw new Exception($error);
                 }
                 return 'Projection is ' . ($count ? : 'next') . ' in queue. Come back shortly.';
             }

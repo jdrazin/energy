@@ -7,9 +7,15 @@
     const SERVER_PROJECTIONS = 'https://www.drazin.net:8444/projections/';  // Lenovo DRAZIN14 VM at 192.168.168.14
     const id                 = '?id=' + encodeURIComponent(getParameterByName('id'));
     const error              = getText(SERVER_PROJECTIONS + 'error'   + id);
-    const projection         = getText(SERVER_PROJECTIONS + 'comment' + id);
-    google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
-    google.charts.setOnLoadCallback(fetchTimeSeries);                       // set a callback to run when the Google Visualization API is loaded
+    if (error.length) {
+        var projection         = getText(SERVER_PROJECTIONS + 'comment' + id);
+        google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
+        google.charts.setOnLoadCallback(fetchTimeSeries);                       // set a callback to run when the Google Visualization API is loaded
+    }
+    else {                                                                      // display error
+
+    }
+
     function getText(url) {  // WARNING: synchronous
         var request = new XMLHttpRequest();
         request.open('GET', url, false);

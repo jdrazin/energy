@@ -7,13 +7,10 @@
     const SERVER_PROJECTIONS = 'https://www.drazin.net:8444/projections/';  // Lenovo DRAZIN14 VM at 192.168.168.14
     const id                 = '?id=' + encodeURIComponent(getParameterByName('id'));
     const error              = getText(SERVER_PROJECTIONS + 'error'   + id);
-    if (error.length) {
-        var projection         = getText(SERVER_PROJECTIONS + 'comment' + id);
+    const projection         = getText(SERVER_PROJECTIONS + 'comment' + id);
+    if (!error.length) {
         google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
         google.charts.setOnLoadCallback(fetchTimeSeries);                       // set a callback to run when the Google Visualization API is loaded
-    }
-    else {                                                                      // display error
-
     }
 
     function getText(url) {  // WARNING: synchronous

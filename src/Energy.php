@@ -605,17 +605,17 @@ class Energy extends Root
                         $hotwater_tank,
                         $heatpump,
                         $insulation];
-        $components_active = [];
+        $components_included = [];
         foreach ($components as $component) {
             if ($component->include) {
-                $components_active[] = $component;
+                $components_included[] = $component;
             }
         }
-        $this->install($components_active, $time);                                                                                                                  // get install costs
-        $this->year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_active, $config, $combination, $combination_acronym); // summarise year 0
+        $this->install($components_included, $time);                                                                                                                  // get install costs
+        $this->year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_included, $config, $combination, $combination_acronym); // summarise year 0
         $export_limit_j = 1000.0*$time->step_s*$supply_electric->export_limit_kw;
         while ($time->next_timestep()) {                                                                                                                            // timestep through years 0 ... N-1
-            $this->value_maintenance($components_active, $time);                                                                                                    // add timestep component maintenance costs
+            $this->value_maintenance($components_included, $time);                                                                                                    // add timestep component maintenance costs
             $supply_electric->update_bands($time);                                                                                                                  // get supply bands
             $supply_boiler->update_bands($time);
             $supply_electric_j = 0.0;                                                                                                                               // zero supply balances for timestep
@@ -726,7 +726,7 @@ class Energy extends Root
             $supply_boiler  ->transfer_consume_j($time, 'import',                                       $supply_boiler_j);                                  // import boiler fuel consumed
             $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
             if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
-                $results = $this->year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $combination, $combination_acronym);  // summarise year at year end
+                $results = $this->year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_included, $config, $combination, $combination_acronym);  // summarise year at year end
             }
         }
         return $results;

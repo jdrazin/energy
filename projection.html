@@ -8,7 +8,7 @@
     const id                 = '?id=' + encodeURIComponent(getParameterByName('id'));
     const projection         = getText(SERVER_PROJECTIONS + 'text' + id);
     google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package
-    google.charts.setOnLoadCallback(fetchTimeSeries);                       // Set a callback to run when the Google Visualization API is loaded
+    google.charts.setOnLoadCallback(fetchTimeSeries);                       // set a callback to run when the Google Visualization API is loaded
     function getText(url) {  // WARNING: synchronous
         var request = new XMLHttpRequest();
         request.open('GET', url, false);
@@ -32,10 +32,18 @@
                 if (!text) throw new Error("Empty response from server");
                 return JSON.parse(text);
             })
-            .then(data => drawChart(data))
+            .then(data => drawNPVChartAbsolute(data))
+            .catch(error => console.error('Error fetching data:', error));
+        fetch(url, { method: "GET"})
+            .then(response => response.text()) // First get response as text
+            .then(text => {
+                if (!text) throw new Error("Empty response from server");
+                return JSON.parse(text);
+            })
+            .then(data => drawNPVChartRelative(data))
             .catch(error => console.error('Error fetching data:', error));
     }
-    function drawChart(data) {
+    function drawNPVChartAbsolute(data) {
         var timeSeries = new google.visualization.DataTable(data);
         for (var column = 0; column < data.length; column++) {
             timeSeries.addColumn('number', data[column][0]);
@@ -99,9 +107,85 @@
         var chart = new google.visualization.LineChart(document.getElementById('npv_chart_absolute'));
         chart.draw(timeSeries, options);
     }
+    function drawNPVChartRelative(dataAbsolute) {
+        if (dataAbsolute.length > 2) { // exit if only none projection
+            var dataRelative = [];
+            dataRelative[0] = dataAbsolute[0];
+            for (column = 2; column < dataAbsolute.length; column++) {
+                var rowRelative = [];
+                rowRelative[0] = dataAbsolute[column][0];
+                for (var i = 1; i < dataAbsolute[0].length; i++) {
+                    rowRelative[i] = dataAbsolute[column][i] - dataAbsolute[1][i];
+                }
+                dataRelative[column-1] = rowRelative;
+            }
+            var timeSeries = new google.visualization.DataTable(dataRelative);
+            for (var column = 0; column < dataRelative.length; column++) {
+                timeSeries.addColumn('number', dataRelative[column][0]);
+            }
+            var duration_years = dataRelative[0].length;
+            var row = [];
+            for (var year = 0; year <= duration_years; year++) {
+                for (var column = 0; column < dataRelative.length; column++) {
+                    row[column] = dataRelative[column][year + 1];
+                }
+                timeSeries.addRow(row);
+            }
+            var options = {
+                title: projection,
+                titleTextStyle: {color: 'black', fontSize: 30, bold: true, italic: false},
+                width: 1800,
+                height: 800,
+                backgroundColor: '#EEEEEE',
+                series: {
+                    0: {lineWidth: 3, targetAxisIndex: 0},
+                    1: {lineWidth: 3, targetAxisIndex: 0},
+                    2: {lineWidth: 3, targetAxisIndex: 0},
+                    3: {lineWidth: 3, targetAxisIndex: 0},
+                    4: {lineWidth: 3, targetAxisIndex: 0},
+                    5: {lineWidth: 3, targetAxisIndex: 0},
+                    6: {lineWidth: 3, targetAxisIndex: 0},
+                    7: {lineWidth: 3, targetAxisIndex: 0},
+                },
+                vAxes: {
+                    0: {title: 'Relative NPV (GBP 000s)'}
+                },
+                colors: [
+                    '#3366cc',
+                    '#dc3912',
+                    '#ff9900',
+                    '#109618',
+                    '#990099',
+                    '#0099c6',
+                    '#dd4477'
+                ],
+                is3D: true,
+                hAxis: {
+                    title: 'Project duration (years)',
+                    titleTextStyle: {color: 'black', fontSize: 25, bold: true, italic: false},
+                    textStyle: {fontSize: 20, bold: false},
+
+                    gridlines: {count: duration_years}
+                },
+                vAxis: {
+                    titleTextStyle: {color: 'black', fontSize: 25, bold: true, italic: false},
+                    textStyle: {fontSize: 20, bold: false},
+                    gridlines: {color: 'grey'},
+                    minValue: 0
+                },
+            };
+            /*
+         * Google Line Chart curve fitting is rubbish, so consider cubic splines for future
+         * see Python scipy/numpy library: https://pythonnumericalmethods.studentorg.berkeley.edu/notebooks/chapter17.03-Cubic-Spline-Interpolation.html
+         */
+            var chart = new google.visualization.LineChart(document.getElementById('npv_chart_relative'));
+            chart.draw(timeSeries, options);
+        }
+     }
     </script>
 </head>
 <body>
 <div id="npv_chart_absolute"></div>
+<div id="npv_chart_relative"></div>
 </body>
 </html>

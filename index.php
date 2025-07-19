@@ -66,12 +66,20 @@ $app->get('/control/slot_solution', function (Request $request, Response $respon
     $response->getBody()->write($slot_solution);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
-$app->get('/projections/text', function (Request $request, Response $response) {
+$app->get('/projections/error', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($projection = $energy->get_text((int) $_GET['id'])) === false) {
+    if (($error = $energy->get_text((int) $_GET['id'], 'error')) === false) {
         return $response->withStatus(401);
     }
-    $response->getBody()->write($projection);
+    $response->getBody()->write($error);
+    return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
+});
+$app->get('/projections/comment', function (Request $request, Response $response) {
+    $energy = new Energy(null);
+    if (($comment = $energy->get_text((int) $_GET['id'], 'comment')) === false) {
+        return $response->withStatus(401);
+    }
+    $response->getBody()->write($comment);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->get('/projections/projection', function (Request $request, Response $response) {

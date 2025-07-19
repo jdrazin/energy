@@ -210,7 +210,7 @@ class Energy extends Root
         $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
                                    VALUES (?,     ?,         ?,       ?)
                     ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
-                                             `response`  = NULL,
+                                             `error`     = NULL,
                                              `status`    = \'IN_QUEUE\',
                                              `submitted` = NOW()';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
@@ -265,17 +265,33 @@ class Energy extends Root
         unset($stmt);
         if ($request) {   // process next projection if exists
             $basetime_seconds = time();
-            $this->projectionStatus($projection_id, 'IN_PROGRESS');
-            $this->deleteProjection($projection_id);
-            $this->combine($projection_id, json_decode($request, true)); // process each combination
-            $this->projectionStatus($projection_id, 'COMPLETED');
+            try {
+                $this->projectionStatus($projection_id, 'IN_PROGRESS');
+                $this->deleteProjection($projection_id);
+                $this->combine($projection_id, json_decode($request, true)); // process each combination
+                $this->projectionStatus($projection_id, 'COMPLETED');
+            }
+            catch (Exception $e) {
+                $message = $e->getMessage();
+                $sql = 'UPDATE  `projections` 
+                          SET   `error`  = ?,
+                                `status` = \'COMPLETED\'
+                          WHERE `id`     = ?';
+                if (!($stmt = $this->mysqli->prepare($sql)) ||
+                    !$stmt->bind_param('si', $message, $projection_id) ||
+                    !$stmt->execute()) {
+                    $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
+                    throw new Exception($message);
+                }
+            }
             $this->write_cpu_seconds($projection_id, time() - $basetime_seconds);
             $this->mysqli->commit();
             if ($email && filter_var($email, FILTER_VALIDATE_EMAIL) &&
-                (new SMTPEmail())->email(['subject'   => 'Renewable Visions: your results are ready',
-                                          'html'      => false,
-                                          'bodyHTML'  => ($message = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
-                                          'bodyAlt'   => strip_tags($message)])) {
+                (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
+                                            'html'      => false,
+                                            'bodyHTML'  => ($message = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
+                                            'bodyAlt'   => strip_tags($message)])) {
                 $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, null, 'NOTICE');
                 $this->projectionStatus($projection_id, 'NOTIFIED');
             }

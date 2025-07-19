@@ -13,11 +13,10 @@
         google.charts.setOnLoadCallback(fetchTimeSeries);                       // set a callback to run when the Google Visualization API is loaded
     }
     else {                                                                      // display error message
-
+        document.write(error);
     }
-
-    function getText(url) {  // WARNING: synchronous
-        var request = new XMLHttpRequest();
+    function getText(url) { // WARNING: synchronous
+    var request = new XMLHttpRequest();
         request.open('GET', url, false);
         request.send(null);
         if (request.status !== 200) throw new Error(request.statusText);
@@ -192,7 +191,7 @@
     </script>
 </head>
 <body>
-<div id="npv_chart_absolute"></div>
-<div id="npv_chart_relative"></div>
+    <div id="npv_chart_absolute"></div>
+    <div id="npv_chart_relative"></div>
 </body>
 </html>

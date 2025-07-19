@@ -270,7 +270,6 @@ class Energy extends Root
                 $this->deleteProjection($projection_id);
                 $this->combine($projection_id, json_decode($request, true)); // process each combination
                 $this->projectionStatus($projection_id, 'COMPLETED');
-                throw new Exception('How now brown cow');
             }
             catch (Exception $e) {
                 $message = $e->getMessage();

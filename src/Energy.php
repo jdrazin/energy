@@ -372,7 +372,7 @@ class Energy extends Root
             case 'NOTIFIED': {
                 switch ($type) {
                     case 'error': {
-                        return $error;
+                        return $error ?? '';
                     }
                     case 'comment': {
                         return $comment . ' elapsed: ' . $cpu_seconds . 's';

@@ -5,14 +5,15 @@ use DateInterval;
 use DateMalformedIntervalStringException;
 use DateMalformedStringException;
 use DateTime;
-use Energy;
 use Exception;
 
-class Time
+class Time extends RangeCheck
 {
-    const array value_ranges =  [
-                                    'max_project_duration_years' => [1, 25],
-                                ];
+    const array RANGES = [
+                            'max_project_duration_years' => [1,     25 ],
+                            'step_seconds'               => [60,    3600],
+                            'discount_rate_pa'           => [0.0,   1.0],
+                         ];
 
     const SECONDS_PER_DAY  = 60 * 60 * 24,
           SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
@@ -35,17 +36,19 @@ class Time
      */
  // public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
     public function __construct($time, $units, $single_year) {
+        $max_project_duration_years = $this->check($time, 'max_project_duration_years', self::RANGES);
+        $step_seconds               = $this->check($time, 'step_seconds',               self::RANGES);
+        $this->discount_rate_pa     = $this->check($time, 'discount_rate_pa',           self::RANGES);;
         $this->time_start = new DateTime('2025-01-01 00:00:00');
         $this->time_end   = clone $this->time_start;
-        $this->time_end->modify('+' . $time['max_project_duration_years'] . ' year');
+        $this->time_end->modify('+' . $max_project_duration_years . ' year');
         $this->time       = clone $this->time_start;
-        $this->timestep   = new DateInterval('PT' . $time['step_seconds'] . 'S');
-        $this->step_count = 1;
-        $this->year       = 0;
-        $this->discount_rate_pa = $time['discount_rate_pa'];
-        $this->step_s = $time['step_seconds'];
+        $this->timestep   = new DateInterval('PT' . $step_seconds . 'S');
+        $this->step_s        = $step_seconds;
+        $this->step_count    = 1;
+        $this->year          = 0;
         $this->units         = $units;
-        $this->units['YEAR'] = ($single_year ? 1 : $time['max_project_duration_years']) + 1;
+        $this->units['YEAR'] = ($single_year ? 1 : $max_project_duration_years) + 1;
         $this->update();
         $this->year_end = true;
     }

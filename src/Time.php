@@ -10,17 +10,17 @@ use Exception;
 class Time extends Check
 {
     const string COMPONENT_NAME = 'time';
-    const array RANGES = [
-                            'max_project_duration_years' => [
-                                                                'range' => [1, 25 ]
-                                                            ],
-                            'step_seconds'               => [
-                                                                'range' => [60, 3600 ]
-                                                            ],
-                            'discount_rate_pa'           => [
-                                                                'range' => [0.0, 1.0]
-                                                            ]
-                         ];
+    const array CHECKS = [
+                                'max_project_duration_years' => [
+                                                                    'range' => [1, 25 ]
+                                                                ],
+                                'step_seconds'               => [
+                                                                    'range' => [60, 3600 ]
+                                                                ],
+                                'discount_rate_pa'           => [
+                                                                    'range' => [0.0, 1.0]
+                                                                ]
+                            ];
 
     const SECONDS_PER_DAY  = 60 * 60 * 24,
           SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
@@ -43,9 +43,9 @@ class Time extends Check
      */
  // public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
     public function __construct($config, $units, $single_year) {
-        $max_project_duration_years = $this->checkValue($config, self::COMPONENT_NAME, 'max_project_duration_years', self::RANGES);
-        $step_seconds               = $this->checkValue($config, self::COMPONENT_NAME, 'step_seconds',               self::RANGES);
-        $this->discount_rate_pa     = $this->checkValue($config, self::COMPONENT_NAME, 'discount_rate_pa',           self::RANGES);;
+        $max_project_duration_years = $this->checkValue($config, null, self::COMPONENT_NAME, 'max_project_duration_years', self::CHECKS);
+        $step_seconds               = $this->checkValue($config, null,  self::COMPONENT_NAME, 'step_seconds',               self::CHECKS);
+        $this->discount_rate_pa     = $this->checkValue($config, null, self::COMPONENT_NAME, 'discount_rate_pa',           self::CHECKS);;
         $this->time_start = new DateTime('2025-01-01 00:00:00');
         $this->time_end   = clone $this->time_start;
         $this->time_end->modify('+' . $max_project_duration_years . ' year');

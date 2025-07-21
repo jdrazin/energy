@@ -9,6 +9,7 @@ use Exception;
 
 class Time extends Check
 {
+    const string COMPONENT_NAME = 'time';
     const array RANGES = [
                             'max_project_duration_years' => [1,     25 ],
                             'step_seconds'               => [60,    3600],
@@ -35,10 +36,10 @@ class Time extends Check
      * @throws \DateMalformedIntervalStringException
      */
  // public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
-    public function __construct($config, $name, $units, $single_year) {
-        $max_project_duration_years = $this->checkValue($config, $name, 'max_project_duration_years', self::RANGES);
-        $step_seconds               = $this->checkValue($config, $name, 'step_seconds',               self::RANGES);
-        $this->discount_rate_pa     = $this->checkValue($config, $name, 'discount_rate_pa',           self::RANGES);;
+    public function __construct($config, $units, $single_year) {
+        $max_project_duration_years = $this->checkValue($config, self::COMPONENT_NAME, 'max_project_duration_years', self::RANGES);
+        $step_seconds               = $this->checkValue($config, self::COMPONENT_NAME, 'step_seconds',               self::RANGES);
+        $this->discount_rate_pa     = $this->checkValue($config, self::COMPONENT_NAME, 'discount_rate_pa',           self::RANGES);;
         $this->time_start = new DateTime('2025-01-01 00:00:00');
         $this->time_end   = clone $this->time_start;
         $this->time_end->modify('+' . $max_project_duration_years . ' year');

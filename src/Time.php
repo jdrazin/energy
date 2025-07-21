@@ -2,6 +2,8 @@
 
 namespace Src;
 use DateInterval;
+use DateMalformedIntervalStringException;
+use DateMalformedStringException;
 use DateTime;
 use Energy;
 use Exception;
@@ -9,7 +11,7 @@ use Exception;
 class Time
 {
     const SECONDS_PER_DAY = 60 * 60 * 24,
-        SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
+          SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
 
     public DateTime $time, $time_start, $time_end;
     public DateInterval $timestep;
@@ -28,17 +30,17 @@ class Time
      * @throws \DateMalformedIntervalStringException
      */
  // public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
-    public function __construct($time, $max_project_duration_years, $time_units) {
-        $this->time_start = new DateTime($time['start']);
-        $this->time       = clone $this->time_start;
+    public function __construct($time, $max_project_duration_years, $units) {
+        $this->time_start = new DateTime('2025-01-01 00:00:00');
         $this->time_end   = clone $this->time_start;
         $this->time_end->modify('+' . $time['max_project_duration_years'] . ' year');
+        $this->time       = clone $this->time_start;
         $this->timestep   = new DateInterval('PT' . $time['step_seconds'] . 'S');
         $this->step_count = 1;
         $this->year       = 0;
         $this->discount_rate_pa = $time['discount_rate_pa'];
         $this->step_s = $time['step_seconds'];
-        $this->units      = $time_units;
+        $this->units         = $units;
         $this->units['YEAR'] = $max_project_duration_years + 1;
         $this->update();
         $this->year_end = true;
@@ -114,10 +116,10 @@ class Time
     public function values(): array
     {
         return [
-            'HOUR_OF_DAY' => (int)(\Src\Energy::HOURS_PER_DAY * $this->fraction_day),
+            'HOUR_OF_DAY'   => (int)(\Src\Energy::HOURS_PER_DAY * $this->fraction_day),
             'MONTH_OF_YEAR' => (int)$this->time->format('F'),
-            'DAY_OF_YEAR' => (int)$this->time->format('z'),
-            'YEAR' => $this->year
+            'DAY_OF_YEAR'   => (int)$this->time->format('z'),
+            'YEAR'          => $this->year
         ];
     }
 

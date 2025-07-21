@@ -10,7 +10,11 @@ use Exception;
 
 class Time
 {
-    const SECONDS_PER_DAY = 60 * 60 * 24,
+    const array value_ranges =  [
+                                    'max_project_duration_years' => [1, 25],
+                                ];
+
+    const SECONDS_PER_DAY  = 60 * 60 * 24,
           SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
 
     public DateTime $time, $time_start, $time_end;
@@ -30,7 +34,7 @@ class Time
      * @throws \DateMalformedIntervalStringException
      */
  // public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
-    public function __construct($time, $max_project_duration_years, $units) {
+    public function __construct($time, $units, $single_year) {
         $this->time_start = new DateTime('2025-01-01 00:00:00');
         $this->time_end   = clone $this->time_start;
         $this->time_end->modify('+' . $time['max_project_duration_years'] . ' year');
@@ -41,7 +45,7 @@ class Time
         $this->discount_rate_pa = $time['discount_rate_pa'];
         $this->step_s = $time['step_seconds'];
         $this->units         = $units;
-        $this->units['YEAR'] = $max_project_duration_years + 1;
+        $this->units['YEAR'] = ($single_year ? 1 : $time['max_project_duration_years']) + 1;
         $this->update();
         $this->year_end = true;
     }

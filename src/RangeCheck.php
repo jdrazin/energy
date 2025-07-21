@@ -19,12 +19,12 @@ class RangeCheck
         }
         if (isset($range[self::MIN])) {
             if ($value < $range[self::MIN]) {
-                throw new Exception("$name cannot be less than " . $range[self::MIN]);
+                throw new Exception('\'' . $name . '\' cannot be less than ' . $range[self::MIN]);
             }
         }
         if (isset($range[self::MAX])) {
             if ($value > $range[self::MAX]) {
-                throw new Exception("$name cannot be more than " . $range[self::MAX]);
+                throw new Exception( '\'' . $name . '\' cannot be more than ' . $range[self::MAX]);
             }
         }
         return $value;

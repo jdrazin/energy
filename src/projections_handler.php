@@ -14,7 +14,7 @@ ini_set('mysql.connect_timeout', '36000');
 
 const     DEBUG                       = true,
           FOLDER_PID                  = '/var/www/html/energy/pids/',
-          TEST_PROJECTION_ID          = 3273157364,
+          TEST_PROJECTION_ID          = 3741840460,
           ARGS                        = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION     = true,
           EMAIL_NOTIFICATION_ON_ERROR = false;

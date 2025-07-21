@@ -185,7 +185,7 @@ class Energy extends Root
             $config_combined = $this->parameters_combined($config, $combination, $config_combinations->variables);
             $combination_acronym = $config_combined['description'];
             echo PHP_EOL . ($key+1) . ' of ' . count($combinations) . ' (' . $combination_acronym . '): ';
-            $this->simulate($projection_id, $config_combined['config'], $config['time']['max_project_duration_years'], $combination, $combination_acronym);
+            $this->simulate($projection_id, $config_combined['config'], $combination, $combination_acronym);
         }
         echo PHP_EOL . 'Done' . PHP_EOL;
    }

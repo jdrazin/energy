@@ -2,6 +2,8 @@
 namespace Src;
 use DateTime;
 use DateTimeZone;
+use DivisionByZeroError;
+use ErrorException;
 use Exception;
 
 class Energy extends Root
@@ -242,9 +244,9 @@ class Energy extends Root
             if (!($stmt = $this->mysqli->prepare($sql)) ||
                 !$stmt->bind_result($projection_id, $request, $email) ||
                 !$stmt->execute()) {
-                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
+                $error = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $error, null, 'ERROR');
+                throw new Exception($error);
             }
         }
         else {
@@ -256,9 +258,9 @@ class Energy extends Root
                 !$stmt->bind_param('i', $projection_id) ||
                 !$stmt->bind_result($request, $email) ||
                 !$stmt->execute()) {
-                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
+                $error = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $error, null, 'ERROR');
+                throw new Exception($error);
             }
         }
         $stmt->fetch();
@@ -268,21 +270,31 @@ class Energy extends Root
             try {
                 $this->projectionStatus($projection_id, 'IN_PROGRESS');
                 $this->deleteProjection($projection_id);
+                $a = 1;
+                $b = 0;
                 $this->combine($projection_id, json_decode($request, true)); // process each combination
                 $this->projectionStatus($projection_id, 'COMPLETED');
             }
+            catch (DivisionByZeroError $e){
+                $error = $e->getMessage();
+            }
+            catch (ErrorException $e) {
+                $error = $e->getMessage();
+            }
             catch (Exception $e) {
-                $message = $e->getMessage();
+                $error = $e->getMessage();
+            }
+            if ($error ?? false) {
                 $sql = 'UPDATE  `projections` 
                           SET   `error`  = ?,
                                 `status` = \'COMPLETED\'
                           WHERE `id`     = ?';
                 if (!($stmt = $this->mysqli->prepare($sql)) ||
-                    !$stmt->bind_param('si', $message, $projection_id) ||
+                    !$stmt->bind_param('si', $error, $projection_id) ||
                     !$stmt->execute()) {
-                    $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                    $this->logDb('MESSAGE', $message, null, 'ERROR');
-                    throw new Exception($message);
+                    $error = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $error, null, 'ERROR');
+                    throw new Exception($error);
                 }
             }
             $this->write_cpu_seconds($projection_id, time() - $basetime_seconds);
@@ -290,8 +302,8 @@ class Energy extends Root
             if ($email && filter_var($email, FILTER_VALIDATE_EMAIL) &&
                 (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
                                             'html'      => false,
-                                            'bodyHTML'  => ($message = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
-                                            'bodyAlt'   => strip_tags($message)])) {
+                                            'bodyHTML'  => ($error = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
+                                            'bodyAlt'   => strip_tags($error)])) {
                 $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, null, 'NOTICE');
                 $this->projectionStatus($projection_id, 'NOTIFIED');
             }

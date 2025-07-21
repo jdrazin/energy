@@ -37,8 +37,6 @@ class Energy extends Root
                                                        'MONTH_OF_YEAR' => 12,
                                                        'DAY_OF_YEAR'   => 366];
 
-    public array $config_applied = [];
-
     /**
      * @throws Exception
      */
@@ -639,9 +637,9 @@ class Energy extends Root
         $time                           = new Time($config, $this->time_units, $calibrating_scop);
         $this->step_s                   = $time->step_s;
         $temperature_internal_room_c    = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
-        $demand_space_heating_thermal   = new Demand($config['demands']['space_heating_thermal'],   $temperature_internal_room_c);
-        $demand_hotwater_thermal        = new Demand($config['demands']['hot_water_thermal'],       null);
-        $demand_non_heating_electric    = new Demand($config['demands']['non_heating_electric'],     null);
+        $demand_space_heating_thermal   = new Demand($config, 'space_heating_thermal',   $temperature_internal_room_c);
+        $demand_hotwater_thermal        = new Demand($config, 'hot_water_thermal',       null);
+        $demand_non_heating_electric    = new Demand($config, 'non_heating_electric',    null);
         $supply_electric                = new Supply($config['energy']['grid'],                                                     $time);
         $supply_boiler                  = new Supply($config['energy'][$config['boiler']['tariff']],                                $time);
         $boiler                         = new Boiler($config['boiler'],                                                             $time);

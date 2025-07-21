@@ -11,9 +11,15 @@ class Time extends Check
 {
     const string COMPONENT_NAME = 'time';
     const array RANGES = [
-                            'max_project_duration_years' => [1,     25 ],
-                            'step_seconds'               => [60,    3600],
-                            'discount_rate_pa'           => [0.0,   1.0],
+                            'max_project_duration_years' => [
+                                                                'range' => [1, 25 ]
+                                                            ],
+                            'step_seconds'               => [
+                                                                'range' => [60, 3600 ]
+                                                            ],
+                            'discount_rate_pa'           => [
+                                                                'range' => [0.0, 1.0]
+                                                            ]
                          ];
 
     const SECONDS_PER_DAY  = 60 * 60 * 24,

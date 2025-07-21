@@ -9,22 +9,28 @@ class Check
     const MIN = 0,
           MAX = 1;
 
-    protected function checkValue($config, $array, $name, $ranges) {
-        $range = $ranges[$name] ?? [];
-        if (!isset($config[$name])) {
-            throw new Exception('\'' . $name . '\' component is missing');
+    protected function checkValue($config, $component, $parameter, $ranges) {
+        $range = $ranges[$parameter] ?? [];
+        $string = '\'' . $component . '\' component ';
+        if (!isset($config[$component])) {
+            throw new Exception($string . 'is missing');
         }
-        elseif (is_null($value = $config[$name])) {
-            throw new Exception("$name is null");
+        $string .= '\'' . $parameter . '\' ';
+        if (!isset($config[$component][$parameter])) {
+            throw new Exception($string . 'is missing');
         }
+        if (is_null($value = $config[$component][$parameter])) {
+            throw new Exception($string . 'is null');
+        }
+        $string .= 'cannot be ';
         if (isset($range[self::MIN])) {
             if ($value < $range[self::MIN]) {
-                throw new Exception('\'' . $name . '\' cannot be less than ' . $range[self::MIN]);
+                throw new Exception($string . 'less than ' . $range[self::MIN]);
             }
         }
         if (isset($range[self::MAX])) {
             if ($value > $range[self::MAX]) {
-                throw new Exception( '\'' . $name . '\' cannot be more than ' . $range[self::MAX]);
+                throw new Exception( $string . 'more than ' . $range[self::MAX]);
             }
         }
         return $value;

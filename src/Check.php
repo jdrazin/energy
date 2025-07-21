@@ -4,17 +4,17 @@ namespace Src;
 
 use Exception;
 
-class RangeCheck
+class Check
 {
     const MIN = 0,
           MAX = 1;
 
-    protected function check($array, $name, $ranges) {
+    protected function checkValue($config, $array, $name, $ranges) {
         $range = $ranges[$name] ?? [];
-        if (!isset($array[$name])) {
-            throw new Exception("$name is missing");
+        if (!isset($config[$name])) {
+            throw new Exception('\'' . $name . '\' component is missing');
         }
-        elseif (is_null($value = $array[$name])) {
+        elseif (is_null($value = $config[$name])) {
             throw new Exception("$name is null");
         }
         if (isset($range[self::MIN])) {

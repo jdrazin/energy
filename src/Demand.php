@@ -5,15 +5,28 @@ namespace Src;
 require_once __DIR__ . "/Climate.php";
 require_once __DIR__ . "/Energy.php";
 
-class Demand
+class Demand extends Check
 {
+    const string COMPONENT_NAME = 'demands';
+    const array CHECKS = [
+        'type'                          => [
+                                            'values' => ['climate_heating', 'fixed']
+                                           ],
+        'total_annual_kwh'              => [60,    3600],
+        'hourly_consumption_weighting'  => [0.0,   1.0],
+    ];
 
     public string $type;
     public float $consumption_rates_sum;
     public array $hour_demands_j;
 
-    public function __construct($demands, $internal_room_c)
+    /**
+     * @throws \Exception
+     */
+    public function __construct($config, $demand, $internal_room_c)
     {
+        $this->type = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'type', self::CHECKS);
+
         $this->hour_demands_j = [];
         $hourly_consumption_weightings = $demands['hourly_consumption_weightings'];
 
@@ -24,7 +37,7 @@ class Demand
         }
         $total_daily_kwh = $total_annual_kwh / Energy::DAYS_PER_YEAR;
 
-        switch ($this->type = $demands['type']) {
+        switch ($this->type) {
             case 'fixed':
             {
                 $this->consumption_rates_sum = 0.0;

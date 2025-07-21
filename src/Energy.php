@@ -636,7 +636,7 @@ class Energy extends Root
      * @throws Exception
      */
     function traverse_years($calibrating_scop, $projection_id, $config, $combination, $combination_acronym, $cop_factor): array {
-        $time                           = new Time($config['time'], $this->time_units, $calibrating_scop);
+        $time                           = new Time($config, 'time', $this->time_units, $calibrating_scop);
         $this->step_s                   = $time->step_s;
         $temperature_internal_room_c    = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
         $demand_space_heating_thermal   = new Demand($config['demands']['space_heating_thermal'],   $temperature_internal_room_c);

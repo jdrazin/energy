@@ -269,7 +269,7 @@ class Energy extends Root
             $basetime_seconds = time();
             try {
                 $this->projectionStatus($projection_id, 'IN_PROGRESS');
-                $this->deleteProjection($projection_id);
+                $this->initialiseProjection($projection_id);
                 $a = 1;
                 $b = 0;
                 $this->combine($projection_id, json_decode($request, true)); // process each combination
@@ -329,9 +329,22 @@ class Energy extends Root
         }
     }
 
-    public function deleteProjection($projection_id): void  {
+    /**
+     * @throws Exception
+     */
+    public function initialiseProjection($projection_id): void  {
         $sql = 'DELETE FROM `combinations`
                   WHERE `projection` = ?';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('i', $projection_id) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $sql = 'UPDATE `projections`
+                  SET `error` = NULL
+                  WHERE `id`  = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
             !$stmt->execute() ||

@@ -270,8 +270,6 @@ class Energy extends Root
             try {
                 $this->projectionStatus($projection_id, 'IN_PROGRESS');
                 $this->initialiseProjection($projection_id);
-                $a = 1;
-                $b = 0;
                 $this->combine($projection_id, json_decode($request, true)); // process each combination
                 $this->projectionStatus($projection_id, 'COMPLETED');
             }

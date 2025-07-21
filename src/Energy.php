@@ -619,24 +619,24 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($projection_id, $config, $max_project_duration_years, $combination, $combination_acronym): void {
+    function simulate($projection_id, $config, $combination, $combination_acronym): void {
         if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
             echo 'Calibrating SCOP: ';
-            $results = $this->traverse_years(true, $projection_id, $config, 1, $combination, $combination_acronym, 1.0);
+            $results = $this->traverse_years(true, $projection_id, $config, $combination, $combination_acronym, 1.0);
             echo PHP_EOL;
             $cop_factor = $scop/$results['scop'];
         }
         else {
             $cop_factor = 1.0;
         }
-        $this->traverse_years(false, $projection_id, $config, $max_project_duration_years, $combination, $combination_acronym, $cop_factor);
+        $this->traverse_years(false, $projection_id, $config, $combination, $combination_acronym, $cop_factor);
     }
 
     /**
      * @throws Exception
      */
-    function traverse_years($calibrating_scop, $projection_id, $config, $max_project_duration_years, $combination, $combination_acronym, $cop_factor): array {
-        $time                           = new Time($config['time'], $max_project_duration_years, $this->time_units);
+    function traverse_years($calibrating_scop, $projection_id, $config, $combination, $combination_acronym, $cop_factor): array {
+        $time                           = new Time($config['time'], $this->time_units, $calibrating_scop);
         $this->step_s                   = $time->step_s;
         $temperature_internal_room_c    = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
         $demand_space_heating_thermal   = new Demand($config['demands']['space_heating_thermal'],   $temperature_internal_room_c);

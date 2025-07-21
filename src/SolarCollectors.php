@@ -77,15 +77,6 @@ class SolarCollectors extends Component
         return $array;
     }
 
-    public function update_output($transfer_j, $time): void
-    {
-        $time_values = $time->values();
-        $transfer_kwh = $transfer_j / Energy::JOULES_PER_KWH;
-        foreach ($time->units as $time_unit => $number_unit_values) {
-            $this->output_kwh[$time_unit][$time_values[$time_unit]]['output_kwh'] += $transfer_kwh;
-        }
-    }
-
     public function transfer_consume_j($temperature_climate_c, $time): array
     {
         if (!$this->include) {
@@ -120,18 +111,16 @@ class SolarCollectors extends Component
                         $power_w = $power_max_w;
                     }
                 }
-
                 $this->power_w[$key] = $power_w;
                 $collector_j[$key] = $power_w * $this->step_s;
                 $inverter_j[$key] = $this->inverter[$key]->transfer_consume_j($collector_j[$key], false);
                 $transfer_j += $inverter_j[$key]['transfer'];
             }
             $transfer_consume_j = ['transfer' => $transfer_j,
-                'consume' => 0.0];
-            $this->update_output($transfer_j, $time);
+                                   'consume'  => 0.0];
         }
         return $transfer_consume_j;
-    } // $time->fraction_year > 0.475 && $time->fraction_day > 0.5
+    }
 
     public function make_collector_parameters($key, $parameters, $panel): void {   // find max panels that fit footprint
         $panel_width_m  = $panel['width_m'];

@@ -11,9 +11,9 @@ class Boiler extends Component
 
     public float $efficiency, $max_output_j;
 
-    function __construct($component, $time, $npv)
+    function __construct($component, $time)
     {
-        parent::__construct($component, $time, $npv);
+        parent::__construct($component, $time);
         if ($this->include) {
             $this->max_output_j = ($component['output_kw'] * 1000 ?? 0.0) * $this->step_s;
             $this->efficiency = $component['efficiency'] ?? 1.0;

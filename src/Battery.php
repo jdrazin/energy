@@ -8,9 +8,9 @@ class Battery extends Component
     public float    $max_charge_w, $store_j, $one_way_efficiency, $initial_raw_capacity_kwh, $cycles_to_reduced_capacity,
                     $reduced_capacity, $capacity_kwh, $store_j_max, $max_discharge_w, $cycles;
 
-    public function __construct($component, $time, $npv)
+    public function __construct($component, $time)
     {
-        parent::__construct($component, $time, $npv);
+        parent::__construct($component, $time);
         if ($this->include) {
             $this->one_way_efficiency           = sqrt(($component['round_trip_efficiency_percent'] ?? 100.0) / 100.0);
             $this->initial_raw_capacity_kwh     = $component['initial_raw_capacity_kwh'] ?? 0.0;

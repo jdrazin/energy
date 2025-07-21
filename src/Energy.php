@@ -37,6 +37,8 @@ class Energy extends Root
                                                        'MONTH_OF_YEAR' => 12,
                                                        'DAY_OF_YEAR'   => 366];
 
+    public array $config_applied = [];
+
     /**
      * @throws Exception
      */
@@ -176,7 +178,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function combine($projection_id, $config): void  {
+    public function projectionCombinations($projection_id, $config): void  {
         $config_combinations = new ParameterCombinations($config);
         $combinations = $config_combinations->combinations;
         foreach ($combinations as $key => $combination) {
@@ -269,8 +271,8 @@ class Energy extends Root
             $basetime_seconds = time();
             try {
                 $this->projectionStatus($projection_id, 'IN_PROGRESS');
-                $this->initialiseProjection($projection_id);
-                $this->combine($projection_id, json_decode($request, true)); // process each combination
+                $this->projectionInitialise($projection_id);
+                $this->projectionCombinations($projection_id, json_decode($request, true)); // process each combination
                 $this->projectionStatus($projection_id, 'COMPLETED');
             }
             catch (DivisionByZeroError $e){
@@ -330,7 +332,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function initialiseProjection($projection_id): void  {
+    public function projectionInitialise($projection_id): void  {
         $sql = 'DELETE FROM `combinations`
                   WHERE `projection` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
@@ -634,22 +636,21 @@ class Energy extends Root
      * @throws Exception
      */
     function traverse_years($calibrating_scop, $projection_id, $config, $max_project_duration_years, $combination, $combination_acronym, $cop_factor): array {
-        $npv                            = $config['npv'];
-        $time                           = new Time($config['time']['start'], $max_project_duration_years, $config['time']['timestep_seconds'], $this->time_units);
+        $time                           = new Time($config['time'], $max_project_duration_years, $this->time_units);
         $this->step_s                   = $time->step_s;
         $temperature_internal_room_c    = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
         $demand_space_heating_thermal   = new Demand($config['demands']['space_heating_thermal'],   $temperature_internal_room_c);
         $demand_hotwater_thermal        = new Demand($config['demands']['hot_water_thermal'],       null);
         $demand_non_heating_electric    = new Demand($config['demands']['non_heating_electric'],     null);
-        $supply_electric                = new Supply($config['energy']['grid'],                                      $time, $npv);
-        $supply_boiler                  = new Supply($config['energy'][$config['boiler']['tariff']],                     $time, $npv);
-        $boiler                         = new Boiler($config['boiler'],                                                  $time, $npv);
-        $solar_pv                       = new SolarCollectors($config['solar_pv'],      $config['location'], 0.0,    $time, $npv);
-        $solar_thermal                  = new SolarCollectors($config['solar_thermal'], $config['location'], 0.0,    $time, $npv);
-        $battery                        = new Battery($config['battery'],                                                $time, $npv);
-        $hotwater_tank                  = new ThermalTank($config['storage_hot_water'], false,                  $time, $npv);
-        $heatpump                       = new HeatPump($config['heat_pump'],                                             $time, $npv);
-        $insulation                     = new Insulation($config['insulation'],                                          $time, $npv);
+        $supply_electric                = new Supply($config['energy']['grid'],                                                     $time);
+        $supply_boiler                  = new Supply($config['energy'][$config['boiler']['tariff']],                                $time);
+        $boiler                         = new Boiler($config['boiler'],                                                             $time);
+        $solar_pv                       = new SolarCollectors($config['solar_pv'],      $config['location'], 0.0,     $time);
+        $solar_thermal                  = new SolarCollectors($config['solar_thermal'], $config['location'], 0.0,     $time);
+        $battery                        = new Battery($config['battery'],                                                           $time);
+        $hotwater_tank                  = new ThermalTank($config['storage_hot_water'], false,                             $time);
+        $heatpump                       = new HeatPump($config['heat_pump'],                                                        $time);
+        $insulation                     = new Insulation($config['insulation'],                                                     $time);
         $components = [	$supply_electric,
                         $supply_boiler,
                         $boiler,
@@ -665,7 +666,7 @@ class Energy extends Root
                 $components_included[] = $component;
             }
         }
-        $this->install($components_included, $time);                                                                                                                  // get install costs
+        $this->install($components_included, $time);                                                                                                                // get install costs
         $this->year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_included, $config, $combination, $combination_acronym); // summarise year 0
         $export_limit_j = 1000.0*$time->step_s*$supply_electric->export_limit_kw;
         while ($time->next_timestep()) {                                                                                                                            // timestep through years 0 ... N-1

@@ -15,9 +15,9 @@ class Time
     public DateInterval $timestep;
 
     public bool $year_end;
-    public float $fraction_year, $fraction_day, $step_s;
+    public float $fraction_year, $fraction_day, $step_s, $discount_rate_pa;
     public string $timestamp;
-    public int $step_count, $year0, $year;
+    public int $step_count, $year;
     public array $units;
 
     /**
@@ -27,17 +27,18 @@ class Time
      * @throws \DateMalformedStringException
      * @throws \DateMalformedIntervalStringException
      */
-    public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
-    {
-        $this->time_start = new DateTime($time_start);
-        $this->time_end = clone $this->time_start;
-        $this->time_end->modify('+' . $max_project_duration_years . ' year');
-        $this->timestep = new DateInterval('PT' . $step_s . 'S');
+ // public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
+    public function __construct($time, $max_project_duration_years, $time_units) {
+        $this->time_start = new DateTime($time['start']);
+        $this->time       = clone $this->time_start;
+        $this->time_end   = clone $this->time_start;
+        $this->time_end->modify('+' . $time['max_project_duration_years'] . ' year');
+        $this->timestep   = new DateInterval('PT' . $time['step_seconds'] . 'S');
         $this->step_count = 1;
-        $this->year = 0;
-        $this->step_s = (float)$step_s;
-        $this->time = new DateTime($time_start);
-        $this->units = $time_units;
+        $this->year       = 0;
+        $this->discount_rate_pa = $time['discount_rate_pa'];
+        $this->step_s = $time['step_seconds'];
+        $this->units      = $time_units;
         $this->units['YEAR'] = $max_project_duration_years + 1;
         $this->update();
         $this->year_end = true;

@@ -14,9 +14,9 @@ class ThermalTank extends Component
     public float $temperature_c, $capacity_c_per_joule, $one_way_storage_efficiency, $decay_rate_per_s, $charge_c_per_joule, $discharge_c_per_joule, $target_temperature_c, $immersion_w;
     public bool $heat_pump;
 
-    public function __construct($component, $heat_pump, $time, $npv)
+    public function __construct($component, $heat_pump, $time)
     {
-        parent::__construct($component, $time, $npv);
+        parent::__construct($component, $time);
         if ($this->include) {
             $this->immersion_w = 1000.0 * ($component['immersion_w'] ?? 0.0);
             $this->target_temperature_c = $component['target_temperature_c'] ?? 50.0;

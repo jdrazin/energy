@@ -16,9 +16,9 @@ class SolarCollectors extends Component
                     $inverter, $output_kwh, $lifetime_years, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
     private array $panels, $panels_area_m2;
 
-    public function __construct($component, $location, $initial_temperature, $time, $npv)
+    public function __construct($component, $location, $initial_temperature, $time)
     {
-        parent::__construct($component, $time, $npv);
+        parent::__construct($component, $time);
         if ($component['include']) {
             $this->area = $component['area'] ?? [];
             $panels     = $component['panels'] ?? [];
@@ -56,7 +56,7 @@ class SolarCollectors extends Component
                     // ThermalInertia used to estimate panel temperature as function of solar power and time (required to estimate solar_pv thermally induced efficiency losses)
                     $thermal_inertia_m2_second_per_w_celsius = $panel['thermal_inertia_m2_second_per_w_celsius'] ?? self::DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS;
                     $this->thermal[$key]  = new ThermalInertia($initial_temperature, $thermal_inertia_m2_second_per_w_celsius, $time);
-                    $this->inverter[$key] = new Inverter($parameters['inverter'] ?? null, $time, $npv);
+                    $this->inverter[$key] = new Inverter($parameters['inverter'] ?? null, $time);
                     $this->solar[$key]    = new Solar($location, $parameters['area']['orientation']);
                 }
                 $key++;

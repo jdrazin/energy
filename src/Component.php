@@ -9,7 +9,7 @@ class Component extends Root // extends Root
     public array $cost, $time_units;
     public Npv $npv;
 
-    public function __construct($component, $time, $npv) {
+    public function __construct($component, $time) {
         $this->name = $component['name'] ?? $this->strip_namespace(__NAMESPACE__,__CLASS__);
         if ($this->include = $component['include'] ?? true) {
             $this->cost = [
@@ -19,7 +19,7 @@ class Component extends Root // extends Root
                           ];
             $this->sum_value($this->cost, $component, 'cost'); // sun cost components
             $this->time_units = $time->units;
-            $this->npv = new Npv($npv);
+            $this->npv = new Npv($time->discount_rate_pa);
             $this->step_s = $time->step_s;
             $this->value_install_gbp   = -$this->value($component, 'cost_install_gbp');
             $value_maintenance_pa_gbp  = -$this->value($component, 'cost_maintenance_pa_gbp');

@@ -15,9 +15,9 @@ class Supply extends Component
     public float $inflation_real_pa, $export_limit_kw;
     public array $tariff, $current_bands, $tariff_bands, $kwh, $value_gbp;
 
-    function __construct($component, $time, $npv)
+    function __construct($component, $time)
     {
-        parent::__construct($component, $time, $npv);
+        parent::__construct($component, $time);
         $this->type = $component['type'] ?? '- no type -';
         $this->inflation_real_pa = $component['inflation_real_pa'] ?? 0.0;
         $this->export_limit_kw = $component['export']['limit_kw'] ?? 0.0;

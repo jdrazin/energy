@@ -7,9 +7,9 @@ class HeatPump extends Component
     public float $heat, $cool, $max_output_j, $energy_background_step_j, $scop;
     public array $cops, $kwh;
 
-    public function __construct($component, $time, $npv)
+    public function __construct($component, $time)
     {
-        parent::__construct($component, $time, $npv);
+        parent::__construct($component, $time);
         if ($this->include) {
             $this->cops = $component['cops'];
             ksort($this->cops);  // ensure cops data are in temperature order

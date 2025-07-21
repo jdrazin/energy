@@ -82,6 +82,14 @@ $app->get('/projections/comment', function (Request $request, Response $response
     $response->getBody()->write($comment);
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
+$app->get('/projections/json_request', function (Request $request, Response $response) {
+    $energy = new Energy(null);
+    if (($json_request = $energy->get_text((int) $_GET['id'], 'json_request')) === false) {
+        return $response->withStatus(401);
+    }
+    $response->getBody()->write($json_request);
+    return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
+});
 $app->get('/projections/projection', function (Request $request, Response $response) {
     $energy = new Energy(null);
     if (($projection = $energy->get_projection((int) $_GET['id'])) === false) {

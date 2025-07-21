@@ -349,7 +349,8 @@ class Energy extends Root
      */
     public function get_text($projection_id, $type): ?string {
         // get acronyms
-        $sql = 'SELECT  `status`,
+        $sql = 'SELECT  `request`,
+                        `status`,
                         `error`,
                         `timestamp`,
                         UNIX_TIMESTAMP(`submitted`),
@@ -359,7 +360,7 @@ class Energy extends Root
                   WHERE `id` = ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('i', $projection_id) ||
-            !$stmt->bind_result($status, $error, $timestamp, $submitted_unix_timestamp, $comment, $cpu_seconds) ||
+            !$stmt->bind_result($json_request, $status, $error, $timestamp, $submitted_unix_timestamp, $comment, $cpu_seconds) ||
             !$stmt->execute()) {
             $error = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $error, null, 'ERROR');
@@ -375,6 +376,9 @@ class Energy extends Root
                     }
                     case 'comment': {
                         return $comment . ' elapsed: ' . $cpu_seconds . 's';
+                    }
+                    case 'json_request': {
+                        return $json_request ?? '';
                     }
                     default: {
                         throw new Exception('Bad text type');

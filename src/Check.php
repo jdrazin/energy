@@ -12,31 +12,26 @@ class Check
     /**
      * @throws Exception
      */
-    protected function checkValue($config, $suffix, $component, $parameter, $parameters)
+    protected function checkValue($config, $suffixes, $component, $parameter, $parameters)
     {
         $checks = $parameters[$parameter] ?? [];
         $string = '\'' . $component . '\' component ';
         if (!isset($config[$component])) {
             throw new Exception($string . 'is missing');
         }
-        if (!$suffix) {
-            $string .= '\'' . $parameter . '\' ';
-            if (!isset($config[$component][$parameter])) {
+        $element = $config[$component];
+        foreach ($suffixes as $suffix) {
+            $string .= '{' . $suffix . '}';
+            if (!isset($element[$suffix])) {
                 throw new Exception($string . 'is missing');
             }
+            $element = $element[$suffix];
         }
-        else {
-            $string .= '\'' . $suffix . '\' suffix ';
-            if (!isset($config[$component][$suffix])) {
-                throw new Exception($string . 'is missing');
-            }
-            $string .= '\'' . $parameter . '\' ';
-            if (!isset($config[$component][$suffix][$parameter])) {
-                throw new Exception($string . 'is missing');
-            }
+        $string .= '\'' . $parameter . '\'';
+        if (!isset($element[$parameter])) {
+            throw new Exception($string . 'is missing');
         }
-        $value = $suffix ? $config[$component][$suffix][$parameter] : $config[$component][$parameter];
-        if (is_null($value)) {
+        if (is_null($value = $element[$parameter])) {
             throw new Exception($string . 'is null');
         }
         foreach ($checks as $check_type => $check_parameters) {
@@ -47,8 +42,11 @@ class Check
                 case 'values': {
                     return $this->values($check_parameters, $string, $value);
                 }
-                case 'hourly': {
-                    return $this->hourly($check_parameters, $string, $value);
+                case 'hour_weightings': {
+                    return $this->hour_weightings($check_parameters, $string, $value);
+                }
+                case 'hour_tags': {
+                    return $this->hour_tags($check_parameters, $string, $value);
                 }
                 default: {
                 }
@@ -56,7 +54,11 @@ class Check
         }
     }
 
-    private function range($check_parameters, $string, $value) {
+    private function range($check_parameters, $string, $value): float|int|string
+    {
+        if (!is_numeric($value)) {
+            throw new Exception($string . '\'' . $value . '\' must be numeric');
+        }
         $string .= 'cannot be ';
         if (isset($check_parameters[self::MIN])) {
             if ($value < $check_parameters[self::MIN]) {
@@ -81,29 +83,58 @@ class Check
         return $value;
     }
 
-    private function hourly($values, $string, $hours)
-    {
-        if (!is_array($hours)) {
-            throw new Exception($string . '\'' . $hours . '\'' . ' must be an array');
+    private function hour_weightings($values, $string, $hourly_weightings): array {
+        if (!is_array($hourly_weightings)) {
+            throw new Exception($string . '\'' . $hourly_weightings . '\'' . ' must be an array');
         }
         $count = 0;
         $last_hour = null;
-        foreach ($hours as $hour => $weighting) {
+        foreach ($hourly_weightings as $hour => $weighting) {
             if ($hour < 0 || $hour > 24) {
                 throw new Exception($string . 'hour \'' . $hour . '\'' . ' must be an integer between 0 and 24');
             }
             if (!is_int($hour)) {
                 throw new Exception($string . 'hour \'' . $hour . '\'' . ' must be an integer');
             }
+            if (!is_numeric($weighting) || $weighting < 0) {
+                throw new Exception($string . 'illegal \'' . $weighting . '\'' . ': must be a positive number');
+            }
             if (!is_null($last_hour) && $hour <= $last_hour) {
                 throw new Exception($string . 'hours must be in numerical order');
             }
             $last_hour = $hour;
         }
+        return $hourly_weightings;
+    }
 
-        if (!isset($values[$hours])) {
-            throw new Exception($string . '\'' . $hours . '\'');
+    private function hour_tags($values, $string, $hourly_tags): array {
+        if (!is_array($hourly_tags)) {
+            throw new Exception($string . '\'' . $hourly_tags . '\'' . ' must be an array');
         }
-        return $hours;
+        $count = 0;
+        $last_hour = null;
+        foreach ($hourly_tags as $hour => $tag) {
+            if ($hour < 0 || $hour > 24) {
+                throw new Exception($string . 'hour \'' . $hour . '\'' . ' must be an integer between 0 and 24');
+            }
+            if (!is_int($hour)) {
+                throw new Exception($string . 'hour \'' . $hour . '\'' . ' must be an integer');
+            }
+            if (!is_string($tag) || $tag < 0) {
+                throw new Exception($string . 'illegal \'' . $tag . '\'' . ': must be a string');
+            }
+            else {
+                $permitted = array_flip($values);
+                if (!isset($permitted[$tag])) {
+                    $string .= ' \'' . $tag . '\'';
+                    throw new Exception($string . 'is illegal name');
+                }
+            }
+            if (!is_null($last_hour) && $hour <= $last_hour) {
+                throw new Exception($string . 'hours must be in numerical order');
+            }
+            $last_hour = $hour;
+        }
+        return $hourly_tags;
     }
 }

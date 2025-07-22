@@ -43,10 +43,13 @@ class Check
                     return $this->values($check_parameters, $string, $value);
                 }
                 case 'hour_weightings': {
-                    return $this->hour_weightings($check_parameters, $string, $value);
+                    return $this->hour_weightings($string, $value);
                 }
                 case 'hour_tags': {
                     return $this->hour_tags($check_parameters, $string, $value);
+                }
+                case 'tag_numbers': {
+                    return $this->tag_numbers($string, $value);
                 }
                 default: {
                 }
@@ -83,7 +86,7 @@ class Check
         return $value;
     }
 
-    private function hour_weightings($values, $string, $hourly_weightings): array {
+    private function hour_weightings($string, $hourly_weightings): array {
         if (!is_array($hourly_weightings)) {
             throw new Exception($string . '\'' . $hourly_weightings . '\'' . ' must be an array');
         }
@@ -105,6 +108,21 @@ class Check
             $last_hour = $hour;
         }
         return $hourly_weightings;
+    }
+
+    private function tag_numbers($string, $tag_numbers): array {
+        if (!is_array($tag_numbers)) {
+            throw new Exception($string . '\'' . $tag_numbers . '\'' . ' must be an array');
+        }
+        foreach ($tag_numbers as $tag => $number) {
+            if (!is_string($tag) || is_numeric($tag)) {
+                throw new Exception($string . 'tag \'' . $tag . '\'' . ' must be a non numeric name');
+            }
+            if (!is_numeric($number)) {
+                throw new Exception($string . 'number \'' . $tag . '\'' . ' must be numeric');
+            }
+        }
+        return $tag_numbers;
     }
 
     private function hour_tags($values, $string, $hourly_tags): array {

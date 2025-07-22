@@ -19,7 +19,7 @@ class Demand extends Check
                                             'range' => [0, 12]
                                            ],
         'hourly_consumption_weightings' => [
-                                            'hourly' => null,
+                                            'hour_weightings' => null,
                                            ]
                            ];
 
@@ -54,7 +54,7 @@ class Demand extends Check
             }
             case 'climate_heating': { // heating linearly proportional to positive difference between target temperature and phase adjusted climate temperature
                 $target_space_temperature_c = $internal_room_c;
-                $target_circadian_phase_lag_hours = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'target_circadian_phase_lag_hours', self::CHECKS);
+                $target_circadian_phase_lag_hours = $this->checkValue($config, [$demand], self::COMPONENT_NAME, 'target_circadian_phase_lag_hours', self::CHECKS);
                 $energy_j_cumulative = 0.0;
                 for ($day = 0; $day < Energy::DAYS_PER_YEAR; $day++) {
                     $this->hour_demands_j[$day] = [];

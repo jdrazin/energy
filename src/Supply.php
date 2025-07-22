@@ -63,7 +63,7 @@ class Supply extends Component
         }
         $this->kwh = $this->zero_time_direction_band_array($time);
         $this->value_gbp = $this->zero_time_direction_band_array($time);
-        $this->value_maintenance_per_timestep_gbp += $this->checkValue($config, [$supply], self::COMPONENT_NAME, 'standing_gbp_per_day',self::CHECKS) * $this->step_s / (Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+        $this->value_maintenance_per_timestep_gbp -= $this->checkValue($config, [$supply], self::COMPONENT_NAME, 'standing_gbp_per_day',self::CHECKS) * $this->step_s / (Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
     }
 
 

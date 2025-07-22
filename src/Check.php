@@ -135,7 +135,6 @@ class Check
         if (!is_array($hourly_tags)) {
             throw new Exception($string . '\'' . $hourly_tags . '\'' . ' must be an array');
         }
-        $count = 0;
         $last_hour = null;
         foreach ($hourly_tags as $hour => $tag) {
             if ($hour < 0 || $hour > 24) {

@@ -230,8 +230,9 @@ class Energy extends Root
      * @throws Exception
      */
     public function processNextProjection($projection_id): void  {
-        if ($this->config) { // override request with root config if exists
+        if ($this->config) { // if root config, submit then process it
             $request = json_encode($this->config);
+            $projection_id = $this->submitProjection(0, $this->config, $request);
         }
         else {
             if (is_null($projection_id)) { // if no explicit projection id, get id for earliest in queue

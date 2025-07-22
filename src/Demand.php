@@ -86,8 +86,7 @@ class Demand extends Check
                 // $annual_kwh = $annual_j / Energy::JOULES_PER_KWH;
                 break;
             }
-            default:
-            {
+            default: {
             }
         }
     }

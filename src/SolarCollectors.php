@@ -16,8 +16,9 @@ class SolarCollectors extends Component
                     $inverter, $output_kwh, $lifetime_years, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
     private array $panels, $panels_area_m2;
 
-    public function __construct($component, $location, $initial_temperature, $time)
+    public function __construct($config, $suffix, $location, $initial_temperature, $time)
     {
+        $component = $config[$suffix];
         parent::__construct($component, $time);
         if ($component['include']) {
             $this->area = $component['area'] ?? [];

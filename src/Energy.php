@@ -191,7 +191,10 @@ class Energy extends Root
     private function parameters_combined($config, $combination, $variables): array {
         $description = '';
         foreach (ParameterCombinations::COMBINATION_ELEMENTS as $component_name) {
-            $value = (bool) $combination[$component_name];
+            $value = $combination[$component_name];
+            if (!is_bool($value)) {
+              throw new Exception('component \'' . $component_name . '\' parameter \'include\' must be boolean');
+            }
             $config[$component_name]['include'] = $value;
             if ($value && in_array($component_name, $variables)) {
                 $description .= self::COMPONENT_ACRONYMS[$component_name] . ', ';
@@ -647,9 +650,9 @@ class Energy extends Root
         $demand_non_heating_electric    = new Demand($config, 'non_heating_electric',    null);
         $supply_electric                = new Supply($config, 'grid',   $time);
         $supply_boiler                  = new Supply($config, 'boiler', $time);
-        $boiler                         = new Boiler($config['boiler'],                                                             $time);
-        $solar_pv                       = new SolarCollectors($config['solar_pv'],      $config['location'], 0.0,     $time);
-        $solar_thermal                  = new SolarCollectors($config['solar_thermal'], $config['location'], 0.0,     $time);
+        $boiler                         = new Boiler($config, 'boiler',  $time);
+        $solar_pv                       = new SolarCollectors($config, 'solar_pv',      $config['location'], 0.0,     $time);
+        $solar_thermal                  = new SolarCollectors($config, 'solar_thermal', $config['location'], 0.0,     $time);
         $battery                        = new Battery($config['battery'],                                                           $time);
         $hotwater_tank                  = new ThermalTank($config['storage_hot_water'], false,                             $time);
         $heatpump                       = new HeatPump($config['heat_pump'],                                                        $time);

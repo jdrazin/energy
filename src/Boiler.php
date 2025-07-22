@@ -10,9 +10,6 @@ class Boiler extends Component
 {
     const string COMPONENT_NAME = 'boiler';
     const array CHECKS = [
-        'include'       => [
-                                'boolean' => null
-                           ],
         'output_kw'     =>  [
                                 'range' => [0.0, 100.0]
                             ],
@@ -23,14 +20,15 @@ class Boiler extends Component
 
     public float $efficiency, $max_output_j;
 
-    function __construct($config, $time)
+    function __construct($config, $component, $time)
     {
-        parent::__construct($config, $time);
-        $suffixes = [];
-        $this->include = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'include', self::CHECKS);;
+        parent::__construct($config[$component], $time);
+        $suffixes   = [];
+        $output_kw  = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'output_kw',  self::CHECKS);
+        $efficiency = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'efficiency', self::CHECKS);
         if ($this->include) {
-            $this->max_output_j = ($component['output_kw'] * 1000 ?? 0.0) * $this->step_s;
-            $this->efficiency = $component['efficiency'] ?? 1.0;
+            $this->max_output_j = $output_kw * 1000 * $this->step_s;
+            $this->efficiency   = $efficiency;
         }
     }
 

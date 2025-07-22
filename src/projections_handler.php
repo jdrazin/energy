@@ -14,7 +14,8 @@ ini_set('mysql.connect_timeout', '36000');
 
 const     DEBUG                       = true,
           FOLDER_PID                  = '/var/www/html/energy/pids/',
-          TEST_PROJECTION_ID          = 3741840460,
+          TEST_PROJECTION_ID          = null,
+          TEST_PROJECTION_PATH        = '/var/www/html/energy/test/config.json',
           ARGS                        = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION     = true,
           EMAIL_NOTIFICATION_ON_ERROR = false;
@@ -33,8 +34,12 @@ try {
     if (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron') { // handle as cron
         (new Energy(null))->processNextProjection(null);
     }
-    else {
+    elseif(TEST_PROJECTION_ID) {
         (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
+    }
+    else {
+        $config = json_decode(file_get_contents(TEST_PROJECTION_PATH), true);
+        (new Energy($config))->processNextProjection(null);
     }
     if (!DEBUG) {
         if (!unlink($pid_filename)) {

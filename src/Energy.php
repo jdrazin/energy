@@ -229,10 +229,13 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function processNextProjection($projection_id): void
-    {
-        if (is_null($projection_id)) {
-            $sql = 'SELECT `j`.`id`,
+    public function processNextProjection($projection_id): void  {
+        if ($this->config) { // override request with root config if exists
+            $request = json_encode($this->config);
+        }
+        else {
+            if (is_null($projection_id)) { // if no explicit projection id, get id for earliest in queue
+                $sql = 'SELECT `j`.`id`,
                            `j`.`request`,
                            `j`.`email`
                       FROM `projections` `j`
@@ -241,30 +244,31 @@ class Energy extends Root
                                     WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
                       WHERE `j`.`status` = \'IN_QUEUE\'
                       LIMIT 0, 1';
-            if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_result($projection_id, $request, $email) ||
-                !$stmt->execute()) {
-                $error = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $error, null, 'ERROR');
-                throw new Exception($error);
+                if (!($stmt = $this->mysqli->prepare($sql)) ||
+                    !$stmt->bind_result($projection_id, $request, $email) ||
+                    !$stmt->execute()) {
+                    $error = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $error, null, 'ERROR');
+                    throw new Exception($error);
+                }
             }
-        }
-        else {
-            $sql = 'SELECT  `request`,
+            else { // get request for specified id
+                $sql = 'SELECT  `request`,
                             `email`
                       FROM  `projections`                     
                       WHERE `id` = ?';
-            if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('i', $projection_id) ||
-                !$stmt->bind_result($request, $email) ||
-                !$stmt->execute()) {
-                $error = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $error, null, 'ERROR');
-                throw new Exception($error);
+                if (!($stmt = $this->mysqli->prepare($sql)) ||
+                    !$stmt->bind_param('i', $projection_id) ||
+                    !$stmt->bind_result($request, $email) ||
+                    !$stmt->execute()) {
+                    $error = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $error, null, 'ERROR');
+                    throw new Exception($error);
+                }
+            $stmt->fetch();
+            unset($stmt);
             }
         }
-        $stmt->fetch();
-        unset($stmt);
         if ($request) {   // process next projection if exists
             $basetime_seconds = time();
             try {

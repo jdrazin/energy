@@ -15,7 +15,7 @@ class Demand extends Check
         'total_annual_kwh'              => [
                                             'range' => [1, 1000000]
                                            ],
-        'target_circadian_phase_lag_hours'              => [
+        'target_circadian_phase_lag_hours'=> [
                                             'range' => [0, 12]
                                            ],
         'hourly_consumption_weightings' => [
@@ -32,9 +32,10 @@ class Demand extends Check
      */
     public function __construct($config, $demand, $internal_room_c)
     {
-        $this->type                    = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'type',                          self::CHECKS);
-        $hourly_consumption_weightings = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'hourly_consumption_weightings', self::CHECKS);
-        $total_annual_kwh              = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'total_annual_kwh',              self::CHECKS);
+        $suffixes = [$demand];
+        $this->type                    = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'type',                          self::CHECKS);
+        $hourly_consumption_weightings = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'hourly_consumption_weightings', self::CHECKS);
+        $total_annual_kwh              = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'total_annual_kwh',              self::CHECKS);
         $total_daily_kwh               = $total_annual_kwh / Energy::DAYS_PER_YEAR;
         $this->hour_demands_j = [];
         switch ($this->type) {
@@ -75,15 +76,12 @@ class Demand extends Check
                     }
                 }
                 // normalise
-                // $annual_j = 0.0;
                 $normalising_coefficient = Energy::JOULES_PER_KWH * $total_annual_kwh / $energy_j_cumulative;
                 for ($day = 0; $day < Energy::DAYS_PER_YEAR; $day++) {
                     for ($hour = 0; $hour < Energy::HOURS_PER_DAY; $hour++) {
                         $this->hour_demands_j[$day][$hour] *= $normalising_coefficient;
-                        //		$annual_j += $this->hour_demands_j[$day][$hour];
                     }
                 }
-                // $annual_kwh = $annual_j / Energy::JOULES_PER_KWH;
                 break;
             }
             default: {

@@ -12,9 +12,9 @@ class Check
     /**
      * @throws Exception
      */
-    protected function checkValue($config, $suffixes, $component, $parameter, $parameters)
+    protected function checkValue($config, $suffixes, $component, $parameter, $parameter_checks)
     {
-        $checks = $parameters[$parameter] ?? [];
+        $checks = $parameter_checks[$parameter] ?? [];
         $string = '\'' . $component . '\' component ';
         if (!isset($config[$component])) {
             throw new Exception($string . 'is missing');

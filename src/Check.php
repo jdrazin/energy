@@ -51,6 +51,9 @@ class Check
                 case 'tag_numbers': {
                     return $this->tag_numbers($string, $value);
                 }
+                case 'boolean': {
+                    return $this->boolean($string, $value);
+                }
                 default: {
                 }
             }
@@ -125,6 +128,9 @@ class Check
         return $tag_numbers;
     }
 
+    /**
+     * @throws Exception
+     */
     private function hour_tags($values, $string, $hourly_tags): array {
         if (!is_array($hourly_tags)) {
             throw new Exception($string . '\'' . $hourly_tags . '\'' . ' must be an array');
@@ -154,5 +160,16 @@ class Check
             $last_hour = $hour;
         }
         return $hourly_tags;
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function boolean($string, $value): bool
+    {
+        if (!is_bool($value)) {
+            throw new Exception($string . '\'' . $value . '\' must be boolean');
+        }
+        return $value;
     }
 }

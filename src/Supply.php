@@ -20,6 +20,9 @@ class Supply extends Component
         'hours'             => [
                                     'hour_tags' => ['off_peak', 'standard', 'peak']
                                 ],
+        'bands_gbp_per_kwh' => [
+                                    'tag_numbers' => [0.0, 100.0]
+                               ]
     ];
     const array DIRECTIONS = ['import' => +1.0,
         'export' => +1.0];
@@ -30,8 +33,9 @@ class Supply extends Component
     public function __construct($config, $supply, $time)
     {
  //       parent::__construct($config, $time);
-        $this->inflation_real_pa  = $this->checkValue($config, [$supply], self::COMPONENT_NAME, 'inflation_real_pa',self::CHECKS);
-        $hours_import             = $this->checkValue($config, [$supply, 'import'], self::COMPONENT_NAME, 'hours',  self::CHECKS);
+        $this->inflation_real_pa  = $this->checkValue($config, [$supply], self::COMPONENT_NAME, 'inflation_real_pa',   self::CHECKS);
+        $hours_import             = $this->checkValue($config, [$supply, 'import'], self::COMPONENT_NAME, 'hours',     self::CHECKS);
+        $bands_gbp_per_kwh        = $this->checkValue($config, [$supply, 'import'], self::COMPONENT_NAME, 'bands_gbp_per_kwh',  self::CHECKS);
 
         if ($supply == 'grid') {
             $hours_export          = $this->checkValue($config, [$supply, 'export'], self::COMPONENT_NAME, 'hours',  self::CHECKS);

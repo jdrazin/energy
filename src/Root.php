@@ -5,7 +5,7 @@ use DateTimeZone;
 use Exception;
 use mysqli;
 
-class Root {
+class Root extends Check {
     public const string     EARLIEST_DATE = '2024-08-01 00:00:00',
                             COMMENT_STRING = '#';
 

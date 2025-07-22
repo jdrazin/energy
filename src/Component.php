@@ -1,7 +1,7 @@
 <?php
 namespace Src;
 
-class Component extends Root // extends Root
+class Component extends Root  // extends Root
 {
     public float $step_s, $value_install_gbp, $value_maintenance_per_timestep_gbp;
     public string $name;
@@ -24,8 +24,7 @@ class Component extends Root // extends Root
             $this->value_install_gbp   = -$this->value($component, 'cost_install_gbp');
             $value_maintenance_pa_gbp  = -$this->value($component, 'cost_maintenance_pa_gbp');
             $value_maintenance_pa_gbp -=  $this->value($component, 'standing_gbp_per_day') * Energy::DAYS_PER_YEAR;
-            $this->value_maintenance_per_timestep_gbp = $value_maintenance_pa_gbp *
-            $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+            $this->value_maintenance_per_timestep_gbp  = $value_maintenance_pa_gbp * $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
             $this->value_install_gbp                   = -$this->cost['install_gbp'];
             $this->value_maintenance_per_timestep_gbp  = -($this->cost['maintenance_pa_gbp'] + Energy::DAYS_PER_YEAR * $this->cost['standing_gbp_per_day']) * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
         }
@@ -38,8 +37,7 @@ class Component extends Root // extends Root
         }
     }
 
-    public function value($array_value, $name): float {
-        // return value as sum of array or value
+    public function value($array_value, $name): float { // return value as sum of array or value
         if (isset($array_value[$name])) {
             return is_array($array_value[$name]) ? array_sum($array_value[$name]) : $array_value[$name];
         }

@@ -12,9 +12,16 @@ class Demand extends Check
         'type'                          => [
                                             'values' => ['climate_heating', 'fixed']
                                            ],
-        'total_annual_kwh'              => [60,    3600],
-        'hourly_consumption_weighting'  => [0.0,   1.0],
-    ];
+        'total_annual_kwh'              => [
+                                            'range' => [1, 1000000]
+                                           ],
+        'target_circadian_phase_lag_hours'              => [
+                                            'range' => [0, 12]
+                                           ],
+        'hourly_consumption_weightings' => [
+                                            'hourly' => null,
+                                           ]
+                           ];
 
     public string $type;
     public float $consumption_rates_sum;
@@ -25,18 +32,11 @@ class Demand extends Check
      */
     public function __construct($config, $demand, $internal_room_c)
     {
-        $this->type = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'type', self::CHECKS);
-
+        $this->type                    = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'type',                          self::CHECKS);
+        $hourly_consumption_weightings = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'hourly_consumption_weightings', self::CHECKS);
+        $total_annual_kwh              = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'total_annual_kwh',              self::CHECKS);
+        $total_daily_kwh               = $total_annual_kwh / Energy::DAYS_PER_YEAR;
         $this->hour_demands_j = [];
-        $hourly_consumption_weightings = $demands['hourly_consumption_weightings'];
-
-        if ($demands['total_annual_kwh'] ?? false) {
-            $total_annual_kwh = (float)$demands['total_annual_kwh'];
-        } else {
-            $total_annual_kwh = Energy::DAYS_PER_YEAR * ((float)($demands['total_daily_kwh'] ?? 0.0));
-        }
-        $total_daily_kwh = $total_annual_kwh / Energy::DAYS_PER_YEAR;
-
         switch ($this->type) {
             case 'fixed':
             {
@@ -51,10 +51,9 @@ class Demand extends Check
                 }
                 break;
             }
-            case 'climate_heating':
-            { // heating linearly proportional to positive difference between target temperature and phase adjusted climate temperature
+            case 'climate_heating': { // heating linearly proportional to positive difference between target temperature and phase adjusted climate temperature
                 $target_space_temperature_c = $internal_room_c;
-                $target_circadian_phase_lag_hours = $demands['target_circadian_phase_lag_hours'];
+                $target_circadian_phase_lag_hours = $this->checkValue($config, $demand, self::COMPONENT_NAME, 'target_circadian_phase_lag_hours', self::CHECKS);
                 $energy_j_cumulative = 0.0;
                 for ($day = 0; $day < Energy::DAYS_PER_YEAR; $day++) {
                     $this->hour_demands_j[$day] = [];

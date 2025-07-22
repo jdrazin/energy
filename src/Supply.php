@@ -28,10 +28,11 @@ class Supply extends Component
                               'export' => +1.0];
     public string $type;
     public float $inflation_real_pa, $import_limit_kw, $export_limit_kw;
-    public array $tariff, $current_bands, $tariff_bands, $kwh, $value_gbp;
+    public array $directions, $tariff, $current_bands, $tariff_bands, $kwh, $value_gbp;
 
     public function __construct($config, $supply, $time) {
         parent::__construct($config, $time);
+        $this->directions = self::DIRECTIONS;
         $this->inflation_real_pa  = $this->checkValue($config, [$supply], self::COMPONENT_NAME, 'inflation_real_pa',   self::CHECKS);
         $tariff = [];
         $tariff['import'] = [
@@ -43,11 +44,16 @@ class Supply extends Component
                                     'hours'             => $this->checkValue($config, [$supply, 'export'], self::COMPONENT_NAME, 'hours',     self::CHECKS),
                                     'bands_gbp_per_kwh' => $this->checkValue($config, [$supply, 'export'], self::COMPONENT_NAME, 'bands_gbp_per_kwh',  self::CHECKS)
                                 ];
+            $standing_gbp_per_day  = $this->checkValue($config, [$supply],           self::COMPONENT_NAME, 'standing_gbp_per_day',self::CHECKS);
             $this->import_limit_kw = $this->checkValue($config, [$supply, 'import'], self::COMPONENT_NAME, 'limit_kw',self::CHECKS);
             $this->export_limit_kw = $this->checkValue($config, [$supply, 'export'], self::COMPONENT_NAME, 'limit_kw',self::CHECKS);
         }
+        elseif($supply == 'boiler') {
+            unset($this->directions['export']); // import only
+            $standing_gbp_per_day = 0.0;
+        }
         $component = $config['energy'];
-        foreach (self::DIRECTIONS as $direction => $factor) {                                     // run through import-export tariffs
+        foreach ($this->directions as $direction => $factor) {                                     // run through import-export tariffs
             $bands = [];
             $band_hours = $this->band_hours($tariff[$direction]);
             $bands_gbp_per_kwh = $component[$supply][$direction]['bands_gbp_per_kwh'];
@@ -63,9 +69,8 @@ class Supply extends Component
         }
         $this->kwh = $this->zero_time_direction_band_array($time);
         $this->value_gbp = $this->zero_time_direction_band_array($time);
-        $this->value_maintenance_per_timestep_gbp -= $this->checkValue($config, [$supply], self::COMPONENT_NAME, 'standing_gbp_per_day',self::CHECKS) * $this->step_s / (Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+        $this->value_maintenance_per_timestep_gbp -= $standing_gbp_per_day * $this->step_s / (Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
     }
-
 
     private function band_hours($tariff): array {
         $bands = $tariff['bands_gbp_per_kwh'];
@@ -114,7 +119,7 @@ class Supply extends Component
             $array[$time_unit] = [];
             for ($time_unit_value = 0; $time_unit_value < $number_unit_values; $time_unit_value++) {
                 $array[$time_unit][$time_unit_value] = [];
-                foreach (self::DIRECTIONS as $direction => $factor) {
+                foreach ($this->directions as $direction => $factor) {
                     foreach ($this->tariff_bands[$direction] as $band) {
                         $array[$time_unit][$time_unit_value][$direction][$band] = 0.0;
                     }
@@ -130,7 +135,7 @@ class Supply extends Component
             $sum_time_unit = 0.0;
             for ($time_unit_value = 0; $time_unit_value < $number_unit_values; $time_unit_value++) {
                 $sum_direction = 0.0;
-                foreach (self::DIRECTIONS as $direction => $factor) {
+                foreach ($this->directions as $direction => $factor) {
                     $sum_band = 0.0;
                     foreach ($this->tariff_bands[$direction] as $band) {
                         $sum_band += $array[$time_unit][$time_unit_value][$direction][$band];

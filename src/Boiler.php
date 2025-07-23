@@ -20,8 +20,7 @@ class Boiler extends Component
 
     public float $efficiency, $max_output_j;
 
-    function __construct($check, $config, $component, $time)
-    {
+    function __construct($check, $config, $time) {
         $suffixes   = [];
         $include    = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'include',    self::CHECKS);
         $output_kw  = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'output_kw',  self::CHECKS);

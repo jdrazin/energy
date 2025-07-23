@@ -94,41 +94,46 @@
       "out_of_spec_activation_power_kw": 0.4,
       "power_efficiency": 0.96
     },
-    "collectors": {
-      "main house, south": {
+    "collectors": [
+      {
+        "name" : "main house, south",
         "include": true,
-        "area": {
-          "dimensions_footprint_axis": {
-            "tilt_m": 11.5,
-            "other_m": 3.6
-          },
-          "orientation": {
-            "type": "tilted",
-            "tilt_degrees": 35,
-            "azimuth_degrees": 185
-          }
-        },
         "panel": "AIKO 455W",
-        "panels_number": 16
-      },
-      "annex": {
-        "include": true,
-        "area": {
-          "dimensions_footprint_axis": {
-            "tilt_m": 5.9,
-            "other_m": 3.9
-          },
-          "orientation": {
-            "type": "tilted",
-            "tilt_degrees": 10,
-            "azimuth_degrees": 184
+        "panels_number": 16,
+          "area": {
+              "dimensions_footprint_axis": {
+                "tilt_m": 11.5,
+                "other_m": 3.6
+              },
+              "orientation": {
+                "type": "tilted",
+                "tilt_degrees": 35,
+                "azimuth_degrees": 185
+              }
           }
-        },
-        "panel": "AIKO 455W",
-        "panels_number": 10
       },
-      "garage": {
+      {
+          "name": "annex",
+          "include": true,
+          "panel": "AIKO 455W",
+          "panels_number": 10,
+          "area": {
+              "dimensions_footprint_axis": {
+                "tilt_m": 5.9,
+                "other_m": 3.9
+              },
+              "orientation": {
+                "type": "tilted",
+                "tilt_degrees": 10,
+                "azimuth_degrees": 184
+              }
+          }
+      },
+      {
+        "name": "garage",
         "include": true,
+        "panel": "AIKO 455W",
+        "panels_number": 9,
         "area": {
           "dimensions_footprint_axis": {
             "tilt_m": 5.8,
@@ -139,11 +144,9 @@
             "tilt_degrees": 15,
             "azimuth_degrees": 184
           }
-        },
-        "panel": "AIKO 455W",
-        "panels_number": 9
+        }
       }
-    }
+    ]
   },
   "solar_thermal": {
     "name": "solar thermal",

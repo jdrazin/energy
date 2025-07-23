@@ -14,6 +14,8 @@ class SolarCollectors extends Component
             'thermal_inertia_m2_second_per_w_celsius'   => ['range'    => [1,   100000]],
             'panels_number'                             => ['integer'  => null,
                                                             'range'    => [0,   1000  ]],
+            'tilt_m'                                    => ['range'    => [0.0, 100.0 ]],
+            'other_m'                                   => ['range'    => [0.0, 100.0 ]],
     ];
 
     const   DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS = 1000.0,
@@ -53,6 +55,10 @@ class SolarCollectors extends Component
                 $include       = $check->checkValue($config, $solar_collector, ['collectors'], 'include',       self::CHECKS, $key);
                 $panel         = $check->checkValue($config, $solar_collector, ['collectors'], 'panel',         self::CHECKS, $key);
                 $panels_number = $check->checkValue($config, $solar_collector, ['collectors'], 'panels_number', self::CHECKS, $key);
+
+                $tilt_m        = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'tilt_m',  self::CHECKS, null);
+                $other_m       = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'other_m', self::CHECKS, null);
+
 
                 if ($parameters && $parameters['include'] ?? true) {
                     $collector_name = $check->checkValue($config, $solar_collector, ['collectors', $collector_name], '', self::CHECKS, null);

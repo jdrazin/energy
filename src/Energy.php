@@ -649,16 +649,16 @@ class Energy extends Root
         $demand_space_heating_thermal   = new Demand($check, $config, 'space_heating_thermal',   $temperature_internal_room_c);
         $demand_hotwater_thermal        = new Demand($check, $config, 'hot_water_thermal',       null);
         $demand_non_heating_electric    = new Demand($check, $config, 'non_heating_electric',    null);
-        $supply_electric                = new Supply($check, $config, 'grid',   $time);
+        $supply_grid                    = new Supply($check, $config, 'grid',   $time);
         $supply_boiler                  = new Supply($check, $config, 'boiler', $time);
-        $boiler                         = new Boiler($check, $config, 'boiler',  $time);
-        $solar_pv                       = new SolarCollectors($config, 'solar_pv',      $config['location'], 0.0,     $time);
-        $solar_thermal                  = new SolarCollectors($config, 'solar_thermal', $config['location'], 0.0,     $time);
-        $battery                        = new Battery($config['battery'],                                                           $time);
-        $hotwater_tank                  = new ThermalTank($config['storage_hot_water'], false,                             $time);
-        $heatpump                       = new HeatPump($config['heat_pump'],                                                        $time);
-        $insulation                     = new Insulation($config['insulation'],                                                     $time);
-        $components = [	$supply_electric,
+        $boiler                         = new Boiler($check, $config, $time);
+        $solar_pv                       = new SolarCollectors($check, $config, 'solar_pv',      $config['location'], 0.0,     $time);
+        $solar_thermal                  = new SolarCollectors($check, $config, 'solar_thermal', $config['location'], 0.0,     $time);
+        $battery                        = new Battery($check, $config['battery'],                                                           $time);
+        $hotwater_tank                  = new ThermalTank($check, $config['storage_hot_water'], false,                             $time);
+        $heatpump                       = new HeatPump($check, $config['heat_pump'],                                                        $time);
+        $insulation                     = new Insulation($check, $config['insulation'],                                                     $time);
+        $components = [	$supply_grid,
                         $supply_boiler,
                         $boiler,
                         $solar_pv,
@@ -674,17 +674,17 @@ class Energy extends Root
             }
         }
         $this->install($components_included, $time);                                                                                                                // get install costs
-        $this->year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_included, $config, $combination, $combination_acronym); // summarise year 0
-        $export_limit_j = 1000.0*$time->step_s*$supply_electric->export_limit_kw;
+        $this->year_summary($calibrating_scop, $projection_id, $time, $supply_grid, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_included, $config, $combination, $combination_acronym); // summarise year 0
+        $export_limit_j = 1000.0*$time->step_s*$supply_grid->export_limit_kw;
         while ($time->next_timestep()) {                                                                                                                            // timestep through years 0 ... N-1
             $this->value_maintenance($components_included, $time);                                                                                                    // add timestep component maintenance costs
-            $supply_electric->update_bands($time);                                                                                                                  // get supply bands
+            $supply_grid->update_bands($time);                                                                                                                  // get supply bands
             $supply_boiler->update_bands($time);
             $supply_electric_j = 0.0;                                                                                                                               // zero supply balances for timestep
             $supply_boiler_j   = 0.0;				                                                                                                                // export: +ve, import: -ve
             $temp_climate_c = (new Climate())->temperature_time($time);	                                                                                            // get average climate temperature for day of year, time of day
             // battery
-            if ($battery->include && ($supply_electric->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak
+            if ($battery->include && ($supply_grid->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak
                 $to_battery_j       = $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate until full
                 $supply_electric_j -= $to_battery_j;
             }
@@ -772,11 +772,11 @@ class Energy extends Root
             $demand_electric_non_heating_j                  = $demand_non_heating_electric->demand_j($time);                                                        // electrical non-heating demand
             $supply_electric_j                             -= $demand_electric_non_heating_j;			                    	                                    // satisfy electric non-heating demand
             if ($battery->include) {
-                if ($supply_electric->current_bands['export'] == 'peak') {                                                                                          // export peak time
+                if ($supply_grid->current_bands['export'] == 'peak') {                                                                                          // export peak time
                     $to_battery_j                           = $battery->transfer_consume_j(-1E9)['transfer'];                                        // discharge battery at max power until empty
                     $supply_electric_j                     -= $to_battery_j;
                 }
-                elseif ($supply_electric->current_bands['export'] == 'standard') {                                                                                  // satisfy demand from battery when standard rate
+                elseif ($supply_grid->current_bands['export'] == 'standard') {                                                                                  // satisfy demand from battery when standard rate
                     $to_battery_j                           = $battery->transfer_consume_j($supply_electric_j)['transfer'];
                     $supply_electric_j                     -= $to_battery_j;
                 }
@@ -784,11 +784,11 @@ class Energy extends Root
             if ($supply_electric_j > 0.0) {                                                                                                                         // export if surplus energy
                 $supply_electric_j = min($supply_electric_j, $export_limit_j);                                                                                      // cap to export limit
             }
-            $supply_electric->transfer_consume_j($time, $supply_electric_j < 0.0 ? 'import' : 'export', $supply_electric_j);                                // import if supply -ve, export if +ve
+            $supply_grid->transfer_consume_j($time, $supply_electric_j < 0.0 ? 'import' : 'export', $supply_electric_j);                                // import if supply -ve, export if +ve
             $supply_boiler  ->transfer_consume_j($time, 'import',                                       $supply_boiler_j);                                  // import boiler fuel consumed
             $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
             if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
-                $results = $this->year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_included, $config, $combination, $combination_acronym);  // summarise year at year end
+                $results = $this->year_summary($calibrating_scop, $projection_id, $time, $supply_grid, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_included, $config, $combination, $combination_acronym);  // summarise year at year end
                 if ($calibrating_scop) {
                     return $results;
                 }

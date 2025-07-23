@@ -3,6 +3,15 @@ namespace Src;
 
 class SolarCollectors extends Component
 {
+    const array CHECKS = [
+            'shading_factor'                            => ['range'  => [0.0, 1.0]   ],
+            'panel'                                     => ['string' => null         ],
+            'width_m'                                   => ['range'  => [0.0, 100.0 ]],
+            'height_m'                                  => ['range'  => [0.0, 100.0 ]],
+            'power_max_w'                               => ['range'  => [0.0, 10000 ]],
+            'lifetime_years'                            => ['range'  => [0.0, 100   ]],
+            'thermal_inertia_m2_second_per_w_celsius'   => ['range'  => [1,   100000]],
+    ];
 
     const   DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS = 1000.0,
             TEMPERATURE_TARGET_INCREMENT_CELSIUS_M2_PER_W = 50 / 900,
@@ -16,16 +25,21 @@ class SolarCollectors extends Component
                     $inverter, $output_kwh, $lifetime_years, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
     private array $panels, $panels_area_m2;
 
-    public function __construct($config, $suffix, $location, $initial_temperature, $time)
+    public function __construct($check, $config, $solar_collector, $location, $initial_temperature, $time)
     {
-        $component = $config[$suffix];
-        parent::__construct($component, $time);
+        $component = $config[$solar_collector];
+        parent::__construct($check, $component, $solar_collector, $time);
         if ($component['include']) {
-            $this->area = $component['area'] ?? [];
-            $panels     = $component['panels'] ?? [];
-            $shading_factor = $this->area['shading_factor'] ?? 1.0;
-            $this->panels = [];
-            foreach ($panels as $panel) {
+            $shading_factor = $check->checkValue($config, $solar_collector, ['area'], 'shading_factor', self::CHECKS);
+            $panels = $component['panels'] ?? [];
+            foreach ($panels as $key => $panel) {
+                $panel                                   = $check->checkValue($config, $solar_collector, ['panels'], 'panel',                                   self::CHECKS, $key);
+                $width_m                                 = $check->checkValue($config, $solar_collector, ['panels'], 'width_m',                                 self::CHECKS, $key);
+                $height_m                                = $check->checkValue($config, $solar_collector, ['panels'], 'height_m',                                self::CHECKS, $key);
+                $power_max_w                             = $check->checkValue($config, $solar_collector, ['panels'], 'power_max_w',                             self::CHECKS, $key);
+                $lifetime_years                          = $check->checkValue($config, $solar_collector, ['panels'], 'lifetime_years',                          self::CHECKS, $key);
+                $thermal_inertia_m2_second_per_w_celsius = $check->checkValue($config, $solar_collector, ['panels'], 'thermal_inertia_m2_second_per_w_celsius', self::CHECKS, $key);
+
                 if ($k = $panel['panel'] ?? '') {
                     $this->panels[$k] = $panel;
                 }

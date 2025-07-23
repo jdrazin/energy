@@ -47,7 +47,8 @@ class SolarCollectors extends Component
             $this->collectors_value_install_gbp                  = [];
             $this->collectors_value_maintenance_per_timestep_gbp = [];
             $key = 0;
-            foreach ($component['collectors'] as $collector_name => $parameters) {
+            $collectors = $component['collectors'] ?? [];
+            foreach ($collectors as $collector_name => $parameters) {
                 if ($parameters && $parameters['include'] ?? true) {
                     $this->collectors[$key]     = $collector_name;
                     $this->shading_factor[$key] = $parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);

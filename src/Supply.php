@@ -31,18 +31,18 @@ class Supply extends Component
     public array $directions, $tariff, $current_bands, $tariff_bands, $kwh, $value_gbp;
 
     public function __construct($check, $config, $supply, $time) {
-        parent::__construct($config, $time);
+        parent::__construct($check, $config, self::COMPONENT_NAME, $time);
         $this->directions = self::DIRECTIONS;
         $this->inflation_real_pa  = $check->checkValue($config, self::COMPONENT_NAME, [$supply], 'inflation_real_pa',   self::CHECKS);
         $tariff = [];
         $tariff['import'] = [
-                                'hours'             => $check->checkValue($config,self::COMPONENT_NAME, [$supply, 'import'], 'hours',     self::CHECKS),
-                                'bands_gbp_per_kwh' => $check->checkValue($config,self::COMPONENT_NAME, [$supply, 'import'], 'bands_gbp_per_kwh',  self::CHECKS)
+                                'hours'             => $check->checkValue($config, self::COMPONENT_NAME, [$supply, 'import'], 'hours',     self::CHECKS),
+                                'bands_gbp_per_kwh' => $check->checkValue($config, self::COMPONENT_NAME, [$supply, 'import'], 'bands_gbp_per_kwh',  self::CHECKS)
                             ];
         if ($supply == 'grid') {
             $tariff['export'] = [
-                                    'hours'             => $check->checkValue($config,self::COMPONENT_NAME,  [$supply, 'export'], 'hours',     self::CHECKS),
-                                    'bands_gbp_per_kwh' => $check->checkValue($config,self::COMPONENT_NAME,  [$supply, 'export'], 'bands_gbp_per_kwh',  self::CHECKS)
+                                    'hours'             => $check->checkValue($config, self::COMPONENT_NAME,  [$supply, 'export'], 'hours',     self::CHECKS),
+                                    'bands_gbp_per_kwh' => $check->checkValue($config, self::COMPONENT_NAME,  [$supply, 'export'], 'bands_gbp_per_kwh',  self::CHECKS)
                                 ];
             $standing_gbp_per_day  = $check->checkValue($config, self::COMPONENT_NAME, [$supply],           'standing_gbp_per_day',self::CHECKS);
             $this->import_limit_kw = $check->checkValue($config, self::COMPONENT_NAME, [$supply, 'import'], 'limit_kw',self::CHECKS);

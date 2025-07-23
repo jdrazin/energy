@@ -18,8 +18,9 @@ class Check
     /**
      * @throws Exception
      */
-    public function checkValue($config, $component, $suffixes, $parameter, $parameter_checks): mixed
+    public function checkValue($config, $component, $suffixes, $parameter, $parameter_checks, $key = null): mixed
     {
+        $is_key = is_int($key);
         $checks = $parameter_checks[$parameter] ?? [];
         $string = '\'' . $component . '\' component ';
         if (!isset($config[$component])) {
@@ -33,18 +34,24 @@ class Check
             }
             $element = $element[$suffix];
         }
+        if ($is_key) {
+            $string .= '[' . $key . ']';
+        }
         $string .= '\'' . $parameter . '\'';
-        if (!isset($element[$parameter])) {
+        if ((is_int($key) && !isset($element[$key][$parameter])) || (!is_int($key) && !isset($element[$parameter]))) {
             throw new Exception($string . 'is missing');
         }
-        if (is_null($value = $element[$parameter])) {
+        $value = $is_key ? $element[$key][$parameter] : $element[$parameter];
+        if (is_null($value)) {
             throw new Exception($string . 'is null');
         }
         // apply value
-    //    $path = '$this->config_applied[\'' . $component . '\']';
         $path = $component;
         foreach ($suffixes as $suffix) {
             $path .= '[' . $suffix . ']';
+        }
+        if ($is_key) {
+            $path .= '[' . $key . ']';
         }
         $path .= '[' . $parameter . ']';
         $this->setValueByStringPath($this->config_applied, $path, $value);
@@ -52,29 +59,26 @@ class Check
         // check value
         foreach ($checks as $check_type => $check_parameters) {
             switch ($check_type) {
-                case 'range':
-                {
+                case 'range': {
                     return $this->range($check_parameters, $string, $value);
                 }
-                case 'values':
-                {
+                case 'values': {
                     return $this->values($check_parameters, $string, $value);
                 }
-                case 'hour_weightings':
-                {
+                case 'hour_weightings': {
                     return $this->hour_weightings($string, $value);
                 }
-                case 'hour_tags':
-                {
+                case 'hour_tags': {
                     return $this->hour_tags($check_parameters, $string, $value);
                 }
-                case 'tag_numbers':
-                {
+                case 'tag_numbers': {
                     return $this->tag_numbers($string, $value);
                 }
-                case 'boolean':
-                {
+                case 'boolean': {
                     return $this->boolean($string, $value);
+                }
+                case 'string': {
+                        return $this->string($string, $value);
                 }
                 default:
                 {
@@ -89,7 +93,7 @@ class Check
         if (!is_numeric($value)) {
             throw new Exception($string . '\'' . $value . '\' must be numeric');
         }
-        $string .= 'cannot be ';
+        $string .= ' cannot be ';
         if (isset($check_parameters[self::MIN])) {
             if ($value < $check_parameters[self::MIN]) {
                 throw new Exception($string . 'less than ' . $check_parameters[self::MIN]);
@@ -192,6 +196,17 @@ class Check
     {
         if (!is_bool($value)) {
             throw new Exception($string . '\'' . $value . '\' must be boolean');
+        }
+        return $value;
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function string($string, $value): string
+    {
+        if (!is_string($value)) {
+            throw new Exception($string . '\'' . $value . '\' must be a character string');
         }
         return $value;
     }

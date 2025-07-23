@@ -9,10 +9,16 @@ class Check
     const MIN = 0,
           MAX = 1;
 
+    public array $config_applied;
+
+    public function __construct() {
+        $this->config_applied = [];
+    }
+
     /**
      * @throws Exception
      */
-    protected function checkValue($config, $suffixes, $component, $parameter, $parameter_checks)
+    protected function checkValue($config, $component, $suffixes, $parameter, $parameter_checks)
     {
         $checks = $parameter_checks[$parameter] ?? [];
         $string = '\'' . $component . '\' component ';

@@ -29,8 +29,7 @@ class Root extends Check {
     /**
      * @throws Exception
      */
-    public function __construct()
-    {
+    public function __construct() {
         /*
          *  change file’s group to group user belongs to:
          *      sudo chown :www-data <pathname>
@@ -42,6 +41,7 @@ class Root extends Check {
          *  add group x permission to all parent folders leading to <pathname>
          *      chmod +x /<parent folder>
          */
+        parent::__construct();
         if (!(($api_text = file_get_contents($path = self::APIS_PATH)) &&
             ($this->apis = json_decode($api_text, true, self::JSON_MAX_DEPTH)))) {
             throw new Exception('bad or missing config json: ' . $path);

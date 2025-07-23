@@ -33,9 +33,9 @@ class Demand extends Check
     public function __construct($config, $demand, $internal_room_c)
     {
         $suffixes = [$demand];
-        $this->type                    = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'type',                          self::CHECKS);
-        $hourly_consumption_weightings = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'hourly_consumption_weightings', self::CHECKS);
-        $total_annual_kwh              = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'total_annual_kwh',              self::CHECKS);
+        $this->type                    = $this->checkValue($config, self::COMPONENT_NAME, $suffixes, 'type',                          self::CHECKS);
+        $hourly_consumption_weightings = $this->checkValue($config, self::COMPONENT_NAME, $suffixes, 'hourly_consumption_weightings', self::CHECKS);
+        $total_annual_kwh              = $this->checkValue($config, self::COMPONENT_NAME, $suffixes, 'total_annual_kwh',              self::CHECKS);
         $total_daily_kwh               = $total_annual_kwh / Energy::DAYS_PER_YEAR;
         $this->hour_demands_j = [];
         switch ($this->type) {
@@ -54,7 +54,7 @@ class Demand extends Check
             }
             case 'climate_heating': { // heating linearly proportional to positive difference between target temperature and phase adjusted climate temperature
                 $target_space_temperature_c = $internal_room_c;
-                $target_circadian_phase_lag_hours = $this->checkValue($config, [$demand], self::COMPONENT_NAME, 'target_circadian_phase_lag_hours', self::CHECKS);
+                $target_circadian_phase_lag_hours = $this->checkValue($config, self::COMPONENT_NAME, [$demand], 'target_circadian_phase_lag_hours', self::CHECKS);
                 $energy_j_cumulative = 0.0;
                 for ($day = 0; $day < Energy::DAYS_PER_YEAR; $day++) {
                     $this->hour_demands_j[$day] = [];

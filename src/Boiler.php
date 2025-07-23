@@ -24,8 +24,8 @@ class Boiler extends Component
     {
         parent::__construct($config[$component], $time);
         $suffixes   = [];
-        $output_kw  = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'output_kw',  self::CHECKS);
-        $efficiency = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'efficiency', self::CHECKS);
+        $output_kw  = $this->checkValue($config, self::COMPONENT_NAME, $suffixes, 'output_kw',  self::CHECKS);
+        $efficiency = $this->checkValue($config, self::COMPONENT_NAME, $suffixes, 'efficiency', self::CHECKS);
         if ($this->include) {
             $this->max_output_j = $output_kw * 1000 * $this->step_s;
             $this->efficiency   = $efficiency;

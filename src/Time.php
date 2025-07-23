@@ -44,9 +44,9 @@ class Time extends Check
  // public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
     public function __construct($config, $units, $single_year) {
         $suffixes = [];
-        $max_project_duration_years = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'max_project_duration_years', self::CHECKS);
-        $step_seconds               = $this->checkValue($config, $suffixes,  self::COMPONENT_NAME, 'step_seconds',               self::CHECKS);
-        $this->discount_rate_pa     = $this->checkValue($config, $suffixes, self::COMPONENT_NAME, 'discount_rate_pa',           self::CHECKS);;
+        $max_project_duration_years = $this->checkValue($config,self::COMPONENT_NAME,  $suffixes, 'max_project_duration_years', self::CHECKS);
+        $step_seconds               = $this->checkValue($config, self::COMPONENT_NAME, $suffixes,  'step_seconds',               self::CHECKS);
+        $this->discount_rate_pa     = $this->checkValue($config, self::COMPONENT_NAME, $suffixes, 'discount_rate_pa',           self::CHECKS);;
         $this->time_start = new DateTime('2025-01-01 00:00:00');
         $this->time_end   = clone $this->time_start;
         $this->time_end->modify('+' . $max_project_duration_years . ' year');

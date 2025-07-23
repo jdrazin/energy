@@ -44,7 +44,7 @@ class Time {
     public function __construct($check, $config, $units, $single_year) {
         $suffixes = [];
         $max_project_duration_years = $check->checkValue($config,self::COMPONENT_NAME,  $suffixes, 'max_project_duration_years', self::CHECKS);
-        $step_seconds               = $check->checkValue($config, self::COMPONENT_NAME, $suffixes,  'step_seconds',               self::CHECKS);
+        $step_seconds               = $check->checkValue($config, self::COMPONENT_NAME, $suffixes,  'step_seconds',              self::CHECKS);
         $this->discount_rate_pa     = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'discount_rate_pa',           self::CHECKS);;
         $this->time_start = new DateTime('2025-01-01 00:00:00');
         $this->time_end   = clone $this->time_start;

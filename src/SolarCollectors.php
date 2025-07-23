@@ -4,13 +4,16 @@ namespace Src;
 class SolarCollectors extends Component
 {
     const array CHECKS = [
-            'shading_factor'                            => ['range'  => [0.0, 1.0]   ],
-            'panel'                                     => ['string' => null         ],
-            'width_m'                                   => ['range'  => [0.0, 100.0 ]],
-            'height_m'                                  => ['range'  => [0.0, 100.0 ]],
-            'power_max_w'                               => ['range'  => [0.0, 10000 ]],
-            'lifetime_years'                            => ['range'  => [0.0, 100   ]],
-            'thermal_inertia_m2_second_per_w_celsius'   => ['range'  => [1,   100000]],
+            'include'                                   => ['boolean'  => null         ],
+            'shading_factor'                            => ['range'    => [0.0, 1.0   ]],
+            'panel'                                     => ['string'   => null         ],
+            'width_m'                                   => ['range'    => [0.0, 100.0 ]],
+            'height_m'                                  => ['range'    => [0.0, 100.0 ]],
+            'power_max_w'                               => ['range'    => [0.0, 10000 ]],
+            'lifetime_years'                            => ['range'    => [0.0, 100   ]],
+            'thermal_inertia_m2_second_per_w_celsius'   => ['range'    => [1,   100000]],
+            'panels_number'                             => ['integer'  => null,
+                                                            'range'    => [0,   1000  ]],
     ];
 
     const   DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS = 1000.0,
@@ -33,7 +36,6 @@ class SolarCollectors extends Component
             $shading_factor = $check->checkValue($config, $solar_collector, ['area'], 'shading_factor', self::CHECKS);
             $panels = $component['panels'] ?? [];
             foreach ($panels as $key => $panel) {
-                $p = $check->checkValue($config, $solar_collector, ['panels'], 'panel',                                   self::CHECKS, $key);
                 $this->panels[$key] = [
                                         'panel'                                   => $check->checkValue($config, $solar_collector, ['panels'], 'panel',                                   self::CHECKS, $key),
                                         'width_m'                                 => $check->checkValue($config, $solar_collector, ['panels'], 'width_m',                                 self::CHECKS, $key),
@@ -46,10 +48,14 @@ class SolarCollectors extends Component
             $this->collectors                                    = [];
             $this->collectors_value_install_gbp                  = [];
             $this->collectors_value_maintenance_per_timestep_gbp = [];
-            $key = 0;
             $collectors = $component['collectors'] ?? [];
-            foreach ($collectors as $collector_name => $parameters) {
+            foreach ($collectors as $key => $collector) {
+                $include       = $check->checkValue($config, $solar_collector, ['collectors'], 'include',       self::CHECKS, $key);
+                $panel         = $check->checkValue($config, $solar_collector, ['collectors'], 'panel',         self::CHECKS, $key);
+                $panels_number = $check->checkValue($config, $solar_collector, ['collectors'], 'panels_number', self::CHECKS, $key);
+
                 if ($parameters && $parameters['include'] ?? true) {
+                    $collector_name = $check->checkValue($config, $solar_collector, ['collectors', $collector_name], '', self::CHECKS, null);
                     $this->collectors[$key]     = $collector_name;
                     $this->shading_factor[$key] = $parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
                     if ($this->panels) {

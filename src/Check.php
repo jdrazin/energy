@@ -78,7 +78,10 @@ class Check
                     return $this->boolean($string, $value);
                 }
                 case 'string': {
-                        return $this->string($string, $value);
+                     return $this->string($string, $value);
+                }
+                case 'integer': {
+                    return $this->integer($string, $value);
                 }
                 default:
                 {
@@ -196,6 +199,17 @@ class Check
     {
         if (!is_bool($value)) {
             throw new Exception($string . '\'' . $value . '\' must be boolean');
+        }
+        return $value;
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function integer($string, $value): bool
+    {
+        if (!is_int($value)) {
+            throw new Exception($string . '\'' . $value . '\' must be integer');
         }
         return $value;
     }

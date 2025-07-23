@@ -30,8 +30,7 @@ class Demand
     /**
      * @throws \Exception
      */
-    public function __construct($check, $config, $demand, $internal_room_c)
-    {
+    public function __construct($check, $config, $demand, $internal_room_c) {
         $suffixes = [$demand];
         $this->type                    = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'type',                          self::CHECKS);
         $hourly_consumption_weightings = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'hourly_consumption_weightings', self::CHECKS);

@@ -5,7 +5,7 @@ use DateTimeZone;
 use Exception;
 use mysqli;
 
-class Root extends Check {
+class Root {
     public const string     EARLIEST_DATE = '2024-08-01 00:00:00',
                             COMMENT_STRING = '#';
 
@@ -41,7 +41,6 @@ class Root extends Check {
          *  add group x permission to all parent folders leading to <pathname>
          *      chmod +x /<parent folder>
          */
-        parent::__construct();
         if (!(($api_text = file_get_contents($path = self::APIS_PATH)) &&
             ($this->apis = json_decode($api_text, true, self::JSON_MAX_DEPTH)))) {
             throw new Exception('bad or missing config json: ' . $path);

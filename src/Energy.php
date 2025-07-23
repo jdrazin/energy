@@ -642,15 +642,16 @@ class Energy extends Root
      * @throws Exception
      */
     function traverse_years($calibrating_scop, $projection_id, $config, $combination, $combination_acronym, $cop_factor): array {
-        $time                           = new Time($config, $this->time_units, $calibrating_scop);
+        $check                          = new Check();
+        $time                           = new Time($check, $config, $this->time_units, $calibrating_scop);
         $this->step_s                   = $time->step_s;
         $temperature_internal_room_c    = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
-        $demand_space_heating_thermal   = new Demand($config, 'space_heating_thermal',   $temperature_internal_room_c);
-        $demand_hotwater_thermal        = new Demand($config, 'hot_water_thermal',       null);
-        $demand_non_heating_electric    = new Demand($config, 'non_heating_electric',    null);
-        $supply_electric                = new Supply($config, 'grid',   $time);
-        $supply_boiler                  = new Supply($config, 'boiler', $time);
-        $boiler                         = new Boiler($config, 'boiler',  $time);
+        $demand_space_heating_thermal   = new Demand($check, $config, 'space_heating_thermal',   $temperature_internal_room_c);
+        $demand_hotwater_thermal        = new Demand($check, $config, 'hot_water_thermal',       null);
+        $demand_non_heating_electric    = new Demand($check, $config, 'non_heating_electric',    null);
+        $supply_electric                = new Supply($check, $config, 'grid',   $time);
+        $supply_boiler                  = new Supply($check, $config, 'boiler', $time);
+        $boiler                         = new Boiler($check, $config, 'boiler',  $time);
         $solar_pv                       = new SolarCollectors($config, 'solar_pv',      $config['location'], 0.0,     $time);
         $solar_thermal                  = new SolarCollectors($config, 'solar_thermal', $config['location'], 0.0,     $time);
         $battery                        = new Battery($config['battery'],                                                           $time);

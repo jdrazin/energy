@@ -30,23 +30,23 @@ class Supply extends Component
     public float $inflation_real_pa, $import_limit_kw, $export_limit_kw;
     public array $directions, $tariff, $current_bands, $tariff_bands, $kwh, $value_gbp;
 
-    public function __construct($config, $supply, $time) {
+    public function __construct($check, $config, $supply, $time) {
         parent::__construct($config, $time);
         $this->directions = self::DIRECTIONS;
-        $this->inflation_real_pa  = $this->checkValue($config, self::COMPONENT_NAME, [$supply], 'inflation_real_pa',   self::CHECKS);
+        $this->inflation_real_pa  = $check->checkValue($config, self::COMPONENT_NAME, [$supply], 'inflation_real_pa',   self::CHECKS);
         $tariff = [];
         $tariff['import'] = [
-                                'hours'             => $this->checkValue($config,self::COMPONENT_NAME, [$supply, 'import'], 'hours',     self::CHECKS),
-                                'bands_gbp_per_kwh' => $this->checkValue($config,self::COMPONENT_NAME, [$supply, 'import'], 'bands_gbp_per_kwh',  self::CHECKS)
+                                'hours'             => $check->checkValue($config,self::COMPONENT_NAME, [$supply, 'import'], 'hours',     self::CHECKS),
+                                'bands_gbp_per_kwh' => $check->checkValue($config,self::COMPONENT_NAME, [$supply, 'import'], 'bands_gbp_per_kwh',  self::CHECKS)
                             ];
         if ($supply == 'grid') {
             $tariff['export'] = [
-                                    'hours'             => $this->checkValue($config,self::COMPONENT_NAME,  [$supply, 'export'], 'hours',     self::CHECKS),
-                                    'bands_gbp_per_kwh' => $this->checkValue($config,self::COMPONENT_NAME,  [$supply, 'export'], 'bands_gbp_per_kwh',  self::CHECKS)
+                                    'hours'             => $check->checkValue($config,self::COMPONENT_NAME,  [$supply, 'export'], 'hours',     self::CHECKS),
+                                    'bands_gbp_per_kwh' => $check->checkValue($config,self::COMPONENT_NAME,  [$supply, 'export'], 'bands_gbp_per_kwh',  self::CHECKS)
                                 ];
-            $standing_gbp_per_day  = $this->checkValue($config, self::COMPONENT_NAME, [$supply],           'standing_gbp_per_day',self::CHECKS);
-            $this->import_limit_kw = $this->checkValue($config, self::COMPONENT_NAME, [$supply, 'import'], 'limit_kw',self::CHECKS);
-            $this->export_limit_kw = $this->checkValue($config, self::COMPONENT_NAME, [$supply, 'export'], 'limit_kw',self::CHECKS);
+            $standing_gbp_per_day  = $check->checkValue($config, self::COMPONENT_NAME, [$supply],           'standing_gbp_per_day',self::CHECKS);
+            $this->import_limit_kw = $check->checkValue($config, self::COMPONENT_NAME, [$supply, 'import'], 'limit_kw',self::CHECKS);
+            $this->export_limit_kw = $check->checkValue($config, self::COMPONENT_NAME, [$supply, 'export'], 'limit_kw',self::CHECKS);
         }
         elseif($supply == 'boiler') {
             unset($this->directions['export']); // import only

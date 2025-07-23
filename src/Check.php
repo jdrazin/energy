@@ -18,7 +18,7 @@ class Check
     /**
      * @throws Exception
      */
-    protected function checkValue($config, $component, $suffixes, $parameter, $parameter_checks)
+    public function checkValue($config, $component, $suffixes, $parameter, $parameter_checks): mixed
     {
         $checks = $parameter_checks[$parameter] ?? [];
         $string = '\'' . $component . '\' component ';
@@ -40,30 +40,48 @@ class Check
         if (is_null($value = $element[$parameter])) {
             throw new Exception($string . 'is null');
         }
+        // apply value
+    //    $path = '$this->config_applied[\'' . $component . '\']';
+        $path = $component;
+        foreach ($suffixes as $suffix) {
+            $path .= '[' . $suffix . ']';
+        }
+        $path .= '[' . $parameter . ']';
+        $this->setValueByStringPath($this->config_applied, $path, $value);
+
+        // check value
         foreach ($checks as $check_type => $check_parameters) {
             switch ($check_type) {
-                case 'range': {
+                case 'range':
+                {
                     return $this->range($check_parameters, $string, $value);
                 }
-                case 'values': {
+                case 'values':
+                {
                     return $this->values($check_parameters, $string, $value);
                 }
-                case 'hour_weightings': {
+                case 'hour_weightings':
+                {
                     return $this->hour_weightings($string, $value);
                 }
-                case 'hour_tags': {
+                case 'hour_tags':
+                {
                     return $this->hour_tags($check_parameters, $string, $value);
                 }
-                case 'tag_numbers': {
+                case 'tag_numbers':
+                {
                     return $this->tag_numbers($string, $value);
                 }
-                case 'boolean': {
+                case 'boolean':
+                {
                     return $this->boolean($string, $value);
                 }
-                default: {
+                default:
+                {
                 }
             }
         }
+        return true;
     }
 
     private function range($check_parameters, $string, $value): float|int|string
@@ -176,5 +194,21 @@ class Check
             throw new Exception($string . '\'' . $value . '\' must be boolean');
         }
         return $value;
+    }
+
+
+    function setValueByStringPath(array &$array, string $path, $value): void {
+        // Convert 'foo[bar][baz]' to ['foo', 'bar', 'baz']
+        preg_match_all('/\[?([^\[\]]+)\]?/', $path, $matches);
+        $keys = $matches[1];
+
+        $ref = &$array;
+        foreach ($keys as $key) {
+            if (!isset($ref[$key]) || !is_array($ref[$key])) {
+                $ref[$key] = [];
+            }
+            $ref = &$ref[$key];
+        }
+        $ref = $value;
     }
 }

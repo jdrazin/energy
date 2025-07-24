@@ -40,13 +40,19 @@ class SolarCollectors extends Component
             $panels = $component['panels'] ?? [];
             foreach ($panels as $key => $panel) {
                 $this->panels[$key] = [
-                                        'panel'                                   => $check->checkValue($config, $solar_collector, ['panels', $key], 'panel',                                   self::CHECKS),
-                                        'width_m'                                 => $check->checkValue($config, $solar_collector, ['panels', $key], 'width_m',                                 self::CHECKS),
-                                        'height_m'                                => $check->checkValue($config, $solar_collector, ['panels', $key], 'height_m',                                self::CHECKS),
-                                        'power_max_w'                             => $check->checkValue($config, $solar_collector, ['panels', $key], 'power_max_w',                             self::CHECKS),
-                                        'lifetime_years'                          => $check->checkValue($config, $solar_collector, ['panels', $key], 'lifetime_years',                          self::CHECKS),
-                                        'thermal_inertia_m2_second_per_w_celsius' => $check->checkValue($config, $solar_collector, ['panels', $key], 'thermal_inertia_m2_second_per_w_celsius', self::CHECKS)
-                                      ];
+                    'panel'                                   => $check->checkValue($config, $solar_collector, ['panels', $key], 'panel',                                   self::CHECKS),
+                    'width_m'                                 => $check->checkValue($config, $solar_collector, ['panels', $key], 'width_m',                                 self::CHECKS),
+                    'height_m'                                => $check->checkValue($config, $solar_collector, ['panels', $key], 'height_m',                                self::CHECKS),
+                    'power_max_w'                             => $check->checkValue($config, $solar_collector, ['panels', $key], 'power_max_w',                             self::CHECKS),
+                    'lifetime_years'                          => $check->checkValue($config, $solar_collector, ['panels', $key], 'lifetime_years',                          self::CHECKS),
+                    'thermal_inertia_m2_second_per_w_celsius' => $check->checkValue($config, $solar_collector, ['panels', $key], 'thermal_inertia_m2_second_per_w_celsius', self::CHECKS),
+                    'efficiency'                              => [
+                                                                 'percent'                       => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'percent',                       self::CHECKS),
+                                                                 'loss_percent_pa'               => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'loss_percent_pa',               self::CHECKS,  0.0),
+                                                                 'loss_percent_per_celsius'      => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'loss_percent_per_celsius',      self::CHECKS,  0.0),
+                                                                 'temperature_reference_celsius' => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'temperature_reference_celsius', self::CHECKS, 25.0)
+                                                                 ]
+                  ];
             }
             if (!$this->panels) {
                 throw new Exception('\'panels\' is missing');
@@ -84,27 +90,30 @@ class SolarCollectors extends Component
 
                             }
                         }
-                        $dim_a_m = ($dimension_footprint_axis_other_m / cos(deg2rad($this->tilt_degrees[$key]))) - 2 * $border_m;
-                        $dim_b_m = $dimension_footprint_axis_tilt_m - 2 * $border_m;
-                        $panels_number = $this->max_panel($dim_a_m, $dim_b_m, $panel['width_m'], $panel['height_m']);
+                        $dim_a_m        = ($dimension_footprint_axis_other_m / cos(deg2rad($this->tilt_degrees[$key]))) - 2 * $border_m;
+                        $dim_b_m        = $dimension_footprint_axis_tilt_m - 2 * $border_m;
+                        $panels_number  = $this->max_panel($dim_a_m, $dim_b_m, $panel['width_m'], $panel['height_m']);
                     }
-                    $panel_name = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panel', self::CHECKS);
-                    $panel = $this->panel($panel_name);
-                    $this->panels_area_m2[$key] = $panels_number * $panel['width_m'] * $panel['height_m'];
-                    $this->power_max_w[$key] = $panel['power_max_w'] ?? null;
-                    $this->lifetime_years[$key] = $panel['lifetime_years'] ?? 100.0;
-                    $this->panels_number[$key] = $panels_number;
-                    $efficiency = $panel['efficiency'];
-                    $this->efficiency[$key] = ($efficiency['percent'] ?? 1.0) / 100.0;
-                    $this->efficiency_per_c[$key] = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
-                    $this->efficiency_pa[$key] = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
+                    else {
+                        $panels_number = 0;
+                    }
+                    $panel_name                     = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panel', self::CHECKS);
+                    $panel                          = $this->panel($panel_name);
+                    $this->panels_area_m2[$key]     = $panels_number * $panel['width_m'] * $panel['height_m'];
+                    $this->power_max_w[$key]        = $panel['power_max_w'] ?? null;
+                    $this->lifetime_years[$key]     = $panel['lifetime_years'] ?? 100.0;
+                    $this->panels_number[$key]      = $panels_number;
+                    $efficiency                     = $panel['efficiency'];
+                    $this->efficiency[$key]         = ($efficiency['percent'] ?? 1.0) / 100.0;
+                    $this->efficiency_per_c[$key]   = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
+                    $this->efficiency_pa[$key]      = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
                     $this->efficiency_temperature_reference_c[$key] = $efficiency['temperature_reference_celsius'] ?? 20.0;
 
                     // ThermalInertia used to estimate panel temperature as function of solar power and time (required to estimate solar_pv thermally induced efficiency losses)
                     $thermal_inertia_m2_second_per_w_celsius = $panel['thermal_inertia_m2_second_per_w_celsius'] ?? self::DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS;
-                    $this->thermal[$key] = new ThermalInertia($initial_temperature, $thermal_inertia_m2_second_per_w_celsius, $time);
-                    $this->inverter[$key] = new Inverter($parameters['inverter'] ?? null, $time);
-                    $this->solar[$key] = new Solar($location, $parameters['area']['orientation']);
+                    $this->thermal[$key]                     = new ThermalInertia($initial_temperature, $thermal_inertia_m2_second_per_w_celsius, $time);
+                    $this->inverter[$key]                    = new Inverter($parameters['inverter'] ?? null, $time);
+                    $this->solar[$key]                       = new Solar($location, $parameters['area']['orientation']);
 
                     $this->value_install_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_gbp'] ?? 0.0);
                     $this->value_maintenance_per_timestep_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_pa_gbp'] ?? 0.0) * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);

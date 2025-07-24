@@ -60,8 +60,12 @@ class Check
                     $this->values($check_parameters, $string, $value);
                     break;
                 }
-                case 'hour_weightings': {
-                    $this->hour_weightings($string, $value);
+                case 'hour_values': {
+                    $this->hour_values($string, $value);
+                    break;
+                }
+                case 'temperature_cops': {
+                    $this->temperature_cops($string, $value);
                     break;
                 }
                 case 'hour_tags': {
@@ -119,13 +123,12 @@ class Check
         }
     }
 
-    private function hour_weightings($string, $hourly_weightings):void {
-        if (!is_array($hourly_weightings)) {
-            throw new Exception($string . '\'' . $hourly_weightings . '\'' . ' must be an array');
+    private function hour_values($string, $hourly_values):void {
+        if (!is_array($hourly_values)) {
+            throw new Exception($string . '\'' . $hourly_values . '\'' . ' must be an array');
         }
-        $count = 0;
         $last_hour = null;
-        foreach ($hourly_weightings as $hour => $weighting) {
+        foreach ($hourly_values as $hour => $weighting) {
             if ($hour < 0 || $hour > 24) {
                 throw new Exception($string . 'hour \'' . $hour . '\'' . ' must be an integer between 0 and 24');
             }
@@ -139,6 +142,23 @@ class Check
                 throw new Exception($string . 'hours must be in numerical order');
             }
             $last_hour = $hour;
+        }
+    }
+
+    private function temperature_cops($string, $temperature_cops):void {
+        if (!is_array($temperature_cops)) {
+            throw new Exception($string . '\'' . $temperature_cops . '\'' . ' must be an array');
+        }
+        foreach ($temperature_cops as $temperature_c => $cop) {
+            if ($temperature_c < -30.0 || $temperature_c > 100.0) {
+                throw new Exception($string . 'temperature \'' . $temperature_c . '\'' . ' must be between -30 and +100 degrees C');
+            }
+            if (!is_numeric($temperature_c)) {
+                throw new Exception($string . 'temperature \'' . $temperature_c . '\'' . ' must be numeric');
+            }
+            if (!is_numeric($cop) || $cop < 0.9 || $cop > 10.0) {
+                throw new Exception($string . 'illegal \'' . $cop . '\'' . ': must be between 0.9 and 10');
+            }
         }
     }
 

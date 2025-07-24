@@ -8,19 +8,11 @@ class Demand
 {
     const string COMPONENT_NAME = 'demands';
     const array CHECKS = [
-        'type'                          => [
-                                            'values' => ['climate_heating', 'fixed']
-                                           ],
-        'total_annual_kwh'              => [
-                                            'range' => [1, 1000000]
-                                           ],
-        'target_circadian_phase_lag_hours'=> [
-                                            'range' => [0, 12]
-                                           ],
-        'hourly_consumption_weightings' => [
-                                            'hour_weightings' => null,
-                                           ]
-                           ];
+        'type'                              => ['values'        => ['climate_heating', 'fixed'] ],
+        'total_annual_kwh'                  => ['range'         => [1, 1000000]                 ],
+        'target_circadian_phase_lag_hours'  => ['range'         => [0, 12]                      ],
+        'hourly_consumption_weightings'     => ['hour_values'   => null                         ]
+       ];
 
     public string $type;
     public float $consumption_rates_sum;
@@ -30,10 +22,9 @@ class Demand
      * @throws \Exception
      */
     public function __construct($check, $config, $demand, $internal_room_c) {
-        $suffixes = [$demand];
-        $this->type                    = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'type',                          self::CHECKS);
-        $hourly_consumption_weightings = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'hourly_consumption_weightings', self::CHECKS);
-        $total_annual_kwh              = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'total_annual_kwh',              self::CHECKS);
+        $this->type                    = $check->checkValue($config, self::COMPONENT_NAME, [$demand], 'type',                          self::CHECKS);
+        $hourly_consumption_weightings = $check->checkValue($config, self::COMPONENT_NAME, [$demand], 'hourly_consumption_weightings', self::CHECKS);
+        $total_annual_kwh              = $check->checkValue($config, self::COMPONENT_NAME, [$demand], 'total_annual_kwh',              self::CHECKS);
         $total_daily_kwh               = $total_annual_kwh / Energy::DAYS_PER_YEAR;
         $this->hour_demands_j = [];
         switch ($this->type) {

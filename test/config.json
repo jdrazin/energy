@@ -20,7 +20,6 @@
       "90": 1.0,
       "100": 0.95
     },
-    "performance_factor": 1.0,
     "#": "https://www.researchgate.net/figure/COP-of-the-air-to-water-heat-pump-with-different-load-side-inlet-temperatures-Based-on_fig1_326114264",
     "power": {
       "output_kw": 10.0,
@@ -85,13 +84,6 @@
           }
         }
     ],
-    "inverter": {
-      "name": "inverter",
-      "#": "https://www.researchgate.net/figure/Efficiency-curve-of-various-solar-inverters_fig8_258220930",
-      "power_threshold_kw": 11.5,
-      "efficiency_percent": 96.0,
-      "out_of_spec_activation_power_kw": 0.4
-    },
     "collectors": [
       {
         "name" : "main house, south",
@@ -109,6 +101,11 @@
             "tilt_degrees": 35,
             "azimuth_degrees": 185
             }
+        },
+        "inverter": {
+          "power_threshold_kw": 5.0,
+          "efficiency_percent": 96.0,
+          "out_of_spec_activation_power_kw": 0.4
         }
       },
       {
@@ -128,6 +125,11 @@
             "tilt_degrees": 10,
             "azimuth_degrees": 184
           }
+        },
+        "inverter": {
+          "power_threshold_kw": 3.0,
+          "efficiency_percent": 96.0,
+          "out_of_spec_activation_power_kw": 0.4
         }
       },
       {
@@ -147,13 +149,18 @@
             "tilt_degrees": 15,
             "azimuth_degrees": 184
           }
+        },
+        "inverter": {
+          "power_threshold_kw": 3.0,
+          "efficiency_percent": 96.0,
+          "out_of_spec_activation_power_kw": 0.4
         }
       }
     ]
   },
   "solar_thermal": {
     "name": "solar thermal",
-    "include": false,
+    "include": true,
     "cost": {
       "install_gbp": 19000.0,
       "maintenance_pa_gbp": 200.0
@@ -166,14 +173,27 @@
         "percent": 70
       }
     },
+    "panels": [
+      {
+        "panel": "Evacuated Tube, Slimline 15 58mm",
+        "cost_per_unit_gbp" : 600.0,
+        "width_m": 1.175,
+        "height_m": 1.98,
+        "lifetime_years": 25,
+        "efficiency": {
+          "percent": 70.0
+        }
+      }
+    ],
     "collectors": {
       "primary": {
+        "panel": "Evacuated Tube, Slimline 15 58mm",
+        "shading_factor": 1.0,
         "area": {
           "dimensions_footprint_axis": {
             "tilt_m": 6.0,
             "other_m": 1.9
           },
-          "shading_factor": 1.0,
           "orientation": {
             "type": "tilted",
             "tilt_degrees": 45,
@@ -185,9 +205,7 @@
           "maintenance_pa_gbp": 25
         },
         "include": true
-      },
-      "tertiary": null,
-      "secondary": null
+      }
     }
   },
   "insulation": {
@@ -340,10 +358,7 @@
     "volume_m3": 0.19,
     "immersion_kw": 3.0,
     "target_temperature_c": 55.0,
-    "half_life_days": 2.5,
-    "cost_install_gbp": 0,
-    "one_way_storage_efficiency": 0.95,
-    "cost_maintenance_pa_gbp": 0
+    "half_life_days": 2.5
   },
   "temperatures": {
     "internal_room_celsius": 21

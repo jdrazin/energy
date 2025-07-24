@@ -16,6 +16,7 @@ class Battery extends Component
         'max_charge_kw'                             => ['range'    => [0.0,     100.0]],
         'max_discharge_kw'                          => ['range'    => [0.0,     100.0]],
     ];
+
     public float    $max_charge_w, $store_j, $one_way_efficiency, $initial_raw_capacity_kwh, $cycles_to_reduced_capacity,
                     $reduced_capacity, $capacity_kwh, $store_j_max, $max_discharge_w, $cycles;
 

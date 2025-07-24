@@ -3,21 +3,33 @@ namespace Src;
 
 class HeatPump extends Component
 {
+    const string COMPONENT_NAME = 'heat_pump';
+    const array CHECKS = [
+        'battery'                                   => ['array'             => null             ],
+        'include'                                   => ['boolean'           => null             ],
+        'scop'                                      => ['range'             => [1.0,      10.0] ],
+        'cops'                                      => ['temperature_cops'  => null             ],
+        'power'                                     => ['array'             => null             ],
+        'output_kw'                                 => ['range'             => [0.5,     100.0] ],
+        'background_w'                              => ['range'             => [0.0,    1000.0] ],
+        'heat'                                      => ['boolean'           => null             ],
+        'cool'                                      => ['boolean'           => null             ],
+    ];
 
-    public float $heat, $cool, $max_output_j, $energy_background_step_j, $scop;
+    public float $heat, $cool, $max_output_j, $energy_background_step_j;
     public array $cops, $kwh;
 
-    public function __construct($component, $time)
+    public function __construct($check, $config, $time)
     {
-        parent::__construct($component, $time);
-        if ($this->include) {
-            $this->cops = $component['cops'];
+        if ($check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS)) {
+            parent::__construct($check, $config, self::COMPONENT_NAME, $time);
+            $this->cops = $check->checkValue($config, self::COMPONENT_NAME, [], 'cops', self::CHECKS);
             ksort($this->cops);  // ensure cops data are in temperature order
-            $power = $component['power'];
-            $this->max_output_j = 1000 * ($power['output_kw'] ?? 0.0) * $this->step_s;
-            $this->energy_background_step_j = ($power['background_w'] ?? 0.0) * $this->step_s;
-            $this->heat = ($component['heat'] ?? true);
-            $this->cool = ($component['cool'] ?? false);
+            $check->checkValue($config, self::COMPONENT_NAME, [], 'power', self::CHECKS);
+            $this->max_output_j             = 1000.0 * $check->checkValue($config, self::COMPONENT_NAME, ['power'], 'output_kw', self::CHECKS) * $this->step_s;
+            $this->energy_background_step_j = $check->checkValue($config, self::COMPONENT_NAME, ['power'], 'background_w', self::CHECKS, 0.0) * $this->step_s;
+            $this->heat = $check->checkValue($config, self::COMPONENT_NAME, [], 'heat', self::CHECKS, true);
+            $this->cool = $check->checkValue($config, self::COMPONENT_NAME, [], 'cool', self::CHECKS, false);
             $this->kwh = $this->zeroKwh();
             $this->time_units = $time->units;
         }

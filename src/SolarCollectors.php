@@ -39,13 +39,7 @@ class SolarCollectors extends Component
     {
         $component = $config[$solar_collector];
         parent::__construct($check, $component, $solar_collector, $time);
-        if ($component['include']) {
-           $inverter = $check->checkValue($config, $solar_collector, [], 'inverter', self::CHECKS)
-                        ? [
-                          'power_threshold_kw' => $check->checkValue($config, $solar_collector, ['inverter'], 'power_threshold_kw', self::CHECKS),
-                          'power_efficiency'   => $check->checkValue($config, $solar_collector, ['inverter'], 'efficiency_percent', self::CHECKS, 100.0) / 100.0,
-                          ]
-                        : null;
+        if ($check->checkValue($config, $solar_collector, [], 'include', self::CHECKS, true)) {
             $panels = $check->checkValue($config, $solar_collector, [], 'panels', self::CHECKS);
             foreach ($panels as $key => $panel) {
                 $this->panels[$key] = [
@@ -53,16 +47,16 @@ class SolarCollectors extends Component
                     'cost_per_unit_gbp'                       => $check->checkValue($config, $solar_collector, ['panels', $key], 'cost_per_unit_gbp',                       self::CHECKS, 0.0),
                     'width_m'                                 => $check->checkValue($config, $solar_collector, ['panels', $key], 'width_m',                                 self::CHECKS),
                     'height_m'                                => $check->checkValue($config, $solar_collector, ['panels', $key], 'height_m',                                self::CHECKS),
-                    'power_max_w'                             => $check->checkValue($config, $solar_collector, ['panels', $key], 'power_max_w',                             self::CHECKS),
+                    'power_max_w'                             => $check->checkValue($config, $solar_collector, ['panels', $key], 'power_max_w',                             self::CHECKS, 10000),
                     'lifetime_years'                          => $check->checkValue($config, $solar_collector, ['panels', $key], 'lifetime_years',                          self::CHECKS, 100),
                     'thermal_inertia_m2_second_per_w_celsius' => $check->checkValue($config, $solar_collector, ['panels', $key], 'thermal_inertia_m2_second_per_w_celsius', self::CHECKS, self::DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS),
                     'efficiency'                              => [
-                                                                 'percent'                       => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'percent',                       self::CHECKS),
-                                                                 'loss_percent_pa'               => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'loss_percent_pa',               self::CHECKS,  0.0),
-                                                                 'loss_percent_per_celsius'      => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'loss_percent_per_celsius',      self::CHECKS,  0.0),
-                                                                 'temperature_reference_celsius' => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'temperature_reference_celsius', self::CHECKS, 25.0)
-                                                                 ]
-                  ];
+                        'percent'                       => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'percent',                       self::CHECKS),
+                        'loss_percent_pa'               => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'loss_percent_pa',               self::CHECKS,  0.0),
+                        'loss_percent_per_celsius'      => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'loss_percent_per_celsius',      self::CHECKS,  0.0),
+                        'temperature_reference_celsius' => $check->checkValue($config, $solar_collector, ['panels', $key,'efficiency'], 'temperature_reference_celsius', self::CHECKS, 25.0)
+                    ]
+                ];
             }
             if (!$this->panels) {
                 throw new Exception('\'panels\' is missing');
@@ -73,6 +67,18 @@ class SolarCollectors extends Component
             $collectors = $component['collectors'] ?? [];
             foreach ($collectors as $key => $collector) {
                 if ($check->checkValue($config, $solar_collector, ['collectors', $key], 'include', self::CHECKS, true)) {
+                    if ($solar_collector == 'solar_pv') {
+                        $inverter = $check->checkValue($config, $solar_collector, ['collectors', $key], 'inverter', self::CHECKS, null)
+                            ? [
+                                'power_threshold_kw' => $check->checkValue($config, $solar_collector, ['collectors', $key, 'inverter'], 'power_threshold_kw', self::CHECKS),
+                                'power_efficiency'   => $check->checkValue($config, $solar_collector, ['collectors', $key, 'inverter'], 'efficiency_percent', self::CHECKS, 100.0) / 100.0,
+                              ]
+                            : [
+                                'power_threshold_kw' => 1E6,
+                                'power_efficiency'   => 1.0,
+                              ];
+                        $this->inverter[$key] = new Inverter($check, $inverter, $time);
+                    }
                     $orientation = [
                         'type'              => $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'type', self::CHECKS),
                         'tilt_degrees'      => $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'tilt_degrees', self::CHECKS),
@@ -120,10 +126,7 @@ class SolarCollectors extends Component
                     $this->efficiency_temperature_reference_c[$key] = $efficiency['temperature_reference_celsius'] ?? 20.0;
 
                     // ThermalInertia used to estimate panel temperature as function of solar power and time (required to estimate solar_pv thermally induced efficiency losses)
-                    $this->thermal[$key]            = new ThermalInertia($initial_temperature, $panel['thermal_inertia_m2_second_per_w_celsius'], $time);
-
-                    //
-                    $this->inverter[$key] = new Inverter($check, $inverter, $time);
+                    $this->thermal[$key]  = new ThermalInertia($initial_temperature, $panel['thermal_inertia_m2_second_per_w_celsius'], $time);
                     $this->solar[$key]    = new Solar($location, $orientation);
 
                     // accumulate costs

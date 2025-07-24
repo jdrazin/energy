@@ -22,9 +22,9 @@ class Boiler extends Component
 
     function __construct($check, $config, $time) {
         $suffixes   = [];
-        $include    = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'include',    self::CHECKS);
-        $output_kw  = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'output_kw',  self::CHECKS);
-        $efficiency = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'efficiency', self::CHECKS);
+        $include    = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'include',            self::CHECKS, true);
+        $output_kw  = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'output_kw',          self::CHECKS);
+        $efficiency = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'efficiency_percent', self::CHECKS, 100.0)/100.0;
         parent::__construct($check, $config, self::COMPONENT_NAME, $time);
         $this->include      = $include;
         $this->max_output_j = $output_kw * 1000 * $this->step_s;

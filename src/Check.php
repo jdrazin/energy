@@ -18,9 +18,8 @@ class Check
     /**
      * @throws Exception
      */
-    public function checkValue($config, $component, $suffixes, $parameter, $parameter_checks, $key = null): mixed
+    public function checkValue($config, $component, $suffixes, $parameter, $parameter_checks, $default = null): mixed
     {
-        $is_key = is_int($key);
         $checks = $parameter_checks[$parameter] ?? [];
         $string = '\'' . $component . '\' component ';
         if (!isset($config[$component])) {
@@ -34,14 +33,11 @@ class Check
             }
             $element = $element[$suffix];
         }
-        if ($is_key) {
-            $string .= '[' . $key . ']';
-        }
         $string .= '\'' . $parameter . '\'';
-        if ((is_int($key) && !isset($element[$key][$parameter])) || (!is_int($key) && !isset($element[$parameter]))) {
+        if (!isset($element[$parameter]) && is_null($default)) {
             throw new Exception($string . 'is missing');
         }
-        $value = $is_key ? $element[$key][$parameter] : $element[$parameter];
+        $value = $element[$parameter] ?? $default;
         if (is_null($value)) {
             throw new Exception($string . 'is null');
         }
@@ -49,9 +45,6 @@ class Check
         $path = $component;
         foreach ($suffixes as $suffix) {
             $path .= '[' . $suffix . ']';
-        }
-        if ($is_key) {
-            $path .= '[' . $key . ']';
         }
         $path .= '[' . $parameter . ']';
         $this->setValueByStringPath($this->config_applied, $path, $value);

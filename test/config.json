@@ -96,8 +96,8 @@
         "include": true,
         "panel": "AIKO 455W",
         "panels_number": 16,
+        "shading_factor": 0.85,
         "area": {
-          "shading_factor": 0.85,
           "border_m": 0.2,
           "dimensions_footprint_axis": {
             "tilt_m": 11.5,
@@ -115,8 +115,8 @@
         "include": true,
         "panel": "AIKO 455W",
         "panels_number": 10,
+        "shading_factor": 0.85,
         "area": {
-          "shading_factor": 0.85,
           "border_m": 0.2,
           "dimensions_footprint_axis": {
             "tilt_m": 5.9,
@@ -134,8 +134,8 @@
         "include": true,
         "panel": "AIKO 455W",
         "panels_number": 9,
+        "shading_factor": 0.85,
         "area": {
-          "shading_factor": 0.85,
           "border_m": 0.2,
           "dimensions_footprint_axis": {
             "tilt_m": 5.8,

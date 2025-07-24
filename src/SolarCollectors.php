@@ -6,24 +6,25 @@ use Exception;
 class SolarCollectors extends Component
 {
     const array CHECKS = [
-            'include'                                   => ['boolean'  => null         ],
-            'panels'                                    => ['array'    => null         ],
-            'inverter'                                  => ['array'    => null         ],
-            'panel'                                     => ['string'   => null         ],
-            'width_m'                                   => ['range'    => [0.0,  100.0 ]],
-            'height_m'                                  => ['range'    => [0.0,  100.0 ]],
-            'power_max_w'                               => ['range'    => [0.0,  10000 ]],
-            'lifetime_years'                            => ['range'    => [0.0,  100   ]],
-            'thermal_inertia_m2_second_per_w_celsius'   => ['range'    => [1,    100000]],
+            'include'                                   => ['boolean'  => null          ],
+            'panels'                                    => ['array'    => null          ],
+            'inverter'                                  => ['array'    => null          ],
+            'panel'                                     => ['string'   => null          ],
+            'cost_per_unit_gbp'                         => ['range'    => [0.0,  10000.0]],
+            'width_m'                                   => ['range'    => [0.0,  100.0  ]],
+            'height_m'                                  => ['range'    => [0.0,  100.0  ]],
+            'power_max_w'                               => ['range'    => [0.0,  10000  ]],
+            'lifetime_years'                            => ['range'    => [0.0,  100    ]],
+            'thermal_inertia_m2_second_per_w_celsius'   => ['range'    => [1,    100000 ]],
             'panels_number'                             => ['integer'  => null,
-                                                            'range'    => [0,    1000  ]],
-            'shading_factor'                            => ['range'    => [0.0,  1.0   ]],
-            'border_m'                                  => ['range'    => [0.0,  1.0   ]],
-            'tilt_m'                                    => ['range'    => [0.0,  100.0 ]],
-            'other_m'                                   => ['range'    => [0.0,  100.0 ]],
+                                                            'range'    => [0,    1000   ]],
+            'shading_factor'                            => ['range'    => [0.0,  1.0    ]],
+            'border_m'                                  => ['range'    => [0.0,  1.0    ]],
+            'tilt_m'                                    => ['range'    => [0.0,  100.0  ]],
+            'other_m'                                   => ['range'    => [0.0,  100.0  ]],
             'type'                                      => ['values'   => ['tilted', '1-axis tracker', '2-axis tracker']],
-            'tilt_degrees'                              => ['range'    => [0,    90.0 ]],
-            'azimuth_degrees'                           => ['range'    => [0,   360.0 ]]
+            'tilt_degrees'                              => ['range'    => [0,    90.0  ]],
+            'azimuth_degrees'                           => ['range'    => [0,   360.0  ]]
     ];
 
     const   DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS = 1000.0,
@@ -49,6 +50,7 @@ class SolarCollectors extends Component
             foreach ($panels as $key => $panel) {
                 $this->panels[$key] = [
                     'panel'                                   => $check->checkValue($config, $solar_collector, ['panels', $key], 'panel',                                   self::CHECKS),
+                    'cost_per_unit_gbp'                       => $check->checkValue($config, $solar_collector, ['panels', $key], 'cost_per_unit_gbp',                       self::CHECKS, 0.0),
                     'width_m'                                 => $check->checkValue($config, $solar_collector, ['panels', $key], 'width_m',                                 self::CHECKS),
                     'height_m'                                => $check->checkValue($config, $solar_collector, ['panels', $key], 'height_m',                                self::CHECKS),
                     'power_max_w'                             => $check->checkValue($config, $solar_collector, ['panels', $key], 'power_max_w',                             self::CHECKS),
@@ -121,13 +123,11 @@ class SolarCollectors extends Component
                     $this->thermal[$key]            = new ThermalInertia($initial_temperature, $panel['thermal_inertia_m2_second_per_w_celsius'], $time);
 
                     //
-                    $this->inverter[$key] = new Inverter($inverter, $time);
+                    $this->inverter[$key] = new Inverter($check, $inverter, $time);
                     $this->solar[$key]    = new Solar($location, $orientation);
 
                     // accumulate costs
-                    $this->value_install_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_gbp'] ?? 0.0);
-                    $this->value_maintenance_per_timestep_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_pa_gbp'] ?? 0.0) * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
-                    $this->sum_value($this->cost, $parameters, 'cost'); // sun cost components
+                    $this->value_install_gbp += -$panels_number * $panel['cost_per_unit_gbp'];
                 }
             }
             $this->output_kwh = $this->zero_output();

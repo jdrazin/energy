@@ -57,7 +57,7 @@ class SolarCollectors extends Component
             $collectors = $component['collectors'] ?? [];
             foreach ($collectors as $key => $collector) {
                 if ($check->checkValue($config, $solar_collector, ['collectors', $key], 'include', self::CHECKS, true)) {
-                    $shading_factor = $check->checkValue($config, $solar_collector, ['collectors', $key], 'shading_factor', self::CHECKS, 1.0);
+                    $this->shading_factor[$key] = $check->checkValue($config, $solar_collector, ['collectors', $key], 'shading_factor', self::CHECKS, 1.0);
                     if (isset($collector['panels_number'])) {
                         $panels_number = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panels_number', self::CHECKS);
                     }
@@ -90,7 +90,6 @@ class SolarCollectors extends Component
                     }
                     $panel_name = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panel', self::CHECKS);
                     $panel = $this->panel($panel_name);
-                    $this->shading_factor[$key] = $shading_factor;
                     $this->panels_area_m2[$key] = $panels_number * $panel['width_m'] * $panel['height_m'];
                     $this->power_max_w[$key] = $panel['power_max_w'] ?? null;
                     $this->lifetime_years[$key] = $panel['lifetime_years'] ?? 100.0;

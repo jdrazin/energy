@@ -8,22 +8,34 @@ require_once __DIR__ . "/Energy.php";
 
 class ThermalTank extends Component
 {
+    const string COMPONENT_NAME = 'storage_hot_water';
+    const array CHECKS = [
+        'storage_hot_water'                         => ['array'    => null           ],
+        'include'                                   => ['boolean'  => null           ],
+        'volume_m3'                                 => ['range'    => [0.0,      10.0]],
+        'immersion_kw'                              => ['range'    => [0.0,      10.0]],
+        'target_temperature_c'                      => ['range'    => [40.0,     95.0]],
+        'half_life_days'                            => ['range'    => [0.5,       7.0]],
+        'one_way_storage_efficiency_percent'        => ['range'    => [50.0,    100.0]],
+    ];
     const   HEAT_CAPACITY_WATER_J_PER_M3_K = 4200000.0,
             TEMPERATURE_MAX_OPERATING_CELSIUS = 65.0;
 
     public float $temperature_c, $capacity_c_per_joule, $one_way_storage_efficiency, $decay_rate_per_s, $charge_c_per_joule, $discharge_c_per_joule, $target_temperature_c, $immersion_w;
     public bool $heat_pump;
 
-    public function __construct($component, $heat_pump, $time)
+    public function __construct($check, $config, $heat_pump, $time)
     {
-        parent::__construct($component, $time);
-        if ($this->include) {
-            $this->immersion_w = 1000.0 * ($component['immersion_w'] ?? 0.0);
-            $this->target_temperature_c = $component['target_temperature_c'] ?? 50.0;
-            $this->capacity_c_per_joule = 1.0 / ($component['volume_m3'] * self::HEAT_CAPACITY_WATER_J_PER_M3_K);
-            $this->decay_rate_per_s = isset($component['half_life_days']) ? log(2) / ($component['half_life_days'] * 24 * 3600) : 0.0;
-            $this->temperature_c = $component['initial_temp_celsius'] ?? (new Climate)->temperature_time($time);
-            $this->one_way_storage_efficiency = $component['one_way_storage_efficiency'] ?? 1.0;
+        if ($check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS, true)) {
+            parent::__construct($check, $config, self::COMPONENT_NAME, $time);
+            $volume_m3 = $check->checkValue($config, self::COMPONENT_NAME, [], 'volume_m3', self::CHECKS);
+            $this->capacity_c_per_joule = 1.0 / ($volume_m3 * self::HEAT_CAPACITY_WATER_J_PER_M3_K);
+            $this->immersion_w = 1000.0 * $check->checkValue($config, self::COMPONENT_NAME, [], 'immersion_kw', self::CHECKS, 3.0);
+            $this->target_temperature_c = $check->checkValue($config, self::COMPONENT_NAME, [], 'target_temperature_c', self::CHECKS, 65.0);
+            $half_life_days = $check->checkValue($config, self::COMPONENT_NAME, [], 'half_life_days', self::CHECKS, 1.0);
+            $this->decay_rate_per_s = log(2.0) / ($half_life_days * 24 * 3600);
+            $this->temperature_c = (new Climate)->temperature_time($time);
+            $this->one_way_storage_efficiency = $check->checkValue($config, self::COMPONENT_NAME, [], 'one_way_storage_efficiency_percent', self::CHECKS, 100.0)/100.0;
             $this->charge_c_per_joule = $this->capacity_c_per_joule * $this->one_way_storage_efficiency;
             $this->discharge_c_per_joule = $this->capacity_c_per_joule;
             $this->heat_pump = $heat_pump;

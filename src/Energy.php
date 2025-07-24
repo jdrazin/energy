@@ -654,7 +654,7 @@ class Energy extends Root
         $boiler                         = new Boiler($check, $config, $time);
         $solar_pv                       = new SolarCollectors($check, $config, 'solar_pv',      $config['location'], 0.0,     $time);
         $solar_thermal                  = new SolarCollectors($check, $config, 'solar_thermal', $config['location'], 0.0,     $time);
-        $battery                        = new Battery($check, $config['battery'],                                                           $time);
+        $battery                        = new Battery($check, $config, $time);
         $hotwater_tank                  = new ThermalTank($check, $config['storage_hot_water'], false,                             $time);
         $heatpump                       = new HeatPump($check, $config['heat_pump'],                                                        $time);
         $insulation                     = new Insulation($check, $config['insulation'],                                                     $time);

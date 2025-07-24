@@ -53,6 +53,9 @@
           "#": "AIK-A-MAH54-445-AB Gen 2 All Black",
           "width_m": 1.134,
           "height_m": 1.722,
+          "power_max_w": 455.0,
+          "lifetime_years": 25,
+          "thermal_inertia_m2_second_per_w_celsius": 1000,
           "efficiency": {
             "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
             "source": "",
@@ -60,10 +63,7 @@
             "loss_percent_pa": 0.3,
             "loss_percent_per_celsius": 0.29,
             "temperature_reference_celsius": 25
-          },
-          "power_max_w": 455.0,
-          "lifetime_years": 25,
-          "thermal_inertia_m2_second_per_w_celsius": 1000
+          }
         },
         {
           "panel": "ABC DEF",

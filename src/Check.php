@@ -53,38 +53,46 @@ class Check
         foreach ($checks as $check_type => $check_parameters) {
             switch ($check_type) {
                 case 'range': {
-                    return $this->range($check_parameters, $string, $value);
+                    $this->range($check_parameters, $string, $value);
+                    break;
                 }
                 case 'values': {
-                    return $this->values($check_parameters, $string, $value);
+                    $this->values($check_parameters, $string, $value);
+                    break;
                 }
                 case 'hour_weightings': {
-                    return $this->hour_weightings($string, $value);
+                    $this->hour_weightings($string, $value);
+                    break;
                 }
                 case 'hour_tags': {
-                    return $this->hour_tags($check_parameters, $string, $value);
+                    $this->hour_tags($check_parameters, $string, $value);
+                    break;
                 }
                 case 'tag_numbers': {
-                    return $this->tag_numbers($string, $value);
+                    $this->tag_numbers($string, $value);
+                    break;
                 }
                 case 'boolean': {
-                    return $this->boolean($string, $value);
+                    $this->boolean($string, $value);
+                    break;
                 }
                 case 'string': {
-                     return $this->string($string, $value);
+                    $this->string($string, $value);
+                    break;
                 }
                 case 'integer': {
-                    return $this->integer($string, $value);
+                    $this->integer($string, $value);
+                    break;
                 }
                 default:
                 {
                 }
             }
         }
-        return true;
+        return $value;
     }
 
-    private function range($check_parameters, $string, $value): float|int|string
+    private function range($check_parameters, $string, $value): void
     {
         if (!is_numeric($value)) {
             throw new Exception($string . '\'' . $value . '\' must be numeric');
@@ -100,20 +108,18 @@ class Check
                 throw new Exception( $string . 'more than ' . $check_parameters[self::MAX]);
             }
         }
-        return $value;
     }
 
-    private function values(array $values, $string, $value)
+    private function values(array $values, $string, $value): void
     {
         $string .= 'cannot be ';
         $values = array_flip($values);
         if (!isset($values[$value])) {
             throw new Exception($string . '\'' . $value . '\'');
         }
-        return $value;
     }
 
-    private function hour_weightings($string, $hourly_weightings): array {
+    private function hour_weightings($string, $hourly_weightings):void {
         if (!is_array($hourly_weightings)) {
             throw new Exception($string . '\'' . $hourly_weightings . '\'' . ' must be an array');
         }
@@ -134,10 +140,9 @@ class Check
             }
             $last_hour = $hour;
         }
-        return $hourly_weightings;
     }
 
-    private function tag_numbers($string, $tag_numbers): array {
+    private function tag_numbers($string, $tag_numbers): void {
         if (!is_array($tag_numbers)) {
             throw new Exception($string . '\'' . $tag_numbers . '\'' . ' must be an array');
         }
@@ -149,13 +154,12 @@ class Check
                 throw new Exception($string . 'number \'' . $tag . '\'' . ' must be numeric');
             }
         }
-        return $tag_numbers;
     }
 
     /**
      * @throws Exception
      */
-    private function hour_tags($values, $string, $hourly_tags): array {
+    private function hour_tags($values, $string, $hourly_tags): void {
         if (!is_array($hourly_tags)) {
             throw new Exception($string . '\'' . $hourly_tags . '\'' . ' must be an array');
         }
@@ -182,40 +186,36 @@ class Check
             }
             $last_hour = $hour;
         }
-        return $hourly_tags;
     }
 
     /**
      * @throws Exception
      */
-    private function boolean($string, $value): bool
+    private function boolean($string, $value): void
     {
         if (!is_bool($value)) {
             throw new Exception($string . '\'' . $value . '\' must be boolean');
         }
-        return $value;
     }
 
     /**
      * @throws Exception
      */
-    private function integer($string, $value): bool
+    private function integer($string, $value): void
     {
         if (!is_int($value)) {
             throw new Exception($string . '\'' . $value . '\' must be integer');
         }
-        return $value;
     }
 
     /**
      * @throws Exception
      */
-    private function string($string, $value): string
+    private function string($string, $value): void
     {
         if (!is_string($value)) {
             throw new Exception($string . '\'' . $value . '\' must be a character string');
         }
-        return $value;
     }
 
 

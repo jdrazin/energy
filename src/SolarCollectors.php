@@ -58,90 +58,71 @@ class SolarCollectors extends Component
             foreach ($collectors as $key => $collector) {
                 $include = $check->checkValue($config, $solar_collector, ['collectors', $key], 'include', self::CHECKS);
                 if ($include) {
-                    $panel_name    = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panel', self::CHECKS);
-                    $panel         = $this->panel($panel_name);
-                    $panels_number = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panels_number', self::CHECKS);
-                    if ($panels_number) {
-                        $this->value_install_gbp                  += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_gbp']    ?? 0.0);
-                        $this->value_maintenance_per_timestep_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_pa_gbp'] ?? 0.0) * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+                    $shading_factor = $check->checkValue($config, $solar_collector, ['collectors', $key], 'shading_factor', self::CHECKS);
+                    if (isset($collector['panels_number'])) {
+                        $panels_number = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panels_number', self::CHECKS);
                     }
+                    elseif (isset($collector['area'])) {
+                        $area = $collector['area'];
+                        $dimension_footprint_axis_tilt_m = $area['dimensions_footprint_axis']['tilt_m'];
+                        $dimension_footprint_axis_other_m = $area['dimensions_footprint_axis']['other_m'];
+                        $border_m = $area['border_m'] ?? self::DEFAULTS['border_m'];
+                        $orientation = $area['orientation'] ?? [];
+                        $this->orientation_type[$key] = $orientation['type'] ?? self::DEFAULTS['type'];
+                        $this->azimuth_degrees[$key] = $orientation['azimuth_degrees'] ?? self::DEFAULTS['azimuth_degrees'];
+                        $this->tilt_degrees[$key] = $orientation['tilt_degrees'] ?? self::DEFAULTS['tilt_degrees'];
 
-                    $shading_factor  = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area'], 'shading_factor', self::CHECKS);
-                    $border_m        = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area'], 'border_m',       self::CHECKS);
-
-                    $tilt_m          = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'tilt_m',  self::CHECKS);
-                    $other_m         = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'other_m', self::CHECKS);
-
-                    $type            = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'type', self::CHECKS);
+                        $dim_a_m = ($dimension_footprint_axis_other_m / cos(deg2rad($this->tilt_degrees[$key]))) - 2 * $border_m;
+                        $dim_b_m = $dimension_footprint_axis_tilt_m - 2 * $border_m;
+                        $panels_number = $this->max_panel($dim_a_m, $dim_b_m, $panel['width_m'], $panel['height_m']);
+                    }
+                    $panel_name = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panel', self::CHECKS);
+                    $panel = $this->panel($panel_name);
+                    $border_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area'], 'border_m', self::CHECKS);
+                    $tilt_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'tilt_m', self::CHECKS);
+                    $other_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'other_m', self::CHECKS);
+                    $type = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'type', self::CHECKS);
                     switch ($type) {
-                        case 'tilted': {
-                            $tilt_degrees    = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'tilt_degrees',    self::CHECKS);
+                        case 'tilted':
+                        {
+                            $tilt_degrees = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'tilt_degrees', self::CHECKS);
                             $azimuth_degrees = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'azimuth_degrees', self::CHECKS);
                             break;
                         }
                         case '1-axis tracker':
-                        case '2-axis tracker': {
+                        case '2-axis tracker':
+                        {
                             break;
                         }
-                        default: {
+                        default:
+                        {
 
                         }
                     }
-
-
                     $this->shading_factor[$key] = $parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
-                    $panel_width_m  = $panel['width_m'];
-                    $panel_height_m = $panel['height_m'];
-                    if ($parameters['panels_number'] ?? 0) {
-                        $panels_number = $parameters['panels_number'];
-                    }
-                    elseif (isset($parameters['area'])) {
-                        $area = $parameters['area'];
-                        $dimension_footprint_axis_tilt_m  = $area['dimensions_footprint_axis']['tilt_m'];
-                        $dimension_footprint_axis_other_m = $area['dimensions_footprint_axis']['other_m'];
-                        $border_m                         = $area['border_m'] ?? self::DEFAULTS['border_m'];
-                        $orientation                      = $area['orientation'] ?? [];
-                        $this->orientation_type[$key]     = $orientation['type'] ?? self::DEFAULTS['type'];
-                        $this->azimuth_degrees[$key]      = $orientation['azimuth_degrees'] ?? self::DEFAULTS['azimuth_degrees'];
-                        $this->tilt_degrees[$key]         = $orientation['tilt_degrees'] ?? self::DEFAULTS['tilt_degrees'];
 
-                        $dim_a_m                          = ($dimension_footprint_axis_other_m / cos(deg2rad($this->tilt_degrees[$key]))) - 2 * $border_m;
-                        $dim_b_m                          = $dimension_footprint_axis_tilt_m - 2 * $border_m;
-                        $panels_number                    = $this->max_panel($dim_a_m, $dim_b_m, $panel_width_m, $panel_height_m);
-                    }
-                    $this->panels_area_m2[$key]                     = $panels_number * $panel_width_m * $panel_height_m;
-                    $this->power_max_w[$key]                        = $panel['power_max_w'] ?? null;
-                    $this->lifetime_years[$key]                     = $panel['lifetime_years'] ?? 100.0;
-                    $this->panels_number[$key]                      = $panels_number;
-                    $efficiency                                     = $panel['efficiency'] ?? 1.0;
-                    $this->efficiency[$key]                         =  ($efficiency['percent'] ?? 1.0) / 100.0;
-                    $this->efficiency_per_c[$key]                   = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
-                    $this->efficiency_pa[$key]                      = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
-                    $this->efficiency_temperature_reference_c[$key] =   $efficiency['temperature_reference_celsius'] ?? 20.0;
+
+                    $this->panels_area_m2[$key] = $panels_number * $panel['width_m'] * $panel['height_m'];
+                    $this->power_max_w[$key] = $panel['power_max_w'] ?? null;
+                    $this->lifetime_years[$key] = $panel['lifetime_years'] ?? 100.0;
+                    $this->panels_number[$key] = $panels_number;
+                    $efficiency = $panel['efficiency'] ?? 1.0;
+                    $this->efficiency[$key] = ($efficiency['percent'] ?? 1.0) / 100.0;
+                    $this->efficiency_per_c[$key] = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
+                    $this->efficiency_pa[$key] = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
+                    $this->efficiency_temperature_reference_c[$key] = $efficiency['temperature_reference_celsius'] ?? 20.0;
 
                     // ThermalInertia used to estimate panel temperature as function of solar power and time (required to estimate solar_pv thermally induced efficiency losses)
                     $thermal_inertia_m2_second_per_w_celsius = $panel['thermal_inertia_m2_second_per_w_celsius'] ?? self::DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS;
-                    $this->thermal[$key]  = new ThermalInertia($initial_temperature, $thermal_inertia_m2_second_per_w_celsius, $time);
+                    $this->thermal[$key] = new ThermalInertia($initial_temperature, $thermal_inertia_m2_second_per_w_celsius, $time);
                     $this->inverter[$key] = new Inverter($parameters['inverter'] ?? null, $time);
-                    $this->solar[$key]    = new Solar($location, $parameters['area']['orientation']);
+                    $this->solar[$key] = new Solar($location, $parameters['area']['orientation']);
+
+                    $this->value_install_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_gbp'] ?? 0.0);
+                    $this->value_maintenance_per_timestep_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_pa_gbp'] ?? 0.0) * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+                    $this->sum_value($this->cost, $parameters, 'cost'); // sun cost components
                 }
 
-
-
-
-            //    if ($parameters && $parameters['include'] ?? true) {
-            //        $collector_name = $check->checkValue($config, $solar_collector, ['collectors', $collector_name], '', self::CHECKS, null);
-
-
-
-
-
-                    $this->make_collector_parameters($key, $parameters, $panel);
-                    $this->sum_value($this->cost, $parameters, 'cost'); // sun cost components
-
-
-           //     }
-                $key++;
             }
             $this->output_kwh = $this->zero_output();
         }

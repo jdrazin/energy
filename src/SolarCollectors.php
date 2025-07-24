@@ -58,50 +58,41 @@ class SolarCollectors extends Component
             foreach ($collectors as $key => $collector) {
                 $include = $check->checkValue($config, $solar_collector, ['collectors', $key], 'include', self::CHECKS);
                 if ($include) {
-                    $shading_factor = $check->checkValue($config, $solar_collector, ['collectors', $key], 'shading_factor', self::CHECKS);
+                    $shading_factor = $check->checkValue($config, $solar_collector, ['collectors', $key], 'shading_factor', self::CHECKS, 1.0);
                     if (isset($collector['panels_number'])) {
                         $panels_number = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panels_number', self::CHECKS);
                     }
                     elseif (isset($collector['area'])) {
                         $area = $collector['area'];
-                        $dimension_footprint_axis_tilt_m = $area['dimensions_footprint_axis']['tilt_m'];
-                        $dimension_footprint_axis_other_m = $area['dimensions_footprint_axis']['other_m'];
-                        $border_m = $area['border_m'] ?? self::DEFAULTS['border_m'];
-                        $orientation = $area['orientation'] ?? [];
-                        $this->orientation_type[$key] = $orientation['type'] ?? self::DEFAULTS['type'];
-                        $this->azimuth_degrees[$key] = $orientation['azimuth_degrees'] ?? self::DEFAULTS['azimuth_degrees'];
-                        $this->tilt_degrees[$key] = $orientation['tilt_degrees'] ?? self::DEFAULTS['tilt_degrees'];
+                        $dimension_footprint_axis_tilt_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'tilt_m', self::CHECKS);;
+                        $dimension_footprint_axis_other_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'other_m', self::CHECKS);
+                        $border_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area'], 'border_m', self::CHECKS, 0.0);
+                        $type = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'type', self::CHECKS);
+                        $tilt_degrees = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'tilt_degrees', self::CHECKS);
+                        $this->tilt_degrees[$key] = $tilt_degrees;
+                        switch ($this->orientation_type[$key] = $type) {
+                            case 'tilted':
+                            {
+                                $this->azimuth_degrees[$key] = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'azimuth_degrees', self::CHECKS);
+                                break;
+                            }
+                            case '1-axis tracker':
+                            case '2-axis tracker':
+                            {
+                                break;
+                            }
+                            default:
+                            {
 
+                            }
+                        }
                         $dim_a_m = ($dimension_footprint_axis_other_m / cos(deg2rad($this->tilt_degrees[$key]))) - 2 * $border_m;
                         $dim_b_m = $dimension_footprint_axis_tilt_m - 2 * $border_m;
                         $panels_number = $this->max_panel($dim_a_m, $dim_b_m, $panel['width_m'], $panel['height_m']);
                     }
                     $panel_name = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panel', self::CHECKS);
                     $panel = $this->panel($panel_name);
-                    $border_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area'], 'border_m', self::CHECKS);
-                    $tilt_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'tilt_m', self::CHECKS);
-                    $other_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'other_m', self::CHECKS);
-                    $type = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'type', self::CHECKS);
-                    switch ($type) {
-                        case 'tilted':
-                        {
-                            $tilt_degrees = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'tilt_degrees', self::CHECKS);
-                            $azimuth_degrees = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'azimuth_degrees', self::CHECKS);
-                            break;
-                        }
-                        case '1-axis tracker':
-                        case '2-axis tracker':
-                        {
-                            break;
-                        }
-                        default:
-                        {
-
-                        }
-                    }
-                    $this->shading_factor[$key] = $parameters['shading_factor'] ?? ($this->area['shading_factor'] ?? $shading_factor);
-
-
+                    $this->shading_factor[$key] = $shading_factor;
                     $this->panels_area_m2[$key] = $panels_number * $panel['width_m'] * $panel['height_m'];
                     $this->power_max_w[$key] = $panel['power_max_w'] ?? null;
                     $this->lifetime_years[$key] = $panel['lifetime_years'] ?? 100.0;

@@ -47,10 +47,6 @@
       "install_gbp": 13000.0,
       "maintenance_pa_gbp": 200.0
     },
-    "area": {
-      "shading_factor": 0.85,
-      "border_m": 0.2
-    },
     "panels": [
           {
           "panel": "AIKO 455W",
@@ -101,33 +97,37 @@
         "panel": "AIKO 455W",
         "panels_number": 16,
         "area": {
-            "dimensions_footprint_axis": {
-              "tilt_m": 11.5,
-              "other_m": 3.6
-            },
-            "orientation": {
-              "type": "tilted",
-              "tilt_degrees": 35,
-              "azimuth_degrees": 185
+          "shading_factor": 0.85,
+          "border_m": 0.2,
+          "dimensions_footprint_axis": {
+            "tilt_m": 11.5,
+            "other_m": 3.6
+          },
+          "orientation": {
+            "type": "tilted",
+            "tilt_degrees": 35,
+            "azimuth_degrees": 185
             }
         }
       },
       {
-          "name": "annex",
-          "include": true,
-          "panel": "AIKO 455W",
-          "panels_number": 10,
-          "area": {
-              "dimensions_footprint_axis": {
-                "tilt_m": 5.9,
-                "other_m": 3.9
-              },
-              "orientation": {
-                "type": "tilted",
-                "tilt_degrees": 10,
-                "azimuth_degrees": 184
-              }
+        "name": "annex",
+        "include": true,
+        "panel": "AIKO 455W",
+        "panels_number": 10,
+        "area": {
+          "shading_factor": 0.85,
+          "border_m": 0.2,
+          "dimensions_footprint_axis": {
+            "tilt_m": 5.9,
+            "other_m": 3.9
+          },
+          "orientation": {
+            "type": "tilted",
+            "tilt_degrees": 10,
+            "azimuth_degrees": 184
           }
+        }
       },
       {
         "name": "garage",
@@ -135,6 +135,8 @@
         "panel": "AIKO 455W",
         "panels_number": 9,
         "area": {
+          "shading_factor": 0.85,
+          "border_m": 0.2,
           "dimensions_footprint_axis": {
             "tilt_m": 5.8,
             "other_m": 4.2

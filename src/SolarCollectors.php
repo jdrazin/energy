@@ -56,20 +56,18 @@ class SolarCollectors extends Component
             $this->collectors_value_maintenance_per_timestep_gbp = [];
             $collectors = $component['collectors'] ?? [];
             foreach ($collectors as $key => $collector) {
-                $include = $check->checkValue($config, $solar_collector, ['collectors', $key], 'include', self::CHECKS);
-                if ($include) {
+                if ($check->checkValue($config, $solar_collector, ['collectors', $key], 'include', self::CHECKS, true)) {
                     $shading_factor = $check->checkValue($config, $solar_collector, ['collectors', $key], 'shading_factor', self::CHECKS, 1.0);
                     if (isset($collector['panels_number'])) {
                         $panels_number = $check->checkValue($config, $solar_collector, ['collectors', $key], 'panels_number', self::CHECKS);
                     }
                     elseif (isset($collector['area'])) {
-                        $area = $collector['area'];
-                        $dimension_footprint_axis_tilt_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'tilt_m', self::CHECKS);;
+                        $dimension_footprint_axis_tilt_m  = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'tilt_m', self::CHECKS);;
                         $dimension_footprint_axis_other_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'dimensions_footprint_axis'], 'other_m', self::CHECKS);
-                        $border_m = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area'], 'border_m', self::CHECKS, 0.0);
-                        $type = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'type', self::CHECKS);
-                        $tilt_degrees = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'tilt_degrees', self::CHECKS);
-                        $this->tilt_degrees[$key] = $tilt_degrees;
+                        $border_m                         = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area'], 'border_m', self::CHECKS, 0.0);
+                        $type                             = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'type', self::CHECKS);
+                        $tilt_degrees                     = $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'tilt_degrees', self::CHECKS);
+                        $this->tilt_degrees[$key]         = $tilt_degrees;
                         switch ($this->orientation_type[$key] = $type) {
                             case 'tilted':
                             {
@@ -97,7 +95,7 @@ class SolarCollectors extends Component
                     $this->power_max_w[$key] = $panel['power_max_w'] ?? null;
                     $this->lifetime_years[$key] = $panel['lifetime_years'] ?? 100.0;
                     $this->panels_number[$key] = $panels_number;
-                    $efficiency = $panel['efficiency'] ?? 1.0;
+                    $efficiency = $panel['efficiency'];
                     $this->efficiency[$key] = ($efficiency['percent'] ?? 1.0) / 100.0;
                     $this->efficiency_per_c[$key] = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
                     $this->efficiency_pa[$key] = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
@@ -113,7 +111,6 @@ class SolarCollectors extends Component
                     $this->value_maintenance_per_timestep_gbp += -$panels_number * ($this->panels[$parameters['panel']]['cost']['per_panel_pa_gbp'] ?? 0.0) * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
                     $this->sum_value($this->cost, $parameters, 'cost'); // sun cost components
                 }
-
             }
             $this->output_kwh = $this->zero_output();
         }

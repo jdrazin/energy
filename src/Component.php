@@ -10,7 +10,7 @@ class Component
         ];
     public float $step_s, $value_install_gbp, $value_maintenance_per_timestep_gbp;
     public string $name;
-    public bool $include;
+    public bool $include, $active;
     public array $cost, $time_units;
     public Npv $npv;
 

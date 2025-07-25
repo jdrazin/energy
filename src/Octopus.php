@@ -189,7 +189,9 @@ class Octopus extends Root
                 catch (GuzzleException $e) {
                     $message = $e->getMessage();
                     (new Root())->logDb('MESSAGE', $message,  null,'WARNING');
-                    echo $message . PHP_EOL;
+                    if (DEBUG) {
+                        echo $message . PHP_EOL;
+                    }
                 }
             }
         }

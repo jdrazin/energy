@@ -195,11 +195,15 @@ class Energy extends Root
             if (!$pre_parse || $key == $last_key) { // process only final combination where all components included
                 $config_combined = $this->parameters_combined($config, $combination, $config_combinations->variables);
                 $combination_acronym = $config_combined['description'];
-                echo PHP_EOL . ($key+1) . ' of ' . count($combinations) . ' (' . $combination_acronym . '): ';
+                if (DEBUG) {
+                    echo PHP_EOL . ($key + 1) . ' of ' . count($combinations) . ' (' . $combination_acronym . '): ';
+                }
                 $this->simulate($pre_parse, $projection_id, $config_combined['config'], $combination, $combination_acronym);
             }
         }
-        echo PHP_EOL . 'Done' . PHP_EOL;
+        if (DEBUG) {
+            echo PHP_EOL . 'Done' . PHP_EOL;
+        }
    }
 
     private function parameters_combined($config, $combination, $variables): array {
@@ -658,9 +662,13 @@ class Energy extends Root
         $this->instantiateComponents(false, $config);
         if (!$pre_parse) {
             if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
-                echo 'Calibrating SCOP: ';
+                if (DEBUG) {
+                    echo 'Calibrating SCOP: ';
+                }
                 $results = $this->traverse_years(true, $projection_id, $config, $combination, $combination_acronym, 1.0);
-                echo PHP_EOL;
+                if (DEBUG) {
+                    echo PHP_EOL;
+                }
                 $cop_factor = $scop / $results['scop'];
             } else {
                 $cop_factor = 1.0;
@@ -839,7 +847,9 @@ class Energy extends Root
      * @throws Exception
      */
     public function year_summary($calibrating_scop, $projection_id, $components_active, $config, $combination, $combination_acronym): array {
-        echo ($this->time->year ? ', ' : '') . $this->time->year;
+        if (DEBUG) {
+            echo ($this->time->year ? ', ' : '') . $this->time->year;
+        }
         $this->supply_grid->sum($this->time);
         $this->supply_boiler->sum($this->time);
         $consumption = self::consumption();

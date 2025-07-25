@@ -38,11 +38,15 @@ class SMTPEmail extends Root
             $mail->Body     = $content['bodyHTML']  ?? 'No HTML body';
             $mail->AltBody  = $content['bodyAlt']   ?? 'No alt body';
             $mail->send();
-            echo 'Email sent';
+            if (DEBUG) {
+                echo 'Email sent';
+            }
             return true;
     }
     catch (Exception $e) {
-        echo 'Email could not be sent. Mailer Error: ' . $mail->ErrorInfo;
+        if (DEBUG) {
+            echo 'Email could not be sent. Mailer Error: ' . $mail->ErrorInfo;
+        }
         return false;
         }
     }

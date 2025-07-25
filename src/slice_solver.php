@@ -55,7 +55,9 @@ catch (exception $e) {
     }
     $root = new Root();
     $root->logDb('MESSAGE', $message, null, 'FATAL');
-    echo $message . PHP_EOL;
+    if (DEBUG) {
+        echo $message . PHP_EOL;
+    }
     if (INITIALISE_ON_EXCEPTION) {
         $root->logDb('MESSAGE', 'Attempting to initialise ...', null,'NOTICE');
         (new GivEnergy())->initialise(true); // set charge discharge blocks
@@ -66,7 +68,10 @@ catch (exception $e) {
 catch (GuzzleException $e) {
     $message = $e->getMessage();
     (new Root())->logDb('MESSAGE', $message,  null, 'FATAL');
-    echo $message . PHP_EOL;
+    if (DEBUG) {
+        echo $message . PHP_EOL;
+    }
     exit(1);
+} catch (Exception $e) {
 } catch (Exception $e) {
 }

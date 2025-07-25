@@ -36,14 +36,18 @@ if (($message = trim($argv[ARGS['MESSAGE']] ?? '')) && !DEBUG) {
     $urgency = strtoupper(trim($argv[ARGS['URGENCY']]  ?? 'FATAL'));
     $root = new Root();
     $root->logDb('MESSAGE', $message, null, $urgency);
-    echo 'Logged to db: ' . $message . PHP_EOL;
+    if (DEBUG) {
+        echo 'Logged to db: ' . $message . PHP_EOL;
+    }
 }
 if (!DEBUG) {
     if (!unlink($pid_filename)) {
         throw new Exception('Cannot delete semaphore');
     }
 }
-echo 'Done';
+if (DEBUG) {
+   echo 'Done';
+}
 exit(0);
 
 

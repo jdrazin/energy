@@ -117,7 +117,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
             else {
                 $code    = 201;
                 $email   = $config['email'] ?? false;
-                $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $crc32 . ' ' . ($email ? '. Will e-mail you when ready at ' . $email . '.' : '');
+                $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $crc32 . '. ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
                 $message .= ' Error handling is work in progress, so you may not get explanation if your simulation fails.';
                 $config_applied = $energy->check->config_applied;
             }

@@ -302,9 +302,9 @@ class Energy extends Root
                     $this->logDb('MESSAGE', $error, null, 'ERROR');
                     throw new Exception($error);
                 }
+            }
             $stmt->fetch();
             unset($stmt);
-            }
         }
         if ($request) {   // process next projection if exists
             $basetime_seconds = time();

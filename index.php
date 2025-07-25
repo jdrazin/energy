@@ -106,7 +106,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
        $crc32 = crc32($config_json);
         if ($config = json_decode($config_json, true)) {
             $energy = new Energy($config);
-            if ($energy->submitProjection($crc32, $config, $config_json) === false) {
+            if ($energy->submitProjection(true, $crc32, $config, $config_json) === false) { // attempt to pre_parse request and submit
                 $code    = 401;
                 $message = 'You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/';
             }

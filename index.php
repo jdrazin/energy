@@ -99,19 +99,26 @@ $app->get('/projections/projection', function (Request $request, Response $respo
     return $response->withHeader('Content-Type', 'application/text')->withHeader('Access-Control-Allow-Origin', '*');
 });
 $app->post('/projections', function (Request $request, Response $response) {  // submit json
+    $body = [];
+    $config_applied = [];
     if ($config_json = (string) $request->getBody()) {
        $crc32  = crc32($config_json);
         if ($config = json_decode($config_json, true)) {
             $energy = new Energy($config);
-            if (($projection_id = $energy->submitProjection($crc32, $config, $config_json)) === false) {
+            if ($energy->submitProjection($crc32, $config, $config_json) === false) {
                 $code    = 401;
                 $message = 'You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/';
+            }
+            elseif ($energy->error) {
+                $code    = 400;
+                $message = $energy->error;
             }
             else {
                 $code    = 201;
                 $email   = $config['email'] ?? false;
                 $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
                 $message .= ' Error handling is work in progress, so you may not get explanation if your simulation fails.';
+                $config_applied = $energy->check->config_applied;
             }
         }
         else {
@@ -123,8 +130,10 @@ $app->post('/projections', function (Request $request, Response $response) {  //
         $code    = 400;
         $message = 'JSON body is missing';
     }
-    $body               = [];
-    $body['message']    = $message;
+    $body['message'] = $message;
+    if ($config_applied) {
+        $body['request'] = $energy->check->config_applied;
+    }
     $json_body          = json_encode($body, JSON_PRETTY_PRINT);
     $response->getBody()->write($json_body);
     return $response->withHeader('Content-Type', 'application/json')->withStatus($code);

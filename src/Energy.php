@@ -42,6 +42,7 @@ class Energy extends Root
     public ThermalTank $hotwater_tank;
     public HeatPump $heat_pump;
     public Insulation $insulation;
+    public string $error;
     public float $temp_internal_c;
     public array $time_units                        = ['HOUR_OF_DAY'   => 24,
                                                        'MONTH_OF_YEAR' => 12,
@@ -220,41 +221,41 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function submitProjection($crc32, $config, $config_json): bool|int {
+    public function submitProjection($crc32, $config, $config_json): bool {
         $comment = ($config[Root::COMMENT_STRING] ?? '') . ' (' . (new DateTime("now", new DateTimeZone("UTC")))->format('j M Y H:i:s') . ')';
         if (!$this->authenticate($config['token'] ?? false)) {
             return false;
         }
         // attempt to pre-parse request
         try {
+            $this->error = '';
             $this->projectionCombinations(true,null, $config);
         }
         catch (DivisionByZeroError $e){
-            $error = $e->getMessage();
+            $this->error = $e->getMessage();
         }
-        catch (ErrorException $e) {
-            $error = $e->getMessage();
-        }
-        catch (Exception $e) {
-            $error = $e->getMessage();
+        catch (ErrorException|Exception $e) {
+            $this->error = $e->getMessage();
         }
 
         // submit projection if it parsed OK
-        $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
-                                   VALUES (?,     ?,         ?,       ?)
-                    ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
-                                             `error`     = NULL,
-                                             `status`    = \'IN_QUEUE\',
-                                             `submitted` = NOW()';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('issss', $crc32, $config_json, $email, $comment, $config_json) ||
-            !$stmt->execute() ||
-            !$this->mysqli->commit()) {
-            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+        if (!$this->error) {
+            $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
+                                       VALUES (?,     ?,         ?,       ?)
+                        ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
+                                                 `error`     = NULL,
+                                                 `status`    = \'IN_QUEUE\',
+                                                 `submitted` = NOW()';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('issss', $crc32, $config_json, $email, $comment, $config_json) ||
+                !$stmt->execute() ||
+                !$this->mysqli->commit()) {
+                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
+            }
         }
-        return $crc32;
+        return true;
     }
 
     /**

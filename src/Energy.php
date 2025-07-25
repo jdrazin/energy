@@ -715,7 +715,7 @@ class Energy extends Root
                         $this->heat_pump,
                         $this->insulation];
         $components_included = [];
-        foreach ($components as $key => $component) {
+        foreach ($components as $component) {
             if ($component->include ?? false) {
                 $components_included[] = $component;
             }
@@ -856,7 +856,7 @@ class Energy extends Root
         $consumption = self::consumption();
         $results['npv_summary'] = self::npv_summary($components_active); // $results['npv_summary']['components']['13.5kWh battery'] is unset after $time->year == 8
         $results['consumption'] = $consumption;
-        if ($this->heat_pump->include && $this->time->year) {
+        if (($this->heat_pump->include ?? false) && $this->time->year) {
             $kwh = $this->heat_pump->kwh['YEAR'][$this->time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;
         }

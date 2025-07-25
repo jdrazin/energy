@@ -68,7 +68,7 @@ class SolarCollectors extends Component
             foreach ($collectors as $key => $collector) {
                 if ($check->checkValue($config, $solar_collector, ['collectors', $key], 'include', self::CHECKS, true)) {
                     if ($solar_collector == 'solar_pv') {
-                        $inverter = $check->checkValue($config, $solar_collector, ['collectors', $key], 'inverter', self::CHECKS, null)
+                        $check->checkValue($config, $solar_collector, ['collectors', $key], 'inverter', self::CHECKS, null)
                             ? [
                                 'power_threshold_kw' => $check->checkValue($config, $solar_collector, ['collectors', $key, 'inverter'], 'power_threshold_kw', self::CHECKS),
                                 'power_efficiency'   => $check->checkValue($config, $solar_collector, ['collectors', $key, 'inverter'], 'efficiency_percent', self::CHECKS, 100.0) / 100.0,
@@ -77,7 +77,7 @@ class SolarCollectors extends Component
                                 'power_threshold_kw' => 1E6,
                                 'power_efficiency'   => 1.0,
                               ];
-                        $this->inverter[$key] = new Inverter($check, $inverter, $time);
+                        $this->inverter[$key] = new Inverter($check, $config, (string) $key, $time);
                     }
                     $orientation = [
                         'type'              => $check->checkValue($config, $solar_collector, ['collectors', $key, 'area', 'orientation'], 'type', self::CHECKS),

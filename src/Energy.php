@@ -187,18 +187,18 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function projectionCombinations($pre_parse, $projection_id, $config): void  {
+    public function projectionCombinations($pre_parse_only, $projection_id, $config): void  {
         $config_combinations = new ParameterCombinations($config);
         $combinations = $config_combinations->combinations;
         $last_key = count($combinations)-1;
         foreach ($combinations as $key => $combination) {
-            if (!$pre_parse || $key == $last_key) { // process only final combination where all components included
+            if (!$pre_parse_only || $key == $last_key) { // process only final combination where all components included
                 $config_combined = $this->parameters_combined($config, $combination, $config_combinations->variables);
                 $combination_acronym = $config_combined['description'];
                 if (DEBUG) {
                     echo PHP_EOL . ($key + 1) . ' of ' . count($combinations) . ' (' . $combination_acronym . '): ';
                 }
-                $this->simulate($pre_parse, $projection_id, $config_combined['config'], $combination, $combination_acronym);
+                $this->simulate($pre_parse_only, $projection_id, $config_combined['config'], $combination, $combination_acronym);
             }
         }
         if (DEBUG) {
@@ -225,7 +225,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function submitProjection($crc32, $config, $config_json): bool {
+    public function submitProjection($pre_parse_only, $crc32, $config, $config_json): bool {
         $comment = ($config[Root::COMMENT_STRING] ?? '') . ' (' . (new DateTime("now", new DateTimeZone("UTC")))->format('j M Y H:i:s') . ')';
         if (!$this->authenticate($config['token'] ?? false)) {
             return false;
@@ -233,7 +233,7 @@ class Energy extends Root
         // attempt to pre-parse request
         try {
             $this->error = '';
-            $this->projectionCombinations(true,null, $config);
+            $this->projectionCombinations($pre_parse_only,null, $config);
         }
         catch (DivisionByZeroError $e){
             $this->error = $e->getMessage();
@@ -268,7 +268,7 @@ class Energy extends Root
     public function processNextProjection($projection_id): void  {
         if ($this->config) { // if root config, submit then process it
             $request = json_encode($this->config);
-            $projection_id = $this->submitProjection(0, $this->config, $request);
+            $projection_id = $this->submitProjection(false, 0, $this->config, $request);
         }
         else {
             if (is_null($projection_id)) { // if no explicit projection id, get id for earliest in queue
@@ -658,9 +658,9 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($pre_parse, $projection_id, $config, $combination, $combination_acronym): void {
+    function simulate($pre_parse_only, $projection_id, $config, $combination, $combination_acronym): void {
         $this->instantiateComponents(false, $config);
-        if (!$pre_parse) {
+        if (!$pre_parse_only) {
             if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
                 if (DEBUG) {
                     echo 'Calibrating SCOP: ';
@@ -696,7 +696,7 @@ class Energy extends Root
         $this->solar_thermal                  = new SolarCollectors($this->check, $config, 'solar_thermal', $config['location'], 0.0, $this->time);
         $this->battery                        = new Battery($this->check, $config, $this->time);
         $this->hotwater_tank                  = new ThermalTank($this->check, $config, false, $this->time);
-        $this->heat_pump                       = new HeatPump($this->check, $config, $this->time);
+        $this->heat_pump                      = new HeatPump($this->check, $config, $this->time);
         $this->insulation                     = new Insulation($this->check, $config, $this->time);
     }
 

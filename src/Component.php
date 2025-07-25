@@ -1,7 +1,7 @@
 <?php
 namespace Src;
 
-class Component extends Root
+class Component
 {
     const array CHECKS = [
         'include'   =>  [
@@ -15,8 +15,8 @@ class Component extends Root
     public Npv $npv;
 
     public function __construct($check, $config, $component_name, $time) {
-        $this->name = $config['name'] ?? $this->strip_namespace(__NAMESPACE__,__CLASS__);
         if ($this->include = $config['include'] ?? true) {
+            $this->name = $component_name;
             $this->cost = [
                             'install_gbp'          => 0.0,
                             'maintenance_pa_gbp'   => 0.0,

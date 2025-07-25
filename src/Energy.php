@@ -32,7 +32,17 @@ class Energy extends Root
                                                                 0.0
                                                             ]
                                                        ];
-    public float $step_s;
+    public Check $check;
+    public Time $time;
+    public Demand $demand_space_heating_thermal, $demand_hotwater_thermal, $demand_non_heating_electric;
+    public Supply $supply_grid, $supply_boiler;
+    public Boiler $boiler;
+    public SolarCollectors $solar_pv, $solar_thermal;
+    public Battery $battery;
+    public ThermalTank $hotwater_tank;
+    public HeatPump $heat_pump;
+    public Insulation $insulation;
+    public float $temp_internal_c;
     public array $time_units                        = ['HOUR_OF_DAY'   => 24,
                                                        'MONTH_OF_YEAR' => 12,
                                                        'DAY_OF_YEAR'   => 366];
@@ -176,14 +186,17 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function projectionCombinations($projection_id, $config): void  {
+    public function projectionCombinations($pre_parse, $projection_id, $config): void  {
         $config_combinations = new ParameterCombinations($config);
         $combinations = $config_combinations->combinations;
+        $last_key = count($combinations)-1;
         foreach ($combinations as $key => $combination) {
-            $config_combined = $this->parameters_combined($config, $combination, $config_combinations->variables);
-            $combination_acronym = $config_combined['description'];
-            echo PHP_EOL . ($key+1) . ' of ' . count($combinations) . ' (' . $combination_acronym . '): ';
-            $this->simulate($projection_id, $config_combined['config'], $combination, $combination_acronym);
+            if (!$pre_parse || $key == $last_key) { // process only final combination where all components included
+                $config_combined = $this->parameters_combined($config, $combination, $config_combinations->variables);
+                $combination_acronym = $config_combined['description'];
+                echo PHP_EOL . ($key+1) . ' of ' . count($combinations) . ' (' . $combination_acronym . '): ';
+                $this->simulate($pre_parse, $projection_id, $config_combined['config'], $combination, $combination_acronym);
+            }
         }
         echo PHP_EOL . 'Done' . PHP_EOL;
    }
@@ -212,6 +225,21 @@ class Energy extends Root
         if (!$this->authenticate($config['token'] ?? false)) {
             return false;
         }
+        // attempt to pre-parse request
+        try {
+            $this->projectionCombinations(true,null, $config);
+        }
+        catch (DivisionByZeroError $e){
+            $error = $e->getMessage();
+        }
+        catch (ErrorException $e) {
+            $error = $e->getMessage();
+        }
+        catch (Exception $e) {
+            $error = $e->getMessage();
+        }
+
+        // submit projection if it parsed OK
         $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
                                    VALUES (?,     ?,         ?,       ?)
                     ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
@@ -240,14 +268,14 @@ class Energy extends Root
         else {
             if (is_null($projection_id)) { // if no explicit projection id, get id for earliest in queue
                 $sql = 'SELECT `j`.`id`,
-                           `j`.`request`,
-                           `j`.`email`
-                      FROM `projections` `j`
-                      INNER JOIN (SELECT MIN(`submitted`) AS `min_submitted`
-                                    FROM `projections`
-                                    WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
-                      WHERE `j`.`status` = \'IN_QUEUE\'
-                      LIMIT 0, 1';
+                               `j`.`request`,
+                               `j`.`email`
+                          FROM `projections` `j`
+                          INNER JOIN (SELECT MIN(`submitted`) AS `min_submitted`
+                                        FROM `projections`
+                                        WHERE `status` = \'IN_QUEUE\') `j_min` ON `j_min`.`min_submitted` = `j`.`submitted`
+                          WHERE `j`.`status` = \'IN_QUEUE\'
+                          LIMIT 0, 1';
                 if (!($stmt = $this->mysqli->prepare($sql)) ||
                     !$stmt->bind_result($projection_id, $request, $email) ||
                     !$stmt->execute()) {
@@ -567,25 +595,25 @@ class Energy extends Root
         }
     }
 
-    private function consumption($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal): array {
+    private function consumption(): array {
         $consumption = [];
-        if ($heatpump->include) {
-            $consumption['heatpump']      = ['annual' => $this->round_consumption($heatpump->kwh['YEAR'][0])];
+        if ($this->heat_pump->include) {
+            $consumption['heatpump']      = ['annual' => $this->round_consumption($this->heat_pump->kwh['YEAR'][0])];
         }
-        if ($solar_pv->include) {
-            $consumption['solar_pv']      = ['annual' => $this->round_consumption($solar_pv->output_kwh['YEAR'][0])];
+        if ($this->solar_pv->include) {
+            $consumption['solar_pv']      = ['annual' => $this->round_consumption($this->solar_pv->output_kwh['YEAR'][0])];
         }
-        if ($solar_thermal->include) {
-            $consumption['solar_thermal'] = ['annual' => $this->round_consumption($solar_thermal->output_kwh['YEAR'][0])];
+        if ($this->solar_thermal->include) {
+            $consumption['solar_thermal'] = ['annual' => $this->round_consumption($this->solar_thermal->output_kwh['YEAR'][0])];
         }
-        for ($year = 0; $year < $time->year; $year++) {
+        for ($year = 0; $year < $this->time->year; $year++) {
             $electric = [
-                'kwh'       => $supply_electric->kwh['YEAR'][$year],
-                'value_gbp' => $supply_electric->value_gbp ['YEAR'][$year]
+                'kwh'       => $this->supply_grid->kwh['YEAR'][$year],
+                'value_gbp' => $this->supply_grid->value_gbp ['YEAR'][$year]
             ];
             $boiler   = [
-                'kwh'       => $supply_boiler->kwh['YEAR'][$year],
-                'value_gbp' => $supply_boiler->value_gbp ['YEAR'][$year]
+                'kwh'       => $this->supply_boiler->kwh['YEAR'][$year],
+                'value_gbp' => $this->supply_boiler->value_gbp ['YEAR'][$year]
             ];
             $consumption['year'] = [
                 'grid' => $this->round_consumption($electric),
@@ -614,10 +642,10 @@ class Energy extends Root
         }
     }
 
-    function install($components, $time): void {
+    function install($components): void {
         foreach ($components as $component) {
             if ($component->include && $component->value_install_gbp <> 0) {
-                $component->npv->value_gbp($time, $component->value_install_gbp);
+                $component->npv->value_gbp($this->time, $component->value_install_gbp);
             }
         }
     }
@@ -625,170 +653,179 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($projection_id, $config, $combination, $combination_acronym): void {
-        if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
-            echo 'Calibrating SCOP: ';
-            $results = $this->traverse_years(true, $projection_id, $config, $combination, $combination_acronym, 1.0);
-            echo PHP_EOL;
-            $cop_factor = $scop/$results['scop'];
+    function simulate($pre_parse, $projection_id, $config, $combination, $combination_acronym): void {
+        $this->instantiateComponents(false, $config);
+        if (!$pre_parse) {
+            if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
+                echo 'Calibrating SCOP: ';
+                $results = $this->traverse_years(true, $projection_id, $config, $combination, $combination_acronym, 1.0);
+                echo PHP_EOL;
+                $cop_factor = $scop / $results['scop'];
+            } else {
+                $cop_factor = 1.0;
+            }
+            $this->traverse_years(false, $projection_id, $config, $combination, $combination_acronym, $cop_factor);
         }
-        else {
-            $cop_factor = 1.0;
-        }
-        $this->traverse_years(false, $projection_id, $config, $combination, $combination_acronym, $cop_factor);
+    }
+
+    /**
+     * @throws \DateMalformedStringException
+     * @throws \DateMalformedIntervalStringException
+     * @throws Exception
+     */
+    function instantiateComponents($calibrating_scop, $config): void {
+        $this->temp_internal_c                = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
+        $this->check                          = new Check();
+        $this->time                           = new Time($this->check, $config, $this->time_units, $calibrating_scop);
+        $this->demand_space_heating_thermal   = new Demand($this->check, $config, 'space_heating_thermal',   $this->temp_internal_c);
+        $this->demand_hotwater_thermal        = new Demand($this->check, $config, 'hot_water_thermal',       null);
+        $this->demand_non_heating_electric    = new Demand($this->check, $config, 'non_heating_electric',    null);
+        $this->supply_grid                    = new Supply($this->check, $config, 'grid',   $this->time);
+        $this->supply_boiler                  = new Supply($this->check, $config, 'boiler', $this->time);
+        $this->boiler                         = new Boiler($this->check, $config, $this->time);
+        $this->solar_pv                       = new SolarCollectors($this->check, $config, 'solar_pv',      $config['location'], 0.0, $this->time);
+        $this->solar_thermal                  = new SolarCollectors($this->check, $config, 'solar_thermal', $config['location'], 0.0, $this->time);
+        $this->battery                        = new Battery($this->check, $config, $this->time);
+        $this->hotwater_tank                  = new ThermalTank($this->check, $config, false, $this->time);
+        $this->heat_pump                       = new HeatPump($this->check, $config, $this->time);
+        $this->insulation                     = new Insulation($this->check, $config, $this->time);
     }
 
     /**
      * @throws Exception
      */
     function traverse_years($calibrating_scop, $projection_id, $config, $combination, $combination_acronym, $cop_factor): array {
-        $check                          = new Check();
-        $time                           = new Time($check, $config, $this->time_units, $calibrating_scop);
-        $this->step_s                   = $time->step_s;
-        $temperature_internal_room_c    = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
-        $demand_space_heating_thermal   = new Demand($check, $config, 'space_heating_thermal',   $temperature_internal_room_c);
-        $demand_hotwater_thermal        = new Demand($check, $config, 'hot_water_thermal',       null);
-        $demand_non_heating_electric    = new Demand($check, $config, 'non_heating_electric',    null);
-        $supply_grid                    = new Supply($check, $config, 'grid',   $time);
-        $supply_boiler                  = new Supply($check, $config, 'boiler', $time);
-        $boiler                         = new Boiler($check, $config, $time);
-        $solar_pv                       = new SolarCollectors($check, $config, 'solar_pv',      $config['location'], 0.0,     $time);
-        $solar_thermal                  = new SolarCollectors($check, $config, 'solar_thermal', $config['location'], 0.0,     $time);
-        $battery                        = new Battery($check, $config, $time);
-        $hotwater_tank                  = new ThermalTank($check, $config, false, $time);
-        $heatpump                       = new HeatPump($check, $config, $time);
-        $insulation                     = new Insulation($check, $config, $time);
-        $components = [	$supply_grid,
-                        $supply_boiler,
-                        $boiler,
-                        $solar_pv,
-                        $solar_thermal,
-                        $battery,
-                        $hotwater_tank,
-                        $heatpump,
-                        $insulation];
+        $components = [	$this->supply_grid,
+                        $this->supply_boiler,
+                        $this->boiler,
+                        $this->solar_pv,
+                        $this->solar_thermal,
+                        $this->battery,
+                        $this->hotwater_tank,
+                        $this->heat_pump,
+                        $this->insulation];
         $components_included = [];
         foreach ($components as $component) {
             if ($component->include) {
                 $components_included[] = $component;
             }
         }
-        $this->install($components_included, $time);                                                                                                                // get install costs
-        $this->year_summary($calibrating_scop, $projection_id, $time, $supply_grid, $supply_boiler, $heatpump, $solar_pv,  $solar_thermal, $components_included, $config, $combination, $combination_acronym); // summarise year 0
-        $export_limit_j = 1000.0*$time->step_s*$supply_grid->export_limit_kw;
-        while ($time->next_timestep()) {                                                                                                                            // timestep through years 0 ... N-1
-            $this->value_maintenance($components_included, $time);                                                                                                    // add timestep component maintenance costs
-            $supply_grid->update_bands($time);                                                                                                                  // get supply bands
-            $supply_boiler->update_bands($time);
-            $supply_electric_j = 0.0;                                                                                                                               // zero supply balances for timestep
-            $supply_boiler_j   = 0.0;				                                                                                                                // export: +ve, import: -ve
-            $temp_climate_c = (new Climate())->temperature_time($time);	                                                                                            // get average climate temperature for day of year, time of day
+        $this->install($components_included);                                                                                                               // get install costs
+        $this->year_summary($calibrating_scop, $projection_id, $components_included, $config, $combination, $combination_acronym);                          // summarise year 0
+        $export_limit_j = 1000.0*$this->time->step_s*$this->supply_grid->export_limit_kw;
+        while ($this->time->next_timestep()) {                                                                                                              // timestep through years 0 ... N-1
+            $this->value_maintenance($components_included, $this->time);                                                                                    // add timestep component maintenance costs
+            $this->supply_grid->update_bands($this->time);                                                                                                  // get supply bands
+            $this->supply_boiler->update_bands($this->time);
+            $supply_electric_j = 0.0;                                                                                                                       // zero supply balances for timestep
+            $supply_boiler_j   = 0.0;				                                                                                                        // export: +ve, import: -ve
+            $temp_climate_c = (new Climate())->temperature_time($this->time);	                                                                            // get average climate temperature for day of year, time of day
             // battery
-            if ($battery->include && ($supply_grid->current_bands['import'] == 'off_peak')) {	                                                                // charge battery when import off peak
-                $to_battery_j       = $battery->transfer_consume_j($time->step_s * $battery->max_charge_w)['consume'];                              // charge at max rate until full
+            if ($this->battery->include && ($this->supply_grid->current_bands['import'] == 'off_peak')) {	                                                // charge battery when import off peak
+                $to_battery_j       = $this->battery->transfer_consume_j($this->time->step_s * $this->battery->max_charge_w)['consume'];    // charge at max rate until full
                 $supply_electric_j -= $to_battery_j;
             }
             // solar pv
-            if ($solar_pv->include) {
-                $solar_pv_j         = $solar_pv->transfer_consume_j($temp_climate_c, $time)['transfer'];                                                            // get solar electrical energy
-                $supply_electric_j += $solar_pv_j;				                                                                                                    // start electric balance: surplus (+), deficit (-)
+            if ($this->solar_pv->include) {
+                $solar_pv_j         = $this->solar_pv->transfer_consume_j($temp_climate_c, $this->time)['transfer'];                                        // get solar electrical energy
+                $supply_electric_j += $solar_pv_j;				                                                                                            // start electric balance: surplus (+), deficit (-)
             }
             // satisfy hot water demand
-            $demand_thermal_hotwater_j                 = $demand_hotwater_thermal->demand_j($time);                                                                 // hot water energy demand
+            $demand_thermal_hotwater_j                 = $this->demand_hotwater_thermal->demand_j($this->time);                                              // hot water energy demand
             if ($demand_thermal_hotwater_j > 0.0) {
-                $hotwater_tank_transfer_consume_j      = $hotwater_tank->transfer_consume_j(-$demand_thermal_hotwater_j, $temperature_internal_room_c);             // try to satisfy demand from hotwater tank;
-                if (($demand_thermal_hotwater_j += $hotwater_tank_transfer_consume_j['transfer']) > 0.0) {                                                          // if insufficient energy in hotwater tank, get from elsewhere
-                    if ($boiler->include) {                                                                                                                          // else use boiler if available
-                        $boiler_transfer_consume_j     = $boiler->transfer_consume_j($demand_thermal_hotwater_j);
+                $hotwater_tank_transfer_consume_j      = $this->hotwater_tank->transfer_consume_j(-$demand_thermal_hotwater_j, $this->temp_internal_c);      // try to satisfy demand from hotwater tank;
+                if (($demand_thermal_hotwater_j += $hotwater_tank_transfer_consume_j['transfer']) > 0.0) {                                                   // if insufficient energy in hotwater tank, get from elsewhere
+                    if ($this->boiler->include) {                                                                                                            // else use boiler if available
+                        $boiler_transfer_consume_j     = $this->boiler->transfer_consume_j($demand_thermal_hotwater_j);
                         $supply_boiler_j              -= $boiler_transfer_consume_j['consume'];
                     }
                     else {
-                        $supply_electric_j            -= $demand_thermal_hotwater_j;                                                                                // use electricity to satisfy any remaining demand
+                        $supply_electric_j            -= $demand_thermal_hotwater_j;                                                                         // use electricity to satisfy any remaining demand
                     }
                 }
             }
             // heat hot water tank if necessary
-            if ($solar_thermal->include) {
-                $solar_thermal_hotwater_j = $solar_thermal->transfer_consume_j($temperature_internal_room_c, $time)['transfer'];                                    // generated solar thermal energy
-                if ($hotwater_tank->temperature_c < $hotwater_tank->target_temperature_c) {                                                                         // heat hot water tank from solar thermal if necessary                                                                          // top up with solar thermal
-                    $solar_thermal_hotwater_j -= $hotwater_tank->transfer_consume_j($solar_thermal_hotwater_j, $temp_climate_c)['consume'];                         // deduct hot water consumption from solar thermal generation
+            if ($this->solar_thermal->include) {
+                $solar_thermal_hotwater_j = $this->solar_thermal->transfer_consume_j($this->temp_internal_c, $this->time)['transfer'];                       // generated solar thermal energy
+                if ($this->hotwater_tank->temperature_c < $this->hotwater_tank->target_temperature_c) {                                                      // heat hot water tank from solar thermal if necessary                                                                          // top up with solar thermal
+                    $solar_thermal_hotwater_j -= $this->hotwater_tank->transfer_consume_j($solar_thermal_hotwater_j, $temp_climate_c)['consume'];            // deduct hot water consumption from solar thermal generation
                 }
             }
             else {
                 $solar_thermal_hotwater_j = 0.0;
             }
-            if ($hotwater_tank->temperature_c < $hotwater_tank->target_temperature_c) {
-                if ($heatpump->include) {                  // use heat pump
-                    $heatpump_transfer_consume_j         = $heatpump->transfer_consume_j($heatpump->max_output_j,                                                   // get energy from heat pump
-                                                                             $hotwater_tank->temperature_c - $temp_climate_c,
-                                                                                        $time,
+            if ($this->hotwater_tank->temperature_c < $this->hotwater_tank->target_temperature_c) {
+                if ($this->heat_pump->include) {                  // use heat pump
+                    $heatpump_transfer_consume_j         = $this->heat_pump->transfer_consume_j($this->heat_pump->max_output_j,                                 // get energy from heat pump
+                                                                             $this->hotwater_tank->temperature_c - $temp_climate_c,
+                                                                                        $this->time,
                                                                                         $cop_factor);
-                    $supply_electric_j                  -= $heatpump_transfer_consume_j['consume'];                                                                 // consumes electricity
-                    $hotwater_tank->transfer_consume_j($heatpump_transfer_consume_j['transfer'], $temperature_internal_room_c);                                     // put energy in hotwater tank
+                    $supply_electric_j                  -= $heatpump_transfer_consume_j['consume'];                                                           // consumes electricity
+                    $this->hotwater_tank->transfer_consume_j($heatpump_transfer_consume_j['transfer'], $this->temp_internal_c);                               // put energy in hotwater tank
                 }
-                elseif ($boiler->include) {                                                                                                                          // use boiler
-                    $boiler_transfer_consume_j           = $boiler->transfer_consume_j($boiler->max_output_j);                                                      // get energy from boiler
-                    $hotwater_transfer_consume_j         = $hotwater_tank->transfer_consume_j($boiler_transfer_consume_j['transfer'], $temperature_internal_room_c);// put energy in hotwater tank
-                    $supply_boiler_j                    -= $hotwater_transfer_consume_j['consume'];                                                                 // consumes oil/gas
+                elseif ($this->boiler->include) {                                                                                                             // use boiler
+                    $boiler_transfer_consume_j           = $this->boiler->transfer_consume_j($this->boiler->max_output_j);                                    // get energy from boiler
+                    $hotwater_transfer_consume_j         = $this->hotwater_tank->transfer_consume_j($boiler_transfer_consume_j['transfer'], $this->temp_internal_c);// put energy in hotwater tank
+                    $supply_boiler_j                    -= $hotwater_transfer_consume_j['consume'];                                                           // consumes oil/gas
                 }
-                else {                                                                                                                                              // use immersion heater
-                    $hotwater_transfer_consume_j         = $time->step_s * $hotwater_tank->immersion_w;                                                             // get energy from hotwater immersion element
-                    $hotwater_transfer_consume_j         = $hotwater_tank->transfer_consume_j($hotwater_transfer_consume_j, $temperature_internal_room_c);          // put energy in hotwater tank
-                    $supply_electric_j                  -= $hotwater_transfer_consume_j['consume'];                                                                 // consumes electricity
+                else {                                                                                                                                        // use immersion heater
+                    $hotwater_transfer_consume_j         = $this->time->step_s * $this->hotwater_tank->immersion_w;                                           // get energy from hotwater immersion element
+                    $hotwater_transfer_consume_j         = $this->hotwater_tank->transfer_consume_j($hotwater_transfer_consume_j, $this->temp_internal_c);    // put energy in hotwater tank
+                    $supply_electric_j                  -= $hotwater_transfer_consume_j['consume'];                                                           // consumes electricity
                 }
             }
             // satisfy space heating-cooling demand
-            $demand_thermal_space_heating_j                     = $demand_space_heating_thermal->demand_j($time)*$insulation->space_heating_demand_factor;          // get space heating energy demand
+            $demand_thermal_space_heating_j                     = $this->demand_space_heating_thermal->demand_j($this->time)*$this->insulation->space_heating_demand_factor; // get space heating energy demand
             if ($solar_thermal_hotwater_j > 0.0) {
-                $demand_thermal_space_heating_j                -= $solar_thermal_hotwater_j;                                                                        // use remaining solar thermal (if any) for space heating
+                $demand_thermal_space_heating_j                -= $solar_thermal_hotwater_j;                                                                   // use remaining solar thermal (if any) for space heating
             }
-            if ($heatpump->include) {                                                                                                                                // use heatpump if available
-                if ($demand_thermal_space_heating_j >= 0.0     && $heatpump->heat) {                                                                                // heating
-                    $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j,
-                                                                                    $temperature_internal_room_c - $temp_climate_c,
-                                                                                               $time,
+            if ($this->heat_pump->include) {                                                                                                                    // use heatpump if available
+                if ($demand_thermal_space_heating_j >= 0.0     && $this->heat_pump->heat) {                                                                     // heating
+                    $heatpump_transfer_thermal_space_heating_j  = $this->heat_pump->transfer_consume_j($demand_thermal_space_heating_j,
+                                                                                    $this->temp_internal_c - $temp_climate_c,
+                                                                                               $this->time,
                                                                                                $cop_factor);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
                     $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];
                 }
-                elseif ($demand_thermal_space_heating_j <  0.0 && $heatpump->cool) {                                                                               // cooling
-                    $heatpump_transfer_thermal_space_heating_j  = $heatpump->transfer_consume_j($demand_thermal_space_heating_j,
-                                                                                     $temp_climate_c - $temperature_internal_room_c,
-                                                                                                $time,
+                elseif ($demand_thermal_space_heating_j <  0.0 && $this->heat_pump->cool) {                                                                     // cooling
+                    $heatpump_transfer_thermal_space_heating_j  = $this->heat_pump->transfer_consume_j($demand_thermal_space_heating_j,
+                                                                                     $temp_climate_c - $this->temp_internal_c,
+                                                                                                $this->time,
                                                                                                 $cop_factor);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
                     $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];
                 }
             }
             if ($demand_thermal_space_heating_j > 0.0) {
-                if ($boiler->include) {                                                                                                                              // use boiler if available and necessary
-                    $boiler_transfer_consume_j              = $boiler->transfer_consume_j($demand_thermal_space_heating_j);
+                if ($this->boiler->include) {                                                                                                                   // use boiler if available and necessary
+                    $boiler_transfer_consume_j              = $this->boiler->transfer_consume_j($demand_thermal_space_heating_j);
                     $supply_boiler_j                       -= $boiler_transfer_consume_j['consume'];
                 }
                 else {
-                    $supply_electric_j                     -= $demand_thermal_space_heating_j;                                                                      // otherwise use electricity
+                    $supply_electric_j                     -= $demand_thermal_space_heating_j;                                                                  // otherwise use electricity
                 }
             }
-            $demand_electric_non_heating_j                  = $demand_non_heating_electric->demand_j($time);                                                        // electrical non-heating demand
-            $supply_electric_j                             -= $demand_electric_non_heating_j;			                    	                                    // satisfy electric non-heating demand
-            if ($battery->include) {
-                if ($supply_grid->current_bands['export'] == 'peak') {                                                                                          // export peak time
-                    $to_battery_j                           = $battery->transfer_consume_j(-1E9)['transfer'];                                        // discharge battery at max power until empty
+            $demand_electric_non_heating_j                  = $this->demand_non_heating_electric->demand_j($this->time);                                        // electrical non-heating demand
+            $supply_electric_j                             -= $demand_electric_non_heating_j;			                    	                                // satisfy electric non-heating demand
+            if ($this->battery->include) {
+                if ($this->supply_grid->current_bands['export'] == 'peak') {                                                                                    // export peak time
+                    $to_battery_j                           = $this->battery->transfer_consume_j(-1E9)['transfer'];                             // discharge battery at max power until empty
                     $supply_electric_j                     -= $to_battery_j;
                 }
-                elseif ($supply_grid->current_bands['export'] == 'standard') {                                                                                  // satisfy demand from battery when standard rate
-                    $to_battery_j                           = $battery->transfer_consume_j($supply_electric_j)['transfer'];
+                elseif ($this->supply_grid->current_bands['export'] == 'standard') {                                                                            // satisfy demand from battery when standard rate
+                    $to_battery_j                           = $this->battery->transfer_consume_j($supply_electric_j)['transfer'];
                     $supply_electric_j                     -= $to_battery_j;
                 }
             }
-            if ($supply_electric_j > 0.0) {                                                                                                                         // export if surplus energy
-                $supply_electric_j = min($supply_electric_j, $export_limit_j);                                                                                      // cap to export limit
+            if ($supply_electric_j > 0.0) {                                                                                                                     // export if surplus energy
+                $supply_electric_j = min($supply_electric_j, $export_limit_j);                                                                                  // cap to export limit
             }
-            $supply_grid->transfer_consume_j($time, $supply_electric_j < 0.0 ? 'import' : 'export', $supply_electric_j);                                // import if supply -ve, export if +ve
-            $supply_boiler  ->transfer_consume_j($time, 'import',                                       $supply_boiler_j);                                  // import boiler fuel consumed
-            $hotwater_tank->decay(0.5*($temperature_internal_room_c+$temp_climate_c));                                                            // hot water tank cooling to midway between room and outside temps
-            if ($time->year_end()) {                                                                                                                                // write summary to db at end of each year's simulation
-                $results = $this->year_summary($calibrating_scop, $projection_id, $time, $supply_grid, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_included, $config, $combination, $combination_acronym);  // summarise year at year end
+            $this->supply_grid->transfer_consume_j($this->time, $supply_electric_j < 0.0 ? 'import' : 'export', $supply_electric_j);                    // import if supply -ve, export if +ve
+            $this->supply_boiler->transfer_consume_j($this->time, 'import',                                       $supply_boiler_j);                    // import boiler fuel consumed
+            $this->hotwater_tank->decay(0.5*($this->temp_internal_c+$temp_climate_c));                                                        // hot water tank cooling to midway between room and outside temps
+            if ($this->time->year_end()) {                                                                                                                      // write summary to db at end of each year's simulation
+                $results = $this->year_summary($calibrating_scop, $projection_id, $components_included, $config, $combination, $combination_acronym);           // summarise year at year end
                 if ($calibrating_scop) {
                     return $results;
                 }
@@ -800,21 +837,21 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function year_summary($calibrating_scop, $projection_id, $time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal, $components_active, $config, $combination, $combination_acronym): array {
-        echo ($time->year ? ', ' : '') . $time->year;
-        $supply_electric->sum($time);
-        $supply_boiler->sum($time);
-        $consumption = self::consumption($time, $supply_electric, $supply_boiler, $heatpump, $solar_pv, $solar_thermal);
+    public function year_summary($calibrating_scop, $projection_id, $components_active, $config, $combination, $combination_acronym): array {
+        echo ($this->time->year ? ', ' : '') . $this->time->year;
+        $this->supply_grid->sum($this->time);
+        $this->supply_boiler->sum($this->time);
+        $consumption = self::consumption();
         $results['npv_summary'] = self::npv_summary($components_active); // $results['npv_summary']['components']['13.5kWh battery'] is unset after $time->year == 8
         $results['consumption'] = $consumption;
-        if ($heatpump->include && $time->year) {
-            $kwh = $heatpump->kwh['YEAR'][$time->year -1];
+        if ($this->heat_pump->include && $this->time->year) {
+            $kwh = $this->heat_pump->kwh['YEAR'][$this->time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;
         }
         if (!$calibrating_scop) {
             $result = ['newResultId' => $this->combinationId($projection_id, $combination, $combination_acronym),
                        'combination' => $combination];
-            $this->updateCombination($config, $result, $results, $time->year);  // end projection
+            $this->updateCombination($config, $result, $results, $this->time->year);  // end projection
         }
         return $results;
     }

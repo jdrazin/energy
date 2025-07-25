@@ -467,7 +467,7 @@ class Energy extends Root
                 return 'Projection is ' . ($count ? : 'next') . ' in queue. Come back shortly.';
             }
             case 'IN_PROGRESS': {
-                return 'Projection in progress ...';
+                return '';
             }
             default: {
                 return 'Projection not found';
@@ -602,17 +602,17 @@ class Energy extends Root
 
     private function consumption(): array {
         $consumption = [];
-        if ($this->heat_pump->include) {
+        if ($this->heat_pump->include ?? false) {
             $consumption['heatpump']      = ['annual' => $this->round_consumption($this->heat_pump->kwh['YEAR'][0])];
         }
-        if ($this->solar_pv->include) {
+        if ($this->solar_pv->include ?? false) {
             $consumption['solar_pv']      = ['annual' => $this->round_consumption($this->solar_pv->output_kwh['YEAR'][0])];
         }
-        if ($this->solar_thermal->include) {
+        if ($this->solar_thermal->include ?? false) {
             $consumption['solar_thermal'] = ['annual' => $this->round_consumption($this->solar_thermal->output_kwh['YEAR'][0])];
         }
         for ($year = 0; $year < $this->time->year; $year++) {
-            $electric = [
+            $grid = [
                 'kwh'       => $this->supply_grid->kwh['YEAR'][$year],
                 'value_gbp' => $this->supply_grid->value_gbp ['YEAR'][$year]
             ];
@@ -621,8 +621,8 @@ class Energy extends Root
                 'value_gbp' => $this->supply_boiler->value_gbp ['YEAR'][$year]
             ];
             $consumption['year'] = [
-                'grid' => $this->round_consumption($electric),
-                'boiler'   => $this->round_consumption($boiler)
+                'grid'   => $this->round_consumption($grid),
+                'boiler' => $this->round_consumption($boiler)
             ];
         }
         return $consumption;
@@ -715,8 +715,8 @@ class Energy extends Root
                         $this->heat_pump,
                         $this->insulation];
         $components_included = [];
-        foreach ($components as $component) {
-            if ($component->include) {
+        foreach ($components as $key => $component) {
+            if ($component->include ?? false) {
                 $components_included[] = $component;
             }
         }

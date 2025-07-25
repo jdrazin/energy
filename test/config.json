@@ -47,42 +47,42 @@
       "maintenance_pa_gbp": 200.0
     },
     "panels": [
-          {
-          "panel": "AIKO 455W",
-          "#": "AIK-A-MAH54-445-AB Gen 2 All Black",
-          "cost_per_unit_gbp" : 100.0,
-          "width_m": 1.134,
-          "height_m": 1.722,
-          "power_max_w": 455.0,
-          "lifetime_years": 25,
-          "thermal_inertia_m2_second_per_w_celsius": 1000,
-          "efficiency": {
-            "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
-            "source": "",
-            "percent": 23.1,
-            "loss_percent_pa": 0.3,
-            "loss_percent_per_celsius": 0.29,
-            "temperature_reference_celsius": 25
-          }
-        },
-        {
-          "panel": "AIKO 470W",
-          "#": "Aiko Neostar 3S+ 470W N-Type ABC, Gen 3, 54 Cell, All Black",
-          "cost_per_unit_gbp" : 115.0,
-          "width_m": 1.134,
-          "height_m": 1.722,
-          "power_max_w": 470.0,
-          "lifetime_years": 25,
-          "thermal_inertia_m2_second_per_w_celsius": 1000,
-          "efficiency": {
-            "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
-            "source": "",
-            "percent": 24.3,
-            "loss_percent_pa": 0.3,
-            "loss_percent_per_celsius": 0.29,
-            "temperature_reference_celsius": 25
-          }
+      {
+        "panel": "AIKO 455W",
+        "#": "AIK-A-MAH54-445-AB Gen 2 All Black",
+        "cost_per_unit_gbp" : 100.0,
+        "width_m": 1.134,
+        "height_m": 1.722,
+        "power_max_w": 455.0,
+        "lifetime_years": 25,
+        "thermal_inertia_m2_second_per_w_celsius": 1000,
+        "efficiency": {
+          "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
+          "source": "",
+          "percent": 23.1,
+          "loss_percent_pa": 0.3,
+          "loss_percent_per_celsius": 0.29,
+          "temperature_reference_celsius": 25
         }
+      },
+      {
+        "panel": "AIKO 470W",
+        "#": "Aiko Neostar 3S+ 470W N-Type ABC, Gen 3, 54 Cell, All Black",
+        "cost_per_unit_gbp" : 115.0,
+        "width_m": 1.134,
+        "height_m": 1.722,
+        "power_max_w": 470.0,
+        "lifetime_years": 25,
+        "thermal_inertia_m2_second_per_w_celsius": 1000,
+        "efficiency": {
+          "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
+          "source": "",
+          "percent": 24.3,
+          "loss_percent_pa": 0.3,
+          "loss_percent_per_celsius": 0.29,
+          "temperature_reference_celsius": 25
+        }
+      }
     ],
     "collectors": [
       {
@@ -100,7 +100,7 @@
             "type": "tilted",
             "tilt_degrees": 35,
             "azimuth_degrees": 185
-            }
+          }
         },
         "inverter": {
           "power_threshold_kw": 5.0,
@@ -365,12 +365,9 @@
   },
   "time": {
     "discount_rate_pa": 0.04,
-    "max_project_duration_years": 25,
+    "max_project_duration_years": 3,
     "step_seconds": 216
   },
   "combine": [
-    "heat_pump",
-    "solar_pv",
-    "battery"
   ]
 }

@@ -8,7 +8,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
 use Slim\Factory\AppFactory;
 
-const SERVER_EXTERNAL_IP_ADDRESS_PORT = "88.202.150.174:8444";
+const   DEBUG                           = false;
+const   SERVER_EXTERNAL_IP_ADDRESS_PORT = "88.202.150.174:8444";
 
 // see slim 4 documentation: https://www.slimframework.com/docs/v4/
 $app = AppFactory::create();
@@ -102,7 +103,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
     $body = [];
     $config_applied = [];
     if ($config_json = (string) $request->getBody()) {
-       $crc32  = crc32($config_json);
+       $crc32 = crc32($config_json);
         if ($config = json_decode($config_json, true)) {
             $energy = new Energy($config);
             if ($energy->submitProjection($crc32, $config, $config_json) === false) {
@@ -116,7 +117,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
             else {
                 $code    = 201;
                 $email   = $config['email'] ?? false;
-                $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $projection_id . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
+                $message = 'Get your result at: https://' . SERVER_EXTERNAL_IP_ADDRESS_PORT . '/projection.html?id=' . $crc32 . ' ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
                 $message .= ' Error handling is work in progress, so you may not get explanation if your simulation fails.';
                 $config_applied = $energy->check->config_applied;
             }

@@ -673,6 +673,7 @@ class Energy extends Root
             } else {
                 $cop_factor = 1.0;
             }
+            $this->instantiateComponents(false, $config);
             $this->traverse_years(false, $projection_id, $config, $combination, $combination_acronym, $cop_factor);
         }
     }

@@ -21,14 +21,13 @@ class Boiler extends Component
     public float $efficiency, $max_output_j;
 
     function __construct($check, $config, $time) {
-        $suffixes   = [];
-        $include    = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'include',            self::CHECKS, true);
-        $output_kw  = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'output_kw',          self::CHECKS);
-        $efficiency = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'efficiency_percent', self::CHECKS, 100.0)/100.0;
-        parent::__construct($check, $config, self::COMPONENT_NAME, $time);
-        $this->include      = $include;
-        $this->max_output_j = $output_kw * 1000 * $this->step_s;
-        $this->efficiency   = $efficiency;
+        if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS, true)) {
+            $output_kw     = $check->checkValue($config, self::COMPONENT_NAME, [], 'output_kw',          self::CHECKS);
+            $efficiency    = $check->checkValue($config, self::COMPONENT_NAME, [], 'efficiency_percent', self::CHECKS, 100.0)/100.0;
+            parent::__construct($check, $config, self::COMPONENT_NAME, $time);
+            $this->max_output_j = $output_kw * 1000 * $this->step_s;
+            $this->efficiency   = $efficiency;
+        }
     }
 
     public function transfer_consume_j($request_consumed_j): array

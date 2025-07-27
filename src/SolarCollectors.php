@@ -31,10 +31,13 @@ class SolarCollectors extends Component
             TEMPERATURE_TARGET_INCREMENT_CELSIUS_M2_PER_W = 50 / 900;
 
     public array    $orientation_type, $azimuth_degrees, $panels_number, $power_max_w,
-                    $tilt_degrees, $shading_factor, $efficiency, $efficiency_temperature_reference_c, $efficiency_per_c, $efficiency_pa, $solar, $thermal,
+                    $tilt_degrees, $shading_factor, $efficiency, $efficiency_temperature_reference_c, $efficiency_per_c, $efficiency_per_year, $solar, $thermal,
                     $inverter, $output_kwh, $lifetime_years, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
     private array $panels, $panels_area_m2;
 
+    /**
+     * @throws Exception
+     */
     public function __construct($check, $config, $component_name, $location, $initial_temperature, $time)
     {
         $component = $config[$component_name];
@@ -44,7 +47,7 @@ class SolarCollectors extends Component
             foreach ($panels as $key => $panel) {
                 $this->panels[$key] = [
                     'panel'                                   => $check->checkValue($config, $component_name, ['panels', $key], 'panel',                                   self::CHECKS),
-                    'cost_per_unit_gbp'                       => $check->checkValue($config, $component_name, ['panels', $key], 'cost_per_unit_gbp',                       self::CHECKS, 0.0),
+                    'cost'                                    => $check->checkValue($config, $component_name, ['panels', $key], 'cost',                                    self::CHECKS, 0.0),
                     'width_m'                                 => $check->checkValue($config, $component_name, ['panels', $key], 'width_m',                                 self::CHECKS),
                     'height_m'                                => $check->checkValue($config, $component_name, ['panels', $key], 'height_m',                                self::CHECKS),
                     'power_max_w'                             => $check->checkValue($config, $component_name, ['panels', $key], 'power_max_w',                             self::CHECKS, 10000),
@@ -52,7 +55,7 @@ class SolarCollectors extends Component
                     'thermal_inertia_m2_second_per_w_celsius' => $check->checkValue($config, $component_name, ['panels', $key], 'thermal_inertia_m2_second_per_w_celsius', self::CHECKS, self::DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS),
                     'efficiency'                              => [
                         'percent'                       => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'percent',                       self::CHECKS),
-                        'loss_percent_pa'               => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'loss_percent_pa',               self::CHECKS,  0.0),
+                        'loss_percent_per_year'         => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'loss_percent_per_year',               self::CHECKS,  0.0),
                         'loss_percent_per_celsius'      => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'loss_percent_per_celsius',      self::CHECKS,  0.0),
                         'temperature_reference_celsius' => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'temperature_reference_celsius', self::CHECKS, 25.0)
                     ]
@@ -119,10 +122,11 @@ class SolarCollectors extends Component
                     $this->power_max_w[$key]                        = $panel['power_max_w'] ?? null;
                     $this->lifetime_years[$key]                     = $panel['lifetime_years'] ?? 100.0;
                     $this->panels_number[$key]                      = $panels_number;
+                    $cost                                           = $panel['cost'] ?? [];
                     $efficiency                                     = $panel['efficiency'];
                     $this->efficiency[$key]                         = ($efficiency['percent'] ?? 1.0) / 100.0;
                     $this->efficiency_per_c[$key]                   = -($efficiency['loss_percent_per_celsius'] ?? 0.0) / 100.0;
-                    $this->efficiency_pa[$key]                      = -($efficiency['loss_percent_pa'] ?? 0.0) / 100.0;
+                    $this->efficiency_per_year[$key]                = -($efficiency['loss_percent_per_year'] ?? 0.0) / 100.0;
                     $this->efficiency_temperature_reference_c[$key] = $efficiency['temperature_reference_celsius'] ?? 20.0;
 
                     // ThermalInertia used to estimate panel temperature as function of solar power and time (required to estimate solar_pv thermally induced efficiency losses)
@@ -184,7 +188,7 @@ class SolarCollectors extends Component
                 $power_w_per_panel_area_m2 *= (1.0 + $this->efficiency_per_c[$key] * ($this->thermal[$key]->temperature_c - $this->efficiency_temperature_reference_c[$key]));
 
                 // power: age corrected
-                $power_w_per_panel_area_m2 *= (1.0 + ((float)$time->year + $time->fraction_year) * $this->efficiency_pa[$key]);
+                $power_w_per_panel_area_m2 *= (1.0 + ((float)$time->year + $time->fraction_year) * $this->efficiency_per_year[$key]);
 
                 $power_w = $power_w_per_panel_area_m2 * $this->panels_area_m2[$key];
 

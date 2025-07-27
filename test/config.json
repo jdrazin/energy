@@ -2,9 +2,53 @@
   "#": "Church House (short test)",
   "token": "nicolasleonardsadicarnot",
   "email": "jonathan@drazin.net",
+  "storage_hot_water": {
+    "name": "hot water tank",
+    "volume_m3": 0.19,
+    "immersion_kw": 3.0,
+    "target_temperature_c": 55.0,
+    "half_life_days": 2.5
+  },
+  "battery": {
+    "name": "13.5kWh battery",
+    "#": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
+    "include": true,
+    "initial_raw_capacity_kwh": 13.5,
+    "cost": {
+      "gbp": 6000.0
+    },
+    "max_charge_kw": 6.0,
+    "max_discharge_kw": 6.0,
+    "round_trip_efficiency_percent": 93,
+    "projection": {
+      "cycles_to_reduced_capacity": 7500,
+      "reduced_capacity_percent": 20
+    },
+    "wear": {
+      "energy": {
+        "cost_average_gbp_per_kwh": 0.03,
+        "constant_coefficient": 0.5,
+        "exponential_coefficient": 25.0,
+        "activation_kwh": 0.4
+      },
+      "power": {
+        "cost_average_gbp_per_kwh": 0.03,
+        "constant_coefficient": 0.0,
+        "exponential_coefficient": 25.0,
+        "activation_kw": 0.1
+      }
+    }
+  },
   "heat_pump": {
     "name": "heatpump ASHP",
     "include": true,
+    "cost": {
+      "gbp": {
+        "plant_room": 5000.0,
+        "install" : 16287.0
+      },
+      "gbp_per_year": 250.0
+    },
     "scop" : 3.62,
     "cops": {
       "0": 5.1,
@@ -24,10 +68,6 @@
     "power": {
       "output_kw": 10.0,
       "background_w": 20
-    },
-    "cost": {
-      "install_gbp": 16287.0,
-      "gbp_per_year": 250.0
     }
   },
   "boiler": {
@@ -35,16 +75,14 @@
     "output_kw": 12.0,
     "efficiency_percent": 0.856,
     "cost": {
-      "gbp": 991.0,
-      "gbp_per_day": 1.0
+      "gbp_per_year": 250.0
     }
   },
   "solar_pv": {
     "name": "solar pv",
     "include": true,
     "cost": {
-      "gbp": 9000.0,
-      "gbp_per_year": 200.0
+      "gbp": 9000.0
     },
     "panels": [
       {
@@ -218,37 +256,6 @@
     },
     "space_heating_demand_reduction_percent": 20
   },
-  "battery": {
-    "name": "13.5kWh battery",
-    "#": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
-    "include": true,
-    "initial_raw_capacity_kwh": 13.5,
-    "cost": {
-      "gbp": 6000.0,
-      "gbp_per_day": 200.0
-    },
-    "max_charge_kw": 6.0,
-    "max_discharge_kw": 6.0,
-    "round_trip_efficiency_percent": 93,
-    "projection": {
-      "cycles_to_reduced_capacity": 7500,
-      "reduced_capacity_percent": 20
-    },
-    "wear": {
-      "energy": {
-        "cost_average_gbp_per_kwh": 0.03,
-        "constant_coefficient": 0.5,
-        "exponential_coefficient": 25.0,
-        "activation_kwh": 0.4
-      },
-      "power": {
-        "cost_average_gbp_per_kwh": 0.03,
-        "constant_coefficient": 0.0,
-        "exponential_coefficient": 25.0,
-        "activation_kw": 0.1
-      }
-    }
-  },
   "demands": {
     "#": "https://find-energy-certificate.service.gov.uk/energy-certificate/0665-2803-7016-9528-7435",
     "EPC": "D",
@@ -353,13 +360,6 @@
       "factors": [0.544, 0.554, 0.534, 0.58, 0.608, 0.585, 0.607, 0.608, 0.57, 0.533, 0.561, 0.57]
     },
     "time_correction_fraction": 0
-  },
-  "storage_hot_water": {
-    "name": "hot water tank",
-    "volume_m3": 0.19,
-    "immersion_kw": 3.0,
-    "target_temperature_c": 55.0,
-    "half_life_days": 2.5
   },
   "temperatures": {
     "internal_room_celsius": 21

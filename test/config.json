@@ -27,7 +27,7 @@
     },
     "cost": {
       "install_gbp": 16287.0,
-      "maintenance_pa_gbp": 250.0
+      "gbp_per_year": 250.0
     }
   },
   "boiler": {
@@ -35,16 +35,16 @@
     "output_kw": 12.0,
     "efficiency_percent": 0.856,
     "cost": {
-      "install_gbp": 0.0,
-      "maintenance_pa_gbp": 250.0
+      "gbp": 991.0,
+      "gbp_per_year": 250.0
     }
   },
   "solar_pv": {
     "name": "solar pv",
     "include": true,
     "cost": {
-      "install_gbp": 9000.0,
-      "maintenance_pa_gbp": 200.0
+      "gbp": 9000.0,
+      "gbp_per_year": 200.0
     },
     "panels": [
       {
@@ -163,8 +163,8 @@
     "name": "solar thermal",
     "include": false,
     "cost": {
-      "install_gbp": 19000.0,
-      "maintenance_pa_gbp": 200.0
+      "gbp": 19000.0,
+      "gbp_per_year": 200.0
     },
     "panel": {
       "width_m": 1,
@@ -202,8 +202,8 @@
           }
         },
         "cost": {
-          "install_gbp": 0,
-          "maintenance_pa_gbp": 25
+          "gbp": 0,
+          "gbp_per_year": 25
         },
         "include": true
       }
@@ -214,7 +214,7 @@
     "name": "external cladding",
     "#": "https://chatgpt.com/c/67d29ec9-7c64-800d-9c85-610421ab2d29",
     "cost": {
-      "install_gbp": 30000.0
+      "gbp": 30000.0
     },
     "space_heating_demand_reduction_percent": 20
   },
@@ -224,8 +224,8 @@
     "include": true,
     "initial_raw_capacity_kwh": 13.5,
     "cost": {
-      "install_gbp": 6000.0,
-      "maintenance_pa_gbp": 200.0
+      "gbp": 6000.0,
+      "gbp_per_year": 200.0
     },
     "max_charge_kw": 6.0,
     "max_discharge_kw": 6.0,
@@ -331,7 +331,7 @@
       },
       "#": "https://agile.octopushome.net/historical-data",
       "inflation_real_pa": 0.0,
-      "standing_gbp_per_day": 0.6127,
+      "gbp_per_day": 0.6127,
       "wear": {
         "power": {
           "cost_average_gbp_per_kwh": 0.03,

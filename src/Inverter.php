@@ -6,13 +6,11 @@ class Inverter extends Component
 {
     public float $power_efficiency, $power_threshold_w;
 
-    public function __construct($check, $config, $component_name, $time)
+    public function __construct($check, $component, $component_name, $time)
     {
-        parent::__construct($check, $config, $component_name, $time);
-        if ($this->include) {
+            parent::__construct($check, $component, $component_name, $time);
             $this->power_efficiency = $component['power_efficiency'] ?? 1.0;
             $this->power_threshold_w = $component['power_threshold_w'] ?? 0.0;
-        }
     }
 
     public function transfer_consume_j($request_consumed_j, // energy for transfer through inverter

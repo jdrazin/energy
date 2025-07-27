@@ -15,20 +15,26 @@ class Component
     public Npv $npv;
 
     public function __construct($check, $config, $component_name, $time) {
-        if ($this->include = $config['include'] ?? true) {
-            $this->name = $component_name;
+        $this->name = $component_name;
+        $component  = $config[$component_name];
+
+        $this->time_units = $time->units;
+        $this->npv = new Npv($time->discount_rate_pa);
+        $this->step_s = $time->step_s;
+
+        // sum install and ongoing costs
+        $this->value_install_gbp                    = 0.0;
+        $this->value_maintenance_per_timestep_gbp   = 0.0;
+        if (isset($component->cost)) { // sum elements
             $this->cost = [
-                            'install_gbp'          => 0.0,
-                            'maintenance_pa_gbp'   => 0.0,
-                            'standing_gbp_per_day' => 0.0
-                          ];
+                'install_gbp'          => 0.0,
+                'maintenance_pa_gbp'   => 0.0,
+                'standing_gbp_per_day' => 0.0
+            ];
             $this->sum_value($this->cost, $config, 'cost'); // sun cost components
-            $this->time_units = $time->units;
-            $this->npv = new Npv($time->discount_rate_pa);
-            $this->step_s = $time->step_s;
-            $this->value_install_gbp                    = -$this->value($config, 'cost_install_gbp');
-            $value_maintenance_pa_gbp                   = -$this->value($config, 'cost_maintenance_pa_gbp');
-            $value_maintenance_pa_gbp                   -= $this->value($config, 'standing_gbp_per_day') * Energy::DAYS_PER_YEAR;
+            $this->value_install_gbp                    = -$this->value($component['cost'], 'cost_install_gbp');
+            $value_maintenance_pa_gbp                   = -$this->value($component, 'cost_maintenance_pa_gbp');
+            $value_maintenance_pa_gbp                   -= $this->value($component, 'standing_gbp_per_day') * Energy::DAYS_PER_YEAR;
             $this->value_maintenance_per_timestep_gbp   = $value_maintenance_pa_gbp * $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
             $this->value_install_gbp                    = -$this->cost['install_gbp'];
             $this->value_maintenance_per_timestep_gbp   = -($this->cost['maintenance_pa_gbp'] + Energy::DAYS_PER_YEAR * $this->cost['standing_gbp_per_day']) * $time->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);

@@ -87,6 +87,7 @@
     "collectors": [
       {
         "name" : "main house, south",
+        "include": true,
         "panel": "AIKO 455W",
         "panels_number": 16,
         "shading_factor": 0.85,
@@ -160,7 +161,7 @@
   },
   "solar_thermal": {
     "name": "solar thermal",
-    "include": true,
+    "include": false,
     "cost": {
       "install_gbp": 19000.0,
       "maintenance_pa_gbp": 200.0
@@ -223,11 +224,11 @@
     "include": true,
     "initial_raw_capacity_kwh": 13.5,
     "cost": {
-      "install_gbp": 6000.0
+      "install_gbp": 6000.0,
+      "maintenance_pa_gbp": 200.0
     },
     "max_charge_kw": 6.0,
     "max_discharge_kw": 6.0,
-    "cost_maintenance_pa_gbp": 0,
     "round_trip_efficiency_percent": 93,
     "projection": {
       "cycles_to_reduced_capacity": 7500,
@@ -365,7 +366,7 @@
   },
   "time": {
     "discount_rate_pa": 0.04,
-    "max_project_duration_years": 3,
+    "max_project_duration_years": 25,
     "step_seconds": 216
   },
   "combine": [

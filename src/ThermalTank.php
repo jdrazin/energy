@@ -26,7 +26,7 @@ class ThermalTank extends Component
 
     public function __construct($check, $config, $heat_pump, $time)
     {
-        if ($check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS, true)) {
+        if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS, true)) {
             parent::__construct($check, $config, self::COMPONENT_NAME, $time);
             $volume_m3 = $check->checkValue($config, self::COMPONENT_NAME, [], 'volume_m3', self::CHECKS);
             $this->capacity_c_per_joule = 1.0 / ($volume_m3 * self::HEAT_CAPACITY_WATER_J_PER_M3_K);

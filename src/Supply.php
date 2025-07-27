@@ -14,7 +14,7 @@ class Supply extends Component
         'limit_kw'              =>  [
                                     'range' => [0.0, 100.0]
                                     ],
-        'standing_gbp_per_day'  => [
+        'gbp_per_day'  => [
                                    'range' => [0.0, 100.0]
                                    ],
         'hours'                 => [
@@ -44,7 +44,7 @@ class Supply extends Component
                                     'hours'             => $check->checkValue($config, self::COMPONENT_NAME,  [$supply, 'export'], 'hours',     self::CHECKS),
                                     'bands_gbp_per_kwh' => $check->checkValue($config, self::COMPONENT_NAME,  [$supply, 'export'], 'bands_gbp_per_kwh',  self::CHECKS)
                                 ];
-            $standing_gbp_per_day  = $check->checkValue($config, self::COMPONENT_NAME, [$supply],           'standing_gbp_per_day',self::CHECKS);
+            $standing_gbp_per_day  = $check->checkValue($config, self::COMPONENT_NAME, [$supply],           'gbp_per_day',self::CHECKS);
             $this->import_limit_kw = $check->checkValue($config, self::COMPONENT_NAME, [$supply, 'import'], 'limit_kw',self::CHECKS);
             $this->export_limit_kw = $check->checkValue($config, self::COMPONENT_NAME, [$supply, 'export'], 'limit_kw',self::CHECKS);
         }
@@ -69,7 +69,7 @@ class Supply extends Component
         }
         $this->kwh = $this->zero_time_direction_band_array($time);
         $this->value_gbp = $this->zero_time_direction_band_array($time);
-        $this->value_maintenance_per_timestep_gbp -= $standing_gbp_per_day * $this->step_s / (Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+        $this->value_per_timestep_gbp -= $standing_gbp_per_day * $this->step_s / (Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
     }
 
     private function band_hours($tariff): array {

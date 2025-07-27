@@ -36,7 +36,7 @@
     "efficiency_percent": 0.856,
     "cost": {
       "gbp": 991.0,
-      "gbp_per_year": 250.0
+      "gbp_per_day": 1.0
     }
   },
   "solar_pv": {
@@ -225,7 +225,7 @@
     "initial_raw_capacity_kwh": 13.5,
     "cost": {
       "gbp": 6000.0,
-      "gbp_per_year": 200.0
+      "gbp_per_day": 200.0
     },
     "max_charge_kw": 6.0,
     "max_discharge_kw": 6.0,

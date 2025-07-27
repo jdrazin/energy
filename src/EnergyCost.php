@@ -389,12 +389,12 @@ class EnergyCost extends Root
                 echo ucfirst(ltrim(($converged ? '' : 'NOT ') . 'converged, ' . ($use_solution ? '' : 'NOT ') . 'usable'                                        . PHP_EOL));
                 $indent = '   ';
                 echo 'Total costs: '                                                                                                                                . PHP_EOL;
-                echo $indent . 'Python, guess:     ' . round($energyCostGuess                       + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
-                echo $indent . 'Php,    guess:     ' . round($this->costs['raw']['total_gbp']       + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
-                echo $indent . 'Python, optimised: ' . round($energyCostSolution                    + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
-                echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Python, guess:     ' . round($energyCostGuess                       + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Php,    guess:     ' . round($this->costs['raw']['total_gbp']       + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Python, optimised: ' . round($energyCostSolution                    + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
+                echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo                                                                                                                                                  PHP_EOL;
-                echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']         + $this->costs['standing_gbp_per_day'],4) . ' GBP' . PHP_EOL;
+                echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']         + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo                                                                                                                                                  PHP_EOL;
             }
             switch ($this->parameters['type']) {
@@ -884,7 +884,7 @@ class EnergyCost extends Root
         $optimised_wear        = round($optimised['wear_gbp'], 3);
         $optimised_import_kwh  = round($optimised['import_kwh'], 3);
         $optimised_export_kwh  = round($optimised['export_kwh'], 3);
-        $standing              = $this->costs['standing_gbp_per_day'];
+        $standing              = $this->costs['gbp_per_day'];
         $tariff_combination_id = $this->tariff_combination['id'];
         $sql = 'INSERT INTO `slot_next_day_cost_estimates` (`tariff_combination`, `standing`, `raw_import`, `raw_export`, `raw_import_kwh`, `raw_export_kwh`, `optimised_import`, `optimised_export`, `optimised_wear`, `optimised_import_kwh`, `optimised_export_kwh`)
                                                     VALUES (?,                   ?,          ?,            ?,            ?,                ?,                ?,                  ?,                  ?,                ?,                      ?                     )

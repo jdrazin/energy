@@ -3,12 +3,10 @@ namespace Src;
 
 class Component
 {
-    const array CHECKS = [
-        'include'   =>  [
-                            'boolean' => null
-                        ]
-        ];
-    public float $step_s, $value_install_gbp, $value_maintenance_per_timestep_gbp;
+    const array CHECKS =    [
+                            'include' =>  ['boolean' => null]
+                            ];
+    public float $step_s, $value_install_gbp, $value_per_timestep_gbp;
     public string $name;
     public bool $include, $active;
     public array $cost, $time_units;
@@ -24,37 +22,23 @@ class Component
 
         // sum install and ongoing costs
         $this->value_install_gbp                  = 0.0;
-        $this->value_maintenance_per_timestep_gbp = 0.0;
-        if (isset($component['cost'])) { // sum elements
-            $this->accumulate_cost($this->cost, $component, 'cost'); // sun cost components
-        }
+        $this->value_per_timestep_gbp = 0.0;
+        $this->sum_costs($component); // sun cost components
     }
 
-    public function value_maintenance($time): void
-    {
-        if ($this->include) {
-            $this->npv->value_gbp($time, $this->value_maintenance_per_timestep_gbp);
-        }
-    }
-
-    public function value($array_value, $name): float { // return value as sum of array or value
-        if (isset($array_value[$name])) {
-            return is_array($array_value[$name]) ? array_sum($array_value[$name]) : $array_value[$name];
+    public function value($array, $name): float { // return value as sum of array or value
+        if (isset($array[$name])) {
+            return is_array($array[$name]) ? array_sum($array[$name]) : $array[$name];
         }
         else {
             return 0.0;
         }
     }
 
-    public function accumulate_cost(&$parameter, $array, $name): void {
-        if (isset($array[$name])) {
-            $element = $array[$name];
-            foreach ($parameter as $k => $v) {
-                $value = $this->value($element, $k);
-                $parameter[$k] += $value;
-            }
+    public function sum_costs($array): void {
+        if ($cost = $array['cost'] ?? []) {
+            $this->value_install_gbp      -= $this->value($cost, 'gbp');
+            $this->value_per_timestep_gbp -= ($this->value($cost, 'gbp_per_year') + Energy::DAYS_PER_YEAR * $this->value($cost, 'gbp_per_day')) * $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
         }
-        $this->value_install_gbp                  -= $parameter['cost_install_gbp'];
-        $this->value_maintenance_per_timestep_gbp -= ($parameter['maintenance_pa_gbp'] + $parameter['standing_gbp_per_day']) * $this->step_s / (Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
     }
 }

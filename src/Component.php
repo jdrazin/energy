@@ -35,10 +35,10 @@ class Component
         }
     }
 
-    public function sum_costs($array): void {
+    public function sum_costs($array, $units = 1.0): void {
         if ($cost = $array['cost'] ?? []) {
-            $this->value_install_gbp      -= $this->value($cost, 'gbp');
-            $this->value_per_timestep_gbp -= ($this->value($cost, 'gbp_per_year') + Energy::DAYS_PER_YEAR * $this->value($cost, 'gbp_per_day')) * $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+            $this->value_install_gbp      -= $units * $this->value($cost, 'gbp');
+            $this->value_per_timestep_gbp -= $units * ($this->value($cost, 'gbp_per_year') + Energy::DAYS_PER_YEAR * $this->value($cost, 'gbp_per_day')) * $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
         }
     }
 }

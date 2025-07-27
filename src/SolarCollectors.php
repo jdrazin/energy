@@ -39,7 +39,7 @@ class SolarCollectors extends Component
     {
         $component = $config[$solar_collector];
         parent::__construct($check, $component, $solar_collector, $time);
-        if ($check->checkValue($config, $solar_collector, [], 'include', self::CHECKS, true)) {
+        if ($this->include = $check->checkValue($config, $solar_collector, [], 'include', self::CHECKS, true)) {
             $panels = $check->checkValue($config, $solar_collector, [], 'panels', self::CHECKS);
             foreach ($panels as $key => $panel) {
                 $this->panels[$key] = [

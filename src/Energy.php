@@ -44,7 +44,8 @@ class Energy extends Root
     public Insulation $insulation;
     public string $error;
     public float $temp_internal_c;
-    public array $time_units                        = ['HOUR_OF_DAY'   => 24,
+    public array    $components,
+                    $time_units                        = ['HOUR_OF_DAY'   => 24,
                                                        'MONTH_OF_YEAR' => 12,
                                                        'DAY_OF_YEAR'   => 366];
 

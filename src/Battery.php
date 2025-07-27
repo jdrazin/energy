@@ -21,7 +21,7 @@ class Battery extends Component
                     $reduced_capacity, $capacity_kwh, $store_j_max, $max_discharge_w, $cycles;
 
     public function __construct($check, $config, $time) {
-        if ($check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS)) {
+        if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS)) {
             parent::__construct($check, $config, self::COMPONENT_NAME, $time);
             $this->one_way_efficiency           = sqrt($check->checkValue($config, self::COMPONENT_NAME, [], 'round_trip_efficiency_percent', self::CHECKS, 100.0)/100.0);
             $this->initial_raw_capacity_kwh     = $check->checkValue($config, self::COMPONENT_NAME, [], 'initial_raw_capacity_kwh', self::CHECKS);

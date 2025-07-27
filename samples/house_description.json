@@ -146,7 +146,7 @@
         "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
         "source": "",
         "percent": 23.1,
-        "loss_percent_pa": 0.3,
+        "loss_percent_per_year": 0.3,
         "loss_percent_per_celsius": 0.29,
         "temperature_reference_celsius": 25
       },

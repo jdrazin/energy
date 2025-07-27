@@ -88,7 +88,10 @@
       {
         "panel": "AIKO 455W",
         "#": "AIK-A-MAH54-445-AB Gen 2 All Black",
-        "cost_per_unit_gbp" : 100.0,
+        "cost": {
+          "gbp" : 100.0,
+          "gbp_per_year" : 1.0
+        },
         "width_m": 1.134,
         "height_m": 1.722,
         "power_max_w": 455.0,
@@ -98,7 +101,7 @@
           "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
           "source": "",
           "percent": 23.1,
-          "loss_percent_pa": 0.3,
+          "loss_percent_per_year": 0.3,
           "loss_percent_per_celsius": 0.29,
           "temperature_reference_celsius": 25
         }
@@ -106,7 +109,10 @@
       {
         "panel": "AIKO 470W",
         "#": "Aiko Neostar 3S+ 470W N-Type ABC, Gen 3, 54 Cell, All Black",
-        "cost_per_unit_gbp" : 115.0,
+        "cost": {
+          "gbp" : 110.0,
+          "gbp_per_year" : 1.0
+        },
         "width_m": 1.134,
         "height_m": 1.722,
         "power_max_w": 470.0,
@@ -116,7 +122,7 @@
           "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
           "source": "",
           "percent": 24.3,
-          "loss_percent_pa": 0.3,
+          "loss_percent_per_year": 0.3,
           "loss_percent_per_celsius": 0.29,
           "temperature_reference_celsius": 25
         }
@@ -151,7 +157,7 @@
         "name": "annex",
         "include": true,
         "panel": "AIKO 455W",
-        "panels_number": 10,
+        "panels_number": 15,
         "shading_factor": 0.85,
         "area": {
           "border_m": 0.2,

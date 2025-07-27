@@ -688,6 +688,7 @@ class Energy extends Root
         $this->temp_internal_c                = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
         $this->check                          = new Check();
         $this->time                           = new Time(           $this->check, $config, $this->time_units, $calibrating_scop);
+        $this->hotwater_tank                  = new ThermalTank(    $this->check, $config, false, $this->time);
         $this->demand_space_heating_thermal   = new Demand(         $this->check, $config, 'space_heating_thermal',   $this->temp_internal_c);
         $this->demand_hotwater_thermal        = new Demand(         $this->check, $config, 'hot_water_thermal',       null);
         $this->demand_non_heating_electric    = new Demand(         $this->check, $config, 'non_heating_electric',    null);
@@ -697,7 +698,6 @@ class Energy extends Root
         $this->solar_pv                       = new SolarCollectors($this->check, $config, 'solar_pv',      $config['location'], 0.0, $this->time);
         $this->solar_thermal                  = new SolarCollectors($this->check, $config, 'solar_thermal', $config['location'], 0.0, $this->time);
         $this->battery                        = new Battery(        $this->check, $config, $this->time);
-        $this->hotwater_tank                  = new ThermalTank(    $this->check, $config, false, $this->time);
         $this->heat_pump                      = new HeatPump(       $this->check, $config, $this->time);
         $this->insulation                     = new Insulation(     $this->check, $config, $this->time);
     }

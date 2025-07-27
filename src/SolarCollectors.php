@@ -7,6 +7,7 @@ class SolarCollectors extends Component
 {
     const array CHECKS = [
             'include'                                   => ['boolean'  => null          ],
+            'cost'                                      => ['array' => null             ],
             'panels'                                    => ['array'    => null          ],
             'inverter'                                  => ['array'    => null          ],
             'panel'                                     => ['string'   => null          ],
@@ -41,8 +42,9 @@ class SolarCollectors extends Component
     public function __construct($check, $config, $component_name, $location, $initial_temperature, $time)
     {
         $component = $config[$component_name];
-        parent::__construct($check, $config, $component_name, $time);
         if ($this->include = $check->checkValue($config, $component_name, [], 'include', self::CHECKS, true)) {
+            parent::__construct($check, $config, $component_name, $time);
+            $this->sum_costs($check->checkValue($config, $component_name, [], 'cost', self::CHECKS)); // sun cost components
             $panels = $check->checkValue($config, $component_name, [], 'panels', self::CHECKS);
             foreach ($panels as $key => $panel) {
                 $this->panels[$key] = [
@@ -134,7 +136,7 @@ class SolarCollectors extends Component
                     $this->solar[$key]    = new Solar($location, $orientation);
 
                     // accumulate costs
-                    $this->value_install_gbp += -$panels_number * $panel['cost_per_unit_gbp'];
+                    $this->sum_costs($cost, $panels_number);
                 }
             }
             $this->output_kwh = $this->zero_output();

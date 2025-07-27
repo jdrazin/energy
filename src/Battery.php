@@ -23,6 +23,7 @@ class Battery extends Component
     public function __construct($check, $config, $time) {
         if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS)) {
             parent::__construct($check, $config, self::COMPONENT_NAME, $time);
+            $this->sum_costs($check->checkValue($config, self::COMPONENT_NAME, [], 'cost', self::CHECKS));
             $this->one_way_efficiency           = sqrt($check->checkValue($config, self::COMPONENT_NAME, [], 'round_trip_efficiency_percent', self::CHECKS, 100.0)/100.0);
             $this->initial_raw_capacity_kwh     = $check->checkValue($config, self::COMPONENT_NAME, [], 'initial_raw_capacity_kwh', self::CHECKS);
             $this->cycles_to_reduced_capacity   = $check->checkValue($config, self::COMPONENT_NAME, [], 'initial_raw_capacity_kwh', self::CHECKS, 1E9);

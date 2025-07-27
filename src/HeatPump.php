@@ -23,6 +23,7 @@ class HeatPump extends Component
     {
         if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS)) {
             parent::__construct($check, $config, self::COMPONENT_NAME, $time);
+            $this->sum_costs($check->checkValue($config, self::COMPONENT_NAME, [], 'cost', self::CHECKS));
             $this->cops = $check->checkValue($config, self::COMPONENT_NAME, [], 'cops', self::CHECKS);
             ksort($this->cops);  // ensure cops data are in temperature order
             $check->checkValue($config, self::COMPONENT_NAME, [], 'power', self::CHECKS);

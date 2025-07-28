@@ -23,7 +23,7 @@ class Values extends Root
 
     private mixed $db_slots;
 
-    private float $solar_pv_inverter_power_threshold_kw;
+    private float $solar_pv_generation_limit_kw;
 
     /**
      * @throws Exception
@@ -32,7 +32,7 @@ class Values extends Root
     {
         parent::__construct();
         $this->use_local_config();
-        $this->solar_pv_inverter_power_threshold_kw = $this->config['solar_pv']['inverter']['power_threshold_kw'];
+        $this->solar_pv_generation_limit_kw = $this->config['solar_pv']['generation_limit_kw'];
     }
 
     /**
@@ -111,7 +111,7 @@ class Values extends Root
             else {
                 $power_w = $this->forecast_average_latest('SOLAR_W', $start, $stop);
             }
-            $powers_kw[$slot] = round(min($power_w/1000.0, $this->solar_pv_inverter_power_threshold_kw), 3);       // clip solar generation to maximum power
+            $powers_kw[$slot] = round(min($power_w/1000.0, $this->solar_pv_generation_limit_kw), 3);       // clip solar generation to maximum power
         }
         $this->updateSlotPowerskW($powers_kw, 'solar_gross_kw');
     }

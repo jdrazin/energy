@@ -725,7 +725,7 @@ class Energy extends Root
         $this->year_summary($calibrating_scop, $projection_id, $components_included, $config, $combination, $combination_acronym);                          // summarise year 0
         $export_limit_j = 1000.0*$this->time->step_s*$this->supply_grid->export_limit_kw;
         while ($this->time->next_timestep()) {                                                                                                              // timestep through years 0 ... N-1
-            $this->gbp_per_time_step($components_included, $this->time);                                                                                    // add timestep component maintenance costs
+            $this->value_time_step($components_included, $this->time);                                                                                    // add timestep component maintenance costs
             $this->supply_grid->update_bands($this->time);                                                                                                  // get supply bands
             $this->supply_boiler->update_bands($this->time);
             $supply_electric_j = 0.0;                                                                                                                       // zero supply balances for timestep

@@ -98,7 +98,7 @@ class EnergyCost extends Root
                 default: {}
             }
             $this->problem              = [
-                                            'solarGenerationLimitKw'                  => $this->config['solar_pv']['inverter']['power_threshold_kw'],
+                                            'solarGenerationLimitKw'                  => $this->config['solar_pv']['generation_limit_kw'],
                                             'batteryCapacityKwh'                      => $this->config['battery']['initial_raw_capacity_kwh'],
                                             'batteryOneWayEfficiency'                 => sqrt(($this->config['battery']['round_trip_efficiency_percent'] ?? 100.0)/100.0),
                                             'batteryWearEnergyCostAverageGbpPerKwh'   => $this->config['battery']['wear']['energy']['cost_average_gbp_per_kwh'],
@@ -384,7 +384,7 @@ class EnergyCost extends Root
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
             $this->costs['optimised']                = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
-            $this->costs['standing_gbp_per_day']     = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
+            $this->costs['gbp_per_day']     = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
             if (DEBUG) {
                 echo ucfirst(ltrim(($converged ? '' : 'NOT ') . 'converged, ' . ($use_solution ? '' : 'NOT ') . 'usable'                                        . PHP_EOL));
                 $indent = '   ';

@@ -13,6 +13,17 @@ class Energy extends Root
     const   float DAYS_PER_YEAR                     = 365.25;
     const   int HOURS_PER_DAY                       = 24;
     const   int SECONDS_PER_HOUR                    = 3600;
+    const array CHECKS                              = ['location' => [
+                                                                        'coordinates'              => ['array'       => null          ],
+                                                                        'latitude_degrees'         => ['range'       => [ -90.0,  90.0]],
+                                                                        'longitude_degrees'        => ['range'       => [-180.0, 180.0]],
+                                                                        'cloud_cover_months'       => ['array'       => null          ],
+                                                                        'fraction'                 => ['array'       => 12            ],
+                                                                        'factors'                  => ['array'       => 12            ],
+                                                                        'temp_internal_celsius'    => ['range'       => [10.0,    30.0]],
+                                                                        'time_correction_fraction' => ['range'       => [-1.0, 1.0]    ]
+                                                                     ]
+                                                      ];
     const   array COMPONENT_ACRONYMS                = [''              => 'none',
                                                        'battery'       => 'B',
                                                        'boiler'        => 'BO',
@@ -660,7 +671,9 @@ class Energy extends Root
      * @throws Exception
      */
     function simulate($pre_parse_only, $projection_id, $config, $combination, $combination_acronym): void {
-        $this->instantiateComponents(false, $config);
+        $this->check = new Check();
+        $this->temp_internal_c              = $this->check->checkValue($config, 'temp_internal_celsius', [], 'temp_internal_celsius', ['temp_internal_celsius' => ['range' => [10.0, 40.0]],], null);
+        $this->instantiateComponents($config);
         if (!$pre_parse_only) {
             if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
                 if (DEBUG) {
@@ -684,22 +697,20 @@ class Energy extends Root
      * @throws \DateMalformedIntervalStringException
      * @throws Exception
      */
-    function instantiateComponents($calibrating_scop, $config): void {
-        $this->temp_internal_c                = (float) $config['temperatures']['internal_room_celsius'] ?? self::TEMPERATURE_INTERNAL_LIVING_CELSIUS;
-        $this->check                          = new Check();
-        $this->time                           = new Time(           $this->check, $config, $this->time_units, $calibrating_scop);
-        $this->hotwater_tank                  = new ThermalTank(    $this->check, $config, false, $this->time);
-        $this->demand_space_heating_thermal   = new Demand(         $this->check, $config, 'space_heating_thermal',   $this->temp_internal_c);
-        $this->demand_hotwater_thermal        = new Demand(         $this->check, $config, 'hot_water_thermal',       null);
-        $this->demand_non_heating_electric    = new Demand(         $this->check, $config, 'non_heating_electric',    null);
-        $this->supply_grid                    = new Supply(         $this->check, $config, 'grid',                      $this->time);
-        $this->supply_boiler                  = new Supply(         $this->check, $config, 'boiler',                    $this->time);
-        $this->boiler                         = new Boiler(         $this->check, $config, $this->time);
-        $this->solar_pv                       = new SolarCollectors($this->check, $config, 'solar_pv',      $config['location'], 0.0, $this->time);
-        $this->solar_thermal                  = new SolarCollectors($this->check, $config, 'solar_thermal', $config['location'], 0.0, $this->time);
-        $this->battery                        = new Battery(        $this->check, $config, $this->time);
-        $this->heat_pump                      = new HeatPump(       $this->check, $config, $this->time);
-        $this->insulation                     = new Insulation(     $this->check, $config, $this->time);
+    function instantiateComponents($config): void {
+        $this->time                         = new Time(           $this->check, $config);
+        $this->hotwater_tank                = new ThermalTank(    $this->check, $config, false, $this->time);
+        $this->demand_space_heating_thermal = new Demand(         $this->check, $config, 'space_heating_thermal',   $this->temp_internal_c);
+        $this->demand_hotwater_thermal      = new Demand(         $this->check, $config, 'hot_water_thermal',       null);
+        $this->demand_non_heating_electric  = new Demand(         $this->check, $config, 'non_heating_electric',    null);
+        $this->supply_grid                  = new Supply(         $this->check, $config, 'grid',                      $this->time);
+        $this->supply_boiler                = new Supply(         $this->check, $config, 'boiler',                    $this->time);
+        $this->boiler                       = new Boiler(         $this->check, $config, $this->time);
+        $this->solar_pv                     = new SolarCollectors($this->check, $config, 'solar_pv',      $config['location'], 0.0, $this->time);
+        $this->solar_thermal                = new SolarCollectors($this->check, $config, 'solar_thermal', $config['location'], 0.0, $this->time);
+        $this->battery                      = new Battery(        $this->check, $config, $this->time);
+        $this->heat_pump                    = new HeatPump(       $this->check, $config, $this->time);
+        $this->insulation                   = new Insulation(     $this->check, $config, $this->time);
     }
 
     /**
@@ -725,7 +736,7 @@ class Energy extends Root
         $this->year_summary($calibrating_scop, $projection_id, $components_included, $config, $combination, $combination_acronym);                          // summarise year 0
         $export_limit_j = 1000.0*$this->time->step_s*$this->supply_grid->export_limit_kw;
         while ($this->time->next_timestep()) {                                                                                                              // timestep through years 0 ... N-1
-            $this->value_time_step($components_included, $this->time);                                                                                    // add timestep component maintenance costs
+            $this->value_time_step($components_included, $this->time);                                                                                      // add timestep component maintenance costs
             $this->supply_grid->update_bands($this->time);                                                                                                  // get supply bands
             $this->supply_boiler->update_bands($this->time);
             $supply_electric_j = 0.0;                                                                                                                       // zero supply balances for timestep

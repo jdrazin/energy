@@ -13,24 +13,16 @@ class Inverter extends Component
             $this->power_threshold_w = $component['power_threshold_w'] ?? 0.0;
     }
 
-    public function transfer_consume_j($request_consumed_j, // energy for transfer through inverter
-                                       $net_request              // flag tp transfer NET energy requested: requires additional energy consumed
-    ): array
-    {
-        if (!$this->include) {
-            return ['transfer' => 0.0,
-                'consume' => 0.0];
+    public function transfer_consume_j($request_consumed_j, $net_request): array { // energy for transfer through inverter
+        $energy_threshold_j = $this->power_threshold_w * $this->step_s;
+        if ($net_request) {
+            $transferred = $request_consumed_j;
+            $consumed = ($request_consumed_j / $this->power_efficiency);
         } else {
-            $energy_threshold_j = $this->power_threshold_w * $this->step_s;
-            if ($net_request) {
-                $transferred = $request_consumed_j;
-                $consumed = ($request_consumed_j / $this->power_efficiency);
-            } else {
-                $transferred = max(($request_consumed_j * $this->power_efficiency) - $energy_threshold_j, 0.0);
-                $consumed = max($transferred, 0.0);
-            }
-            return ['transfer' => $transferred,
-                'consume' => $consumed];
+            $transferred = max(($request_consumed_j * $this->power_efficiency) - $energy_threshold_j, 0.0);
+            $consumed = max($transferred, 0.0);
         }
+        return ['transfer' => $transferred,
+                'consume' => $consumed];
     }
 }

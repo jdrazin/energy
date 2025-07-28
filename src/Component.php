@@ -9,8 +9,8 @@ class Component
                             ];
     public float $step_s, $value_install_gbp, $value_per_timestep_gbp;
     public string $name;
-    public bool $include, $active;
-    public array $cost, $time_units;
+    public bool $include;
+    public array $time_units;
     public Npv $npv;
 
     public function __construct($check, $config, $component_name, $time) {

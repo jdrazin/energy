@@ -31,7 +31,7 @@ class Supply extends Component
     public array $directions, $tariff, $current_bands, $tariff_bands, $kwh, $value_gbp;
 
     public function __construct($check, $config, $supply_name, $time) {
-        if ($this->include = $check->checkValue($config, $supply_name, [], 'include', self::CHECKS, true)) {
+        if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name], 'include', self::CHECKS, true)) {
             parent::__construct($check, $config, self::COMPONENT_NAME, $time);
             $this->directions = self::DIRECTIONS;
             $this->inflation_real_pa = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name], 'inflation_real_pa', self::CHECKS);

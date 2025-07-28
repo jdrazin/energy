@@ -35,6 +35,11 @@ class Component
         }
     }
 
+    public function value_time_step($time): void
+    {
+       $this->npv->value_gbp($time, $this->value_per_timestep_gbp);
+    }
+
     public function sum_costs($array, $units = 1.0): void {
         if ($cost = $array ?? []) {
             $this->value_install_gbp      -= $units * $this->value($cost, 'gbp');

@@ -147,7 +147,7 @@ class Energy extends Root
                     FROM  `slot_solutions` 
                     WHERE `id` = (SELECT MAX(`id`) FROM `slot_solutions`)";
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('s', $this->config['time']['zone']) ||
+            !$stmt->bind_param('s', $this->config['location']['time_zone']) ||
             !$stmt->bind_result($slot_solution_message, $mode, $slot_solution_stop) ||
             !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
@@ -166,7 +166,7 @@ class Energy extends Root
                     WHERE `id` = (SELECT MAX(`id`) 
                                     FROM `slice_solutions`)";
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('s', $this->config['time']['zone']) ||
+            !$stmt->bind_param('s', $this->config['location']['time_zone']) ||
             !$stmt->bind_result($slice_charge_kw, $slice_timestamp) ||
             !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);

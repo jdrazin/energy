@@ -364,17 +364,14 @@
       "fractions": [0.0425, 0.123, 0.204, 0.288, 0.371, 0.455, 0.538, 0.623, 0.707, 0.79, 0.874, 0.958],
       "factors": [0.544, 0.554, 0.534, 0.58, 0.608, 0.585, 0.607, 0.608, 0.57, 0.533, 0.561, 0.57]
     },
+    "temp_internal_celsius": 21,
     "time_correction_fraction": 0
-  },
-  "temperatures": {
-    "internal_room_celsius": 21
   },
   "time": {
     "discount_rate_pa": 0.04,
-    "max_project_duration_years": 25,
+    "max_project_duration_years": 1,
     "step_seconds": 216
   },
   "combine": [
-
   ]
 }

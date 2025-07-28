@@ -51,7 +51,7 @@ class MetOffice extends Root
     private function getForecast(): array
     {
         $url = $this->api['endpoint'] .
-            '?latitude=' . $this->location['coordinates']['latitude_degrees'] .
+            '?latitude='  . $this->location['coordinates']['latitude_degrees'] .
             '&longitude=' . $this->location['coordinates']['longitude_degrees'] .
             '&excludeParameterMetadata=true&includeLocationName=false';
         $headers = ['apikey' => $this->api['apikey'],

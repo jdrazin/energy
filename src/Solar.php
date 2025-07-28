@@ -29,7 +29,7 @@ class Solar
         $this->time_correction_fraction = $location['time_correction_fraction'];
 
         $coordinates = $location['coordinates'];
-        $this->latitude_degrees = $coordinates['latitude_degrees'];
+        $this->latitude_degrees  = $coordinates['latitude_degrees'];
         $this->longitude_degrees = $coordinates['longitude_degrees'];
 
         $cloud_cover_months = $location['cloud_cover_months'];
@@ -37,14 +37,14 @@ class Solar
         $this->cloud_cover_months_factors = $cloud_cover_months['factors'];
 
         $this->orientation_type = $orientation['type'];
-        $this->azimuth_degrees = $orientation['azimuth_degrees'];
-        $this->tilt_degrees = $orientation['tilt_degrees'];
+        $this->azimuth_degrees  = $orientation['azimuth_degrees'];
+        $this->tilt_degrees     = $orientation['tilt_degrees'];
     }
 
     public function time_update($time): void
     {
         $fraction_year = $time->fraction_year;
-        $fraction_day = $time->fraction_day;
+        $fraction_day  = $time->fraction_day;
 
         //
         // values at solar noon

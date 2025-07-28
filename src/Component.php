@@ -18,7 +18,7 @@ class Component
         $component  = $config[$component_name];
 
         $this->time_units = $time->units;
-        $this->npv = new Npv($time->discount_rate_pa);
+        $this->npv = new Npv($time);
         $this->step_s = $time->step_s;
 
         // sum install and ongoing costs

@@ -52,6 +52,10 @@ class Check
         // check value
         foreach ($checks as $check_type => $check_parameters) {
             switch ($check_type) {
+                case 'array': {
+                    $this->array($check_parameters, $string, $value);
+                    break;
+                }
                 case 'range': {
                     $this->range($check_parameters, $string, $value);
                     break;
@@ -96,6 +100,22 @@ class Check
         return $value;
     }
 
+    /**
+     * @throws Exception
+     */
+    private function array($check_parameters, $string, $value): void
+    {
+        if (!is_array($value)) {
+            throw new Exception($string . '\'' . $value . '\' must be array');
+        }
+        if (!is_null($check_parameters) && count($value) != $check_parameters) {
+            throw new Exception($string . ' array must have ' . $check_parameters . ' elements');
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
     private function range($check_parameters, $string, $value): void
     {
         if (!is_numeric($value)) {
@@ -114,6 +134,9 @@ class Check
         }
     }
 
+    /**
+     * @throws Exception
+     */
     private function values(array $values, $string, $value): void
     {
         $string .= 'cannot be ';
@@ -123,6 +146,9 @@ class Check
         }
     }
 
+    /**
+     * @throws Exception
+     */
     private function hour_values($string, $hourly_values):void {
         if (!is_array($hourly_values)) {
             throw new Exception($string . '\'' . $hourly_values . '\'' . ' must be an array');
@@ -145,6 +171,9 @@ class Check
         }
     }
 
+    /**
+     * @throws Exception
+     */
     private function temperature_cops($string, $temperature_cops):void {
         if (!is_array($temperature_cops)) {
             throw new Exception($string . '\'' . $temperature_cops . '\'' . ' must be an array');
@@ -162,6 +191,9 @@ class Check
         }
     }
 
+    /**
+     * @throws Exception
+     */
     private function tag_numbers($string, $tag_numbers): void {
         if (!is_array($tag_numbers)) {
             throw new Exception($string . '\'' . $tag_numbers . '\'' . ' must be an array');

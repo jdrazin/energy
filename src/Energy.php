@@ -8,7 +8,6 @@ use Exception;
 
 class Energy extends Root
 {
-    const   int TEMPERATURE_INTERNAL_LIVING_CELSIUS = 20;
     const   float JOULES_PER_KWH                    = 1000.0 * 3600.0;
     const   float DAYS_PER_YEAR                     = 365.25;
     const   int HOURS_PER_DAY                       = 24;
@@ -18,7 +17,7 @@ class Energy extends Root
                                                                         'latitude_degrees'         => ['range'       => [ -90.0,  90.0]],
                                                                         'longitude_degrees'        => ['range'       => [-180.0, 180.0]],
                                                                         'cloud_cover_months'       => ['array'       => null          ],
-                                                                        'fraction'                 => ['array'       => 12            ],
+                                                                        'fractions'                => ['array'       => 12            ],
                                                                         'factors'                  => ['array'       => 12            ],
                                                                         'temp_internal_celsius'    => ['range'       => [10.0,    30.0]],
                                                                         'time_correction_fraction' => ['range'       => [-1.0, 1.0]    ]
@@ -42,7 +41,11 @@ class Energy extends Root
                                                                 0.0,
                                                                 0.0
                                                             ]
-                                                       ];
+                                                       ],
+                    TIME_UNITS                      = [ 'HOUR_OF_DAY'   => 24,
+                                                        'MONTH_OF_YEAR' => 12,
+                                                        'DAY_OF_YEAR'   => 366];
+
     public Check $check;
     public Time $time;
     public Demand $demand_space_heating_thermal, $demand_hotwater_thermal, $demand_non_heating_electric;
@@ -55,10 +58,6 @@ class Energy extends Root
     public Insulation $insulation;
     public string $error;
     public float $temp_internal_c;
-    public array    $components,
-                    $time_units                        = ['HOUR_OF_DAY'   => 24,
-                                                       'MONTH_OF_YEAR' => 12,
-                                                       'DAY_OF_YEAR'   => 366];
 
     /**
      * @throws Exception
@@ -350,16 +349,18 @@ class Energy extends Root
             }
             $this->write_cpu_seconds($projection_id, time() - $basetime_seconds);
             $this->mysqli->commit();
-            if ($email && filter_var($email, FILTER_VALIDATE_EMAIL) &&
-                (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
-                                            'html'      => false,
-                                            'bodyHTML'  => ($error = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
-                                            'bodyAlt'   => strip_tags($error)])) {
-                $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, null, 'NOTICE');
-                $this->projectionStatus($projection_id, 'NOTIFIED');
-            }
-            else {
-                $this->logDb('MESSAGE', 'Notification failed: ' . $email . 'of completed projection ' . $projection_id, null, 'WARNING');
+            if ($email ?? false) {
+                if (filter_var($email, FILTER_VALIDATE_EMAIL) &&
+                    (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
+                        'html'      => false,
+                        'bodyHTML'  => ($error = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
+                        'bodyAlt'   => strip_tags($error)])) {
+                    $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, null, 'NOTICE');
+                    $this->projectionStatus($projection_id, 'NOTIFIED');
+                }
+                else {
+                    $this->logDb('MESSAGE', 'Notification failed: ' . $email . 'of completed projection ' . $projection_id, null, 'WARNING');
+                }
             }
         }
     }
@@ -672,7 +673,13 @@ class Energy extends Root
      */
     function simulate($pre_parse_only, $projection_id, $config, $combination, $combination_acronym): void {
         $this->check = new Check();
-        $this->temp_internal_c              = $this->check->checkValue($config, 'temp_internal_celsius', [], 'temp_internal_celsius', ['temp_internal_celsius' => ['range' => [10.0, 40.0]],], null);
+        $this->check->checkValue($config, 'location', [],              'coordinates',        self::CHECKS['location']);
+        $this->check->checkValue($config, 'location', ['coordinates'], 'latitude_degrees',   self::CHECKS['location']);
+        $this->check->checkValue($config, 'location', ['coordinates'], 'longitude_degrees',  self::CHECKS['location']);
+        $this->check->checkValue($config, 'location', [],              'cloud_cover_months', self::CHECKS['location']);
+        $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'fractions',   self::CHECKS['location']);
+        $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'factors',     self::CHECKS['location']);
+        $this->temp_internal_c = $this->check->checkValue($config, 'location', [], 'temp_internal_celsius',        self::CHECKS['location']);
         $this->instantiateComponents($config);
         if (!$pre_parse_only) {
             if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
@@ -687,7 +694,7 @@ class Energy extends Root
             } else {
                 $cop_factor = 1.0;
             }
-            $this->instantiateComponents(false, $config);
+            $this->instantiateComponents($config);
             $this->traverse_years(false, $projection_id, $config, $combination, $combination_acronym, $cop_factor);
         }
     }
@@ -735,7 +742,7 @@ class Energy extends Root
         $this->install($components_included);                                                                                                               // get install costs
         $this->year_summary($calibrating_scop, $projection_id, $components_included, $config, $combination, $combination_acronym);                          // summarise year 0
         $export_limit_j = 1000.0*$this->time->step_s*$this->supply_grid->export_limit_kw;
-        while ($this->time->next_timestep()) {                                                                                                              // timestep through years 0 ... N-1
+        while ($this->time->next_time_step()) {                                                                                                              // timestep through years 0 ... N-1
             $this->value_time_step($components_included, $this->time);                                                                                      // add timestep component maintenance costs
             $this->supply_grid->update_bands($this->time);                                                                                                  // get supply bands
             $this->supply_boiler->update_bands($this->time);

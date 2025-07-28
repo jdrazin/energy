@@ -57,7 +57,7 @@ class SolarCollectors extends Component
                     'thermal_inertia_m2_second_per_w_celsius' => $check->checkValue($config, $component_name, ['panels', $key], 'thermal_inertia_m2_second_per_w_celsius', self::CHECKS, self::DEFAULT_THERMAL_INERTIA_M2_SECOND_PER_W_CELSIUS),
                     'efficiency'                              => [
                         'percent'                       => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'percent',                       self::CHECKS),
-                        'loss_percent_per_year'         => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'loss_percent_per_year',               self::CHECKS,  0.0),
+                        'loss_percent_per_year'         => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'loss_percent_per_year',         self::CHECKS,  0.0),
                         'loss_percent_per_celsius'      => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'loss_percent_per_celsius',      self::CHECKS,  0.0),
                         'temperature_reference_celsius' => $check->checkValue($config, $component_name, ['panels', $key,'efficiency'], 'temperature_reference_celsius', self::CHECKS, 25.0)
                     ]

@@ -25,10 +25,10 @@ class Time {
           SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
 
     public DateTime $time, $time_start, $time_end;
-    public DateInterval $timestep;
+    public DateInterval $time_step;
 
     public bool $year_end;
-    public float $fraction_year, $fraction_day, $step_s, $discount_rate_pa;
+    public float $fraction_year, $fraction_day, $step_s, $discount_rate_pa, $discount_factor_pa;
     public string $timestamp;
     public int $step_count, $year;
     public array $units;
@@ -41,21 +41,21 @@ class Time {
      * @throws \DateMalformedIntervalStringException
      */
  // public function __construct(string $time_start, int $max_project_duration_years, int $step_s, array $time_units)
-    public function __construct($check, $config, $units, $single_year) {
+    public function __construct($check, $config) {
         $suffixes = [];
-        $max_project_duration_years = $check->checkValue($config,self::COMPONENT_NAME,  $suffixes, 'max_project_duration_years', self::CHECKS);
-        $step_seconds               = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'step_seconds',              self::CHECKS);
-        $this->discount_rate_pa     = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'discount_rate_pa',           self::CHECKS);;
-        $this->time_start = new DateTime('2025-01-01 00:00:00');
-        $this->time_end   = clone $this->time_start;
+        $max_project_duration_years = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'max_project_duration_years', self::CHECKS);
+        $step_seconds               = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'step_seconds',               self::CHECKS);
+        $this->discount_rate_pa     = $check->checkValue($config, self::COMPONENT_NAME, $suffixes, 'discount_rate_pa',           self::CHECKS);
+        $this->time_start           = new DateTime('2025-01-01 00:00:00');
+        $this->time_end             = clone $this->time_start;
         $this->time_end->modify('+' . $max_project_duration_years . ' year');
-        $this->time       = clone $this->time_start;
-        $this->timestep   = new DateInterval('PT' . $step_seconds . 'S');
-        $this->step_s        = $step_seconds;
-        $this->step_count    = 1;
-        $this->year          = 0;
-        $this->units         = $units;
-        $this->units['YEAR'] = ($single_year ? 1 : $max_project_duration_years) + 1;
+        $this->time                 = clone $this->time_start;
+        $this->time_step            = new DateInterval('PT' . $step_seconds . 'S');
+        $this->step_s               = $step_seconds;
+        $this->step_count           = 1;
+        $this->year                 = 0;
+        $this->units                = Energy::TIME_UNITS;
+        $this->units['YEAR']        = $max_project_duration_years + 1;
         $this->update();
         $this->year_end = true;
     }
@@ -63,10 +63,10 @@ class Time {
     /**
      * @throws Exception
      */
-    public function next_timestep(): bool
+    public function next_time_step(): bool
     {
         if ($this->time < $this->time_end) {
-            $this->time->add($this->timestep);
+            $this->time->add($this->time_step);
             $this->step_count++;
             $this->update();
             return true;

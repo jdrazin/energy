@@ -139,6 +139,7 @@ class SolarCollectors extends Component
                     $this->sum_costs($cost, $panels_number);
                 }
             }
+            $this->collectors = $collectors;
             $this->output_kwh = $this->zero_output();
         }
     }

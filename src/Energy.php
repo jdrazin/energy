@@ -133,6 +133,26 @@ class Energy extends Root
         return json_encode($tariff_combinations, JSON_PRETTY_PRINT);
     }
 
+    public function tariff_warn(): string {
+        $sql = "SELECT  NOT IFNULL(`tc`.`active`, FALSE) AS `warn`,
+                        CONCAT(`ti`.`code`, ', ', `te`.`code`) AS `tariff`
+                    FROM `slot_next_day_cost_estimates` `sndce`
+                    JOIN `tariff_combinations` `tc` ON `sndce`.`tariff_combination` = `tc`.`id`
+                    JOIN `tariff_imports`      `ti` ON `ti`   .`id`                 = `tc`.`import`
+                    JOIN `tariff_exports`      `te` ON `te`   .`id`                 = `tc`.`export`
+                    ORDER BY ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)), 2) DESC
+                    LIMIT 0, 1";
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_result($warn, $tariff) ||
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        return $warn ? 'Warning, better tariff: ' . $tariff : '';
+    }
+
     /**
      * @throws Exception
      */

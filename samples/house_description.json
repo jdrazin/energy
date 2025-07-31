@@ -305,7 +305,7 @@
         }
       },
       "inflation_real_pa": 0.03,
-      "standing_gbp_per_day": 0.296
+      "gbp_per_day": 0.296
     },
     "oil": {
       "name": "Texaco Oil",
@@ -354,7 +354,7 @@
       },
       "#": "https://agile.octopushome.net/historical-data",
       "inflation_real_pa": 0.0,
-      "standing_gbp_per_day": 0.6127,
+      "gbp_per_day": 0.6127,
       "wear": {
         "power": {
           "cost_average_gbp_per_kwh": 0.03,

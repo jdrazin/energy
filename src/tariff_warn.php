@@ -51,12 +51,6 @@ try {
 }
 catch (exception $e) {
     $message = $e->getMessage();
-    if (EMAIL_NOTIFICATION_ON_ERROR) {
-        (new SMTPEmail())->email(['subject'  => 'EnergyController: Error',
-            'html'     => false,
-            'bodyHTML' => $message,
-            'bodyAlt'  => strip_tags($message)]);
-    }
     $root = new Root();
     $root->logDb('MESSAGE', $message,  null, 'FATAL');
     if (DEBUG) {

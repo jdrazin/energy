@@ -345,7 +345,7 @@
         "gbp_per_day": 0.4155
         },
         {
-          "name": "Octopus Cosy",
+          "name": "Octopus Cosy - SEG",
           "months": [1,2,11,12],
           "import": {
             "hours": {
@@ -366,16 +366,12 @@
           },
           "export": {
             "hours": {
-              "0": "standard",
-              "2": "off_peak",
-              "5": "standard",
-              "16": "peak",
-              "19": "standard"
+              "0": "standard"
             },
             "bands_gbp_per_kwh": {
-              "off_peak": 0.0474,
-              "standard": 0.1332,
-              "peak": 0.266
+              "off_peak": 0.041,
+              "standard": 0.041,
+              "peak": 0.041
             },
             "limit_kw": 8.5
           },

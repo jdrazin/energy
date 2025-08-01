@@ -349,7 +349,7 @@
         },
         {
           "name": "Octopus Cosy - SEG",
-          "months": [1,2,11,12],
+          "months": [1, 2, 11,12],
           "import": {
             "hours": {
               "0": "standard",

@@ -647,11 +647,11 @@ class Energy extends Root
         for ($year = 0; $year < $this->time->year; $year++) {
             $grid = [
                 'kwh'       => $this->supply_grid->kwh['YEAR'][$year],
-                'value_gbp' => $this->supply_grid->value_gbp ['YEAR'][$year]
+                'value_gbp' => $this->supply_grid->cost_value_gbp ['YEAR'][$year]
             ];
             $boiler   = [
                 'kwh'       => $this->supply_boiler->kwh['YEAR'][$year],
-                'value_gbp' => $this->supply_boiler->value_gbp ['YEAR'][$year]
+                'value_gbp' => $this->supply_boiler->cost_value_gbp ['YEAR'][$year]
             ];
             $consumption['year'] = [
                 'grid'   => $this->round_consumption($grid),
@@ -682,8 +682,8 @@ class Energy extends Root
 
     function install($components): void {
         foreach ($components as $component) {
-            if ($component->include && $component->value_install_gbp <> 0) {
-                $component->npv->value_gbp($this->time, $component->value_install_gbp);
+            if ($component->include && $component->cost_value_gbp <> 0) {
+                $component->npv->value_gbp($this->time, $component->cost_value_gbp);
             }
         }
     }
@@ -761,11 +761,10 @@ class Energy extends Root
         }
         $this->install($components_included);                                                                                                               // get install costs
         $this->year_summary($calibrating_scop, $projection_id, $components_included, $config, $combination, $combination_acronym);                          // summarise year 0
-        $export_limit_j = 1000.0*$this->time->step_s*$this->supply_grid->export_limit_kw;
-        while ($this->time->next_time_step()) {                                                                                                              // timestep through years 0 ... N-1
+        while ($this->time->next_time_step()) {                                                                                                             // timestep through years 0 ... N-1
             $this->value_time_step($components_included, $this->time);                                                                                      // add timestep component maintenance costs
-            $this->supply_grid->update_bands($this->time);                                                                                                  // get supply bands
-            $this->supply_boiler->update_bands($this->time);
+            $this->supply_grid->update_tariff($this->time);                                                                                                  // get supply bands
+            $this->supply_boiler->update_tariff($this->time);
             $supply_electric_j = 0.0;                                                                                                                       // zero supply balances for timestep
             $supply_boiler_j   = 0.0;				                                                                                                        // export: +ve, import: -ve
             $temp_climate_c = (new Climate())->temperature_time($this->time);	                                                                            // get average climate temperature for day of year, time of day
@@ -868,10 +867,11 @@ class Energy extends Root
                 }
             }
             if ($supply_electric_j > 0.0) {                                                                                                                     // export if surplus energy
+                $export_limit_j    = 1000.0*$this->time->step_s*$this->supply_grid->tariff['export']['limit_kw'];
                 $supply_electric_j = min($supply_electric_j, $export_limit_j);                                                                                  // cap to export limit
             }
-            $this->supply_grid->transfer_consume_j($this->time, $supply_electric_j < 0.0 ? 'import' : 'export', $supply_electric_j);                    // import if supply -ve, export if +ve
-            $this->supply_boiler->transfer_consume_j($this->time, 'import',                                       $supply_boiler_j);                    // import boiler fuel consumed
+            $this->supply_grid->transfer_timestep_consume_j($this->time,  $supply_electric_j);                   // import if supply -ve, export if +ve
+            $this->supply_boiler->transfer_timestep_consume_j($this->time, $supply_boiler_j);                    // import boiler fuel consumed
             $this->hotwater_tank->decay(0.5*($this->temp_internal_c+$temp_climate_c));                                                        // hot water tank cooling to midway between room and outside temps
             if ($this->time->year_end()) {                                                                                                                      // write summary to db at end of each year's simulation
                 $results = $this->year_summary($calibrating_scop, $projection_id, $components_included, $config, $combination, $combination_acronym);           // summarise year at year end
@@ -890,11 +890,11 @@ class Energy extends Root
         if (DEBUG) {
             echo ($this->time->year ? ', ' : '') . $this->time->year;
         }
-        $this->supply_grid->sum($this->time);
-        $this->supply_boiler->sum($this->time);
-        $consumption = self::consumption();
+      //  $this->supply_grid->sum($this->time);
+      //  $this->supply_boiler->sum($this->time);
+      //  $consumption = self::consumption();
+      //  $results['consumption'] = $consumption;
         $results['npv_summary'] = self::npv_summary($components_active); // $results['npv_summary']['components']['13.5kWh battery'] is unset after $time->year == 8
-        $results['consumption'] = $consumption;
         if (($this->heat_pump->include ?? false) && $this->time->year) {
             $kwh = $this->heat_pump->kwh['YEAR'][$this->time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;

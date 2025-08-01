@@ -306,41 +306,45 @@
       "inflation_real_pa": 0.03
     },
     "grid": {
-      "name": "Octopus Flux",
-      "url": "https://www.youtube.com/watch?v=ualxtLLAwcc",
-      "import": {
-        "hours": {
-          "0": "standard",
-          "2": "off_peak",
-          "5": "standard",
-          "16": "peak",
-          "19": "standard"
+      "tariffs": [
+        {
+        "name": "Octopus Flux",
+        "months": [3,4,5,6,7,8,9,10],
+        "import": {
+          "hours": {
+            "0": "standard",
+            "2": "off_peak",
+            "5": "standard",
+            "16": "peak",
+            "19": "standard"
+          },
+          "bands_gbp_per_kwh": {
+            "off_peak": 0.1634,
+            "standard": 0.2724,
+            "peak": 0.3814
+          },
+          "limit_kw": 24.0
         },
-        "bands_gbp_per_kwh": {
-          "off_peak": 0.1499,
-          "standard": 0.2498,
-          "peak": 0.3497
+        "export": {
+          "hours": {
+            "0": "standard",
+            "2": "off_peak",
+            "5": "standard",
+            "16": "peak",
+            "19": "standard"
+          },
+          "bands_gbp_per_kwh": {
+            "off_peak": 0.0474,
+            "standard": 0.1332,
+            "peak": 0.266
+          },
+          "limit_kw": 8.5
         },
-        "limit_kw": 24.0
-      },
-      "export": {
-        "hours": {
-          "0": "standard",
-          "2": "off_peak",
-          "5": "standard",
-          "16": "peak",
-          "19": "standard"
-        },
-        "bands_gbp_per_kwh": {
-          "off_peak": 0.0474,
-          "standard": 0.1332,
-          "peak": 0.266
-        },
-        "limit_kw": 8.5
-      },
-      "#": "https://agile.octopushome.net/historical-data",
-      "inflation_real_pa": 0.0,
-      "gbp_per_day": 0.6127,
+        "#": "https://agile.octopushome.net/historical-data",
+        "inflation_real_pa": 0.0,
+        "gbp_per_day": 0.6127
+        }
+      ],
       "wear": {
         "power": {
           "cost_average_gbp_per_kwh": 0.03,

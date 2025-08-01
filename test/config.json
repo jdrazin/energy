@@ -411,7 +411,7 @@
   },
   "combine": [
     "solar_pv",
-    "heat_pump",
-    "battery"
+    "battery",
+    "heat_pump"
   ]
 }

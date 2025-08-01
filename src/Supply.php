@@ -2,12 +2,20 @@
 
 namespace Src;
 
+use Exception;
+
 require_once __DIR__ . "/Energy.php";
 
 class Supply extends Component
 {
     const string COMPONENT_NAME = 'energy';
     const array CHECKS = [
+        'tariffs'               =>  [
+                                    'array' => null
+                                    ],
+        'months'               =>   [
+                                    'array' => null
+                                    ],
         'inflation_real_pa'     =>  [
                                     'range' => [0.0, 1.0]
                                     ],
@@ -27,49 +35,79 @@ class Supply extends Component
     const array DIRECTIONS = ['import' => +1.0,
                               'export' => +1.0];
     public string $type;
-    public float $inflation_real_pa, $import_limit_kw, $export_limit_kw;
-    public array $directions, $tariff, $current_bands, $tariff_bands, $kwh, $value_gbp;
+    public float $inflation_real_pa;
+    public array $directions, $tariffs, $tariff, $month_tariff_keys, $current_bands, $kwh;
 
+    /**
+     * @throws Exception
+     */
     public function __construct($check, $config, $supply_name, $time) {
-        if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name], 'include', self::CHECKS, true)) {
-            parent::__construct($check, $config, self::COMPONENT_NAME, $time);
-            $this->directions = self::DIRECTIONS;
-            $this->inflation_real_pa = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name], 'inflation_real_pa', self::CHECKS);
+        parent::__construct($check, $config, self::COMPONENT_NAME, $time);
+        $this->include = true;
+        $this->directions = self::DIRECTIONS;
+        $this->inflation_real_pa = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name], 'inflation_real_pa', self::CHECKS);
+        $tariffs = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name], 'tariffs', self::CHECKS);
+        $this->month_tariff_keys = [];
+        foreach ($tariffs as $key => $tariff) {
             $tariff = [];
-            $tariff['import'] = [
-                'hours' => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'import'], 'hours', self::CHECKS),
-                'bands_gbp_per_kwh' => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'import'], 'bands_gbp_per_kwh', self::CHECKS)
-            ];
-            if ($supply_name == 'grid') {
-                $tariff['export'] = [
-                    'hours' => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'export'], 'hours', self::CHECKS),
-                    'bands_gbp_per_kwh' => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'export'], 'bands_gbp_per_kwh', self::CHECKS)
-                ];
-                $gbp_per_day = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name], 'gbp_per_day', self::CHECKS);
-                $this->import_limit_kw = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'import'], 'limit_kw', self::CHECKS);
-                $this->export_limit_kw = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'export'], 'limit_kw', self::CHECKS);
-            } elseif ($supply_name == 'boiler') {
-                unset($this->directions['export']); // import only
-                $gbp_per_day = 0.0;
+            $months = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key], 'months', self::CHECKS);
+            // allocate tariff keys to months
+            foreach ($months as $month) {
+                if (!is_int($month) || $month < 1 || $month > Energy::TIME_UNITS['MONTH_OF_YEAR']) {
+                    throw new Exception(self::COMPONENT_NAME . ' ' . $supply_name . 'month ' . $month . ' must be a month number between 1 and 12');
+                }
+                elseif (isset($this->month_tariff_keys[$month])) {
+                    throw new Exception(self::COMPONENT_NAME . ' ' . $supply_name . 'month ' . $month . ' is duplicated');
+                }
+                else {
+                    $this->month_tariff_keys[$month] = $key;
+                }
             }
+            $tariff['import'] = [
+                'hours'             => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'import'], 'hours',             self::CHECKS),
+                'bands_gbp_per_kwh' => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'import'], 'bands_gbp_per_kwh', self::CHECKS)
+            ];
+
+            if ($supply_name == 'grid') {
+                $gbp_per_day = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key], 'gbp_per_day', self::CHECKS);
+                $tariff['import']['limit_kw'] = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'import'], 'limit_kw', self::CHECKS);
+                $tariff['export'] = [
+                    'hours'             => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'export'], 'hours',             self::CHECKS),
+                    'bands_gbp_per_kwh' => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'export'], 'bands_gbp_per_kwh', self::CHECKS),
+                    'limit_kw'          => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'export'], 'limit_kw',          self::CHECKS)
+                ];
+            }
+            elseif ($supply_name == 'boiler') {
+                $gbp_per_day = 0.0;
+                unset($this->directions['export']); // import only
+            }
+            else {
+                throw new Exception(self::COMPONENT_NAME . ' ' . $supply_name . 'month ' . $month . ' is duplicated');
+            }
+            $tariff['gbp_per_day'] = $gbp_per_day;
+            $tariff['value_per_timestep_gbp'] = $gbp_per_day * $this->step_s / (Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
             $component = $config['energy'];
             foreach ($this->directions as $direction => $factor) {                                     // run through import-export tariffs
                 $bands = [];
                 $band_hours = $this->band_hours($tariff[$direction]);
-                $bands_gbp_per_kwh = $component[$supply_name][$direction]['bands_gbp_per_kwh'];
+                $bands_gbp_per_kwh = $component[$supply_name]['tariffs'][$key][$direction]['bands_gbp_per_kwh'];
                 foreach ($bands_gbp_per_kwh as $band => $rate) {
                     $bands[] = $band;
                 }
                 for ($hour = 0; $hour < Energy::HOURS_PER_DAY; $hour++) {
                     $band = $band_hours[$hour];
-                    $this->tariff[$direction][$hour] = ['band' => $band,
-                        'gbp_per_kwh' => $factor * $bands_gbp_per_kwh[$band]];
+                    $tariff[$direction][$hour] = ['band'          => $band,
+                                                  'gbp_per_kwh'   => $factor * $bands_gbp_per_kwh[$band]];
                 }
-                $this->tariff_bands[$direction] = $bands; // [ 0 => 'tag0', ... n => 'tagN''
+                $tariff['tariff_bands'][$direction] = $bands; // [ 0 => 'tag0', ... n => 'tagN''
             }
-            $this->kwh = $this->zero_time_direction_band_array($time);
-            $this->value_gbp = $this->zero_time_direction_band_array($time);
-            $this->value_per_timestep_gbp -= $gbp_per_day * $this->step_s / (Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+            $this->tariffs[$key] = $tariff;
+        }
+        // check tariff key allocated to each month
+        for ($month = 1; $month <= Energy::TIME_UNITS['MONTH_OF_YEAR']; $month++) {
+            if (!isset($this->month_tariff_keys[$month])) {
+                throw new Exception(self::COMPONENT_NAME . ' ' . $supply_name . 'month ' . $month . ' has no tariff');
+            }
         }
     }
 
@@ -78,7 +116,7 @@ class Supply extends Component
         $hour_bands = $tariff['hours'];
         $band = key($bands);
         $band_hours = [];
-        for ($hour = 0; $hour < \Src\Energy::HOURS_PER_DAY; $hour++) {
+        for ($hour = 0; $hour < Energy::HOURS_PER_DAY; $hour++) {
             if (isset($hour_bands[$hour])) {
                 $band = $hour_bands[$hour];
             }
@@ -87,74 +125,20 @@ class Supply extends Component
         return $band_hours;
     }
 
-    public function update_bands($time): void
-    { // return band for direction
-        $hour = (int)(\Src\Energy::HOURS_PER_DAY * $time->fraction_day);
-        foreach (self::DIRECTIONS as $direction => $factor) {
-            if (isset($this->tariff[$direction])) {
-                $this->current_bands[$direction] = $this->tariff[$direction][$hour]['band'];
-            }
+    public function update_tariff($time): void {  // get tariff for this time
+        $key  = $this->month_tariff_keys[$time->month()]; // get tariff key for month
+        $hour = (int)(Energy::HOURS_PER_DAY * $time->fraction_day);
+        $this->tariff = $this->tariffs[$key];
+        foreach ($this->directions as $direction => $factor) { // return bands for each direction
+            $this->current_bands[$direction] = $this->tariff[$direction][$hour]['band'];
         }
     }
 
-    function transfer_consume_j($time, $direction, $energy_j): void
-    {
-        $time_values = $time->values();
-        $hour_of_day = $time_values['HOUR_OF_DAY'];
+    function transfer_timestep_consume_j($time, $energy_j): void {
+        $direction  = $energy_j < 0.0 ? 'import' : 'export';
         $supply_kwh = (float)($energy_j / Energy::JOULES_PER_KWH);
-        $inflation = (1.0 + $this->inflation_real_pa) ** (((float)$time->year) + $time->fraction_year);
-        $rate_gbp_per_kwh = $this->tariff[$direction][$hour_of_day]['gbp_per_kwh'];
-        $value_gbp = $supply_kwh * $inflation * $rate_gbp_per_kwh;
+        $inflation  = (1.0 + $this->inflation_real_pa) ** (((float)$time->year) + $time->fraction_year);
+        $value_gbp  = $inflation * (($supply_kwh * $this->tariff[$direction][$time->values()['HOUR_OF_DAY']]['gbp_per_kwh']) + $this->tariff['value_per_timestep_gbp']);
         $this->npv->value_gbp($time, $value_gbp);
-        $current_band = $this->current_bands[$direction];
-        foreach ($time_values as $time_unit => $value) {
-            $this->kwh[$time_unit][$value][$direction][$current_band] += $supply_kwh;
-            $this->value_gbp [$time_unit][$value][$direction][$current_band] += $value_gbp;
-        }
-    }
-
-    public function zero_time_direction_band_array($time): array
-    { //  $array[TIME_UNIT][TIME][DIRECTION][BAND]
-        $array = [];
-        foreach ($time->units as $time_unit => $number_unit_values) {
-            $array[$time_unit] = [];
-            for ($time_unit_value = 0; $time_unit_value < $number_unit_values; $time_unit_value++) {
-                $array[$time_unit][$time_unit_value] = [];
-                foreach ($this->directions as $direction => $factor) {
-                    foreach ($this->tariff_bands[$direction] as $band) {
-                        $array[$time_unit][$time_unit_value][$direction][$band] = 0.0;
-                    }
-                }
-            }
-        }
-        return $array;
-    }
-
-    public function sum_time_direction_band_array($array, $time): array
-    { //  $array[TIME_UNIT][TIME][DIRECTION][BAND]
-        foreach ($time->units as $time_unit => $number_unit_values) {
-            $sum_time_unit = 0.0;
-            for ($time_unit_value = 0; $time_unit_value < $number_unit_values; $time_unit_value++) {
-                $sum_direction = 0.0;
-                foreach ($this->directions as $direction => $factor) {
-                    $sum_band = 0.0;
-                    foreach ($this->tariff_bands[$direction] as $band) {
-                        $sum_band += $array[$time_unit][$time_unit_value][$direction][$band];
-                    }
-                    $array[$time_unit][$time_unit_value][$direction]['sum'] = $sum_band;
-                    $sum_direction += $sum_band;
-                }
-                $array[$time_unit][$time_unit_value]['sum'] = $sum_direction;
-                $sum_time_unit += $sum_direction;
-            }
-            $array[$time_unit]['sum'] = $sum_time_unit;
-        }
-        return $array;
-    }
-
-    public function sum($time): void
-    {
-        $this->kwh = $this->sum_time_direction_band_array($this->kwh, $time);
-        $this->value_gbp = $this->sum_time_direction_band_array($this->value_gbp, $time);
     }
 }

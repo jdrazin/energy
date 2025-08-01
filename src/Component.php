@@ -15,14 +15,13 @@ class Component
 
     public function __construct($check, $config, $component_name, $time) {
         $this->name = $component_name;
-        $component  = $config[$component_name];
 
         $this->time_units = $time->units;
         $this->npv = new Npv($time);
         $this->step_s = $time->step_s;
 
         // sum install and ongoing costs
-        $this->value_install_gbp                  = 0.0;
+        $this->value_install_gbp      = 0.0;
         $this->value_per_timestep_gbp = 0.0;
     }
 

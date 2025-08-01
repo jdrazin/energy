@@ -340,7 +340,6 @@
           },
           "limit_kw": 8.5
         },
-        "inflation_real_pa": 0.0,
         "gbp_per_day": 0.4155
         },
         {
@@ -368,17 +367,14 @@
               "0": "standard"
             },
             "bands_gbp_per_kwh": {
-              "off_peak": 0.041,
-              "standard": 0.041,
-              "peak": 0.041
+              "standard": 0.041
             },
             "limit_kw": 8.5
           },
-          "#": "https://agile.octopushome.net/historical-data",
-          "inflation_real_pa": 0.0,
           "gbp_per_day": 0.4155
         }
       ],
+      "inflation_real_pa": 0.0,
       "wear": {
         "power": {
           "cost_average_gbp_per_kwh": 0.03,

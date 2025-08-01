@@ -308,7 +308,7 @@
     "grid": {
       "tariffs": [
         {
-        "name": "Octopus Flux",
+        "name": "Octopus Flux Import, Export",
         "months": [3,4,5,6,7,8,9,10],
         "import": {
           "hours": {
@@ -343,6 +343,45 @@
         "#": "https://agile.octopushome.net/historical-data",
         "inflation_real_pa": 0.0,
         "gbp_per_day": 0.4155
+        },
+        {
+          "name": "Octopus Cosy",
+          "months": [1,2,11,12],
+          "import": {
+            "hours": {
+              "0": "standard",
+              "4": "off_peak",
+              "8": "standard",
+              "13": "off_peak",
+              "16": "peak",
+              "19": "standard",
+              "22": "off_peak"
+            },
+            "bands_gbp_per_kwh": {
+              "off_peak": 0.1272,
+              "standard": 0.2594,
+              "peak": 0.3891
+            },
+            "limit_kw": 24.0
+          },
+          "export": {
+            "hours": {
+              "0": "standard",
+              "2": "off_peak",
+              "5": "standard",
+              "16": "peak",
+              "19": "standard"
+            },
+            "bands_gbp_per_kwh": {
+              "off_peak": 0.0474,
+              "standard": 0.1332,
+              "peak": 0.266
+            },
+            "limit_kw": 8.5
+          },
+          "#": "https://agile.octopushome.net/historical-data",
+          "inflation_real_pa": 0.0,
+          "gbp_per_day": 0.4155
         }
       ],
       "wear": {

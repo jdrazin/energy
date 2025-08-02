@@ -225,11 +225,10 @@ class Energy extends Root
         foreach ($combinations as $key => $combination) {
             if (!$pre_parse_only || $key == $last_key) { // process only final combination where all components included
                 $config_combined = $this->parameters_combined($config, $combination, $config_combinations->variables);
-                $combination_acronym = $config_combined['description'];
                 if (DEBUG) {
-                    echo PHP_EOL . ($key + 1) . ' of ' . count($combinations) . ' (' . $combination_acronym . '): ';
+                    echo PHP_EOL . ($key + 1) . ' of ' . count($combinations) . ' (' . $config_combined['description'] . '): ';
                 }
-                $this->simulate($pre_parse_only, $projection_id, $config_combined['config'], $combination, $combination_acronym);
+                $this->simulate($pre_parse_only, $projection_id, $config_combined);
             }
         }
         if (DEBUG) {
@@ -250,7 +249,8 @@ class Energy extends Root
             }
         }
         return ['config'      => $config,
-                'description' => (rtrim($description, ', ') ? : 'none')];
+                'combination' => $combination,
+                'acronym'     => (rtrim($description, ', ') ? : 'none')];
     }
 
     /**
@@ -264,7 +264,7 @@ class Energy extends Root
         // attempt to pre-parse request
         try {
             $this->error = '';
-            $this->projectionCombinations($pre_parse_only,null, $config);
+            $this->projectionCombinations($pre_parse_only, $crc32, $config);
         }
         catch (DivisionByZeroError $e){
             $this->error = $e->getMessage();
@@ -275,20 +275,7 @@ class Energy extends Root
 
         // submit projection if it parsed OK
         if (!$this->error) {
-            $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
-                                       VALUES (?,     ?,         ?,       ?)
-                        ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
-                                                 `error`     = NULL,
-                                                 `status`    = \'IN_QUEUE\',
-                                                 `submitted` = NOW()';
-            if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('issss', $crc32, $config_json, $email, $comment, $config_json) ||
-                !$stmt->execute() ||
-                !$this->mysqli->commit()) {
-                $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
-            }
+            $this->insertProjection($crc32, $config_json, '', $comment);
         }
         return true;
     }
@@ -296,10 +283,30 @@ class Energy extends Root
     /**
      * @throws Exception
      */
+    public function insertProjection($crc32, $config_json, $email, $comment): void
+    {
+        $sql = 'INSERT INTO `projections` (`id`,  `request`, `email`, `comment`)
+                                       VALUES (?,     ?,         ?,       ?)
+                        ON DUPLICATE KEY UPDATE  `request`   = ?,                                             
+                                                 `error`     = NULL,
+                                                 `status`    = \'IN_QUEUE\',
+                                                 `submitted` = NOW()';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('issss', $crc32, $config_json, $email, $comment, $config_json) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
     public function processNextProjection($projection_id): void  {
-        if ($this->config) { // if root config, submit then process it
+        if ($this->config) { // make json request from root config if exists
             $request = json_encode($this->config);
-            $projection_id = $this->submitProjection(false, 0, $this->config, $request);
         }
         else {
             if (is_null($projection_id)) { // if no explicit projection id, get id for earliest in queue
@@ -322,9 +329,9 @@ class Energy extends Root
             }
             else { // get request for specified id
                 $sql = 'SELECT  `request`,
-                            `email`
-                      FROM  `projections`                     
-                      WHERE `id` = ?';
+                                `email`
+                          FROM  `projections`                     
+                          WHERE `id` = ?';
                 if (!($stmt = $this->mysqli->prepare($sql)) ||
                     !$stmt->bind_param('i', $projection_id) ||
                     !$stmt->bind_result($request, $email) ||
@@ -586,27 +593,6 @@ class Energy extends Root
         return json_encode($projection, JSON_PRETTY_PRINT);
     }
 
-    private function combinationId($projection_id, $combination, $combination_acronym): int { // returns combination id
-        $battery       = $combination['battery'];
-        $heat_pump     = $combination['heat_pump'];
-        $insulation    = $combination['insulation'];
-        $boiler        = $combination['boiler'];
-        $solar_pv      = $combination['solar_pv'];
-        $solar_thermal = $combination['solar_thermal'];
-        $sql = 'INSERT IGNORE INTO `combinations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
-			                               VALUES (?,            ?,              ?,         ?,       ?,            ?,        ?,          ?,               NOW(),   NULL  )';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('isiiiiii', $projection_id, $combination_acronym, $battery, $heat_pump, $insulation, $boiler, $solar_pv, $solar_thermal) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        $id = $this->mysqli->insert_id;
-        $this->mysqli->commit();
-        return $id;
-    }
-
     /**
      * @throws Exception
      */
@@ -691,7 +677,8 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($pre_parse_only, $projection_id, $config, $combination, $combination_acronym): void {
+    function simulate($pre_parse_only, $projection_id, $config_combined): void {
+        $config = $config_combined['config'];
         $this->check = new Check();
         $this->check->checkValue($config, 'location', [],              'coordinates',        self::CHECKS['location']);
         $this->check->checkValue($config, 'location', ['coordinates'], 'latitude_degrees',   self::CHECKS['location']);
@@ -706,7 +693,7 @@ class Energy extends Root
                 if (DEBUG) {
                     echo 'Calibrating SCOP: ';
                 }
-                $results = $this->traverse_years(true, $projection_id, $config, $combination, $combination_acronym, 1.0);
+                $results = $this->traverse_years(true, $projection_id, $config_combined, 1.0);
                 if (DEBUG) {
                     echo PHP_EOL;
                 }
@@ -715,7 +702,7 @@ class Energy extends Root
                 $cop_factor = 1.0;
             }
             $this->instantiateComponents($config);
-            $this->traverse_years(false, $projection_id, $config, $combination, $combination_acronym, $cop_factor);
+            $this->traverse_years(false, $projection_id, $config_combined, $cop_factor);
         }
     }
 
@@ -743,7 +730,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function traverse_years($calibrating_scop, $projection_id, $config, $combination, $combination_acronym, $cop_factor): array {
+    function traverse_years($calibrating_scop, $projection_id, $config_combined, $cop_factor): array {
         $components = [	$this->supply_grid,
                         $this->supply_boiler,
                         $this->boiler,
@@ -760,7 +747,7 @@ class Energy extends Root
             }
         }
         $this->install($components_included);                                                                                                               // get install costs
-        $this->year_summary($calibrating_scop, $projection_id, $components_included, $config, $combination, $combination_acronym);                          // summarise year 0
+        $this->year_summary($calibrating_scop, $projection_id, $components_included, $config_combined);                          // summarise year 0
         while ($this->time->next_time_step()) {                                                                                                             // timestep through years 0 ... N-1
             $this->value_time_step($components_included, $this->time);                                                                                      // add timestep component maintenance costs
             $this->supply_grid->update_tariff($this->time);                                                                                                  // get supply bands
@@ -874,7 +861,7 @@ class Energy extends Root
             $this->supply_boiler->transfer_timestep_consume_j($this->time, $supply_boiler_j);                    // import boiler fuel consumed
             $this->hotwater_tank->decay(0.5*($this->temp_internal_c+$temp_climate_c));                                                        // hot water tank cooling to midway between room and outside temps
             if ($this->time->year_end()) {                                                                                                                      // write summary to db at end of each year's simulation
-                $results = $this->year_summary($calibrating_scop, $projection_id, $components_included, $config, $combination, $combination_acronym);           // summarise year at year end
+                $results = $this->year_summary($calibrating_scop, $projection_id, $components_included, $config_combined);           // summarise year at year end
                 if ($calibrating_scop) {
                     return $results;
                 }
@@ -886,25 +873,41 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function year_summary($calibrating_scop, $projection_id, $components_active, $config, $combination, $combination_acronym): array {
-        if (DEBUG) {
-            echo ($this->time->year ? ', ' : '') . $this->time->year;
-        }
-      //  $this->supply_grid->sum($this->time);
-      //  $this->supply_boiler->sum($this->time);
-      //  $consumption = self::consumption();
-      //  $results['consumption'] = $consumption;
-        $results['npv_summary'] = self::npv_summary($components_active); // $results['npv_summary']['components']['13.5kWh battery'] is unset after $time->year == 8
+    public function year_summary($calibrating_scop, $projection_id, $components_included, $config_combined): array {
+        $results['npv_summary'] = self::npv_summary($components_included); // $results['npv_summary']['components']['13.5kWh battery'] is unset after $time->year == 8
         if (($this->heat_pump->include ?? false) && $this->time->year) {
             $kwh = $this->heat_pump->kwh['YEAR'][$this->time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;
         }
         if (!$calibrating_scop) {
-            $result = ['newResultId' => $this->combinationId($projection_id, $combination, $combination_acronym),
-                       'combination' => $combination];
-            $this->updateCombination($config, $result, $results, $this->time->year);  // end projection
+            $result = ['newResultId' => $this->combinationId($projection_id, $config_combined),
+                       'combination' => $config_combined['combination']];
+            $this->updateCombination($config_combined, $result, $results, $this->time->year);  // end projection
         }
         return $results;
+    }
+
+
+    private function combinationId($projection_id, $config_combined): int { // returns combination id
+        $combination   = $config_combined['combination'];
+        $battery       = $combination['battery'];
+        $heat_pump     = $combination['heat_pump'];
+        $insulation    = $combination['insulation'];
+        $boiler        = $combination['boiler'];
+        $solar_pv      = $combination['solar_pv'];
+        $solar_thermal = $combination['solar_thermal'];
+        $sql = 'INSERT IGNORE INTO `combinations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
+			                               VALUES (?,            ?,              ?,         ?,       ?,            ?,        ?,          ?,               NOW(),   NULL  )';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('isiiiiii', $projection_id, $combination_acronym, $battery, $heat_pump, $insulation, $boiler, $solar_pv, $solar_thermal) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__,__FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        $id = $this->mysqli->insert_id;
+        $this->mysqli->commit();
+        return $id;
     }
 
     function npv_summary($components): array {

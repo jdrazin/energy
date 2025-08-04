@@ -6,7 +6,7 @@
     "name": "hot water tank",
     "volume_m3": 0.19,
     "immersion_kw": 3.0,
-    "target_temperature_c": 55.0,
+    "target_temperature_c": 45.0,
     "half_life_days": 2.5
   },
   "battery": {

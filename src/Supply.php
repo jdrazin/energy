@@ -26,10 +26,11 @@ class Supply extends Component
                                    'range' => [0.0, 100.0]
                                    ],
         'hours'                 => [
-                                    'hour_tags' => ['off_peak', 'standard', 'peak']
+                                    'hour_bands' => ['off_peak', 'standard', 'peak']
                                     ],
         'bands_gbp_per_kwh'     => [
-                                    'tag_numbers' => [0.0, 100.0]
+                                    'tag_numbers' => [0.0, 100.0],
+                                    'bands_key'   => ['off_peak', 'standard', 'peak']
                                     ]
     ];
     const array DIRECTIONS = ['import' => +1.0,
@@ -57,23 +58,26 @@ class Supply extends Component
                     throw new Exception(self::COMPONENT_NAME . ' ' . $supply_name . 'month ' . $month . ' must be a month number between 1 and 12');
                 }
                 elseif (isset($this->month_tariff_keys[$month])) {
-                    throw new Exception(self::COMPONENT_NAME . ' ' . $supply_name . 'month ' . $month . ' is duplicated');
+                    throw new Exception(self::COMPONENT_NAME . ' \'' . $supply_name . '\' month ' . $month . ' is duplicated');
                 }
                 else {
                     $this->month_tariff_keys[$month] = $key;
                 }
             }
+            $hours =             $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'import'], 'hours',             self::CHECKS);
+            $bands_gbp_per_kwh = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'import'], 'bands_gbp_per_kwh', self::CHECKS);
             $tariff['import'] = [
-                'hours'             => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'import'], 'hours',             self::CHECKS),
-                'bands_gbp_per_kwh' => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'import'], 'bands_gbp_per_kwh', self::CHECKS)
-            ];
-
+                                'hours'             => $hours,
+                                'bands_gbp_per_kwh' => $bands_gbp_per_kwh
+                                ];
             if ($supply_name == 'grid') {
                 $gbp_per_day = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key], 'gbp_per_day', self::CHECKS);
                 $tariff['import']['limit_kw'] = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'import'], 'limit_kw', self::CHECKS);
+                $hours =             $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'export'], 'hours',             self::CHECKS);
+                $bands_gbp_per_kwh = $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'export'], 'bands_gbp_per_kwh', self::CHECKS);
                 $tariff['export'] = [
-                    'hours'             => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'export'], 'hours',             self::CHECKS),
-                    'bands_gbp_per_kwh' => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'export'], 'bands_gbp_per_kwh', self::CHECKS),
+                    'hours'             => $hours,
+                    'bands_gbp_per_kwh' => $bands_gbp_per_kwh,
                     'limit_kw'          => $check->checkValue($config, self::COMPONENT_NAME, [$supply_name, 'tariffs', $key, 'export'], 'limit_kw',          self::CHECKS)
                 ];
             }
@@ -108,7 +112,7 @@ class Supply extends Component
         // check tariff key allocated to each month
         for ($month = 1; $month <= Energy::TIME_UNITS['MONTH_OF_YEAR']; $month++) {
             if (!isset($this->month_tariff_keys[$month])) {
-                throw new Exception(self::COMPONENT_NAME . ' ' . $supply_name . 'month ' . $month . ' has no tariff');
+                throw new Exception(self::COMPONENT_NAME . ' \'' . $supply_name . '\' month ' . $month . ' has no tariff');
             }
         }
     }

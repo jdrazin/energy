@@ -140,7 +140,7 @@ class Energy extends Root
                     JOIN `tariff_combinations` `tc` ON `sndce`.`tariff_combination` = `tc`.`id`
                     JOIN `tariff_imports`      `ti` ON `ti`   .`id`                 = `tc`.`import`
                     JOIN `tariff_exports`      `te` ON `te`   .`id`                 = `tc`.`export`
-                    ORDER BY ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)), 2) DESC
+                    ORDER BY (((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)) DESC
                     LIMIT 0, 1";
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($warn, $tariff) ||

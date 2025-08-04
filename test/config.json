@@ -44,7 +44,7 @@
     "include": true,
     "cost": {
       "gbp": {
-        "install" : 16287.0,
+        "install" : 23787.0,
         "grant" : -7500
       },
       "gbp_per_year": 250.0
@@ -314,7 +314,7 @@
       "tariffs": [
         {
         "name": "Octopus Flux Import, Export",
-        "months": [3, 4,5,6,7,8,9,10],
+        "months": [3,4,5,6,7,8,9,10],
         "import": {
           "hours": {
             "0": "standard",

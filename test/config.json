@@ -44,7 +44,7 @@
     "include": true,
     "cost": {
       "gbp": {
-        "install" : 23787.0,
+        "install" : 23786,
         "grant" : -7500
       },
       "gbp_per_year": 250.0

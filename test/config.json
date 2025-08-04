@@ -314,7 +314,7 @@
       "tariffs": [
         {
         "name": "Octopus Flux Import, Export",
-        "months": [3,4,5,6,7,8,9,10],
+        "months": [3, 4,5,6,7,8,9,10],
         "import": {
           "hours": {
             "0": "standard",
@@ -349,7 +349,7 @@
         },
         {
           "name": "Octopus Cosy - SEG",
-          "months": [1, 2, 11,12],
+          "months": [1,2,11,12],
           "import": {
             "hours": {
               "0": "standard",

@@ -38,8 +38,10 @@ try {
         (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
     }
     else {
-        $config = json_decode(file_get_contents(TEST_PROJECTION_PATH), true);
-        (new Energy($config))->processNextProjection(null);
+        $config = json_decode($config_json = file_get_contents(TEST_PROJECTION_PATH), true);
+        $energy = new Energy($config);
+        $energy->insertProjection(0, $config_json, '', 'DEBUG');
+        $energy->processNextProjection(0);
     }
     if (!DEBUG) {
         if (!unlink($pid_filename)) {

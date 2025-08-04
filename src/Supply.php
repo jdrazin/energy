@@ -36,7 +36,7 @@ class Supply extends Component
                               'export' => +1.0];
     public string $type;
     public float $inflation_real_pa;
-    public array $directions, $tariffs, $tariff, $month_tariff_keys, $current_bands, $kwh;
+    public array $directions, $tariffs, $tariff, $month_tariff_keys, $current_bands, $kwh, $value_gbp;
 
     /**
      * @throws Exception
@@ -89,7 +89,7 @@ class Supply extends Component
             $component = $config['energy'];
             foreach ($this->directions as $direction => $factor) {                                     // run through import-export tariffs
                 $bands = [];
-                $band_hours = $this->band_hours($tariff[$direction]);
+                $band_hours = $this->bandHours($tariff[$direction]);
                 $bands_gbp_per_kwh = $component[$supply_name]['tariffs'][$key][$direction]['bands_gbp_per_kwh'];
                 foreach ($bands_gbp_per_kwh as $band => $rate) {
                     $bands[] = $band;
@@ -101,7 +101,9 @@ class Supply extends Component
                 }
                 $tariff['tariff_bands'][$direction] = $bands; // [ 0 => 'tag0', ... n => 'tagN''
             }
-            $this->tariffs[$key] = $tariff;
+            $this->kwh              = $this->zeroTimeDirectionBandArray($time);
+            $this->value_gbp        = $this->zeroTimeDirectionBandArray($time);
+            $this->tariffs[$key]    = $tariff;
         }
         // check tariff key allocated to each month
         for ($month = 1; $month <= Energy::TIME_UNITS['MONTH_OF_YEAR']; $month++) {
@@ -111,7 +113,7 @@ class Supply extends Component
         }
     }
 
-    private function band_hours($tariff): array {
+    private function bandHours($tariff): array {
         $bands = $tariff['bands_gbp_per_kwh'];
         $hour_bands = $tariff['hours'];
         $band = key($bands);
@@ -125,7 +127,7 @@ class Supply extends Component
         return $band_hours;
     }
 
-    public function update_tariff($time): void {  // get tariff for this time
+    public function updateTariff($time): void {  // get tariff for this time
         $key  = $this->month_tariff_keys[$time->month()]; // get tariff key for month
         $hour = (int)(Energy::HOURS_PER_DAY * $time->fraction_day);
         $this->tariff = $this->tariffs[$key];
@@ -134,11 +136,51 @@ class Supply extends Component
         }
     }
 
-    function transfer_timestep_consume_j($time, $energy_j): void {
-        $direction  = $energy_j < 0.0 ? 'import' : 'export';
+    function transferTimestepConsumeJ($time, $energy_j): void {
+        $time_values = $time->values();
+        $direction  = $energy_j <= 0.0 ? 'import' : 'export';
         $supply_kwh = (float)($energy_j / Energy::JOULES_PER_KWH);
         $inflation  = (1.0 + $this->inflation_real_pa) ** (((float)$time->year) + $time->fraction_year);
         $value_gbp  = $inflation * (($supply_kwh * $this->tariff[$direction][$time->values()['HOUR_OF_DAY']]['gbp_per_kwh']) + $this->tariff['value_per_timestep_gbp']);
-        $this->npv->value_gbp($time, $value_gbp);
+        $this->npv->valueGbp($time, $value_gbp);
+        foreach ($time_values as $time_unit => $value) {
+            $this->kwh[$time_unit][$value][$direction] += $supply_kwh;
+            $this->value_gbp [$time_unit][$value][$direction] += $value_gbp;
+        }
+    }
+
+    public function zeroTimeDirectionBandArray($time): array { //  $array[TIME_UNIT][TIME][DIRECTION]
+        $array = [];
+        foreach ($time->units as $time_unit => $number_unit_values) {
+            $array[$time_unit] = [];
+            for ($time_unit_value = 0; $time_unit_value < $number_unit_values; $time_unit_value++) {
+                $array[$time_unit][$time_unit_value] = [];
+                foreach (self::DIRECTIONS as $direction => $factor) {
+                    $array[$time_unit][$time_unit_value][$direction] = 0.0;
+                }
+            }
+        }
+        return $array;
+    }
+
+    public function sumTimeDirectionBandArray($array, $time): array { //  $array[TIME_UNIT][TIME][DIRECTION]
+        foreach ($time->units as $time_unit => $number_unit_values) {
+            $sum_time_unit = 0.0;
+            for ($time_unit_value = 0; $time_unit_value < $number_unit_values; $time_unit_value++) {
+                $sum_direction = 0.0;
+                foreach (self::DIRECTIONS as $direction => $factor) {
+                }
+                $array[$time_unit][$time_unit_value]['sum'] = $sum_direction;
+                $sum_time_unit += $sum_direction;
+            }
+            $array[$time_unit]['sum'] = $sum_time_unit;
+        }
+        return $array;
+    }
+
+    public function sum($time): void
+    {
+        $this->kwh = $this->sumTimeDirectionBandArray($this->kwh, $time);
+        $this->value_gbp = $this->sumTimeDirectionBandArray($this->value_gbp, $time);
     }
 }

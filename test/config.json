@@ -1,6 +1,6 @@
 {
   "#": "Church House",
-  "token": "<token>",
+  "token": "nicolasleonardsadicarnot",
   "email": "jonathan@drazin.net",
   "storage_hot_water": {
     "name": "hot water tank",
@@ -41,7 +41,7 @@
   },
   "heat_pump": {
     "name": "heatpump ASHP",
-    "include": false,
+    "include": true,
     "cost": {
       "gbp": {
         "install" : 16287.0,
@@ -410,8 +410,6 @@
     "step_seconds": 216
   },
   "combine": [
-    "solar_pv",
-    "battery",
-    "heat_pump"
+
   ]
 }

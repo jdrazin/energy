@@ -34,7 +34,7 @@ class ThermalTank extends Component
             $this->target_temperature_c = $check->checkValue($config, self::COMPONENT_NAME, [], 'target_temperature_c', self::CHECKS, 65.0);
             $half_life_days = $check->checkValue($config, self::COMPONENT_NAME, [], 'half_life_days', self::CHECKS, 1.0);
             $this->decay_rate_per_s = log(2.0) / ($half_life_days * 24 * 3600);
-            $this->temperature_c = (new Climate)->temperature_time($time);
+            $this->temperature_c = (new Climate)->temperatureTime($time);
             $this->one_way_storage_efficiency = $check->checkValue($config, self::COMPONENT_NAME, [], 'one_way_storage_efficiency_percent', self::CHECKS, 100.0)/100.0;
             $this->charge_c_per_joule = $this->capacity_c_per_joule * $this->one_way_storage_efficiency;
             $this->discharge_c_per_joule = $this->capacity_c_per_joule;
@@ -42,7 +42,7 @@ class ThermalTank extends Component
         }
     }
 
-    public function transfer_consume_j($request_consumed_j, $temperature_external_c): array
+    public function transferConsumeJ($request_consumed_j, $temperature_external_c): array
     {  // adds to (+ve) / subtracts from (-ve) tank
         if (!$this->include) {
             return ['transfer' => 0.0,

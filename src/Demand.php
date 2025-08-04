@@ -78,7 +78,7 @@ class Demand
         }
     }
 
-    public function demand_j($time): float
+    public function demandJ($time): float
     {
         $hour = (int)(Energy::HOURS_PER_DAY * $time->fraction_day);
         switch ($this->type) {

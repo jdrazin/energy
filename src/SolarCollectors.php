@@ -44,7 +44,7 @@ class SolarCollectors extends Component
         $component = $config[$component_name];
         if ($this->include = $check->checkValue($config, $component_name, [], 'include', self::CHECKS, true)) {
             parent::__construct($check, $config, $component_name, $time);
-            $this->sum_costs($check->checkValue($config, $component_name, [], 'cost', self::CHECKS)); // sun cost components
+            $this->sumCosts($check->checkValue($config, $component_name, [], 'cost', self::CHECKS)); // sun cost components
             $panels = $check->checkValue($config, $component_name, [], 'panels', self::CHECKS);
             foreach ($panels as $key => $panel) {
                 $this->panels[$key] = [
@@ -136,7 +136,7 @@ class SolarCollectors extends Component
                     $this->solar[$key]    = new Solar($location, $orientation);
 
                     // accumulate costs
-                    $this->sum_costs($cost, $panels_number);
+                    $this->sumCosts($cost, $panels_number);
                 }
             }
             $this->collectors = $collectors;
@@ -168,7 +168,7 @@ class SolarCollectors extends Component
         return $array;
     }
 
-    public function transfer_consume_j($temperature_climate_c, $time): array
+    public function transferConsumeJ($temperature_climate_c, $time): array
     {
         if (!$this->include) {
             $transfer_consume_j = ['transfer' => 0.0,

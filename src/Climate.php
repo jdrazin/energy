@@ -9,7 +9,7 @@ class Climate
         TEMPERATURE_LAG_YEAR_FRACTION = 9.0 / 365.0,
         TEMPERATURE_LAG_DAY_FRACTION = 0.1;
 
-    public function temperature_time($time): float
+    public function temperatureTime($time): float
     {
         return $this->temperature_fraction($time->fraction_year, $time->fraction_day);
     }

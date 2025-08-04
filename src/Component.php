@@ -33,12 +33,12 @@ class Component
         }
     }
 
-    public function value_time_step($time): void
+    public function valueTimeStep($time): void
     {
-        $this->npv->value_gbp($time, $this->cost_value_per_timestep_gbp);
+        $this->npv->valueGbp($time, $this->cost_value_per_timestep_gbp);
     }
 
-    public function sum_costs($array, $units = 1.0): void {
+    public function sumCosts($array, $units = 1.0): void {
         if ($cost = $array ?? []) {
             $this->cost_value_gbp              -= $units * $this->value($cost, 'gbp');
             $this->cost_value_per_timestep_gbp -= $units * ($this->value($cost, 'gbp_per_year') + Energy::DAYS_PER_YEAR * $this->value($cost, 'gbp_per_day')) * $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);

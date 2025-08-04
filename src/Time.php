@@ -63,7 +63,7 @@ class Time {
     /**
      * @throws Exception
      */
-    public function next_time_step(): bool
+    public function nextTimeStep(): bool
     {
         if ($this->time < $this->time_end) {
             $this->time->add($this->time_step);
@@ -80,9 +80,9 @@ class Time {
         return $this->time->format('Y');
     }
 
-    public function month(): string
+    public function month(): int
     {
-        return $this->time->format('m');
+        return $this->time->format('n');
     }
 
     public function day_of_month(): string
@@ -130,14 +130,14 @@ class Time {
     public function values(): array
     {
         return [
-            'HOUR_OF_DAY'   => (int)(\Src\Energy::HOURS_PER_DAY * $this->fraction_day),
+            'HOUR_OF_DAY'   => (int)(Energy::HOURS_PER_DAY * $this->fraction_day),
             'MONTH_OF_YEAR' => (int)$this->time->format('F'),
             'DAY_OF_YEAR'   => (int)$this->time->format('z'),
             'YEAR'          => $this->year
         ];
     }
 
-    public function year_end(): bool
+    public function yearEnd(): bool
     {
         if ($this->year_end) {
             $this->year_end = false;

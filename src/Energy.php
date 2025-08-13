@@ -710,6 +710,7 @@ class Energy extends Root
      */
     function instantiateComponents($config): void {
         $this->time                         = new Time(           $this->check, $config);
+ //       $this->house                        = new ThermalTank(    $this->check, $config, false, $this->time);
         $this->hotwater_tank                = new ThermalTank(    $this->check, $config, false, $this->time);
         $this->demand_space_heating_thermal = new Demand(         $this->check, $config, 'space_heating_thermal',   $this->temp_internal_c);
         $this->demand_hotwater_thermal      = new Demand(         $this->check, $config, 'hot_water_thermal',       null);

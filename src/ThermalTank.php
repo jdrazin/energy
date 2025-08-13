@@ -10,13 +10,13 @@ class ThermalTank extends Component
 {
     const string COMPONENT_NAME = 'storage_hot_water';
     const array CHECKS = [
-        'storage_hot_water'                         => ['array'    => null           ],
-        'include'                                   => ['boolean'  => null           ],
-        'volume_m3'                                 => ['range'    => [0.0,      10.0]],
-        'immersion_kw'                              => ['range'    => [0.0,      10.0]],
-        'target_temperature_c'                      => ['range'    => [40.0,     95.0]],
-        'half_life_days'                            => ['range'    => [0.5,       7.0]],
-        'one_way_storage_efficiency_percent'        => ['range'    => [50.0,    100.0]],
+                            'storage_hot_water'                         => ['array'    => null           ],
+                            'include'                                   => ['boolean'  => null           ],
+                            'volume_m3'                                 => ['range'    => [0.0,      10.0]],
+                            'immersion_kw'                              => ['range'    => [0.0,      10.0]],
+                            'target_temperature_c'                      => ['range'    => [40.0,     95.0]],
+                            'half_life_days'                            => ['range'    => [0.5,       7.0]],
+                            'one_way_storage_efficiency_percent'        => ['range'    => [50.0,    100.0]],
     ];
     const   HEAT_CAPACITY_WATER_J_PER_M3_K = 4200000.0,
             TEMPERATURE_MAX_OPERATING_CELSIUS = 65.0;

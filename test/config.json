@@ -6,7 +6,7 @@
     "name": "hot water tank",
     "volume_m3": 0.19,
     "immersion_kw": 3.0,
-    "target_temperature_c": 45.0,
+    "target_temperature_c": 50.0,
     "half_life_days": 2.5
   },
   "battery": {
@@ -72,8 +72,8 @@
   },
   "boiler": {
     "include": true,
-    "output_kw": 12.0,
-    "efficiency_percent": 0.856,
+    "output_kw": 25.0,
+    "efficiency_percent": 0.9,
     "cost": {
       "gbp_per_year": 250.0
     }
@@ -82,7 +82,7 @@
     "name": "solar pv",
     "include": true,
     "cost": {
-      "gbp": 9000.0
+      "gbp": 15000
     },
     "panels": [
       {
@@ -130,7 +130,7 @@
         "include": true,
         "panel": "AIKO 455W",
         "panels_number": 16,
-        "shading_factor": 0.95,
+        "shading_factor": 0.99,
         "area": {
           "border_m": 0.2,
           "dimensions_footprint_axis": {
@@ -154,7 +154,7 @@
         "include": true,
         "panel": "AIKO 455W",
         "panels_number": 15,
-        "shading_factor": 0.85,
+        "shading_factor": 0.8,
         "area": {
           "border_m": 0.2,
           "dimensions_footprint_axis": {
@@ -256,7 +256,7 @@
     "cost": {
       "gbp": 30000.0
     },
-    "space_heating_demand_reduction_percent": 20
+    "energy_saving_percent": 20
   },
   "demands": {
     "#": "https://find-energy-certificate.service.gov.uk/energy-certificate/0665-2803-7016-9528-7435",
@@ -296,14 +296,14 @@
     "boiler": {
       "tariffs": [
         {
-          "name": "Domestic heating oil",
+          "name": "Texaco Oil, domestic heating oil",
           "months": [1,2,3,4,5,6,7,8,9,10,11,12],
           "import": {
             "hours": {
               "0": "standard"
             },
             "bands_gbp_per_kwh": {
-              "standard": 0.055
+              "standard": 0.065
               }
             }
         }
@@ -402,14 +402,12 @@
       "factors": [0.544, 0.554, 0.534, 0.58, 0.608, 0.585, 0.607, 0.608, 0.57, 0.533, 0.561, 0.57]
     },
     "temp_internal_celsius": 21,
+    "temp_internal_half_life_days": 1.5,
     "time_correction_fraction": 0
   },
   "time": {
     "discount_rate_pa": 0.04,
     "max_project_duration_years": 25,
     "step_seconds": 216
-  },
-  "combine": [
-
-  ]
+  }
 }

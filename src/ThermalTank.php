@@ -5,7 +5,7 @@ require_once __DIR__ . "/Energy.php";
 
 class ThermalTank extends Component
 {
-    public float $temperature_c, $capacity_c_per_joule, $one_way_storage_efficiency, $decay_rate_per_s, $charge_c_per_joule,
+    public float  $temperature_c, $capacity_c_per_joule, $one_way_storage_efficiency, $decay_rate_per_s, $charge_c_per_joule,
                   $discharge_c_per_joule, $temperature_max_operating_celsius;
     public bool $heat_pump;
 

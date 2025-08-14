@@ -15,7 +15,7 @@ class Demand
        ];
 
     public string $type;
-    public float $consumption_rates_sum;
+    public float $consumption_rates_sum, $total_annual_j;
     public array $hour_demands_j;
 
     /**
@@ -26,6 +26,7 @@ class Demand
         $hourly_consumption_weightings = $check->checkValue($config, self::COMPONENT_NAME, [$demand], 'hourly_consumption_weightings', self::CHECKS);
         $total_annual_kwh              = $check->checkValue($config, self::COMPONENT_NAME, [$demand], 'total_annual_kwh',              self::CHECKS);
         $total_daily_kwh               = $total_annual_kwh / Energy::DAYS_PER_YEAR;
+        $this->total_annual_j          = $total_annual_kwh * 1000.0 * Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY;
         $this->hour_demands_j = [];
         switch ($this->type) {
             case 'fixed':

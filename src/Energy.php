@@ -894,6 +894,9 @@ class Energy extends Root
                 if ($calibrating_scop) {
                     $this->average_temp_climate_c  = $sum_temp_climate_c  / $sum_count;
                     $this->average_temp_internal_c = $sum_temp_internal_c / $sum_count;
+                    $house_heating_w_per_c = ($this->demand_space_heating_thermal->total_annual_j +
+                                              $this->demand_hotwater_thermal     ->total_annual_j +
+                                              $this->demand_non_heating_electric ->total_annual_j) / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR * ($this->average_temp_internal_c - $this->average_temp_climate_c));
                     return $results;
                 }
             }

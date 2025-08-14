@@ -911,11 +911,11 @@ class Energy extends Root
                                                                 -32));
                     $solver = new Simplex\Solver($task);                        // get solutions
                     $solution = $solver->getSolution();                         // array('x1' => 0, 'x2' => 8, 'x3' => 8, 'x4' => 0)
-                    $alternativeSolutions = $solver->getAlternativeSolution();  // array(array('x1' => 4, 'x2' => 6, 'x3' => 0, 'x4' => 0))
+          /*          $alternativeSolutions = $solver->getAlternativeSolution();  // array(array('x1' => 4, 'x2' => 6, 'x3' => 0, 'x4' => 0))
                     $optimum = $solver->getSolutionValue($solution);            // optimal value = 16
                     $printer = new Simplex\Printer;                             // print solutions
                     $printer->printSolution($solver);
-                    $printer->printSolver($solver);                             // or print the whole solution process
+                    $printer->printSolver($solver);                             // or print the whole solution process */
                     return $results;
                 }
             }

@@ -101,7 +101,7 @@ final class NelderMead {
                 $xc = null; $fc = null;
                 if ($fr < $f[$n]) {
                     // Outside contraction
-                    $xc = $this->affine($centroid, $simplex[$n], $this->rho * 1.0);
+                    $xc = $this->affine($centroid, $simplex[$n], $this->rho);
                 } else {
                     // Inside contraction
                     $xc = $this->affine($centroid, $simplex[$n], -$this->rho);

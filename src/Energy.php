@@ -892,11 +892,12 @@ class Energy extends Root
             if ($this->time->yearEnd()) {                                                                                                                       // write summary to db at end of each year's simulation
                 $results = $this->yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined);                                       // summarise year at year end
                 if ($calibrating_scop) {
-                    $this->average_temp_climate_c  = $sum_temp_climate_c  / $sum_count;
-                    $this->average_temp_internal_c = $sum_temp_internal_c / $sum_count;
-                    $house_heating_w_per_c = ($this->demand_space_heating_thermal->total_annual_j +
-                                              $this->demand_hotwater_thermal     ->total_annual_j +
-                                              $this->demand_non_heating_electric ->total_annual_j) / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR * ($this->average_temp_internal_c - $this->average_temp_climate_c));
+                    $this->average_temp_climate_c      = $sum_temp_climate_c  / $sum_count;
+                    $this->average_temp_internal_c     = $sum_temp_internal_c / $sum_count;
+                    $house_heating_thermal_w_per_c     = $this->demand_space_heating_thermal->total_annual_j / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR * ($this->average_temp_internal_c - $this->average_temp_climate_c));
+                    $heat_capacity_j_per_c             = $house_heating_thermal_w_per_c / $house->decay_rate_per_s;
+                    $house->thermal_compliance_c_per_j = 1.0/$heat_capacity_j_per_c;
+                    $heat_capacity_kwh_per_c           = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
                     return $results;
                 }
             }

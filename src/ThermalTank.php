@@ -12,12 +12,6 @@ class ThermalTank extends Component
     public function __construct($check, $config, $component_name, $time)
     {
         parent::__construct($check, $config, $component_name, $time);
-        $half_life_days = $check->checkValue($config, $component_name, [], 'half_life_days', self::CHECKS, 1.0);
-        $this->decay_rate_per_s = log(2.0) / ($half_life_days * 24 * 3600);
-        $this->temperature_c = (new Climate)->temperatureTime($time);
-        $this->one_way_storage_efficiency = $check->checkValue($config, $component_name, [], 'one_way_storage_efficiency_percent', self::CHECKS, 100.0)/100.0;
-        $this->charge_c_per_joule = $this->capacity_c_per_joule * $this->one_way_storage_efficiency;
-        $this->discharge_c_per_joule = $this->capacity_c_per_joule;
     }
 
     public function transferConsumeJ($request_consumed_j, $temperature_external_c): array
@@ -45,6 +39,10 @@ class ThermalTank extends Component
                         'consume' => 0.0];                                                           // other no operation
             }
         }
+    }
+
+    public function cPerJoule($c_per_joule): void { // set thermal inertia
+        $this->charge_c_per_joule = $this->discharge_c_per_joule = $c_per_joule;
     }
 
     public function decay($temperature_ambient_c): void

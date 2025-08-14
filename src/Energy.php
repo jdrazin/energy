@@ -754,7 +754,8 @@ class Energy extends Root
         $this->install($components_included);                                                                                                // get install costs
         $this->yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined);                                       // summarise year 0
         if ($calibrating_scop) {                                                                                                             // get annual average external and internal temperatures
-            $house = new ThermalTank();
+            $house = new ThermalTank(null, null, 'House', $this->time);
+            $house->cPerJoule(1.0); // set heat capacity
         }
         while ($this->time->nextTimeStep()) {                                                                                                // timestep through years 0 ... N-1
             if ($calibrating_scop) {                                                                                                         // get annual average external and internal temperatures

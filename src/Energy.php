@@ -62,7 +62,7 @@ class Energy extends Root
     public HeatPump $heat_pump;
     public Insulation $insulation;
     public string $error;
-    public float $temp_climate_c, $temperature_internal_c, $temperature_internal_decay_rate_per_s;
+    public float $temp_climate_c, $temperature_internal_c, $temperature_internal_decay_rate_per_s, $average_temp_climate_c, $average_temp_internal_c;
     public array $temperature_target_hours;
 
     /**
@@ -760,6 +760,7 @@ class Energy extends Root
             $house = new ThermalTank(null, null, 'House', $this->time);
             $house->cPerJoule(1.0);                                                                                                 // set house thermal inertia
             $house->setTemperature($this->temp_climate_c);
+            $house->decay_rate_per_s = $this->temperature_internal_decay_rate_per_s;
             $sum_count = 0;
             $sum_temp_climate_c  = 0.0;
             $sum_temp_internal_c = 0.0;
@@ -768,10 +769,10 @@ class Energy extends Root
             $this->temp_climate_c = (new Climate())->temperatureTime($this->time);	                                                         // update climate temperature
             if ($calibrating_scop) {                                                                                                         // get annual average external and internal temperatures
                 if (!isset($this->temperature_target_hours[$this->time->values['HOUR_OF_DAY']])) {
-                    $this->house->decay($this->temp_climate_c);    // cool down
+                    $house->decay($this->temp_climate_c);    // cool down
                 }
                 else {
-
+                    $house->setTemperature($this->temperature_internal_c);                                                                   // restore to target temperature
                 }
                 $sum_count++;
                 $sum_temp_climate_c  += $this->temp_climate_c;
@@ -891,6 +892,8 @@ class Energy extends Root
             if ($this->time->yearEnd()) {                                                                                                                       // write summary to db at end of each year's simulation
                 $results = $this->yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined);                                       // summarise year at year end
                 if ($calibrating_scop) {
+                    $this->average_temp_climate_c  = $sum_temp_climate_c  / $sum_count;
+                    $this->average_temp_internal_c = $sum_temp_internal_c / $sum_count;
                     return $results;
                 }
             }

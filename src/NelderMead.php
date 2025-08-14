@@ -73,7 +73,7 @@ final class NelderMead {
             $centroid = $this->centroid($simplex, $n); // excluding worst later; we compute full then recompute below
             // Simple x-spread measure
             for ($i = 0; $i <= $n; $i++) {
-                $xspread = max($xspread, $simplex[0]->subtract($simplex[$i])->norm());
+                $xspread = max($xspread, $simplex[0]->subtract($simplex[$i])->l2norm());
             }
             if ($fspread < $this->ftol && $xspread < $this->xtol) break;
 
@@ -86,7 +86,7 @@ final class NelderMead {
 
             if ($fr < $f[0]) {
                 // Expansion
-                $xe = $this->affine($centroid, $simplex[$n], -$this->gamma); // move past reflection
+                $xe = $this->affine($centroid, $simplex[$n], $this->gamma); // expansion
                 $fe = $this->penalized($objective, $xe, $lower, $upper); $evals++;
                 if ($fe < $fr) {
                     $simplex[$n] = $xe; $f[$n] = $fe;

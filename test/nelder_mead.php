@@ -29,9 +29,8 @@ $objective = function (Vector $x): float {
 
 try {
     $result = $nm->minimize($objective, $x0, $step, $lb, $ub);
-} catch (BadDataException $e) {
-
-} catch (VectorException $e) {
+}
+catch (BadDataException|VectorException $e) {
 
 }
 

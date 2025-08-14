@@ -90,12 +90,11 @@ class HeatPump extends Component
 
     public function transferConsumeUpdate($transfer_consume_j, $time): void
     {
-        $time_values = $time->values();
         $kwh = [];
         $kwh['transfer_kwh'] = $transfer_consume_j['transfer'] / Energy::JOULES_PER_KWH;
         $kwh['consume_kwh']  = $transfer_consume_j['consume']  / Energy::JOULES_PER_KWH;
         foreach ($this->time_units as $time_unit => $number_unit_values) {
-            $time_value = $time_values[$time_unit];
+            $time_value = $time->values[$time_unit];
             $t = $this->kwh[$time_unit][$time_value];
             foreach ($t as $key => $value) {
                 $t[$key] += $kwh[$key];

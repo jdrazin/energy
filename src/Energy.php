@@ -8,10 +8,12 @@ use Exception;
 
 class Energy extends Root
 {
-    const   float JOULES_PER_KWH                    = 1000.0 * 3600.0;
-    const   float DAYS_PER_YEAR                     = 365.25;
-    const   int HOURS_PER_DAY                       = 24;
-    const   int SECONDS_PER_HOUR                    = 3600;
+    const   float   JOULES_PER_KWH                      = 1000.0 * 3600.0,
+                    DAYS_PER_YEAR                       = 365.25,
+                    DEFAULT_TEMPERATURE_TARGET_CELSIUS  = 21.0,
+                    TEMPERATURE_HALF_LIFE_DAYS          = 1.0;
+    const   int     HOURS_PER_DAY                       = 24,
+                    SECONDS_PER_HOUR                    = 3600;
     const array CHECKS                              = ['location' => [
                                                                         'coordinates'                   => ['array' => null          ],
                                                                         'latitude_degrees'              => ['range' => [ -90.0,  90.0]],
@@ -24,7 +26,8 @@ class Energy extends Root
                                                                         'time_correction_fraction'      => ['range' => [-1.0,     1.0]],
                                                                         'target_hours'                  => ['array' => [0,        23 ]],
                                                                      ]
-                                                      ];
+                                                      ],
+                    DEFAULT_TEMPERATURE_TARGET_HOURS = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
     const   array COMPONENT_ACRONYMS                = [''              => 'none',
                                                        'battery'       => 'B',
                                                        'boiler'        => 'BO',
@@ -686,9 +689,9 @@ class Energy extends Root
         $this->check->checkValue($config, 'location', [],              'cloud_cover_months', self::CHECKS['location']);
         $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'fractions',   self::CHECKS['location']);
         $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'factors',     self::CHECKS['location']);
-        $this->temperature_internal_c                = $this->check->checkValue($config, 'location', ['internal'],'temperature_target_celsius',  self::CHECKS['location']);
-        $this->temperature_internal_decay_rate_per_s = log(2.0) / ($this->check->checkValue($config, 'location', ['internal'],'temperature_half_life_days',  self::CHECKS['location']) * 24 * 3600);
-        $this->temperature_target_hours              = array_flip($this->check->checkValue($config, 'location', ['internal'],'target_hours',  self::CHECKS['location']));
+        $this->temperature_internal_c                = $this->check->checkValue($config, 'location', ['internal'],'temperature_target_celsius',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_TARGET_CELSIUS);
+        $this->temperature_internal_decay_rate_per_s = log(2.0) / ($this->check->checkValue($config, 'location', ['internal'],'temperature_half_life_days', self::CHECKS['location'], self::TEMPERATURE_HALF_LIFE_DAYS) * 24 * 3600);
+        $this->temperature_target_hours              = array_flip($this->check->checkValue($config, 'location', ['internal'],'target_hours',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_TARGET_HOURS));
         $this->instantiateComponents($config);
         if (!$pre_parse_only) {
             if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop

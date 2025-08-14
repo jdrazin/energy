@@ -21,17 +21,17 @@ class Time {
                                                                 ]
                             ];
 
-    const SECONDS_PER_DAY  = 60 * 60 * 24,
-          SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
+    const int|float SECONDS_PER_DAY  = 60 * 60 * 24;
+    const float SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
 
     public DateTime $time, $time_start, $time_end;
     public DateInterval $time_step;
 
     public bool $year_end;
-    public float $fraction_year, $fraction_day, $step_s, $discount_rate_pa, $discount_factor_pa;
+    public float $fraction_year, $fraction_day, $step_s, $discount_rate_pa;
     public string $timestamp;
     public int $step_count, $year;
-    public array $units;
+    public array $units, $values;
 
     /**
      * @throws Exception
@@ -101,6 +101,12 @@ class Time {
         $year = (int)date_diff($this->time_start, $this->time)->format('%R%y');
         $this->year_end = !($year == $this->year);
         $this->year = $year;
+        $this->values = [
+            'HOUR_OF_DAY'   => (int)(Energy::HOURS_PER_DAY * $this->fraction_day),
+            'MONTH_OF_YEAR' => (int)$this->time->format('F'),
+            'DAY_OF_YEAR'   => (int)$this->time->format('z'),
+            'YEAR'          => $this->year
+        ];
     }
 
     /**
@@ -125,16 +131,6 @@ class Time {
         $year_begin = new DateTime($this->year() . '-01-01 00:00:00');
         $timestamp_year_begin = $year_begin->getTimestamp();
         $this->fraction_year = ($timestamp - $timestamp_year_begin) / self::SECONDS_PER_YEAR;
-    }
-
-    public function values(): array
-    {
-        return [
-            'HOUR_OF_DAY'   => (int)(Energy::HOURS_PER_DAY * $this->fraction_day),
-            'MONTH_OF_YEAR' => (int)$this->time->format('F'),
-            'DAY_OF_YEAR'   => (int)$this->time->format('z'),
-            'YEAR'          => $this->year
-        ];
     }
 
     public function yearEnd(): bool

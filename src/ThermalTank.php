@@ -41,6 +41,10 @@ class ThermalTank extends Component
         }
     }
 
+    public function setTemperature($temperature_c): void { // set temperature
+        $this->temperature_c = $temperature_c;
+    }
+
     public function cPerJoule($c_per_joule): void { // set thermal inertia
         $this->charge_c_per_joule = $this->discharge_c_per_joule = $c_per_joule;
     }

@@ -760,11 +760,22 @@ class Energy extends Root
             $house = new ThermalTank(null, null, 'House', $this->time);
             $house->cPerJoule(1.0);                                                                                                 // set house thermal inertia
             $house->setTemperature($this->temp_climate_c);
+            $sum_count = 0;
+            $sum_temp_climate_c  = 0.0;
+            $sum_temp_internal_c = 0.0;
         }
         while ($this->time->nextTimeStep()) {                                                                                                // timestep through years 0 ... N-1
-            $this->temp_climate_c = (new Climate())->temperatureTime($this->time);	                                                             // update climate temperature
+            $this->temp_climate_c = (new Climate())->temperatureTime($this->time);	                                                         // update climate temperature
             if ($calibrating_scop) {                                                                                                         // get annual average external and internal temperatures
+                if (!isset($this->temperature_target_hours[$this->time->values['HOUR_OF_DAY']])) {
+                    $this->house->decay($this->temp_climate_c);    // cool down
+                }
+                else {
 
+                }
+                $sum_count++;
+                $sum_temp_climate_c  += $this->temp_climate_c;
+                $sum_temp_internal_c += $house->temperature_c;
             }
             $this->valueTimeStep($components_included, $this->time);                                                                         // add timestep component maintenance costs
             $this->supply_grid->updateTariff($this->time);                                                                                   // get supply bands

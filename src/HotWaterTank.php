@@ -26,7 +26,6 @@ class HotWaterTank extends ThermalTank
     {
         if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS, true)) {
             parent::__construct($check, $config, self::COMPONENT_NAME, $time);
-            $this->temperature_c = (new Climate)->temperatureTime($time);
             $this->one_way_storage_efficiency = $check->checkValue($config, self::COMPONENT_NAME, [], 'one_way_storage_efficiency_percent', self::CHECKS, self::DEFAULT_ONE_WAY_STORAGE_EFFICIENCY_PERCENT)/100.0;
             $this->decay_rate_per_s = log(2.0) / ($check->checkValue($config, self::COMPONENT_NAME, [], 'half_life_days', self::CHECKS, self::DEFAULT_HALF_LIFE_DAYS) * 24 * 3600);
             $volume_m3 = $check->checkValue($config, self::COMPONENT_NAME, [], 'volume_m3', self::CHECKS);

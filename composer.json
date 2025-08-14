@@ -23,7 +23,8 @@
     "php": "^8.3",
     "phpmailer/phpmailer": "^6.9.3",
     "slim/php-view": "^2.0",
-    "slim/slim" : "^4.14"
+    "slim/slim": "^4.14",
+    "uestla/simplex-calculator": "*"
     },
   "autoload": {
       "psr-4": {

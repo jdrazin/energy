@@ -902,6 +902,10 @@ class Energy extends Root
                 }
             }
         }
+        if ($calibrating_scop) { // optimise setback temperatures
+
+
+        }
         return $results;
     }
 

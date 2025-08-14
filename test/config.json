@@ -410,7 +410,7 @@
   },
   "time": {
     "discount_rate_pa": 0.04,
-    "max_project_duration_years": 25,
+    "max_project_duration_years": 1,
     "step_seconds": 216
   }
 }

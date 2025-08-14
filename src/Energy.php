@@ -902,8 +902,9 @@ class Energy extends Root
                     $house->thermal_compliance_c_per_j = 1.0/$heat_capacity_j_per_c;
                     $heat_capacity_kwh_per_c           = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
 
-                    $task = new Simplex\Task(new Simplex\Func(    ['x1' => 1, 'x2' => 2]));     // define task: Maximize x1 + 2x2
-                    $task->addRestriction(new Simplex\Restriction(['x1' => 3, 'x2' => 2],       // add constraints: 3x1 + 2x2 <= 24
+                    $func = new Simplex\Func(['x1' => 1, 'x2' => 2]);                           // define function:  f = x + 2x*x
+                    $task = new Simplex\Task($func);                                            // define task: Maximize x1 + 2x2
+                    $task->addRestriction(new Simplex\Restriction(['x1' => 3, 'x2' => 2],       // add constraints: 3x + 2x*x <= 24
                                                                 Simplex\Restriction::TYPE_LOE,
                                                                 24));
                     $task->addRestriction(new Simplex\Restriction(['x1' => -2, 'x2' => -4],    // create solver // -2x1 - 4x2 >= -32

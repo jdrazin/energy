@@ -112,8 +112,21 @@ class Check
         if (!is_array($value)) {
             throw new Exception($string . '\'' . $value . '\' must be array');
         }
-        if (!is_null($check_parameters) && count($value) != $check_parameters) {
-            throw new Exception($string . ' array must have ' . $check_parameters . ' elements');
+        if (is_array($check_parameters) && (count($check_parameters) == 2) && is_numeric($lo = $check_parameters[0]) && is_numeric($hi = $check_parameters[1])) {
+            foreach ($value as $v) {
+                if (!is_numeric($v)) {
+                    throw new Exception($string . ' array value ' . $v . ' must be numeric)');
+                }
+                if ($v < $lo) {
+                    throw new Exception($string . ' array value ' . $v . ' is too low (must exceed ' . $lo . ')');
+                }
+                if ($v > $hi) {
+                    throw new Exception($string . ' array value ' . $v . ' is too high (must not exceed ' . $hi . ')');
+                }
+            }
+            if (count($value) != $check_parameters) {
+                throw new Exception($string . ' array must have ' . $check_parameters . ' elements');
+            }
         }
     }
 

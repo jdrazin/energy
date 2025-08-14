@@ -13,14 +13,16 @@ class Energy extends Root
     const   int HOURS_PER_DAY                       = 24;
     const   int SECONDS_PER_HOUR                    = 3600;
     const array CHECKS                              = ['location' => [
-                                                                        'coordinates'              => ['array'       => null          ],
-                                                                        'latitude_degrees'         => ['range'       => [ -90.0,  90.0]],
-                                                                        'longitude_degrees'        => ['range'       => [-180.0, 180.0]],
-                                                                        'cloud_cover_months'       => ['array'       => null          ],
-                                                                        'fractions'                => ['array'       => 12            ],
-                                                                        'factors'                  => ['array'       => 12            ],
-                                                                        'temp_internal_celsius'    => ['range'       => [10.0,    30.0]],
-                                                                        'time_correction_fraction' => ['range'       => [-1.0, 1.0]    ]
+                                                                        'coordinates'                   => ['array' => null          ],
+                                                                        'latitude_degrees'              => ['range' => [ -90.0,  90.0]],
+                                                                        'longitude_degrees'             => ['range' => [-180.0, 180.0]],
+                                                                        'cloud_cover_months'            => ['array' => null          ],
+                                                                        'fractions'                     => ['array' => 12            ],
+                                                                        'factors'                       => ['array' => 12            ],
+                                                                        'temperature_target_celsius'    => ['range' => [10.0,    30.0]],
+                                                                        'temperature_half_life_days'    => ['range' => [0.1,     30.0]],
+                                                                        'time_correction_fraction'      => ['range' => [-1.0,     1.0]],
+                                                                        'target_hours'                  => ['array' => [0,        23 ]],
                                                                      ]
                                                       ];
     const   array COMPONENT_ACRONYMS                = [''              => 'none',
@@ -57,7 +59,8 @@ class Energy extends Root
     public HeatPump $heat_pump;
     public Insulation $insulation;
     public string $error;
-    public float $temp_internal_c;
+    public float $temperature_internal_c, $temperature_internal_decay_rate_per_s;
+    public array $temperature_target_hours;
 
     /**
      * @throws Exception
@@ -683,7 +686,9 @@ class Energy extends Root
         $this->check->checkValue($config, 'location', [],              'cloud_cover_months', self::CHECKS['location']);
         $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'fractions',   self::CHECKS['location']);
         $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'factors',     self::CHECKS['location']);
-        $this->temp_internal_c = $this->check->checkValue($config, 'location', [], 'temp_internal_celsius',        self::CHECKS['location']);
+        $this->temperature_internal_c                = $this->check->checkValue($config, 'location', ['internal'],'temperature_target_celsius',  self::CHECKS['location']);
+        $this->temperature_internal_decay_rate_per_s = log(2.0) / ($this->check->checkValue($config, 'location', ['internal'],'temperature_half_life_days',  self::CHECKS['location']) * 24 * 3600);
+        $this->temperature_target_hours              = array_flip($this->check->checkValue($config, 'location', ['internal'],'target_hours',  self::CHECKS['location']));
         $this->instantiateComponents($config);
         if (!$pre_parse_only) {
             if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
@@ -711,7 +716,7 @@ class Energy extends Root
     function instantiateComponents($config): void {
         $this->time                         = new Time(           $this->check, $config);
         $this->hot_water_tank               = new HotWaterTank(   $this->check, $config, false, $this->time);
-        $this->demand_space_heating_thermal = new Demand(         $this->check, $config, 'space_heating_thermal',   $this->temp_internal_c);
+        $this->demand_space_heating_thermal = new Demand(         $this->check, $config, 'space_heating_thermal',   $this->temperature_internal_c);
         $this->demand_hotwater_thermal      = new Demand(         $this->check, $config, 'hot_water_thermal',       null);
         $this->demand_non_heating_electric  = new Demand(         $this->check, $config, 'non_heating_electric',    null);
         $this->supply_grid                  = new Supply(         $this->check, $config, 'grid',                      $this->time);
@@ -765,7 +770,7 @@ class Energy extends Root
             // satisfy hot water demand
             $demand_thermal_hotwater_j                 = $this->demand_hotwater_thermal->demandJ($this->time);                               // hot water energy demand
             if ($demand_thermal_hotwater_j > 0.0) {
-                $hotwater_tank_transfer_consume_j      = $this->hot_water_tank->transferConsumeJ(-$demand_thermal_hotwater_j, $this->temp_internal_c); // try to satisfy demand from hotwater tank;
+                $hotwater_tank_transfer_consume_j      = $this->hot_water_tank->transferConsumeJ(-$demand_thermal_hotwater_j, $this->temperature_internal_c); // try to satisfy demand from hotwater tank;
                 if (($demand_thermal_hotwater_j += $hotwater_tank_transfer_consume_j['transfer']) > 0.0) {                                   // if insufficient energy in hotwater tank, get from elsewhere
                     if ($this->boiler->include) {                                                                                            // else use boiler if available
                         $boiler_j     = $this->boiler->transferConsumeJ($demand_thermal_hotwater_j);
@@ -778,7 +783,7 @@ class Energy extends Root
             }
             // heat hot water tank if necessary
             if ($this->solar_thermal->include) {
-                $solar_thermal_hotwater_j = $this->solar_thermal->transferConsumeJ($this->temp_internal_c, $this->time)['transfer'];         // generated solar thermal energy
+                $solar_thermal_hotwater_j = $this->solar_thermal->transferConsumeJ($this->temperature_internal_c, $this->time)['transfer'];         // generated solar thermal energy
                 if ($this->hot_water_tank->temperature_c < $this->hot_water_tank->target_temperature_c) {                                    // heat hot water tank from solar thermal if necessary                                                                          // top up with solar thermal
                     $solar_thermal_hotwater_j -= $this->hot_water_tank->transferConsumeJ($solar_thermal_hotwater_j, $temp_climate_c)['consume']; // deduct hot water consumption from solar thermal generation
                 }
@@ -793,16 +798,16 @@ class Energy extends Root
                                                                              $this->time,
                                                                              $cop_factor);
                     $supply_electric_j   -= $heatpump_j['consume'];                                                                          // consumes electricity
-                    $this->hot_water_tank->transferConsumeJ($heatpump_j['transfer'], $this->temp_internal_c);                                // put energy in hotwater tank
+                    $this->hot_water_tank->transferConsumeJ($heatpump_j['transfer'], $this->temperature_internal_c);                                // put energy in hotwater tank
                 }
                 elseif ($this->boiler->include) {                                                                                            // use boiler
                     $boiler_j           = $this->boiler->transferConsumeJ($this->boiler->max_output_j);                                      // get energy from boiler
-                    $hotwater_j         = $this->hot_water_tank->transferConsumeJ($boiler_j['transfer'], $this->temp_internal_c);            // put energy in hotwater tank
+                    $hotwater_j         = $this->hot_water_tank->transferConsumeJ($boiler_j['transfer'], $this->temperature_internal_c);            // put energy in hotwater tank
                     $supply_boiler_j   -= $hotwater_j['consume'];                                                                            // consumes oil/gas
                 }
                 else {                                                                                                                       // use immersion heater
                     $hotwater_j         = $this->hot_water_tank->transferConsumeJ($this->time->step_s * $this->hot_water_tank->immersion_w,
-                                                                                  $this->temp_internal_c);                                   // put energy in hotwater tank
+                                                                                  $this->temperature_internal_c);                                   // put energy in hotwater tank
                     $supply_electric_j -= $hotwater_j['consume'];                                                                            // consumes electricity
                 }
             }
@@ -814,7 +819,7 @@ class Energy extends Root
             if ($this->heat_pump->include) {                                                                                                                  // use heatpump if available
                 if ($demand_thermal_space_heating_j >= 0.0     && $this->heat_pump->heat) {                                                                   // heating
                     $heatpump_transfer_thermal_space_heating_j  = $this->heat_pump->transferConsumeJ($demand_thermal_space_heating_j,
-                                                                                    $this->temp_internal_c - $temp_climate_c,
+                                                                                    $this->temperature_internal_c - $temp_climate_c,
                                                                                                $this->time,
                                                                                                $cop_factor);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
@@ -822,7 +827,7 @@ class Energy extends Root
                 }
                 elseif ($demand_thermal_space_heating_j <  0.0 && $this->heat_pump->cool) {                                                                   // cooling
                     $heatpump_transfer_thermal_space_heating_j  = $this->heat_pump->transferConsumeJ($demand_thermal_space_heating_j,
-                                                                                     $temp_climate_c - $this->temp_internal_c,
+                                                                                     $temp_climate_c - $this->temperature_internal_c,
                                                                                                 $this->time,
                                                                                                 $cop_factor);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
@@ -856,7 +861,7 @@ class Energy extends Root
             }
             $this->supply_grid->transferTimestepConsumeJ($this->time,  $supply_electric_j);                                                                     // import if supply -ve, export if +ve
             $this->supply_boiler->transferTimestepConsumeJ($this->time, $supply_boiler_j);                                                                      // import boiler fuel consumed
-            $this->hot_water_tank->decay(0.5*($this->temp_internal_c+$temp_climate_c));                                                       // hot water tank cooling to midway between room and outside temps
+            $this->hot_water_tank->decay(0.5*($this->temperature_internal_c+$temp_climate_c));                                                       // hot water tank cooling to midway between room and outside temps
             if ($this->time->yearEnd()) {                                                                                                                       // write summary to db at end of each year's simulation
                 $results = $this->yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined);                                       // summarise year at year end
                 if ($calibrating_scop) {

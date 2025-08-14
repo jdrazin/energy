@@ -9,21 +9,22 @@ use MathPHP\Exception\VectorException;
 use MathPHP\LinearAlgebra\Vector;
 
 $nm = new NelderMead();
-$nm->maxIter = 5000;       // allow more iterations for 24D
-$nm->maxEval = 200000;
+$nm->maxIter = 50000;       // allow more iterations for 24D
+$nm->maxEval = 2000000;
 
-$n  = 24;
-$x0 = array_fill(0, $n, 5.0);
-$lb = array_fill(0, $n, -10.0);
-$ub = array_fill(0, $n,  10.0);
-$step = array_fill(0, $n, 1.0);
+$n      = 24;
+$x0     = array_fill(0, $n, 5.0);
+$lb     = array_fill(0, $n, -10.0);
+$ub     = array_fill(0, $n,  10.0);
+$step   = array_fill(0, $n, 1.0);
 
 // Objective: sum((x_i - 3)^2) with mild noise
 $objective = function (Vector $x): float {
-    $v = $x->getVector();
+    $v   = $x->getVector();
     $sum = 0.0;
-    foreach ($v as $xi) {
-        $sum += ($xi - 3.0) * ($xi - 3.0);
+    $max = (float) count($v)-1;
+    foreach ($v as $k => $xi) {
+        $sum += ($xi - ($k/$max)) * ($xi - ($k/$max));
     }
     return $sum + 1e-6 * mt_rand() / mt_getrandmax(); // optional noise
 };

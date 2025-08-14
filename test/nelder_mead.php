@@ -1,4 +1,5 @@
 <?php
+// see https://chatgpt.com/c/689e483a-8e68-8324-b1a9-4273c7f33a25
 declare(strict_types=1);
 namespace Src;
 require_once __DIR__ . '/../vendor/autoload.php';

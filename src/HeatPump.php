@@ -32,7 +32,7 @@ class HeatPump extends Component
     const float     DEFAULT_RADIATOR_TEMP_MAX_C =  50.0,
                     DEFAULT_OUTSIDE_TEMP_MIN_C  = -5.0;
 
-    public float $heat, $cool, $max_output_j, $energy_background_step_j, $radiator_temp_max_c, $outside_temp_min_c, $temp_delta_max_c;
+    public float $heat, $cool, $max_output_w, $max_output_j, $energy_background_step_j, $radiator_temp_max_c, $outside_temp_min_c, $temp_delta_max_c;
     public array $cops, $kwh;
 
     public function __construct($check, $config, $time)
@@ -46,7 +46,8 @@ class HeatPump extends Component
             $this->temp_delta_max_c    = $this->radiator_temp_max_c - $this->outside_temp_min_c;
             ksort($this->cops);  // ensure cops data are in temperature order
             $check->checkValue($config, self::COMPONENT_NAME, [], 'power', self::CHECKS);
-            $this->max_output_j = 1000.0 * $check->checkValue($config, self::COMPONENT_NAME, ['power'], 'output_kw', self::CHECKS) * $this->step_s;
+            $this->max_output_w = 1000.0 * $check->checkValue($config, self::COMPONENT_NAME, ['power'], 'output_kw', self::CHECKS);
+            $this->max_output_j = $this->max_output_w * $this->step_s;
             $this->energy_background_step_j = $check->checkValue($config, self::COMPONENT_NAME, ['power'], 'background_w', self::CHECKS, 0.0) * $this->step_s;
             $this->heat = $check->checkValue($config, self::COMPONENT_NAME, [], 'heat', self::CHECKS, true);
             $this->cool = $check->checkValue($config, self::COMPONENT_NAME, [], 'cool', self::CHECKS, false);

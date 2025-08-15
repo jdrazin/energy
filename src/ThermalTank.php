@@ -29,7 +29,8 @@ class ThermalTank extends Component
             }
             return ['transfer' => $request_consumed_j,                                               // thermal energy transferred to tank
                     'consume' => $request_consumed_j];                                               // does not consume energy
-        } else {                                                                                     // draw energy from tank
+        }
+        else {                                                                                     // draw energy from tank
             if ($this->temperature_c > $temperature_external_c) {
                 $this->temperature_c += $request_consumed_j * $this->discharge_c_per_joule;
                 return ['transfer' => $request_consumed_j,                                           // thermal energy transferred to tank

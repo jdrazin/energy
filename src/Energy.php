@@ -10,14 +10,15 @@ use Exception;
 
 class Energy extends Root
 {
-    const   float   JOULES_PER_KWH                      = 1000.0 * 3600.0,
-                    DAYS_PER_YEAR                       = 365.25,
-                    MONTHS_PER_YEAR                     = 12,
-                    DEFAULT_TEMPERATURE_TARGET_CELSIUS  = 21.0,
-                    DEFAULT_SETBACK_DELTA_CELSIUS       = 5.0,
-                    TEMPERATURE_HALF_LIFE_DAYS          = 1.0;
-    const   int     HOURS_PER_DAY                       = 24,
-                    SECONDS_PER_HOUR                    = 3600;
+    const   float   JOULES_PER_KWH                                       = 1000.0 * 3600.0,
+                    DAYS_PER_YEAR                                        = 365.25,
+                    MONTHS_PER_YEAR                                      = 12,
+                    DEFAULT_TEMPERATURE_TARGET_CELSIUS                   = 21.0,
+                    DEFAULT_TEMPERATURE_INTOLERANCE_GBP_PER_CELSIUS2_HOUR = 0.5,
+                    DEFAULT_SETBACK_DELTA_CELSIUS                        = 5.0,
+                    TEMPERATURE_HALF_LIFE_DAYS                           = 1.0;
+    const   int     HOURS_PER_DAY                                        = 24,
+                    SECONDS_PER_HOUR                                     = 3600;
     const array CHECKS                              = ['location' => [
                                                                         'coordinates'                   => ['array' => null          ],
                                                                         'latitude_degrees'              => ['range' => [ -90.0,  90.0]],
@@ -66,7 +67,7 @@ class Energy extends Root
     public HeatPump $heat_pump;
     public Insulation $insulation;
     public string $error;
-    public float $temp_climate_c, $temperature_target_internal_c, $temperature_internal_decay_rate_per_s, $average_temp_climate_c, $average_temp_internal_c;
+    public float $temp_climate_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius2_hour, $temperature_internal_decay_rate_per_s, $average_temp_climate_c, $average_temp_internal_c;
     public array $temperature_target_hours;
 
     /**
@@ -696,9 +697,10 @@ class Energy extends Root
         $this->check->checkValue($config, 'location', [],              'cloud_cover_months', self::CHECKS['location']);
         $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'fractions',   self::CHECKS['location']);
         $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'factors',     self::CHECKS['location']);
-        $this->temperature_target_internal_c         = $this->check->checkValue($config, 'location', ['internal'],'temperature_target_celsius',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_TARGET_CELSIUS);
-        $this->temperature_internal_decay_rate_per_s = log(2.0) / ($this->check->checkValue($config, 'location', ['internal'],'temperature_half_life_days', self::CHECKS['location'], self::TEMPERATURE_HALF_LIFE_DAYS) * 24 * 3600);
-        $this->temperature_target_hours              = array_flip($this->check->checkValue($config, 'location', ['internal'],'target_hours',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_TARGET_HOURS));
+        $this->temperature_target_internal_c                 = $this->check->checkValue($config, 'location', ['internal'],'temperature_target_celsius',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_TARGET_CELSIUS);
+        $this->temperature_intolerance_gbp_per_celsius2_hour = $this->check->checkValue($config, 'location', ['internal'],'temperature_intolerance_gbp_per_celsius_hour',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_INTOLERANCE_GBP_PER_CELSIUS2_HOUR);
+        $this->temperature_internal_decay_rate_per_s         = log(2.0) / ($this->check->checkValue($config, 'location', ['internal'],'temperature_half_life_days', self::CHECKS['location'], self::TEMPERATURE_HALF_LIFE_DAYS) * 24 * 3600);
+        $this->temperature_target_hours                      = array_flip($this->check->checkValue($config, 'location', ['internal'],'target_hours',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_TARGET_HOURS));
         $this->instantiateComponents($config);
         if (!$pre_parse_only) {
             if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
@@ -927,6 +929,7 @@ class Energy extends Root
                         }
                         $day_cost = $this->dayCost( $setback_temps_c,
                                                     $this->temperature_target_internal_c,
+                                                    $this->temperature_intolerance_gbp_per_celsius2_hour,
                                                     $this->temperature_target_hours,
                                                     $this->time->step_s,
                                                     $climate_temps,
@@ -944,23 +947,30 @@ class Energy extends Root
         return $results;
     }
 
-    function dayCost($setback_temps_c, $temperature_target_internal_c, $target_hours, $time_step_s, $climate_temps, $import_gbp_per_kwh, $house, $heat_pump): float {
+    function dayCost($setback_temps_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius2_hour, $target_hours, $time_step_s, $climate_temps, $import_gbp_per_kwh, $house, $heat_pump): float {
         $day_cost = 0.0;
         $steps_count = count($climate_temps);
         $seconds = 0;
         for ($step = 0; $step < $steps_count; $step++) {
-            $hour                = (int) ($seconds / self::SECONDS_PER_HOUR);
-            $temp_target_c       = isset($target_hours[$hour]) ? $temperature_target_internal_c : $setback_temps_c[$hour];
-            if ($temp_target_c < $house->temperature_c) {
-                $climate_temp_c     = $climate_temps[$step];
+            if (isset($target_hours[$hour = (int) ($seconds / self::SECONDS_PER_HOUR)])) { // temperature targeting
+                $temp_target_c            = $temperature_target_internal_c;
+                $delta_target_internal_c  = $temp_target_c - $house->temperature_c;
+                $day_cost                += $temperature_intolerance_gbp_per_celsius2_hour * $delta_target_internal_c * $delta_target_internal_c;   // add temperature intolerance cost
+            }
+            else {  // temperature setback
+                $temp_target_c            = $setback_temps_c[$hour];
+                $delta_target_internal_c  = $temp_target_c - $house->temperature_c;
+            }
+            $climate_temp_c = $climate_temps[$step];
+            if ($delta_target_internal_c > 0) {   // heat house if target after internal temperature
                 $cop                = $heat_pump->cop($temp_target_c - $climate_temp_c);
                 $import_gbp_per_kwh = $import_gbp_per_kwh[$step];
-                $power_thermal_w    = $heat_pump->max_output_w * (($temp_target_c - $climate_temp_c) / $heat_pump->temp_delta_max);
-                $power_electric_j   = $power_thermal_w * $time_step_s / $cop;
-
+                $power_thermal_w    = $heat_pump->max_output_w * (($temp_target_c - $climate_temp_c) / $heat_pump->temp_delta_max_c);
+                $heat_pump->transferConsumeJ($power_thermal_w, $climate_temp_c);
+                $electric_j         = $power_thermal_w * $time_step_s / $cop;
+                $day_cost           += $electric_j * $import_gbp_per_kwh / self::JOULES_PER_KWH;                                       // add heating cost
             }
-
-
+        $heat_pump->decay($climate_temp_c);
         $seconds += $time_step_s;
         }
         return $day_cost;

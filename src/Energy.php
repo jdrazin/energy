@@ -14,6 +14,7 @@ class Energy extends Root
                     DAYS_PER_YEAR                       = 365.25,
                     MONTHS_PER_YEAR                     = 12,
                     DEFAULT_TEMPERATURE_TARGET_CELSIUS  = 21.0,
+                    DEFAULT_SETBACK_DELTA_CELSIUS       = 5.0,
                     TEMPERATURE_HALF_LIFE_DAYS          = 1.0;
     const   int     HOURS_PER_DAY                       = 24,
                     SECONDS_PER_HOUR                    = 3600;
@@ -921,11 +922,9 @@ class Energy extends Root
                         // load setback hour first guesses
                         $setback_temps_c = [];
                         for ($hour = 0; $hour < self::HOURS_PER_DAY; $hour++) {
-                            $setback_temps_c[$hour] = $this->temperature_target_internal_c;
+                            $setback_temps_c[$hour] = isset($this->temperature_target_hours[$hour]) ? $this->temperature_target_internal_c :
+                                                                                                      $this->temperature_target_internal_c - self::DEFAULT_SETBACK_DELTA_CELSIUS;  
                         }
-
-
-
                         $day_cost = $this->dayCost( $setback_temps_c,
                                                     $this->temperature_target_internal_c,
                                                     $this->temperature_target_hours,
@@ -953,12 +952,16 @@ class Energy extends Root
             $hour                = (int) ($seconds / self::SECONDS_PER_HOUR);
             $temp_target_c       = isset($target_hours[$hour]) ? $temperature_target_internal_c : $setback_temps_c[$hour];
             if ($temp_target_c < $house->temperature_c) {
+                $climate_temp_c     = $climate_temps[$step];
+                $cop                = $heat_pump->cop($temp_target_c - $climate_temp_c);
                 $import_gbp_per_kwh = $import_gbp_per_kwh[$step];
-                $cop = $heat_pump->cop($temp_target_c - $climate_temps[$step]);
+                $power_thermal_w    = $heat_pump->max_output_w * (($temp_target_c - $climate_temp_c) / $heat_pump->temp_delta_max);
+                $power_electric_j   = $power_thermal_w * $time_step_s / $cop;
+
             }
 
 
-
+        $seconds += $time_step_s;
         }
         return $day_cost;
     }

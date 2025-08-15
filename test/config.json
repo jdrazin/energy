@@ -50,19 +50,23 @@
       "gbp_per_year": 250.0
     },
     "scop" : 3.62,
-    "cops": {
-      "0": 5.1,
-      "5": 5.0,
-      "10": 4.9,
-      "20": 4.5,
-      "30": 4.0,
-      "40": 3.0,
-      "50": 2.0,
-      "60": 1.5,
-      "70": 1.2,
-      "80": 1.1,
-      "90": 1.0,
-      "100": 0.95
+    "design" : {
+      "radiator_temp_max_c" : 45.0,
+      "outside_temp_min_c" : -5.0,
+      "cops": {
+        "0": 5.1,
+        "5": 5.0,
+        "10": 4.9,
+        "20": 4.5,
+        "30": 4.0,
+        "40": 3.0,
+        "50": 2.0,
+        "60": 1.5,
+        "70": 1.2,
+        "80": 1.1,
+        "90": 1.0,
+        "100": 0.95
+      }
     },
     "#": "https://www.researchgate.net/figure/COP-of-the-air-to-water-heat-pump-with-different-load-side-inlet-temperatures-Based-on_fig1_326114264",
     "power": {

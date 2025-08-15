@@ -20,7 +20,7 @@ class ThermalTank extends Component
             if ($this->temperature_c < $this->temperature_max_operating_celsius) {                   // heat up if within max operating temperature
               $this->temperature_c += $request_consumed_j * $this->charge_c_per_joule;
               return ['transfer' => $request_consumed_j,                                             // thermal energy transferred to tank
-                    'consume'  => $request_consumed_j];                                              // does not consume energy
+                      'consume'  => $request_consumed_j];
             }
             else {
               return ['transfer' => 0.0,

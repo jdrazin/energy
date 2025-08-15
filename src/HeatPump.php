@@ -1,22 +1,38 @@
 <?php
 namespace Src;
 
+use Exception;
+
 class HeatPump extends Component
 {
     const string COMPONENT_NAME = 'heat_pump';
-    const array CHECKS = [
-        'battery'                                   => ['array'             => null             ],
-        'include'                                   => ['boolean'           => null             ],
-        'scop'                                      => ['range'             => [1.0,      10.0] ],
-        'cops'                                      => ['temperature_cops'  => null             ],
-        'power'                                     => ['array'             => null             ],
-        'output_kw'                                 => ['range'             => [0.5,     100.0] ],
-        'background_w'                              => ['range'             => [0.0,    1000.0] ],
-        'heat'                                      => ['boolean'           => null             ],
-        'cool'                                      => ['boolean'           => null             ],
-    ];
+    const array CHECKS = [  'battery'             => ['array'             => null             ],
+                            'include'             => ['boolean'           => null             ],
+                            'scop'                => ['range'             => [1.0,      10.0] ],
+                            'cops'                => ['temperature_cops'  => null             ],
+                            'radiator_temp_max_c' => ['range'             => [ 25.0,      90.0]],
+                            'outside_temp_min_c'  => ['range'             => [-25.0,      5.0]],
+                            'power'               => ['array'             => null             ],
+                            'output_kw'           => ['range'             => [0.5,     100.0] ],
+                            'background_w'        => ['range'             => [0.0,    1000.0] ],
+                            'heat'                => ['boolean'           => null             ],
+                            'cool'                => ['boolean'           => null             ],],
+                DEFAULT_COPS = [   0 =>  5.1,
+                                   5 =>  5.0,
+                                  10 =>  4.9,
+                                  20 =>  4.5,
+                                  30 =>  4.0,
+                                  40 =>  3.0,
+                                  50 =>  2.0,
+                                  60 =>  1.5,
+                                  70 =>  1.2,
+                                  80 =>  1.1,
+                                  90 =>  1.0,
+                                 100 =>  0.95];
+    const float     DEFAULT_RADIATOR_TEMP_MAX_C =  50.0,
+                    DEFAULT_OUTSIDE_TEMP_MIN_C  = -5.0;
 
-    public float $heat, $cool, $max_output_j, $energy_background_step_j;
+    public float $heat, $cool, $max_output_j, $energy_background_step_j, $radiator_temp_max_c, $outside_temp_min_c, $temp_delta_max_c;
     public array $cops, $kwh;
 
     public function __construct($check, $config, $time)
@@ -24,10 +40,13 @@ class HeatPump extends Component
         if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS)) {
             parent::__construct($check, $config, self::COMPONENT_NAME, $time);
             $this->sumCosts($check->checkValue($config, self::COMPONENT_NAME, [], 'cost', self::CHECKS));
-            $this->cops = $check->checkValue($config, self::COMPONENT_NAME, [], 'cops', self::CHECKS);
+            $this->cops = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'cops', self::CHECKS, self::DEFAULT_COPS);
+            $this->radiator_temp_max_c = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'radiator_temp_max_c', self::CHECKS, self::DEFAULT_RADIATOR_TEMP_MAX_C);
+            $this->outside_temp_min_c  = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'outside_temp_min_c', self::CHECKS, self::DEFAULT_OUTSIDE_TEMP_MIN_C);
+            $this->temp_delta_max_c    = $this->radiator_temp_max_c - $this->outside_temp_min_c;
             ksort($this->cops);  // ensure cops data are in temperature order
             $check->checkValue($config, self::COMPONENT_NAME, [], 'power', self::CHECKS);
-            $this->max_output_j             = 1000.0 * $check->checkValue($config, self::COMPONENT_NAME, ['power'], 'output_kw', self::CHECKS) * $this->step_s;
+            $this->max_output_j = 1000.0 * $check->checkValue($config, self::COMPONENT_NAME, ['power'], 'output_kw', self::CHECKS) * $this->step_s;
             $this->energy_background_step_j = $check->checkValue($config, self::COMPONENT_NAME, ['power'], 'background_w', self::CHECKS, 0.0) * $this->step_s;
             $this->heat = $check->checkValue($config, self::COMPONENT_NAME, [], 'heat', self::CHECKS, true);
             $this->cool = $check->checkValue($config, self::COMPONENT_NAME, [], 'cool', self::CHECKS, false);
@@ -52,19 +71,25 @@ class HeatPump extends Component
         return $transfer_consume_j;
     }
 
-    public function cop($temperature_delta_c): float
-    {
+    /**
+     * @throws Exception
+     */
+    public function cop($temperature_delta_c): float {
+        $temp_lo             = $cop_lo = null;
         $temperature_delta_c = abs($temperature_delta_c);
-        $first = true;
-        foreach ($this->cops as $temp_delta_c => $cop) {
+        $first               = true;
+        foreach ($this->cops as $temp_delta_c => $cop) {  // linearly interpolate cop between adjacent values
             if ($first) {
-                $temp_lo = (float)$temp_delta_c;
-                $cop_lo = (float)$cop;
-                $first = false;
+                $temp_lo = (float) $temp_delta_c;
+                $cop_lo  = (float) $cop;
+                $first   = false;
             }
-            $element_cop = (float)$cop;
-            $element_temp = (float)$temp_delta_c;
+            $element_cop  = (float) $cop;
+            $element_temp = (float) $temp_delta_c;
             if ($element_temp > $temperature_delta_c) {
+                if (is_null($temp_lo) || is_null($cop_lo)) {
+                    break;
+                }
                 $dividend = ($temperature_delta_c - $temp_lo) * ($element_cop - $cop_lo);
                 $divisor  = $element_temp - $temp_lo;
                 return $cop_lo + ($dividend / $divisor);
@@ -72,7 +97,7 @@ class HeatPump extends Component
             $temp_lo = $element_temp;
             $cop_lo = $element_cop;
         }
-        return $cop;
+        throw new Exception('cop: temperature difference ' . $temperature_delta_c . ' is unbounded');
     }
 
     public function zeroKwh(): array

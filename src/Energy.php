@@ -12,6 +12,7 @@ class Energy extends Root
 {
     const   float   JOULES_PER_KWH                      = 1000.0 * 3600.0,
                     DAYS_PER_YEAR                       = 365.25,
+                    MONTHS_PER_YEAR                     = 12,
                     DEFAULT_TEMPERATURE_TARGET_CELSIUS  = 21.0,
                     TEMPERATURE_HALF_LIFE_DAYS          = 1.0;
     const   int     HOURS_PER_DAY                       = 24,
@@ -439,6 +440,9 @@ class Energy extends Root
         }
     }
 
+    /**
+     * @throws Exception
+     */
     private function projectionStatus($id, $status): void {
         $this->mysqli->commit();
         $sql = 'UPDATE  `projections`
@@ -901,6 +905,23 @@ class Energy extends Root
                     $house->thermal_compliance_c_per_j = 1.0/$heat_capacity_j_per_c;
                     $heat_capacity_kwh_per_c           = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
 
+                    $steps_per_day = self::HOURS_PER_DAY * self::SECONDS_PER_HOUR / $this->time->step_s;
+                    $month = 1;  // optimise set back temperatures for each month of the year
+                    while ($month <= self::MONTHS_PER_YEAR) {
+                        $this->time->beginDayMiddle($month);
+                        $step_count = 0;
+                        $climate_temps = [];
+                        while ($step_count < $steps_per_day) { // make problem arrays
+                            $climate_temps[$step_count] = (new Climate())->temperatureTime($this->time);
+                            $this->supply_grid->updateTariff($this->time);
+                            $import_rates[$step_count] = $this->supply_grid->tariff['import'][$this->time->values['HOUR_OF_DAY']]['gbp_per_kwh'];
+                            $this->time->nextTimeStep();
+                            $step_count++;
+                        }
+
+                        $month++;
+                    }
+
 
                     return $results;
                 }
@@ -909,6 +930,16 @@ class Energy extends Root
 
 
         return $results;
+    }
+
+    function dayCost($setback_temps, $time_step_s, $climate_temps, $import_rates,  ): float {
+
+        $day_cost = 0.0;
+        $steps_count = count($climate_temps);
+        while ($time_s < self::HOURS_PER_DAY * self::SECONDS_PER_HOUR) {
+            $time_s += $time_step_s;
+        }
+        return $day_cost;
     }
 
     /**

@@ -9,7 +9,7 @@ use MathPHP\Exception\VectorException;
 use MathPHP\LinearAlgebra\Vector;
 
 $nm = new NelderMead();
-$nm->maxIter = 50000;       // allow more iterations for 24D
+$nm->maxIter = 50000;
 $nm->maxEval = 2000000;
 
 $n      = 24;

@@ -133,13 +133,23 @@ class Time {
         $this->fraction_year = ($timestamp - $timestamp_year_begin) / self::SECONDS_PER_YEAR;
     }
 
-    public function yearEnd(): bool
-    {
+    public function yearEnd(): bool {
         if ($this->year_end) {
             $this->year_end = false;
             return true;
         } else {
             return false;
         }
+    }
+
+    /**
+     * @throws DateMalformedStringException
+     * @throws Exception
+     */
+    public function beginDayMiddle($month): void {  // sets time to beginning of day in middle of month
+        $this->time_start = new DateTime('2025-01-15 00:00:00');
+        $this->time_start->modify('+' . $month-1 . ' month');
+        $this->time = clone $this->time_start;
+        $this->update();
     }
 }

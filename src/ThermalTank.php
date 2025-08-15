@@ -5,9 +5,8 @@ require_once __DIR__ . "/Energy.php";
 
 class ThermalTank extends Component
 {
-    public float  $temperature_c, $thermal_compliance_c_per_j, $one_way_storage_efficiency, $decay_rate_per_s, $charge_c_per_joule,
+    public float  $temperature_c, $thermal_compliance_c_per_j, $decay_rate_per_s, $charge_c_per_joule,
                   $discharge_c_per_joule, $temperature_max_operating_celsius;
-    public bool $heat_pump;
 
     public function __construct($check, $config, $component_name, $time)
     {
@@ -18,19 +17,17 @@ class ThermalTank extends Component
     {  // adds to (+ve) / subtracts from (-ve) tank
 
         if ($request_consumed_j > 0.0) {                                                             // add energy to tank
-            $thermal_energy_j = $request_consumed_j * $this->charge_c_per_joule;
-            if ($this->heat_pump) {
-                $this->temperature_c += $thermal_energy_j;                                           // if heat pump:  transfer heat energy to (+ve) /from (-ve) thermal reservoir
-            } elseif ($this->temperature_c < $this->temperature_max_operating_celsius) {
-                $this->temperature_c += $thermal_energy_j;                                           // heat up water provided within max operating temperature
-            } else {
-                return ['transfer' => 0.0,
-                        'consume' => 0.0];                                                           // other no operation
+            if ($this->temperature_c < $this->temperature_max_operating_celsius) {                   // heat up if within max operating temperature
+              $this->temperature_c += $request_consumed_j * $this->charge_c_per_joule;
+              return ['transfer' => $request_consumed_j,                                             // thermal energy transferred to tank
+                    'consume'  => $request_consumed_j];                                              // does not consume energy
             }
-            return ['transfer' => $request_consumed_j,                                               // thermal energy transferred to tank
-                    'consume' => $request_consumed_j];                                               // does not consume energy
+            else {
+              return ['transfer' => 0.0,
+                      'consume' => 0.0];                                                             // otherwise no operation
+            }
         }
-        else {                                                                                     // draw energy from tank
+        else {                                                                                       // draw energy from tank
             if ($this->temperature_c > $temperature_external_c) {
                 $this->temperature_c += $request_consumed_j * $this->discharge_c_per_joule;
                 return ['transfer' => $request_consumed_j,                                           // thermal energy transferred to tank

@@ -32,13 +32,14 @@ class HeatPump extends Component
     const float     DEFAULT_RADIATOR_TEMP_MAX_C =  50.0,
                     DEFAULT_OUTSIDE_TEMP_MIN_C  = -5.0;
 
-    public float $heat, $cool, $max_output_w, $max_output_j, $energy_background_step_j, $radiator_temp_max_c, $outside_temp_min_c, $temp_delta_max_c;
+    public float $scop, $cop_factor, $heat, $cool, $max_output_w, $max_output_j, $energy_background_step_j, $radiator_temp_max_c, $outside_temp_min_c, $temp_delta_max_c;
     public array $cops, $kwh;
 
     public function __construct($check, $config, $time)
     {
         if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS)) {
             parent::__construct($check, $config, self::COMPONENT_NAME, $time);
+            $this->scop = $check->checkValue($config, self::COMPONENT_NAME, [], 'scop', self::CHECKS, 1.0);
             $this->sumCosts($check->checkValue($config, self::COMPONENT_NAME, [], 'cost', self::CHECKS));
             $this->cops = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'cops', self::CHECKS, self::DEFAULT_COPS);
             $this->radiator_temp_max_c = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'radiator_temp_max_c', self::CHECKS, self::DEFAULT_RADIATOR_TEMP_MAX_C);
@@ -56,13 +57,16 @@ class HeatPump extends Component
         }
     }
 
-    public function transferConsumeJ($request_transfer_consume_j, $temp_delta_c, $time, $cop_factor): array
+    /**
+     * @throws Exception
+     */
+    public function transferConsumeJ($request_transfer_consume_j, $temp_delta_c, $time): array
     {
         if (!$this->include || !$request_transfer_consume_j) {
             $transfer_consume_j = ['transfer' => 0.0,
                                    'consume'  => 0.0];
         } else {
-            $cop = $this->cop($temp_delta_c)*$cop_factor;
+            $cop = $this->cop($temp_delta_c)*$this->cop_factor;
             $transfer_cap_j = min($request_transfer_consume_j, $this->max_output_j);        // cap transfer at heatpump capacity
             $consumed_cap_j = $this->energy_background_step_j + ($transfer_cap_j / $cop);
             $transfer_consume_j = ['transfer' => $transfer_cap_j,

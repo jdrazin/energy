@@ -67,7 +67,7 @@ class Energy extends Root
     public HeatPump $heat_pump;
     public Insulation $insulation;
     public string $error;
-    public float $temp_climate_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius2_hour, $temperature_internal_decay_rate_per_s, $average_temp_climate_c, $average_temp_internal_c;
+    public float $temp_climate_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius2_hour, $temperature_internal_decay_rate_per_s, $average_temp_climate_c, $average_temp_internal_c, $cop_factor;
     public array $temperature_target_hours;
 
     /**
@@ -703,20 +703,18 @@ class Energy extends Root
         $this->temperature_target_hours                      = array_flip($this->check->checkValue($config, 'location', ['internal'],'target_hours',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_TARGET_HOURS));
         $this->instantiateComponents($config);
         if (!$pre_parse_only) {
-            if (($config['heat_pump']['include'] ?? false) && ($scop = $config['heat_pump']['scop'] ?? false)) {  // normalise cop performance to declared scop
+            if (($this->heat_pump->include ?? false) && ($this->heat_pump->scop > 1.0)) {  // normalise cop performance to declared scop
                 if (DEBUG) {
                     echo 'Calibrating SCOP: ';
                 }
-                $results = $this->traverseYears(true, $projection_id, $config_combined, 1.0);
+                $this->heat_pump->cop_factor = 1.0;
+                $this->traverseYears(true, $projection_id, $config_combined);
                 if (DEBUG) {
                     echo PHP_EOL;
                 }
-                $cop_factor = $scop / $results['scop'];
-            } else {
-                $cop_factor = 1.0;
             }
             $this->instantiateComponents($config);
-            $this->traverseYears(false, $projection_id, $config_combined, $cop_factor);
+            $this->traverseYears(false, $projection_id, $config_combined);
         }
     }
 
@@ -747,7 +745,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function traverseYears($calibrating_scop, $projection_id, $config_combined, $cop_factor): array {
+    function traverseYears($calibrating_scop, $projection_id, $config_combined): array {
         $components = [	$this->supply_grid,
                         $this->supply_boiler,
                         $this->boiler,
@@ -831,8 +829,7 @@ class Energy extends Root
                 if ($this->heat_pump->include) {                                                                                             // use heat pump
                     $heatpump_j         = $this->heat_pump->transferConsumeJ($this->heat_pump->max_output_j,                                 // get energy from heat pump
                                                                   $this->hot_water_tank->temperature_c - $this->temp_climate_c,
-                                                                             $this->time,
-                                                                             $cop_factor);
+                                                                             $this->time);
                     $supply_electric_j   -= $heatpump_j['consume'];                                                                          // consumes electricity
                     $this->hot_water_tank->transferConsumeJ($heatpump_j['transfer'], $this->temperature_target_internal_c);                                // put energy in hotwater tank
                 }
@@ -843,7 +840,7 @@ class Energy extends Root
                 }
                 else {                                                                                                                       // use immersion heater
                     $hotwater_j         = $this->hot_water_tank->transferConsumeJ($this->time->step_s * $this->hot_water_tank->immersion_w,
-                                                                                  $this->temperature_target_internal_c);                                   // put energy in hotwater tank
+                                                                                  $this->temperature_target_internal_c);                         // put energy in hotwater tank
                     $supply_electric_j -= $hotwater_j['consume'];                                                                            // consumes electricity
                 }
             }
@@ -856,16 +853,14 @@ class Energy extends Root
                 if ($demand_thermal_space_heating_j >= 0.0     && $this->heat_pump->heat) {                                                                   // heating
                     $heatpump_transfer_thermal_space_heating_j  = $this->heat_pump->transferConsumeJ($demand_thermal_space_heating_j,
                                                                                     $this->temperature_target_internal_c - $this->temp_climate_c,
-                                                                                               $this->time,
-                                                                                               $cop_factor);
+                                                                                               $this->time);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
                     $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];
                 }
                 elseif ($demand_thermal_space_heating_j <  0.0 && $this->heat_pump->cool) {                                                                   // cooling
                     $heatpump_transfer_thermal_space_heating_j  = $this->heat_pump->transferConsumeJ($demand_thermal_space_heating_j,
                                                                                      $this->temp_climate_c - $this->temperature_target_internal_c,
-                                                                                                $this->time,
-                                                                                                $cop_factor);
+                                                                                                $this->time);
                     $demand_thermal_space_heating_j            -= $heatpump_transfer_thermal_space_heating_j['transfer'];
                     $supply_electric_j                         -= $heatpump_transfer_thermal_space_heating_j['consume'];
                 }
@@ -901,13 +896,13 @@ class Energy extends Root
             if ($this->time->yearEnd()) {                                                                                                                       // write summary to db at end of each year's simulation
                 $results = $this->yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined);                                       // summarise year at year end
                 if ($calibrating_scop) {
-                    $this->average_temp_climate_c      = $sum_temp_climate_c  / $sum_count;
-                    $this->average_temp_internal_c     = $sum_temp_internal_c / $sum_count;
+                    $this->heat_pump->cop_factor       = $this->heat_pump->scop / $results['scop'];
+                    $this->average_temp_climate_c      = $sum_temp_climate_c    / $sum_count;
+                    $this->average_temp_internal_c     = $sum_temp_internal_c   / $sum_count;
                     $house_heating_thermal_w_per_c     = $this->demand_space_heating_thermal->total_annual_j / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR * ($this->average_temp_internal_c - $this->average_temp_climate_c));
                     $heat_capacity_j_per_c             = $house_heating_thermal_w_per_c / $house->decay_rate_per_s;
                     $house->thermal_compliance_c_per_j = 1.0/$heat_capacity_j_per_c;
                     $heat_capacity_kwh_per_c           = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
-
                     $steps_per_day = self::HOURS_PER_DAY * self::SECONDS_PER_HOUR / $this->time->step_s;
                     $month = 1;  // optimise set back temperatures for each month of the year
                     while ($month <= self::MONTHS_PER_YEAR) {
@@ -937,7 +932,7 @@ class Energy extends Root
                                                     $import_gbp_per_kwh,
                                                     $house,
                                                     $this->heat_pump,
-                                                    $cop_factor);
+                                                    $this->cop_factor);
                         $month++;
                     }
                     return $results;

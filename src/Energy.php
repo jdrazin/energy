@@ -949,13 +949,12 @@ class Energy extends Root
         for ($step = 0; $step < $steps_count; $step++) {
             if (isset($target_hours[$hour = (int) ($seconds / self::SECONDS_PER_HOUR)])) { // temperature targeting
                 $temp_target_c            = $temperature_target_internal_c;
-                $delta_target_internal_c  = $temp_target_c - $house->temperature_c;
                 $day_cost                += $temperature_intolerance_gbp_per_celsius2_hour * $delta_target_internal_c * $delta_target_internal_c;   // add temperature intolerance cost
             }
             else {  // temperature setback
                 $temp_target_c            = $setback_temps_c[$hour];
-                $delta_target_internal_c  = $temp_target_c - $house->temperature_c;
             }
+            $delta_target_internal_c = $temp_target_c - $house->temperature_c;
             $climate_temp_c = $climate_temps[$step];
             if ($delta_target_internal_c > 0) {   // heat house if target after internal temperature
                 $cop                = $heat_pump->cop_factor * $heat_pump->cop($temp_target_c - $climate_temp_c);

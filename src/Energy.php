@@ -17,6 +17,7 @@ class Energy extends Root
                     DEFAULT_TEMPERATURE_INTOLERANCE_GBP_PER_CELSIUS_HOUR = 0.5,
                     DEFAULT_SETBACK_DELTA_CELSIUS                        = 5.0,
                     TEMPERATURE_HALF_LIFE_DAYS                           = 1.0,
+                    DEFAULT_THERMAL_COMPLIANCE_FACTOR                            = 2.0,
                     TEMPERATURE_HYSTERESIS_POWER_CELSIUS                 = 10.0;
 
     const   int     HOURS_PER_DAY                                        = 24,
@@ -69,7 +70,7 @@ class Energy extends Root
     public HeatPump $heat_pump;
     public Insulation $insulation;
     public string $error;
-    public float $cop_factor, $temp_climate_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius_hour, $temperature_internal_decay_rate_per_s;
+    public float $cop_factor, $temp_climate_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius_hour, $temperature_internal_decay_rate_per_s, $thermal_compliance_factor;
     public int $setback_optimiser_start_hour;
     public array $temperature_target_hours, $setback_temps_c;
 
@@ -700,9 +701,10 @@ class Energy extends Root
         $this->check->checkValue($config, 'location', [],              'cloud_cover_months', self::CHECKS['location']);
         $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'fractions',   self::CHECKS['location']);
         $this->check->checkValue($config, 'location', ['cloud_cover_months'], 'factors',     self::CHECKS['location']);
-        $this->temperature_target_internal_c                 = $this->check->checkValue($config, 'location', ['internal'],'temperature_target_celsius',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_TARGET_CELSIUS);
+        $this->temperature_target_internal_c                = $this->check->checkValue($config, 'location', ['internal'],'temperature_target_celsius',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_TARGET_CELSIUS);
         $this->temperature_intolerance_gbp_per_celsius_hour = $this->check->checkValue($config, 'location', ['internal'],'temperature_intolerance_gbp_per_celsius_hour',  self::CHECKS['location'], self::DEFAULT_TEMPERATURE_INTOLERANCE_GBP_PER_CELSIUS_HOUR);
-        $this->temperature_internal_decay_rate_per_s         = log(2.0) / ($this->check->checkValue($config, 'location', ['internal'],'temperature_half_life_days', self::CHECKS['location'], self::TEMPERATURE_HALF_LIFE_DAYS) * 24 * 3600);
+        $this->temperature_internal_decay_rate_per_s        = log(2.0) / ($this->check->checkValue($config, 'location', ['internal'],'temperature_half_life_days', self::CHECKS['location'], self::TEMPERATURE_HALF_LIFE_DAYS) * 24 * 3600);
+        $this->thermal_compliance_factor                    = $this->check->checkValue($config, 'location', ['internal'],'thermal_compliance_factor', self::CHECKS['location'], self::DEFAULT_THERMAL_COMPLIANCE_FACTOR);
         $this->temperature_target_hours($config); // make setback target temperatures
         $this->instantiateComponents($config);
         if (!$pre_parse_only) {
@@ -904,7 +906,7 @@ class Energy extends Root
                     $house                                      = new ThermalTank(null, null, 'House', $this->time);
                     $house->decay_rate_per_s                    = $this->temperature_internal_decay_rate_per_s;
                     $heat_capacity_j_per_c                      = $this->heat_pump->max_output_w / ($house->decay_rate_per_s * ($this->temperature_target_internal_c - $this->heat_pump->outside_temp_min_c));
-                    $house->thermal_compliance_heating_c_per_j  = 1.0 / $heat_capacity_j_per_c;
+                    $house->thermal_compliance_heating_c_per_j  = $this->thermal_compliance_factor / $heat_capacity_j_per_c;
                     $heat_capacity_kwh_per_c                    = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
                     $steps_per_day = self::HOURS_PER_DAY * self::SECONDS_PER_HOUR / $this->time->step_s;
                     $month = 1;  // optimise set back temperatures for each month of the year

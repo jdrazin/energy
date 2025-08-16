@@ -40,10 +40,6 @@ class ThermalTank extends Component
         $this->temperature_c = $temperature_c;
     }
 
-    public function thermalComplianceCPerJ($thermal_compliance_c_per_joule): void {                  // set thermal compliance (inverse thermal inertia)
-        $this->thermal_compliance_heating_c_per_j = $this->thermal_compliance_cooling_c_per_j = $thermal_compliance_c_per_joule;
-    }
-
     public function decay($temperature_ambient_c): void
     {                                                // cool down
         $this->temperature_c = $temperature_ambient_c + ($this->temperature_c - $temperature_ambient_c) * exp(-$this->decay_rate_per_s * $this->step_s);

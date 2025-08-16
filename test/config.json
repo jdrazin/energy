@@ -410,6 +410,7 @@
       "temperature_target_celsius": 21.0,
       "temperature_intolerance_gbp_per_celsius_hour" : 0.2,
       "temperature_half_life_days": 1.5,
+      "thermal_compliance_factor": 2.0,
       "target_hours": [8,9,10,11,12,13,14,15,16,17,18,19,20,21]
     }
   },

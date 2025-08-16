@@ -7,9 +7,6 @@ use DateTimeZone;
 use DivisionByZeroError;
 use ErrorException;
 use Exception;
-use MathPHP\Exception\BadDataException;
-use MathPHP\Exception\VectorException;
-use MathPHP\LinearAlgebra\Vector;
 
 class Energy extends Root
 {

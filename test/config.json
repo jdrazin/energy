@@ -51,7 +51,8 @@
     },
     "scop" : 3.62,
     "design" : {
-      "outside_temp_min_c" : -5.0,
+      "internal_temp_max_c" : 21.0,
+      "outside_temp_min_c" : -3.0,
       "cops": {
         "0": 5.1,
         "5": 5.0,

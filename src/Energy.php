@@ -15,7 +15,6 @@ class Energy extends Root
                     MONTHS_PER_YEAR                                      = 12,
                     DEFAULT_TEMPERATURE_TARGET_CELSIUS                   = 21.0,
                     DEFAULT_TEMPERATURE_INTOLERANCE_GBP_PER_CELSIUS_HOUR = 0.5,
-                    DEFAULT_SETBACK_DELTA_CELSIUS                        = 5.0,
                     TEMPERATURE_HALF_LIFE_DAYS                           = 1.0,
                     DEFAULT_THERMAL_COMPLIANCE_FACTOR                    = 2.0,
                     TEMPERATURE_HYSTERESIS_POWER_CELSIUS                 = 10.0,

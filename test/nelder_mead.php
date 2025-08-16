@@ -19,12 +19,14 @@ $ub     = array_fill(0, $n,  10.0);
 $step   = array_fill(0, $n, 1.0);
 
 $test = 101;
+$a = ['cat', 'dog'];
 
 // Objective: sum((x_i - 3)^2) with mild noise
-$objective = function (Vector $x): float {
+$objective = function (Vector $x) use ($test, $a): float {
     $v   = $x->getVector();
     $sum = 0.0;
     $max = (float) count($v)-1;
+    $a = $test+1;
     foreach ($v as $k => $xi) {
         $sum += ($xi - ($k/$max)) * ($xi - ($k/$max));
     }

@@ -938,8 +938,10 @@ class Energy extends Root
         $day_cost_best = null;
         $setback_temp_best_c = null;
         $setback_temp_c = self::TEMPERATURE_SETBACK_MINIMUM_CELSIUS;
+        $day_costs = [];
         while ($setback_temp_c <= self::TEMPERATURE_SETBACK_MAXIMUM_CELSIUS) {
             $day_cost = $this->day_cost($setback_temp_c, $climate_temps, $import_gbp_per_kwhs, $house);
+            $day_costs[number_format($setback_temp_c, 1)] = round($day_cost, 3);
             if (is_null($day_cost_best) || $day_cost < $day_cost_best) {
                 $day_cost_best       = $day_cost;
                 $setback_temp_best_c = $setback_temp_c;

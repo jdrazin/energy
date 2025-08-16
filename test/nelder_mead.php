@@ -13,10 +13,12 @@ $nm->maxIter = 50000;
 $nm->maxEval = 2000000;
 
 $n      = 24;
-$x0     = array_fill(0, $n, 5.0);
+$x0     = array_fill(0, $n,   5.0);
 $lb     = array_fill(0, $n, -10.0);
 $ub     = array_fill(0, $n,  10.0);
 $step   = array_fill(0, $n, 1.0);
+
+$test = 101;
 
 // Objective: sum((x_i - 3)^2) with mild noise
 $objective = function (Vector $x): float {

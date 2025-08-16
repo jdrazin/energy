@@ -936,7 +936,7 @@ class Energy extends Root
         }
     }
 
-    public function setback_temp_c($month): float { // traverse setback temperature range, returning temperature with lowest cost
+    public function setback_temp_c($month): float { // traverse setback temperature range, returning temperature with lowest day cost
         $day_cost_best     = null;
         $setback_temp_best_c = null;
         $setback_temp_c = self::TEMPERATURE_SETBACK_MINIMUM_CELSIUS;
@@ -964,7 +964,7 @@ class Energy extends Root
         $day_cost_electricity_gbp = 0.0;
         $steps_count = count($climate_temps);
         $house->temperature_c = $temperature_target_internal_c;
-        $seconds = self::SECONDS_PER_HOUR * array_key_first($setback_temps_c);        // traverse 24 hours starting with the first hour after setback
+        $seconds = self::SECONDS_PER_HOUR * array_key_first($setback_hours);        // traverse 24 hours starting with the first hour after setback
         for ($step = 0; $step < $steps_count; $step++) {
             $hour = (int) ($seconds / self::SECONDS_PER_HOUR);
             $h    = $hour % self::HOURS_PER_DAY;
@@ -989,9 +989,8 @@ class Energy extends Root
         $house->decay($climate_temp_c);
         $seconds += $time_step_s;
         }
-        $day_cost = $day_cost_electricity_gbp + $day_cost_intolerance_gbp;
-        return $day_cost;
-        }
+        return $day_cost_electricity_gbp + $day_cost_intolerance_gbp;
+    }
 
 
     /**

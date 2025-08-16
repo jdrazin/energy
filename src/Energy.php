@@ -67,7 +67,7 @@ class Energy extends Root
     public HeatPump $heat_pump;
     public Insulation $insulation;
     public string $error;
-    public float $temp_climate_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius2_hour, $temperature_internal_decay_rate_per_s, $average_temp_climate_c, $average_temp_internal_c;
+    public float $cop_factor, $temp_climate_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius2_hour, $temperature_internal_decay_rate_per_s;
     public array $temperature_target_hours;
 
     /**
@@ -714,6 +714,7 @@ class Energy extends Root
                 }
             }
             $this->instantiateComponents($config);
+            $this->heat_pump->cop_factor = $this->cop_factor;
             $this->traverseYears(false, $projection_id, $config_combined);
         }
     }
@@ -763,28 +764,8 @@ class Energy extends Root
         }
         $this->install($components_included);                                                                                                // get install costs
         $this->yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined);                                       // summarise year 0
-        if ($calibrating_scop) {                                                                                                             // get annual average external and internal temperatures
-            $house = new ThermalTank(null, null, 'House', $this->time);
-            $house->cPerJoule(1.0);                                                                                                 // set house thermal inertia
-            $house->setTemperature($this->temp_climate_c);
-            $house->decay_rate_per_s = $this->temperature_internal_decay_rate_per_s;
-            $sum_count = 0;
-            $sum_temp_climate_c  = 0.0;
-            $sum_temp_internal_c = 0.0;
-        }
         while ($this->time->nextTimeStep()) {                                                                                                // timestep through years 0 ... N-1
             $this->temp_climate_c = (new Climate())->temperatureTime($this->time);	                                                         // update climate temperature
-            if ($calibrating_scop) {                                                                                                         // get annual average external and internal temperatures
-                if (!isset($this->temperature_target_hours[$this->time->values['HOUR_OF_DAY']])) {
-                    $house->decay($this->temp_climate_c);    // cool down
-                }
-                else {
-                    $house->setTemperature($this->temperature_target_internal_c);                                                                   // restore to target temperature
-                }
-                $sum_count++;
-                $sum_temp_climate_c  += $this->temp_climate_c;
-                $sum_temp_internal_c += $house->temperature_c;
-            }
             $this->valueTimeStep($components_included, $this->time);                                                                         // add timestep component maintenance costs
             $this->supply_grid->updateTariff($this->time);                                                                                   // get supply bands
             $this->supply_boiler->updateTariff($this->time);
@@ -892,17 +873,18 @@ class Energy extends Root
             }
             $this->supply_grid->transferTimestepConsumeJ($this->time,  $supply_electric_j);                                                                     // import if supply -ve, export if +ve
             $this->supply_boiler->transferTimestepConsumeJ($this->time, $supply_boiler_j);                                                                      // import boiler fuel consumed
-            $this->hot_water_tank->decay(0.5*($this->temperature_target_internal_c + $this->temp_climate_c));                                        // hot water tank cooling to midway between room and outside temps
+            $this->hot_water_tank->decay(0.5*($this->temperature_target_internal_c + $this->temp_climate_c));                                 // hot water tank cooling to midway between room and outside temps
             if ($this->time->yearEnd()) {                                                                                                                       // write summary to db at end of each year's simulation
                 $results = $this->yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined);                                       // summarise year at year end
                 if ($calibrating_scop) {
-                    $this->heat_pump->cop_factor       = $this->heat_pump->scop / $results['scop'];
-                    $this->average_temp_climate_c      = $sum_temp_climate_c    / $sum_count;
-                    $this->average_temp_internal_c     = $sum_temp_internal_c   / $sum_count;
-                    $house_heating_thermal_w_per_c     = $this->demand_space_heating_thermal->total_annual_j / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR * ($this->average_temp_internal_c - $this->average_temp_climate_c));
-                    $heat_capacity_j_per_c             = $house_heating_thermal_w_per_c / $house->decay_rate_per_s;
-                    $house->thermal_compliance_c_per_j = 1.0/$heat_capacity_j_per_c;
-                    $heat_capacity_kwh_per_c           = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
+                    $this->cop_factor                           = $this->heat_pump->scop / $results['scop'];
+                    $this->heat_pump->cop_factor                = $this->cop_factor;
+                    $house                                      = new ThermalTank(null, null, 'House', $this->time);
+                    $house->temperature_c                       = $this->temperature_target_internal_c;
+                    $house->decay_rate_per_s                    = $this->temperature_internal_decay_rate_per_s;
+                    $heat_capacity_j_per_c                      = $this->heat_pump->max_output_w / ($house->decay_rate_per_s * ($this->temperature_target_internal_c - $this->heat_pump->outside_temp_min_c));
+                    $house->thermal_compliance_heating_c_per_j  = 1.0 / $heat_capacity_j_per_c;
+                    $heat_capacity_kwh_per_c                    = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
                     $steps_per_day = self::HOURS_PER_DAY * self::SECONDS_PER_HOUR / $this->time->step_s;
                     $month = 1;  // optimise set back temperatures for each month of the year
                     while ($month <= self::MONTHS_PER_YEAR) {
@@ -945,21 +927,21 @@ class Energy extends Root
         $day_cost = 0.0;
         $steps_count = count($climate_temps);
         $seconds = 0;
-        $temp_delta_max_c = $temperature_target_internal_c - $heat_pump->outside_temp_min_c;
         for ($step = 0; $step < $steps_count; $step++) {
             if (isset($target_hours[$hour = (int) ($seconds / self::SECONDS_PER_HOUR)])) { // temperature targeting
                 $temp_target_c            = $temperature_target_internal_c;
+                $delta_target_internal_c  = $temp_target_c - $house->temperature_c;
                 $day_cost                += $temperature_intolerance_gbp_per_celsius2_hour * $delta_target_internal_c * $delta_target_internal_c;   // add temperature intolerance cost
             }
             else {  // temperature setback
                 $temp_target_c            = $setback_temps_c[$hour];
+                $delta_target_internal_c  = $temp_target_c - $house->temperature_c;
             }
-            $delta_target_internal_c = $temp_target_c - $house->temperature_c;
             $climate_temp_c = $climate_temps[$step];
             if ($delta_target_internal_c > 0) {   // heat house if target after internal temperature
                 $cop                = $heat_pump->cop_factor * $heat_pump->cop($temp_target_c - $climate_temp_c);
                 $import_gbp_per_kwh = $import_gbp_per_kwhs[$step];
-                $power_thermal_w    = $heat_pump->max_output_w * (($temp_target_c - $climate_temp_c) / $temp_delta_max_c);
+                $power_thermal_w    = $heat_pump->max_output_w * (($temp_target_c - $climate_temp_c) / $heat_pump->temp_delta_max_c);
                 $house->transferConsumeJ($power_thermal_w * $time_step_s, $climate_temp_c);
                 $electric_j         = $power_thermal_w * $time_step_s / $cop;
                 $day_cost           += $electric_j * $import_gbp_per_kwh / self::JOULES_PER_KWH;                                       // add heating cost

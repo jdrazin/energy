@@ -10,6 +10,7 @@ class HeatPump extends Component
                             'include'             => ['boolean'           => null             ],
                             'scop'                => ['range'             => [1.0,      10.0] ],
                             'cops'                => ['temperature_cops'  => null             ],
+                            'internal_temp_max_c' => ['range'             => [ 20.0,     25.0]],
                             'outside_temp_min_c'  => ['range'             => [-25.0,      5.0]],
                             'power'               => ['array'             => null             ],
                             'output_kw'           => ['range'             => [0.5,     100.0] ],
@@ -28,9 +29,10 @@ class HeatPump extends Component
                                   80 =>  1.1,
                                   90 =>  1.0,
                                  100 =>  0.95];
-    const float  DEFAULT_OUTSIDE_TEMP_MIN_C  = -5.0;
+    const float     DEFAULT_INSIDE_TEMP_MAX_C  =  21.0,
+                    DEFAULT_OUTSIDE_TEMP_MIN_C = -5.0;
 
-    public float $scop, $cop_factor, $heat, $cool, $max_output_w, $max_output_j, $energy_background_step_j, $outside_temp_min_c, $temp_delta_max_c;
+    public float $scop, $cop_factor, $heat, $cool, $max_output_w, $max_output_j, $energy_background_step_j, $internal_temp_max_c, $outside_temp_min_c, $temp_delta_max_c;
     public array $cops, $kwh;
 
     public function __construct($check, $config, $time)
@@ -40,7 +42,9 @@ class HeatPump extends Component
             $this->scop = $check->checkValue($config, self::COMPONENT_NAME, [], 'scop', self::CHECKS, 1.0);
             $this->sumCosts($check->checkValue($config, self::COMPONENT_NAME, [], 'cost', self::CHECKS));
             $this->cops = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'cops', self::CHECKS, self::DEFAULT_COPS);
-            $this->outside_temp_min_c  = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'outside_temp_min_c', self::CHECKS, self::DEFAULT_OUTSIDE_TEMP_MIN_C);
+            $this->internal_temp_max_c = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'internal_temp_max_c', self::CHECKS, self::DEFAULT_INSIDE_TEMP_MAX_C);
+            $this->outside_temp_min_c  = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'outside_temp_min_c',  self::CHECKS, self::DEFAULT_OUTSIDE_TEMP_MIN_C);
+            $this->temp_delta_max_c    = $this->internal_temp_max_c - $this->outside_temp_min_c;
             ksort($this->cops);  // ensure cops data are in temperature order
             $check->checkValue($config, self::COMPONENT_NAME, [], 'power', self::CHECKS);
             $this->max_output_w = 1000.0 * $check->checkValue($config, self::COMPONENT_NAME, ['power'], 'output_kw', self::CHECKS);
@@ -56,8 +60,7 @@ class HeatPump extends Component
     /**
      * @throws Exception
      */
-    public function transferConsumeJ($request_transfer_consume_j, $temp_delta_c, $time): array
-    {
+    public function transferConsumeJ($request_transfer_consume_j, $temp_delta_c, $time): array {
         if (!$this->include || !$request_transfer_consume_j) {
             $transfer_consume_j = ['transfer' => 0.0,
                                    'consume'  => 0.0];

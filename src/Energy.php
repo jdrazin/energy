@@ -743,7 +743,8 @@ class Energy extends Root
         $hour = (max(array_keys($target_hours))+1) % self::HOURS_PER_DAY;
         $hour_count =0;
         while ($hour_count < self::HOURS_PER_DAY) {
-            if ($h = $hour % self::HOURS_PER_DAY) {
+            $h = $hour % self::HOURS_PER_DAY;
+            if (!isset($this->temperature_target_hours[$h])) {
                 $this->setback_hours[$h] = true;
             }
             $hour_count++;
@@ -923,25 +924,22 @@ class Energy extends Root
                             $this->time->nextTimeStep();
                             $step_count++;
                         }
-                        $temperature_target_internal_c = $this->temperature_target_internal_c;
-                        $temperature_intolerance_gbp_per_celsius_hour = $this->temperature_intolerance_gbp_per_celsius_hour;
-                        $setback_hours = $this->setback_hours;
-                        $time_step_s = $this->time->step_s;
-                        $heat_pump = $this->heat_pump;
-                        $temperature_setbacks_c[$month] = $this->setback_temp_c($month);
-
+                        $temperature_setbacks_c[$month] = $this->best_setback_temp_c($climate_temps, $import_gbp_per_kwhs, $house);
                     }
                 }
             }
         }
     }
 
-    public function setback_temp_c($month): float { // traverse setback temperature range, returning temperature with lowest day cost
-        $day_cost_best     = null;
+    /**
+     * @throws Exception
+     */
+    public function best_setback_temp_c($climate_temps, $import_gbp_per_kwhs, $house): float { // traverse setback temperature range, returning temperature with lowest day cost
+        $day_cost_best = null;
         $setback_temp_best_c = null;
         $setback_temp_c = self::TEMPERATURE_SETBACK_MINIMUM_CELSIUS;
         while ($setback_temp_c <= self::TEMPERATURE_SETBACK_MAXIMUM_CELSIUS) {
-            $day_cost = $this->day_cost();
+            $day_cost = $this->day_cost($setback_temp_c, $climate_temps, $import_gbp_per_kwhs, $house);
             if (is_null($day_cost_best) || $day_cost < $day_cost_best) {
                 $day_cost_best       = $day_cost;
                 $setback_temp_best_c = $setback_temp_c;
@@ -951,43 +949,39 @@ class Energy extends Root
         return $setback_temp_best_c;
     }
 
-    public function day_cost($setback_temp_c,
-                             $temperature_target_internal_c,
-                             $temperature_intolerance_gbp_per_celsius_hour,
-                             $setback_hours,
-                             $time_step_s,
-                             $climate_temps,
-                             $import_gbp_per_kwhs,
-                             $heat_pump,
-                             $house): float {
+    /**
+     * @throws Exception
+     */
+    public function day_cost($setback_temp_c, $climate_temps, $import_gbp_per_kwhs, $house): float { // return day cost for setback temperature
         $day_cost_intolerance_gbp = 0.0;
         $day_cost_electricity_gbp = 0.0;
         $steps_count = count($climate_temps);
-        $house->temperature_c = $temperature_target_internal_c;
-        $seconds = self::SECONDS_PER_HOUR * array_key_first($setback_hours);        // traverse 24 hours starting with the first hour after setback
+        $house->temperature_c = $this->temperature_target_internal_c;
+        $seconds = self::SECONDS_PER_HOUR * array_key_first($this->setback_hours);        // traverse 24 hours starting with the first hour after setback
         for ($step = 0; $step < $steps_count; $step++) {
             $hour = (int) ($seconds / self::SECONDS_PER_HOUR);
             $h    = $hour % self::HOURS_PER_DAY;
-            if (isset($setback_hours[$h])) { // temperature targeting
-                $temp_target_c             = $temperature_target_internal_c;
-                $delta_target_internal_c   = $temp_target_c - $house->temperature_c;
-                $day_cost_intolerance_gbp += $temperature_intolerance_gbp_per_celsius_hour * abs($delta_target_internal_c) * $time_step_s  / self::SECONDS_PER_HOUR;   // add temperature intolerance cost
-            }
-            else {  // temperature setback
+            if (isset($this->setback_hours[$h])) { // setback
                 $temp_target_c            =  $setback_temp_c;
                 $delta_target_internal_c  = $temp_target_c - $house->temperature_c;
             }
-        $climate_temp_c = $climate_temps[$step];
+            else {  // target temperature
+                $temp_target_c             = $this->temperature_target_internal_c;
+                $delta_target_internal_c   = $temp_target_c - $house->temperature_c;
+                $day_cost_intolerance_gbp += $this->temperature_intolerance_gbp_per_celsius_hour * abs($delta_target_internal_c) * $this->time->step_s  / self::SECONDS_PER_HOUR;   // add temperature intolerance cost
+            }
+        $index = round(($hour + 0.5) * $steps_count / self::HOURS_PER_DAY) % $steps_count;
+        $climate_temp_c = $climate_temps[$index];
         if ($delta_target_internal_c > 0) {   // heat house if target after internal temperature
-            $cop                       = $heat_pump->cop_factor * $heat_pump->cop($temp_target_c - $climate_temp_c);
-            $import_gbp_per_kwh        = $import_gbp_per_kwhs[$step];
-            $power_thermal_w           = $heat_pump->max_output_w * min(1.0, (self::TEMPERATURE_HYSTERESIS_POWER_CELSIUS + $temp_target_c - $climate_temp_c) / $heat_pump->temp_delta_max_c);
-            $house->transferConsumeJ($power_thermal_w * $time_step_s, $climate_temp_c);
-            $electric_j                = $power_thermal_w * $time_step_s / $cop;
+            $cop                       = $this->heat_pump->cop_factor * $this->heat_pump->cop($temp_target_c - $climate_temp_c);
+            $import_gbp_per_kwh        = $import_gbp_per_kwhs[$index];
+            $power_thermal_w           = $this->heat_pump->max_output_w * min(1.0, (self::TEMPERATURE_HYSTERESIS_POWER_CELSIUS + $temp_target_c - $climate_temp_c) / $this->heat_pump->temp_delta_max_c);
+            $house->transferConsumeJ($power_thermal_w * $this->time->step_s, $climate_temp_c);
+            $electric_j                = $power_thermal_w * $this->time->step_s / $cop;
             $day_cost_electricity_gbp += $electric_j * $import_gbp_per_kwh  / self::JOULES_PER_KWH; // add heating cost
         }
         $house->decay($climate_temp_c);
-        $seconds += $time_step_s;
+        $seconds += $this->time->step_s;
         }
         return $day_cost_electricity_gbp + $day_cost_intolerance_gbp;
     }

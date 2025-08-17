@@ -23,23 +23,23 @@ class Check
         $checks = $parameter_checks[$parameter] ?? [];
         $string = '\'' . $component . '\' component ';
         if (!isset($config[$component])) {
-            throw new Exception($string . 'is missing');
+            throw new Exception($string . ' is missing');
         }
         $element = $config[$component];
         foreach ($suffixes as $suffix) {
             $string .= '{' . $suffix . '}';
             if (!isset($element[$suffix])) {
-                throw new Exception($string . 'is missing');
+                throw new Exception($string . ' is missing');
             }
             $element = $element[$suffix];
         }
         $string .= '\'' . $parameter . '\'';
         if (!isset($element[$parameter]) && is_null($default)) {
-            throw new Exception($string . 'is missing');
+            throw new Exception($string . ' is missing');
         }
         $value = $element[$parameter] ?? $default;
         if (is_null($value)) {
-            throw new Exception($string . 'is null');
+            throw new Exception($string . ' is null');
         }
         // apply value
         $path = $component;

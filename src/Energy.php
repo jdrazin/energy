@@ -400,7 +400,7 @@ class Energy extends Root
             if ($email ?? false) {
                 $message_setback = '';
                 if ($setback_temps_c) {
-                    $message_setback = 'Optimum heat pump setback temperature for this configuration is ' . $setback_temps_c[1] . 'C.' . PHP_EOL . '<br>';
+                    $message_setback = 'Optimum winter heat pump setback temperature for this configuration is ' . $setback_temps_c[1] . 'C.' . PHP_EOL . '<br>';
                 }
                 if (filter_var($email, FILTER_VALIDATE_EMAIL) &&
                     (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
@@ -789,6 +789,7 @@ class Energy extends Root
      * @throws Exception
      */
     function traverseYears($calibrating_scop, $projection_id, $config_combined): array {
+        $best_setback_temps_c = [];
         $components = [	$this->supply_grid,
                         $this->supply_boiler,
                         $this->boiler,
@@ -920,7 +921,6 @@ class Energy extends Root
                     $house->thermal_compliance_heating_c_per_j = $this->thermal_compliance_factor / $heat_capacity_j_per_c;
                     $heat_capacity_kwh_per_c = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
                     $steps_per_day = self::HOURS_PER_DAY * self::SECONDS_PER_HOUR / $this->time->step_s;
-                    $best_setback_temps_c = [];
                     $month = 1;  // optimise set back temperatures for each month of the year
                     while ($month <= self::MONTHS_PER_YEAR) {
                         $this->time->beginDayMiddle($month);
@@ -936,11 +936,12 @@ class Energy extends Root
                         }
                         $best_setback_temps_c[$month] = $this->best_setback_temp_c($climate_temps, $import_gbp_per_kwhs, $house);
                         $month++;
+                        break; // only do January worst case
                     }
-                    return $best_setback_temps_c;
                 }
             }
         }
+        return $best_setback_temps_c;
     }
 
     /**

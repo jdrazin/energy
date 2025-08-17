@@ -235,22 +235,28 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function projectionCombinations($pre_parse_only, $projection_id, $config): void  {
+    public function projectionCombinations($pre_parse_only, $projection_id, $config): array  {
+        $setback_temps_c = [];
         $config_combinations = new ParameterCombinations($config);
         $combinations = $config_combinations->combinations;
         $last_key = count($combinations)-1;
         foreach ($combinations as $key => $combination) {
+            $best_setback_temps_c = [];
             if (!$pre_parse_only || $key == $last_key) { // process only final combination where all components included
                 $config_combined = $this->parametersCombined($config, $combination, $config_combinations->variables);
                 if (DEBUG) {
                     echo PHP_EOL . ($key + 1) . ' of ' . count($combinations) . ' (' . $config_combined['acronym'] . '): ';
                 }
-                $this->simulate($pre_parse_only, $projection_id, $config_combined);
+                $best_setback_temps_c = $this->simulate($pre_parse_only, $projection_id, $config_combined);
+            }
+            if ($best_setback_temps_c) {
+                $setback_temps_c = $best_setback_temps_c;
             }
         }
         if (DEBUG) {
             echo PHP_EOL . 'Done' . PHP_EOL;
         }
+        return $setback_temps_c;
    }
 
     private function parametersCombined($config, $combination, $variables): array {
@@ -362,11 +368,12 @@ class Energy extends Root
             unset($stmt);
         }
         if ($request) {   // process next projection if exists
+            $setback_temps_c = [];
             $basetime_seconds = time();
             try {
                 $this->projectionStatus($projection_id, 'IN_PROGRESS');
                 $this->projectionInitialise($projection_id);
-                $this->projectionCombinations(false, $projection_id, json_decode($request, true)); // process each combination
+                $setback_temps_c = $this->projectionCombinations(false, $projection_id, json_decode($request, true)); // process each combination
                 $this->projectionStatus($projection_id, 'COMPLETED');
             }
             catch (DivisionByZeroError $e){
@@ -391,11 +398,16 @@ class Energy extends Root
             $this->writeCpuSeconds($projection_id, time() - $basetime_seconds);
             $this->mysqli->commit();
             if ($email ?? false) {
+                $message_setback = '';
+                if ($setback_temps_c) {
+                    $message_setback = 'Optimum heat pump setback temperature for this configuration is ' . $setback_temps_c[1] . 'C.' . PHP_EOL . '<br>';
+                }
                 if (filter_var($email, FILTER_VALIDATE_EMAIL) &&
                     (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
-                        'html'      => false,
-                        'bodyHTML'  => ($error = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>'),
-                        'bodyAlt'   => strip_tags($error)])) {
+                                                'html'      => false,
+                                                'bodyHTML'  => $error = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>' .
+                                                                        $message_setback,
+                                                'bodyAlt'   => strip_tags($error)])) {
                     $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, null, 'NOTICE');
                     $this->projectionStatus($projection_id, 'NOTIFIED');
                 }
@@ -694,7 +706,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($pre_parse_only, $projection_id, $config_combined): void {
+    function simulate($pre_parse_only, $projection_id, $config_combined): array {
         $config = $config_combined['config'];
         $this->check = new Check();
         $this->check->checkValue($config, 'location', [],              'coordinates',        self::CHECKS['location']);
@@ -709,13 +721,14 @@ class Energy extends Root
         $this->thermal_compliance_factor                    = $this->check->checkValue($config, 'location', ['internal'],'thermal_compliance_factor', self::CHECKS['location'], self::DEFAULT_THERMAL_COMPLIANCE_FACTOR);
         $this->temperature_target_hours($config); // make setback target temperatures
         $this->instantiateComponents($config);
+        $best_setback_temps_c = [];
         if (!$pre_parse_only) {
             if (($this->heat_pump->include ?? false) && ($this->heat_pump->scop > 1.0)) {  // normalise cop performance to declared scop
                 if (DEBUG) {
                     echo 'Calibrating SCOP: ';
                 }
                 $this->heat_pump->cop_factor = 1.0;
-                $this->traverseYears(true, $projection_id, $config_combined);
+                $best_setback_temps_c = $this->traverseYears(true, $projection_id, $config_combined);
                 if (DEBUG) {
                     echo PHP_EOL;
                 }
@@ -724,6 +737,7 @@ class Energy extends Root
             $this->heat_pump->cop_factor = $this->cop_factor;
             $this->traverseYears(false, $projection_id, $config_combined);
         }
+        return $best_setback_temps_c;
     }
 
     /**
@@ -906,7 +920,7 @@ class Energy extends Root
                     $house->thermal_compliance_heating_c_per_j = $this->thermal_compliance_factor / $heat_capacity_j_per_c;
                     $heat_capacity_kwh_per_c = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
                     $steps_per_day = self::HOURS_PER_DAY * self::SECONDS_PER_HOUR / $this->time->step_s;
-                    $temperature_setbacks_c = [];
+                    $best_setback_temps_c = [];
                     $month = 1;  // optimise set back temperatures for each month of the year
                     while ($month <= self::MONTHS_PER_YEAR) {
                         $this->time->beginDayMiddle($month);
@@ -920,8 +934,10 @@ class Energy extends Root
                             $this->time->nextTimeStep();
                             $step_count++;
                         }
-                        $temperature_setbacks_c[$month] = $this->best_setback_temp_c($climate_temps, $import_gbp_per_kwhs, $house);
+                        $best_setback_temps_c[$month] = $this->best_setback_temp_c($climate_temps, $import_gbp_per_kwhs, $house);
+                        $month++;
                     }
+                    return $best_setback_temps_c;
                 }
             }
         }

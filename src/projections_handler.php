@@ -72,5 +72,4 @@ catch (GuzzleException $e) {
         echo $message . PHP_EOL;
     }
     exit(1);
-} catch (Exception $e) {
 }

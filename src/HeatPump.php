@@ -39,7 +39,7 @@ class HeatPump extends Component
     {
         if ($this->include = $check->checkValue($config, self::COMPONENT_NAME, [], 'include', self::CHECKS)) {
             parent::__construct($check, $config, self::COMPONENT_NAME, $time);
-            $this->scop = $check->checkValue($config, self::COMPONENT_NAME, [], 'scop', self::CHECKS, 1.0);
+            $this->scop = $check->checkValue($config, self::COMPONENT_NAME, [], 'scop', self::CHECKS, 3.0);
             $this->sumCosts($check->checkValue($config, self::COMPONENT_NAME, [], 'cost', self::CHECKS));
             $this->cops = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'cops', self::CHECKS, self::DEFAULT_COPS);
             $this->internal_temp_max_c = $check->checkValue($config, self::COMPONENT_NAME, ['design'], 'internal_temp_max_c', self::CHECKS, self::DEFAULT_INSIDE_TEMP_MAX_C);

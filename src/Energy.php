@@ -12,7 +12,6 @@ class Energy extends Root
 {
     const   float   JOULES_PER_KWH                                       = 1000.0 * 3600.0,
                     DAYS_PER_YEAR                                        = 365.25,
-                    MONTHS_PER_YEAR                                      = 12,
                     DEFAULT_TEMPERATURE_TARGET_CELSIUS                   = 21.0,
                     DEFAULT_TEMPERATURE_INTOLERANCE_GBP_PER_CELSIUS_HOUR = 0.5,
                     TEMPERATURE_HALF_LIFE_DAYS                           = 1.0,
@@ -72,7 +71,8 @@ class Energy extends Root
     public HeatPump $heat_pump;
     public Insulation $insulation;
     public string $error;
-    public float $cop_factor, $temp_climate_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius_hour, $temperature_internal_decay_rate_per_s, $thermal_compliance_factor;
+    public float $cop_factor, $temp_climate_c, $temperature_target_internal_c, $temperature_intolerance_gbp_per_celsius_hour, $temperature_internal_decay_rate_per_s, $thermal_compliance_factor, $best_setback_temp_c;
+    public bool $calibrate;
     public int $setback_optimiser_start_hour;
     public array $temperature_target_hours, $setback_hours;
 
@@ -400,7 +400,7 @@ class Energy extends Root
             if ($email ?? false) {
                 $message_setback = '';
                 if ($setback_temps_c) {
-                    $message_setback = 'Optimum winter heat pump setback temperature for this configuration is ' . $setback_temps_c[1] . 'C.' . PHP_EOL . '<br>';
+                    $message_setback = 'Optimum winter heat pump setback temperature for this configuration is ' . $this->best_setback_temp_c . 'C.' . PHP_EOL . '<br>';
                 }
                 if (filter_var($email, FILTER_VALIDATE_EMAIL) &&
                     (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
@@ -706,7 +706,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($pre_parse_only, $projection_id, $config_combined): array {
+    function simulate($check_only, $projection_id, $config_combined): float {
         $config = $config_combined['config'];
         $this->check = new Check();
         $this->check->checkValue($config, 'location', [],              'coordinates',        self::CHECKS['location']);
@@ -721,23 +721,15 @@ class Energy extends Root
         $this->thermal_compliance_factor                    = $this->check->checkValue($config, 'location', ['internal'],'thermal_compliance_factor', self::CHECKS['location'], self::DEFAULT_THERMAL_COMPLIANCE_FACTOR);
         $this->temperature_target_hours($config); // make setback target temperatures
         $this->instantiateComponents($config);
-        $best_setback_temps_c = [];
-        if (!$pre_parse_only) {
-            if (($this->heat_pump->include ?? false) && ($this->heat_pump->scop > 1.0)) {  // normalise cop performance to declared scop
-                if (DEBUG) {
-                    echo 'Calibrating SCOP: ';
-                }
-                $this->heat_pump->cop_factor = 1.0;
-                $best_setback_temps_c = $this->traverseYears(true, $projection_id, $config_combined);
-                if (DEBUG) {
-                    echo PHP_EOL;
-                }
+        $this->heat_pump->cop_factor = 1.0;
+        if (!$check_only) {
+            if ($this->calibrate = ($this->heat_pump->include ?? false) && !isset($this->cop_factor)) {  // get cop factor for declared scop, and setback
+                $this->traverseYears($projection_id, $config_combined);
             }
             $this->instantiateComponents($config);
             $this->heat_pump->cop_factor = $this->cop_factor;
-            $this->traverseYears(false, $projection_id, $config_combined);
+            $this->traverseYears($projection_id, $config_combined);
         }
-        return $best_setback_temps_c;
     }
 
     /**
@@ -788,8 +780,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function traverseYears($calibrating_scop, $projection_id, $config_combined): array {
-        $best_setback_temps_c = [];
+    function traverseYears($projection_id, $config_combined): array {
         $components = [	$this->supply_grid,
                         $this->supply_boiler,
                         $this->boiler,
@@ -806,7 +797,7 @@ class Energy extends Root
             }
         }
         $this->install($components_included);                                                                                                // get install costs
-        $this->yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined);                                       // summarise year 0
+        $this->yearSummary($projection_id, $components_included, $config_combined);                                       // summarise year 0
         while ($this->time->nextTimeStep()) {                                                                                                // timestep through years 0 ... N-1
             $this->temp_climate_c = (new Climate())->temperatureTime($this->time);                                                             // update climate temperature
             $this->valueTimeStep($components_included, $this->time);                                                                         // add timestep component maintenance costs
@@ -907,41 +898,36 @@ class Energy extends Root
                 $export_limit_j = 1000.0 * $this->time->step_s * $this->supply_grid->tariff['export']['limit_kw'];
                 $supply_electric_j = min($supply_electric_j, $export_limit_j);                                                                                  // cap to export limit
             }
-            $this->supply_grid->transferTimestepConsumeJ($this->time, $supply_electric_j);                                                                     // import if supply -ve, export if +ve
+            $this->supply_grid->transferTimestepConsumeJ($this->time, $supply_electric_j);                                                                      // import if supply -ve, export if +ve
             $this->supply_boiler->transferTimestepConsumeJ($this->time, $supply_boiler_j);                                                                      // import boiler fuel consumed
-            $this->hot_water_tank->decay(0.5 * ($this->temperature_target_internal_c + $this->temp_climate_c));                                 // hot water tank cooling to midway between room and outside temps
+            $this->hot_water_tank->decay(0.5 * ($this->temperature_target_internal_c + $this->temp_climate_c));                               // hot water tank cooling to midway between room and outside temps
             if ($this->time->yearEnd()) {                                                                                                                       // write summary to db at end of each year's simulation
-                $results = $this->yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined);                                       // summarise year at year end
-                if ($calibrating_scop) {
+                $results = $this->yearSummary($projection_id, $components_included, $config_combined);                                                          // summarise year at year end
+                if ($this->calibrate ?? false) {
+                    $setback_time = clone $this->time;
                     $this->cop_factor = $this->heat_pump->scop / $results['scop'];
-                    $this->heat_pump->cop_factor = $this->cop_factor;
-                    $house = new ThermalTank(null, null, 'House', $this->time);
+                    $house = new ThermalTank(null, null, 'House', $setback_time);
                     $house->decay_rate_per_s = $this->temperature_internal_decay_rate_per_s;
                     $heat_capacity_j_per_c = $this->heat_pump->max_output_w / ($house->decay_rate_per_s * ($this->temperature_target_internal_c - $this->heat_pump->outside_temp_min_c));
                     $house->thermal_compliance_heating_c_per_j = $this->thermal_compliance_factor / $heat_capacity_j_per_c;
                     $heat_capacity_kwh_per_c = $heat_capacity_j_per_c / (1000.0 * Energy::SECONDS_PER_HOUR);
-                    $steps_per_day = self::HOURS_PER_DAY * self::SECONDS_PER_HOUR / $this->time->step_s;
-                    $month = 1;  // optimise set back temperatures for each month of the year
-                    while ($month <= self::MONTHS_PER_YEAR) {
-                        $this->time->beginDayMiddle($month);
-                        $step_count = 0;
-                        $climate_temps = [];
-                        $import_gbp_per_kwhs = [];
-                        while ($step_count < $steps_per_day) { // make problem arrays
-                            $climate_temps[$step_count] = (new Climate())->temperatureTime($this->time);
-                            $this->supply_grid->updateTariff($this->time);
-                            $import_gbp_per_kwhs[$step_count] = $this->supply_grid->tariff['import'][$this->time->values['HOUR_OF_DAY']]['gbp_per_kwh'];
-                            $this->time->nextTimeStep();
-                            $step_count++;
-                        }
-                        $best_setback_temps_c[$month] = $this->best_setback_temp_c($climate_temps, $import_gbp_per_kwhs, $house);
-                        $month++;
-                        break; // only do January worst case
+                    $steps_per_day = self::HOURS_PER_DAY * self::SECONDS_PER_HOUR / $setback_time->step_s;
+                    $this->time->beginDayMiddleMonth(1); // get best setback temperature for mid-January
+                    $step_count = 0;
+                    $climate_temps = [];
+                    $import_gbp_per_kwhs = [];
+                    while ($step_count < $steps_per_day) { // make problem arrays
+                        $climate_temps[$step_count] = (new Climate())->temperatureTime($setback_time);
+                        $this->supply_grid->updateTariff($setback_time);
+                        $import_gbp_per_kwhs[$step_count] = $this->supply_grid->tariff['import'][$setback_time->values['HOUR_OF_DAY']]['gbp_per_kwh'];
+                        $setback_time->nextTimeStep();
+                        $step_count++;
                     }
+                    $this->best_setback_temp_c= $this->best_setback_temp_c($climate_temps, $import_gbp_per_kwhs, $house);
+                    $this->calibrate = false; // don't wast time recalibrating
                 }
             }
         }
-        return $best_setback_temps_c;
     }
 
     /**
@@ -1005,7 +991,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function yearSummary($calibrating_scop, $projection_id, $components_included, $config_combined): array {
+    public function yearSummary($projection_id, $components_included, $config_combined): array {
         if (DEBUG) {
             echo ($this->time->year ? ', ' : '') . $this->time->year;
         }
@@ -1014,11 +1000,11 @@ class Energy extends Root
         $consumption = self::consumption();
         $results['npv_summary'] = self::npvSummary($components_included); // $results['npv_summary']['components']['13.5kWh battery'] is unset after $time->year == 8
         $results['consumption'] = $consumption;
-        if (($this->heat_pump->include ?? false) && $this->time->year) {
+        if (($this->calibrate ?? false) && $this->time->year) {
             $kwh = $this->heat_pump->kwh['YEAR'][$this->time->year -1];
             $results['scop'] = $kwh['consume_kwh'] ? round($kwh['transfer_kwh'] / $kwh['consume_kwh'], 3) : null;
         }
-        if (!$calibrating_scop) {
+        if (!($this->calibrate ?? false)) {
             $result = ['newResultId' => $this->combinationId($projection_id, $config_combined),
                        'combination' => $config_combined['combination']];
             $this->updateCombination($config_combined, $result, $results, $this->time->year);  // end projection

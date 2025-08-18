@@ -146,7 +146,7 @@ class Time {
      * @throws DateMalformedStringException
      * @throws Exception
      */
-    public function beginDayMiddle($month): void {  // sets time to beginning of day in middle of month
+    public function beginDayMiddleMonth($month): void {  // sets time to beginning of day in middle of month
         $this->time_start = new DateTime('2025-01-15 00:00:00');
         $this->time_start->modify('+' . $month-1 . ' month');
         $this->time = clone $this->time_start;

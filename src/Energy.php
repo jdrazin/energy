@@ -241,16 +241,15 @@ class Energy extends Root
         $combinations = $config_combinations->combinations;
         $last_key = count($combinations)-1;
         foreach ($combinations as $key => $combination) {
-            $best_setback_temps_c = [];
             if (!$pre_parse_only || $key == $last_key) { // process only final combination where all components included
                 $config_combined = $this->parametersCombined($config, $combination, $config_combinations->variables);
                 if (DEBUG) {
                     echo PHP_EOL . ($key + 1) . ' of ' . count($combinations) . ' (' . $config_combined['acronym'] . '): ';
                 }
-                $best_setback_temps_c = $this->simulate($pre_parse_only, $projection_id, $config_combined);
-            }
-            if ($best_setback_temps_c) {
-                $setback_temps_c = $best_setback_temps_c;
+                $this->simulate($pre_parse_only, $projection_id, $config_combined);
+                if (DEBUG) {
+                    echo PHP_EOL;
+                }
             }
         }
         if (DEBUG) {
@@ -399,7 +398,7 @@ class Energy extends Root
             $this->mysqli->commit();
             if ($email ?? false) {
                 $message_setback = '';
-                if ($setback_temps_c) {
+                if ($this->best_setback_temp_c ?? false) {
                     $message_setback = 'Optimum winter heat pump setback temperature for this configuration is ' . $this->best_setback_temp_c . 'C.' . PHP_EOL . '<br>';
                 }
                 if (filter_var($email, FILTER_VALIDATE_EMAIL) &&
@@ -706,7 +705,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function simulate($check_only, $projection_id, $config_combined): float {
+    function simulate($check_only, $projection_id, $config_combined): void {
         $config = $config_combined['config'];
         $this->check = new Check();
         $this->check->checkValue($config, 'location', [],              'coordinates',        self::CHECKS['location']);
@@ -780,7 +779,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    function traverseYears($projection_id, $config_combined): array {
+    function traverseYears($projection_id, $config_combined): void {
         $components = [	$this->supply_grid,
                         $this->supply_boiler,
                         $this->boiler,
@@ -925,8 +924,12 @@ class Energy extends Root
                     }
                     $this->best_setback_temp_c= $this->best_setback_temp_c($climate_temps, $import_gbp_per_kwhs, $house);
                     $this->calibrate = false; // don't wast time recalibrating
+                    break;
                 }
             }
+        }
+        if (DEBUG) {
+            echo PHP_EOL;
         }
     }
 
@@ -993,7 +996,7 @@ class Energy extends Root
      */
     public function yearSummary($projection_id, $components_included, $config_combined): array {
         if (DEBUG) {
-            echo ($this->time->year ? ', ' : '') . $this->time->year;
+            echo ($this->time->year ? ', ' : '') . $this->time->year . ($this->calibrate && $this->time->year ? ' (scop-setback calibration)' : '');
         }
         $this->supply_grid->sum($this->time);
         $this->supply_boiler->sum($this->time);

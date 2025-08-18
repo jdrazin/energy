@@ -725,7 +725,9 @@ class Energy extends Root
                 $this->traverseYears($projection_id, $config_combined);
             }
             $this->instantiateComponents($config);
-            $this->heat_pump->cop_factor = $this->cop_factor;
+            if ($this->heat_pump->include ?? false) {
+               $this->heat_pump->cop_factor = $this->cop_factor;
+            }
             $this->traverseYears($projection_id, $config_combined);
         }
     }

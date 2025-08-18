@@ -297,7 +297,7 @@ class Energy extends Root
 
         // submit projection if it parsed OK
         if (!$this->error) {
-            $this->insertProjection($crc32, $config_json, '', $comment);
+            $this->insertProjection($crc32, $config_json, filter_var($email = $config['email'], FILTER_VALIDATE_EMAIL) ? $email : '', $comment);
         }
         return true;
     }
@@ -367,12 +367,11 @@ class Energy extends Root
             unset($stmt);
         }
         if ($request) {   // process next projection if exists
-            $setback_temps_c = [];
             $basetime_seconds = time();
             try {
                 $this->projectionStatus($projection_id, 'IN_PROGRESS');
                 $this->projectionInitialise($projection_id);
-                $setback_temps_c = $this->projectionCombinations(false, $projection_id, json_decode($request, true)); // process each combination
+                $this->projectionCombinations(false, $projection_id, json_decode($request, true)); // process each combination
                 $this->projectionStatus($projection_id, 'COMPLETED');
             }
             catch (DivisionByZeroError $e){

@@ -308,8 +308,8 @@
             },
             "bands_gbp_per_kwh": {
               "standard": 0.065
-              }
             }
+          }
         }
       ],
       "inflation_real_pa": 0.03
@@ -317,39 +317,39 @@
     "grid": {
       "tariffs": [
         {
-        "name": "Octopus Flux Import, Export",
-        "months": [3,4,5,6,7,8,9,10],
-        "import": {
-          "hours": {
-            "0": "standard",
-            "2": "off_peak",
-            "5": "standard",
-            "16": "peak",
-            "19": "standard"
+          "name": "Octopus Flux Import, Export",
+          "months": [3,4,5,6,7,8,9,10],
+          "import": {
+            "hours": {
+              "0": "standard",
+              "2": "off_peak",
+              "5": "standard",
+              "16": "peak",
+              "19": "standard"
+            },
+            "bands_gbp_per_kwh": {
+              "off_peak": 0.1634,
+              "standard": 0.2724,
+              "peak": 0.3814
+            },
+            "limit_kw": 24.0
           },
-          "bands_gbp_per_kwh": {
-            "off_peak": 0.1634,
-            "standard": 0.2724,
-            "peak": 0.3814
+          "export": {
+            "hours": {
+              "0": "standard",
+              "2": "off_peak",
+              "5": "standard",
+              "16": "peak",
+              "19": "standard"
+            },
+            "bands_gbp_per_kwh": {
+              "off_peak": 0.0474,
+              "standard": 0.1332,
+              "peak": 0.266
+            },
+            "limit_kw": 8.5
           },
-          "limit_kw": 24.0
-        },
-        "export": {
-          "hours": {
-            "0": "standard",
-            "2": "off_peak",
-            "5": "standard",
-            "16": "peak",
-            "19": "standard"
-          },
-          "bands_gbp_per_kwh": {
-            "off_peak": 0.0474,
-            "standard": 0.1332,
-            "peak": 0.266
-          },
-          "limit_kw": 8.5
-        },
-        "gbp_per_day": 0.4155
+          "gbp_per_day": 0.4155
         },
         {
           "name": "Octopus Cosy - SEG",
@@ -408,15 +408,19 @@
     "time_correction_fraction": 0,
     "internal" : {
       "temperature_target_celsius": 21.0,
-      "temperature_intolerance_gbp_per_celsius_hour" : 0.1,
       "temperature_half_life_days": 1.5,
-      "thermal_compliance_factor": 2.0,
-      "target_hours": [8,9,10,11,12,13,14,15,16,17,18,19,20,21]
+      "target_hours": [8,9,10,11,12,13,14,15,16,17,18,19,20,21],
+      "intolerance_gbp_per_deg_c_per_hour": 0.1
     }
   },
   "time": {
     "discount_rate_pa": 0.04,
-    "max_project_duration_years": 1,
+    "max_project_duration_years": 25,
     "step_seconds": 216
-  }
+  },
+  "combine": [
+    "solar_pv",
+    "battery",
+    "heat_pump"
+  ]
 }

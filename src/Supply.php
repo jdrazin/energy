@@ -144,7 +144,7 @@ class Supply extends Component
         $direction  = $energy_j <= 0.0 ? 'import' : 'export';
         $supply_kwh = (float)($energy_j / Energy::JOULES_PER_KWH);
         $inflation  = (1.0 + $this->inflation_real_pa) ** (((float)$time->year) + $time->fraction_year);
-        $value_gbp  = $inflation * (($supply_kwh * $this->tariff[$direction][$time->values['HOUR_OF_DAY']]['gbp_per_kwh']) + $this->tariff['value_per_timestep_gbp']);
+        $value_gbp  = $inflation * (($supply_kwh * ($tariff = $this->tariff[$direction][$time->values['HOUR_OF_DAY']]['gbp_per_kwh'])) + $this->tariff['value_per_timestep_gbp']);
         $this->npv->valueGbp($time, $value_gbp);
         foreach ($time->values as $time_unit => $value) {
             $this->kwh[$time_unit][$value][$direction] += $supply_kwh;

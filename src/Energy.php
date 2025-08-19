@@ -818,25 +818,13 @@ class Energy extends Root
         }
         $this->install($components_included);                                                                                                // get install costs
         $this->yearSummary($projection_id, $components_included, $config_combined);                                                          // summarise year 0
-        while ($this->time->nextTimeStep()) {                                                                                                // timestep through years 0 ... N-1
+        while ($this->time->nextTimeStep()) {             // todo: battery discharged at commencement of 2 Jan                                                                                   // timestep through years 0 ... N-1
             $this->temp_climate_c = (new Climate())->temperatureTime($this->time);                                                           // update climate temperature
             $this->valueTimeStep($components_included, $this->time);                                                                         // add timestep component maintenance costs
             $this->supply_grid->updateTariff($this->time);                                                                                   // get supply bands
             $this->supply_boiler->updateTariff($this->time);
             $supply_electric_j = 0.0;                                                                                                        // zero supply balances for timestep
             $supply_boiler_j = 0.0;                                                                                                          // export: +ve, import: -ve
-            if ($this->battery->include) {
-               switch($this->supply_grid->current_bands['import']) {
-                   case 'off_peak': {                                                                                                       // off_peak: charge from grid at max rate to full
-                       $supply_electric_j += -($charge_j = $this->battery->transferConsumeJ($this->time->step_s * $this->battery->max_charge_w)['consume']);
-                       break;
-                   }
-                   case 'standard':
-                   case 'peak':
-                   default: {
-                   }
-               }
-            }
             if ($this->solar_pv->include) {
                $solar_pv_j = $this->solar_pv->transferConsumeJ($this->temp_climate_c, $this->time)['transfer'];                              // get solar electrical energy
                $supply_electric_j += $solar_pv_j;                                                                                            // start electric balance: surplus (+), deficit (-)
@@ -913,30 +901,25 @@ class Energy extends Root
             if ($this->battery->include) {
                switch($this->supply_grid->current_bands['export']) {
                    case 'off_peak': {
+                       $supply_electric_j -= $this->battery->transferConsumeJ($this->time->step_s * $this->battery->max_charge_w)['consume'];
                        break;
                    }
                    case 'standard': {                                                                                                       // satisfy demand from battery when standard rate
                        if ($supply_electric_j < 0) {                                                                                        // if consuming, try to satisfy from battery
-                           $supply_electric_j += ($discharge_j = $this->battery->transferConsumeJ($supply_electric_j)['transfer']);
+                           $supply_electric_j -= $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
                        }
                        break;
                    }
                    case 'peak': {                                                                                                           // discharge battery to grid at max rate to empty
-                       $supply_electric_j += ($discharge_j = $this->battery->transferConsumeJ(-$this->time->step_s * $this->battery->max_discharge_w)['transfer']);
+                       $supply_electric_j -= $this->battery->transferConsumeJ(-$this->time->step_s * $this->battery->max_discharge_w)['transfer'];
                        break;
                    }
                    default: {
                    }
                }
             }
-            if ($supply_electric_j > 0.0) {                                                                                                 // cap to export/import limit
-               $limit_j = 1000.0 * $this->time->step_s * $this->supply_grid->tariff['export']['limit_kw'];
-               $supply_electric_j = min($supply_electric_j, $limit_j);
-            }
-            else {
-                $limit_j = -1000.0 * $this->time->step_s * $this->supply_grid->tariff['import']['limit_kw'];
-                $supply_electric_j = max($supply_electric_j, $limit_j);
-            }
+            $limit_j = 1000.0 * $this->time->step_s * $this->supply_grid->tariff[$supply_electric_j>0.0 ? 'export' : 'import']['limit_kw']; // cap to export/import limit
+            $supply_electric_j = $supply_electric_j > 0.0 ? min($supply_electric_j, $limit_j) : max($supply_electric_j, -$limit_j);
             $this->supply_grid->transferTimestepConsumeJ($this->time, $supply_electric_j);                                                   // import if supply -ve, export if +ve
             $this->supply_boiler->transferTimestepConsumeJ($this->time, $supply_boiler_j);                                                   // import boiler fuel consumed
             $this->hot_water_tank->decay(0.5 * ($this->temperature_target_internal_c + $this->temp_climate_c));            // hot water tank cooling to midway between room and outside temps

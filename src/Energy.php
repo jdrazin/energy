@@ -829,7 +829,7 @@ class Energy extends Root
             // battery
             if ($this->battery->include) {
                 switch($this->supply_grid->current_bands['import']) {
-                    case 'off_peak': {                                                                                                       // off_peak: charge from grid as much as possible
+                    case 'off_peak': {                                                                                                       // off_peak: charge from grid at max rate to full
                         $supply_electric_j -= $this->battery->transferConsumeJ($this->time->step_s * $this->battery->max_charge_w)['consume'];
                         break;
                     }

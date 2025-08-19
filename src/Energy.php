@@ -904,7 +904,7 @@ class Energy extends Root
                         $supply_electric_j -= $this->battery->transferConsumeJ($this->time->step_s * $this->battery->max_charge_w)['consume'];
                         break;
                     }
-                    case 'standard': {                                                                                                       // satisfy demand from battery when standard rate
+                    case 'standard': {                                                                                                       // charge/discharge battery
                         $supply_electric_j -= $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
                         break;
                     }

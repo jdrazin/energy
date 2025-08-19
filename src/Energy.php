@@ -866,8 +866,8 @@ class Energy extends Root
             if ($this->hot_water_tank->temperature_c < $this->hot_water_tank->target_temperature_c) {
                if ($this->heat_pump->include) {                                                                                             // use heat pump
                    $heatpump_j = $this->heat_pump->transferConsumeJ($this->heat_pump->max_output_j,                                         // get energy from heat pump
-                       $this->hot_water_tank->temperature_c - $this->temp_climate_c,
-                       $this->time);
+                                                           $this->hot_water_tank->temperature_c - $this->temp_climate_c,
+                                                                        $this->time);
                    $supply_electric_j -= $heatpump_j['consume'];                                                                            // consumes electricity
                    $this->hot_water_tank->transferConsumeJ($heatpump_j['transfer'], $this->temperature_target_internal_c);                  // put energy in hotwater tank
                } elseif ($this->boiler->include) {                                                                                          // use boiler

@@ -48,7 +48,7 @@ try {
 }
 catch (exception $e) {
     $message = $e->getMessage();
-    if (EMAIL_NOTIFICATION_ON_ERROR) {
+    if (EMAIL_ON_ERROR) {
         (new SMTPEmail())->email(['subject'  => 'EnergyController: Error',
                                   'html'     => false,
                                   'bodyHTML' => $message,

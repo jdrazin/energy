@@ -1,5 +1,5 @@
 {
-  "#": "Church House",
+  "#": "Church House - Cosy, B, day 1",
   "token": "nicolasleonardsadicarnot",
   "email": "jonathan@drazin.net",
   "storage_hot_water": {
@@ -13,10 +13,13 @@
     "name": "13.5kWh battery",
     "#": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
     "include": true,
-    "initial_raw_capacity_kwh": 13.5,
     "cost": {
-      "gbp": 6000.0
+      "gbp": {
+        "install" : 0
+      },
+      "gbp_per_year": 0
     },
+    "initial_raw_capacity_kwh": 13.5,
     "max_charge_kw": 6.0,
     "max_discharge_kw": 6.0,
     "round_trip_efficiency_percent": 93,
@@ -44,10 +47,9 @@
     "include": true,
     "cost": {
       "gbp": {
-        "install" : 23786,
-        "grant" : -7500
+        "install" : 0
       },
-      "gbp_per_year": 250.0
+      "gbp_per_year": 0
     },
     "scop" : 3.62,
     "design" : {
@@ -75,7 +77,7 @@
     }
   },
   "boiler": {
-    "include": true,
+    "include": false,
     "output_kw": 25.0,
     "efficiency_percent": 0.9,
     "cost": {
@@ -84,7 +86,7 @@
   },
   "solar_pv": {
     "name": "solar pv",
-    "include": true,
+    "include": false,
     "cost": {
       "gbp": 15000
     },
@@ -318,7 +320,7 @@
       "tariffs": [
         {
           "name": "Octopus Flux Import, Export",
-          "months": [3,4,5,6,7,8,9,10],
+          "months": [2,3,4,5,6,7,8,9,10,11,12],
           "import": {
             "hours": {
               "0": "standard",
@@ -353,7 +355,7 @@
         },
         {
           "name": "Octopus Cosy - SEG",
-          "months": [1,2,11,12],
+          "months": [1],
           "import": {
             "hours": {
               "0": "standard",

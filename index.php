@@ -8,7 +8,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
 use Slim\Factory\AppFactory;
 
-const   DEBUG                           = false;
+const   DEBUG = false;
 const   SERVER_EXTERNAL_IP_ADDRESS_PORT = "88.202.150.174:8444";
 
 // see slim 4 documentation: https://www.slimframework.com/docs/v4/

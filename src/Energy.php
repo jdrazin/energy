@@ -235,18 +235,18 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function projectionCombinations($pre_parse_only, $projection_id, $config): array  {
+    public function projectionCombinations($check_only, $projection_id, $config): array  {
         $setback_temps_c = [];
-        $config_combinations = new ParameterCombinations($config);
-        $combinations = $config_combinations->combinations;
-        $last_key = count($combinations)-1;
-        foreach ($combinations as $key => $combination) {
-            if (!$pre_parse_only || $key == $last_key) { // process only final combination where all components included
-                $config_combined = $this->parametersCombined($config, $combination, $config_combinations->variables);
+        $parameter_combinations = new ParameterCombinations($config);
+        $combinations = $parameter_combinations->combinations;
+        $last_key = count($parameter_combinations->combinations)-1;
+        foreach ($parameter_combinations->combinations as $key => $combination) {
+            if (!$check_only || $key == $last_key) { // if check only: pre-parse only final combination (i.e. all components included)
+                $config_combined = $this->parametersCombined($config, $parameter_combinations, $key);
                 if (DEBUG) {
                     echo PHP_EOL . ($key + 1) . ' of ' . count($combinations) . ' (' . $config_combined['acronym'] . '): ';
                 }
-                $this->simulate($pre_parse_only, $projection_id, $config_combined);
+                $this->simulate($check_only, $projection_id, $config_combined);
                 if (DEBUG) {
                     echo PHP_EOL;
                 }
@@ -258,7 +258,13 @@ class Energy extends Root
         return $setback_temps_c;
    }
 
-    private function parametersCombined($config, $combination, $variables): array {
+    /**
+     * @throws Exception
+     */
+    private function parametersCombined($config, $parameter_combinations, $key): array {
+        $combinations = $parameter_combinations->combinations;
+        $combination = $combinations[$key];
+        $variables = $parameter_combinations->variables;
         $description = '';
         foreach (ParameterCombinations::COMBINATION_ELEMENTS as $component_name) {
             $value = $combination[$component_name];
@@ -270,9 +276,15 @@ class Energy extends Root
                 $description .= self::COMPONENT_ACRONYMS[$component_name] . ', ';
             }
         }
+        if (count($combinations) == 1) {
+            $acronym = $parameter_combinations->fixed_acronyms;
+        }
+        else {
+           $acronym = rtrim($description, ', ') ? : 'none';
+        }
         return ['config'      => $config,
                 'combination' => $combination,
-                'acronym'     => (rtrim($description, ', ') ? : 'none')];
+                'acronym'     => $acronym];
     }
 
     /**

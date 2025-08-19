@@ -415,12 +415,12 @@ class Energy extends Root
             }
             $this->writeCpuSeconds($projection_id, time() - $basetime_seconds);
             $this->mysqli->commit();
-            if ($email ?? false) {
+            if (EMAIL_NOTIFICATION_ON_COMPLETION && ($email ?? false)) {
                 $message_setback = '';
                 if ($this->best_setback_temp_c ?? false) {
                     $message_setback = 'Optimum winter heat pump setback temperature for this configuration is ' . $this->best_setback_temp_c . 'C.' . PHP_EOL . '<br>';
                 }
-                if (filter_var($email, FILTER_VALIDATE_EMAIL) &&
+                if (filter_var($email = ($email ?? false), FILTER_VALIDATE_EMAIL) &&
                     (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
                                                 'html'      => false,
                                                 'bodyHTML'  => $error = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>' .

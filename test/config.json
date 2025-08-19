@@ -419,7 +419,7 @@
     "step_seconds": 216
   },
   "combine": [
-    "-solar_pv",
-    "-heat_pump"
+    "solar_pv",
+    "heat_pump"
   ]
 }

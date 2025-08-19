@@ -280,7 +280,15 @@ class Energy extends Root
             $acronym = $parameter_combinations->fixed_acronyms;
         }
         else {
-           $acronym = rtrim($description, ', ') ? : 'none';
+           if ($description = rtrim($description, ', ')) {
+               $acronym = $description;
+           }
+           else {
+              $acronym = 'none';
+              if ($parameter_combinations->fixed_acronyms) {
+                  $acronym .= ' [' . $parameter_combinations->fixed_acronyms . ']';
+              }
+           }
         }
         return ['config'      => $config,
                 'combination' => $combination,

@@ -828,17 +828,13 @@ class Energy extends Root
 
             // battery
             if ($this->battery->include) {
-                switch($import_band = $this->supply_grid->current_bands['import']) {
-                    case 'off_peak': {                                                                                                        // off_peak: charge as much as possible
-                        $to_battery_j = $this->battery->transferConsumeJ($this->time->step_s * $this->battery->max_charge_w)['consume'];
-                        $supply_electric_j -= $to_battery_j;
+                switch($this->supply_grid->current_bands['import']) {
+                    case 'off_peak': {                                                                                                       // off_peak: charge from grid as much as possible
+                        $supply_electric_j -= $this->battery->transferConsumeJ($this->time->step_s * $this->battery->max_charge_w)['consume'];
                         break;
                     }
-                    case 'peak': {                                                                                                            // peak: discharge as much as possible
-                        $to_battery_j = $this->battery->transferConsumeJ($this->time->step_s * $this->battery->max_discharge_w)['consume'];
-                        $supply_electric_j -= $to_battery_j;
-                        break;
-                    }
+                    case 'standard':
+                    case 'peak':
                     default: {
                     }
                 }
@@ -918,15 +914,23 @@ class Energy extends Root
             }
             $demand_electric_non_heating_j = $this->demand_non_heating_electric->demandJ($this->time);                                       // electrical non-heating demand
             $supply_electric_j -= $demand_electric_non_heating_j;                                                                            // satisfy electric non-heating demand
+
+
             if ($this->battery->include) {
-                if ($this->supply_grid->current_bands['export'] == 'peak') {                                                                 // export peak time
-                    $to_battery_j = $this->battery->transferConsumeJ(-1E9)['transfer'];                                      // discharge battery at max power until empty
-                    $supply_electric_j -= $to_battery_j;
+                switch($this->supply_grid->current_bands['export']) {
+                    case 'peak': {                                                                                                           // export
+                        $to_battery_j = $this->battery->transferConsumeJ(-1E9)['transfer'];                                  // discharge battery at max power until empty
+                        break;
+                    }
+                    case 'standard': {                                                                                                       // satisfy demand from battery when standard rate
+                        $to_battery_j = $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
+                        break;
+                    }
+                    default: {
+                        $to_battery_j = 0.0;
+                    }
                 }
-                elseif ($this->supply_grid->current_bands['export'] == 'standard') {                                                         // satisfy demand from battery when standard rate
-                    $to_battery_j = $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
-                    $supply_electric_j -= $to_battery_j;
-                }
+                $supply_electric_j -= $to_battery_j;
             }
             if ($supply_electric_j > 0.0) {                                                                                                  // export if surplus energy
                 $export_limit_j = 1000.0 * $this->time->step_s * $this->supply_grid->tariff['export']['limit_kw'];

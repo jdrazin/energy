@@ -30,7 +30,7 @@ class Time {
     public bool $year_end;
     public float $fraction_year, $fraction_day, $step_s, $discount_rate_pa;
     public string $timestamp;
-    public int $step_count, $year;
+    public int $step_count, $year, $day_of_year;
     public array $units, $values;
 
     /**
@@ -98,9 +98,10 @@ class Time {
         $this->timestamp = $this->time->format('Y-m-d H:i:s');
         $this->fraction_year();
         $this->fraction_day();
-        $year = (int)date_diff($this->time_start, $this->time)->format('%R%y');
+        $year = (int) date_diff($this->time_start, $this->time)->format('%R%y');
         $this->year_end = !($year == $this->year);
         $this->year = $year;
+        $this->day_of_year = $this->time->format('z');
         $this->values = [
             'HOUR_OF_DAY'   => (int)(Energy::HOURS_PER_DAY * $this->fraction_day),
             'MONTH_OF_YEAR' => (int)$this->time->format('F'),

@@ -818,7 +818,7 @@ class Energy extends Root
         }
         $this->install($components_included);                                                                                                // get install costs
         $this->yearSummary($projection_id, $components_included, $config_combined);                                                          // summarise year 0
-        while ($this->time->nextTimeStep()) {             // todo: battery discharged at commencement of 2 Jan                                                                                   // timestep through years 0 ... N-1
+        while ($this->time->nextTimeStep()) {                                                                                                // timestep through years 0 ... N-1
             $this->temp_climate_c = (new Climate())->temperatureTime($this->time);                                                           // update climate temperature
             $this->valueTimeStep($components_included, $this->time);                                                                         // add timestep component maintenance costs
             $this->supply_grid->updateTariff($this->time);                                                                                   // get supply bands
@@ -899,15 +899,28 @@ class Energy extends Root
             $demand_electric_non_heating_j = $this->demand_non_heating_electric->demandJ($this->time);                                      // electrical non-heating demand
             $supply_electric_j -= $demand_electric_non_heating_j;                                                                           // satisfy electric non-heating demand
             if ($this->battery->include) {
-               switch($this->supply_grid->current_bands['export']) {
+                switch ($this->supply_grid->current_bands['import']) {
+                    case 'off_peak': {
+                        $supply_electric_j -= $this->battery->transferConsumeJ($this->time->step_s * $this->battery->max_charge_w)['consume'];
+                        break;
+                    }
+                    case 'standard': {                                                                                                       // satisfy demand from battery when standard rate
+                        if ($supply_electric_j < 0) {                                                                                        // if consuming, try to satisfy from battery
+                            $supply_electric_j -= $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
+                        }
+                        break;
+                    }
+                    case 'peak': {                                                                                                           // discharge battery to grid at max rate to empty
+                        break;
+                    }
+                    default: {
+                    }
+               }
+               switch ($this->supply_grid->current_bands['export']) {
                    case 'off_peak': {
-                       $supply_electric_j -= $this->battery->transferConsumeJ($this->time->step_s * $this->battery->max_charge_w)['consume'];
                        break;
                    }
                    case 'standard': {                                                                                                       // satisfy demand from battery when standard rate
-                       if ($supply_electric_j < 0) {                                                                                        // if consuming, try to satisfy from battery
-                           $supply_electric_j -= $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
-                       }
                        break;
                    }
                    case 'peak': {                                                                                                           // discharge battery to grid at max rate to empty

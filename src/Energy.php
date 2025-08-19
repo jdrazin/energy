@@ -415,7 +415,7 @@ class Energy extends Root
             }
             $this->writeCpuSeconds($projection_id, time() - $basetime_seconds);
             $this->mysqli->commit();
-            if (EMAIL_NOTIFICATION_ON_COMPLETION && ($email ?? false)) {
+            if (EMAIL_ON_COMPLETION && ($email ?? false)) {
                 $message_setback = '';
                 if ($this->best_setback_temp_c ?? false) {
                     $message_setback = 'Optimum winter heat pump setback temperature for this configuration is ' . $this->best_setback_temp_c . 'C.' . PHP_EOL . '<br>';

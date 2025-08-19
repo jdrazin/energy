@@ -915,22 +915,22 @@ class Energy extends Root
             $demand_electric_non_heating_j = $this->demand_non_heating_electric->demandJ($this->time);                                       // electrical non-heating demand
             $supply_electric_j -= $demand_electric_non_heating_j;                                                                            // satisfy electric non-heating demand
 
-
             if ($this->battery->include) {
                 switch($this->supply_grid->current_bands['export']) {
-                    case 'peak': {                                                                                                           // export
-                        $to_battery_j = $this->battery->transferConsumeJ(-1E9)['transfer'];                                  // discharge battery at max power until empty
+                    case 'off_peak': {
                         break;
                     }
                     case 'standard': {                                                                                                       // satisfy demand from battery when standard rate
-                        $to_battery_j = $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
+                        $supply_electric_j -= $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
+                        break;
+                    }
+                    case 'peak': {                                                                                                           // export
+                        $supply_electric_j -= $this->battery->transferConsumeJ(-$this->time->step_s * $this->battery->max_discharge_w)['transfer']; // discharge battery to grid at max rate to empty
                         break;
                     }
                     default: {
-                        $to_battery_j = 0.0;
                     }
                 }
-                $supply_electric_j -= $to_battery_j;
             }
             if ($supply_electric_j > 0.0) {                                                                                                  // export if surplus energy
                 $export_limit_j = 1000.0 * $this->time->step_s * $this->supply_grid->tariff['export']['limit_kw'];

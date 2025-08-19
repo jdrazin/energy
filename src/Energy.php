@@ -905,9 +905,7 @@ class Energy extends Root
                         break;
                     }
                     case 'standard': {                                                                                                       // satisfy demand from battery when standard rate
-                        if ($supply_electric_j < 0) {                                                                                        // if consuming, try to satisfy from battery
-                            $supply_electric_j -= $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
-                        }
+                        $supply_electric_j -= $this->battery->transferConsumeJ($supply_electric_j)['transfer'];
                         break;
                     }
                     case 'peak': {                                                                                                           // discharge battery to grid at max rate to empty

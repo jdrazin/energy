@@ -929,9 +929,13 @@ class Energy extends Root
                    }
                }
             }
-            if ($supply_electric_j > 0.0) {                                                                                                  // export if surplus energy
-               $export_limit_j = 1000.0 * $this->time->step_s * $this->supply_grid->tariff['export']['limit_kw'];
-               $supply_electric_j = min($supply_electric_j, $export_limit_j);                                                               // cap to export limit
+            if ($supply_electric_j > 0.0) {                                                                                                 // cap to export/import limit
+               $limit_j = 1000.0 * $this->time->step_s * $this->supply_grid->tariff['export']['limit_kw'];
+               $supply_electric_j = min($supply_electric_j, $limit_j);
+            }
+            else {
+                $limit_j = -1000.0 * $this->time->step_s * $this->supply_grid->tariff['import']['limit_kw'];
+                $supply_electric_j = max($supply_electric_j, $limit_j);
             }
             $this->supply_grid->transferTimestepConsumeJ($this->time, $supply_electric_j);                                                   // import if supply -ve, export if +ve
             $this->supply_boiler->transferTimestepConsumeJ($this->time, $supply_boiler_j);                                                   // import boiler fuel consumed

@@ -825,8 +825,6 @@ class Energy extends Root
             $this->supply_boiler->updateTariff($this->time);
             $supply_electric_j = 0.0;                                                                                                        // zero supply balances for timestep
             $supply_boiler_j = 0.0;                                                                                                          // export: +ve, import: -ve
-
-            // battery
             if ($this->battery->include) {
                switch($this->supply_grid->current_bands['import']) {
                    case 'off_peak': {                                                                                                       // off_peak: charge from grid at max rate to full
@@ -839,18 +837,16 @@ class Energy extends Root
                    }
                }
             }
-
-            // solar pv
             if ($this->solar_pv->include) {
                $solar_pv_j = $this->solar_pv->transferConsumeJ($this->temp_climate_c, $this->time)['transfer'];                              // get solar electrical energy
                $supply_electric_j += $solar_pv_j;                                                                                            // start electric balance: surplus (+), deficit (-)
             }
             // satisfy hot water demand
-            $demand_thermal_hotwater_j = $this->demand_hot_water_thermal->demandJ($this->time);                                               // hot water energy demand
+            $demand_thermal_hotwater_j = $this->demand_hot_water_thermal->demandJ($this->time);                                              // hot water energy demand
             if ($demand_thermal_hotwater_j > 0.0) {
                $hotwater_tank_transfer_consume_j = $this->hot_water_tank->transferConsumeJ(-$demand_thermal_hotwater_j, $this->temperature_target_internal_c); // try to satisfy demand from hotwater tank;
-               if (($demand_thermal_hotwater_j += $hotwater_tank_transfer_consume_j['transfer']) > 0.0) {                                   // if insufficient energy in hotwater tank, get from elsewhere
-                   if ($this->boiler->include) {                                                                                            // else use boiler if available
+               if (($demand_thermal_hotwater_j += $hotwater_tank_transfer_consume_j['transfer']) > 0.0) {                                    // if insufficient energy in hotwater tank, get from elsewhere
+                   if ($this->boiler->include) {                                                                                             // else use boiler if available
                        $boiler_j = $this->boiler->transferConsumeJ($demand_thermal_hotwater_j);
                        $supply_boiler_j -= $boiler_j['consume'];
                    } else {

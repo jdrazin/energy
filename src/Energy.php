@@ -153,7 +153,7 @@ class Energy extends Root
     /**
      * @throws Exception
      */
-    public function betterTariffWarning(): string {
+    public function betterTariffNotice(): string {
         $sql = 'SELECT  ROW_NUMBER() OVER (ORDER BY `sndce`.`standing`+`sndce`.`optimised_import`+`sndce`.`optimised_export`) AS `row`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`) AS `tariff`
                   FROM  `slot_next_day_cost_estimates` `sndce`
@@ -173,7 +173,7 @@ class Energy extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        return $better_tariff ? 'Warning, better tariff: ' . $better_tariff : '';
+        return $better_tariff ? 'Better tariff: ' . $better_tariff : '';
     }
 
     /**

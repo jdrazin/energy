@@ -23,23 +23,23 @@ class Check
         $checks = $parameter_checks[$parameter] ?? [];
         $string = '\'' . $component . '\' component ';
         if (!isset($config[$component])) {
-            throw new Exception($string . 'is missing');
+            throw new Exception($string . ' is missing');
         }
         $element = $config[$component];
         foreach ($suffixes as $suffix) {
             $string .= '{' . $suffix . '}';
             if (!isset($element[$suffix])) {
-                throw new Exception($string . 'is missing');
+                throw new Exception($string . ' is missing');
             }
             $element = $element[$suffix];
         }
         $string .= '\'' . $parameter . '\'';
         if (!isset($element[$parameter]) && is_null($default)) {
-            throw new Exception($string . 'is missing');
+            throw new Exception($string . ' is missing');
         }
         $value = $element[$parameter] ?? $default;
         if (is_null($value)) {
-            throw new Exception($string . 'is null');
+            throw new Exception($string . ' is null');
         }
         // apply value
         $path = $component;
@@ -72,8 +72,12 @@ class Check
                     $this->temperature_cops($string, $value);
                     break;
                 }
-                case 'hour_tags': {
-                    $this->hour_tags($check_parameters, $string, $value);
+                case 'bands_key': {
+                    $this->bands_key($check_parameters, $string, $value);
+                    break;
+                }
+                case 'hour_bands': {
+                    $this->hour_bands($check_parameters, $string, $value);
                     break;
                 }
                 case 'tag_numbers': {
@@ -108,7 +112,22 @@ class Check
         if (!is_array($value)) {
             throw new Exception($string . '\'' . $value . '\' must be array');
         }
-        if (!is_null($check_parameters) && count($value) != $check_parameters) {
+        if (is_array($check_parameters)) {
+            if ((count($check_parameters) == 2) && is_numeric($lo = $check_parameters[0]) && is_numeric($hi = $check_parameters[1])) {
+                foreach ($value as $v) {
+                    if (!is_numeric($v)) {
+                        throw new Exception($string . ' array value ' . $v . ' must be numeric)');
+                    }
+                    if ($v < $lo) {
+                        throw new Exception($string . ' array value ' . $v . ' is too low (must exceed ' . $lo . ')');
+                    }
+                    if ($v > $hi) {
+                        throw new Exception($string . ' array value ' . $v . ' is too high (must not exceed ' . $hi . ')');
+                    }
+                }
+            }
+        }
+        elseif (is_int($check_parameters) && (count($value) != $check_parameters)) {
             throw new Exception($string . ' array must have ' . $check_parameters . ' elements');
         }
     }
@@ -211,32 +230,47 @@ class Check
     /**
      * @throws Exception
      */
-    private function hour_tags($values, $string, $hourly_tags): void {
-        if (!is_array($hourly_tags)) {
-            throw new Exception($string . '\'' . $hourly_tags . '\'' . ' must be an array');
+    private function bands_key($values, $string, $band_keys): void {
+        if (!is_array($band_keys)) {
+            throw new Exception($string . '\'' . $band_keys . '\'' . ' must be an array');
         }
         $last_hour = null;
-        foreach ($hourly_tags as $hour => $tag) {
-            if ($hour < 0 || $hour > 24) {
-                throw new Exception($string . 'hour \'' . $hour . '\'' . ' must be an integer between 0 and 24');
+        foreach ($band_keys as $band_key => $value) {
+            if (!$band_key || !in_array($band_key, Supply::CHECKS['bands_gbp_per_kwh']['bands_key'])) {
+                throw new Exception($string . 'hour \'' . $band_key . '\'' . ' missing or illegal band');
             }
-            if (!is_int($hour)) {
-                throw new Exception($string . 'hour \'' . $hour . '\'' . ' must be an integer');
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function hour_bands($values, $string, $band_values): void {
+        if (!is_array($band_values)) {
+            throw new Exception($string . '\'' . $band_values . '\'' . ' must be an array');
+        }
+        $last_hour = null;
+        foreach ($band_values as $key => $band_value) {
+            if ($key < 0 || $key > 24) {
+                throw new Exception($string . 'hour \'' . $key . '\'' . ' must be an integer between 0 and 24');
             }
-            if (!is_string($tag) || $tag < 0) {
-                throw new Exception($string . 'illegal \'' . $tag . '\'' . ': must be a string');
+            if (!is_int($key)) {
+                throw new Exception($string . 'hour \'' . $key . '\'' . ' must be an integer');
+            }
+            if (!is_string($band_value) || $band_value < 0) {
+                throw new Exception($string . 'illegal \'' . $band_value . '\'' . ': must be a string');
             }
             else {
                 $permitted = array_flip($values);
-                if (!isset($permitted[$tag])) {
-                    $string .= ' \'' . $tag . '\'';
+                if (!isset($permitted[$band_value])) {
+                    $string .= ' \'' . $band_value . '\'';
                     throw new Exception($string . 'is illegal name');
                 }
             }
-            if (!is_null($last_hour) && $hour <= $last_hour) {
+            if (!is_null($last_hour) && $key <= $last_hour) {
                 throw new Exception($string . 'hours must be in numerical order');
             }
-            $last_hour = $hour;
+            $last_hour = $key;
         }
     }
 

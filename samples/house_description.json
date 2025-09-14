@@ -84,7 +84,7 @@
     "active": false,
     "#": "https://chatgpt.com/c/67d29ec9-7c64-800d-9c85-610421ab2d29",
     "cost_install_gbp": 25000,
-    "space_heating_demand_reduction_percent": 20
+    "energy_saving_percent": 20
   },
   "heat_pump": {
     "name": "heatpump ASHP",

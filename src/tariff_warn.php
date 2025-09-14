@@ -32,7 +32,7 @@ try {
     }
     $cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron');
     if (($cron && !DEBUG) || !$cron) {
-        if ($message = (new Energy(null))->tariff_warn()) {   // warn if better tariff
+        if ($message = (new Energy(null))->tariffWarn()) {   // warn if better tariff
             (new SMTPEmail())->email([  'subject'  => 'EnergyController: Error',
                                         'html'     => false,
                                         'bodyHTML' => $message,

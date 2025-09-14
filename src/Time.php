@@ -21,17 +21,17 @@ class Time {
                                                                 ]
                             ];
 
-    const SECONDS_PER_DAY  = 60 * 60 * 24,
-          SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
+    const int|float SECONDS_PER_DAY  = 60 * 60 * 24;
+    const float SECONDS_PER_YEAR = 60 * 60 * 24 * 365.25;
 
     public DateTime $time, $time_start, $time_end;
     public DateInterval $time_step;
 
     public bool $year_end;
-    public float $fraction_year, $fraction_day, $step_s, $discount_rate_pa, $discount_factor_pa;
+    public float $fraction_year, $fraction_day, $step_s, $discount_rate_pa;
     public string $timestamp;
-    public int $step_count, $year;
-    public array $units;
+    public int $step_count, $year, $day_of_year, $hour_of_day;
+    public array $units, $values;
 
     /**
      * @throws Exception
@@ -63,7 +63,7 @@ class Time {
     /**
      * @throws Exception
      */
-    public function next_time_step(): bool
+    public function nextTimeStep(): bool
     {
         if ($this->time < $this->time_end) {
             $this->time->add($this->time_step);
@@ -80,9 +80,9 @@ class Time {
         return $this->time->format('Y');
     }
 
-    public function month(): string
+    public function month(): int
     {
-        return $this->time->format('m');
+        return $this->time->format('n');
     }
 
     public function day_of_month(): string
@@ -98,9 +98,17 @@ class Time {
         $this->timestamp = $this->time->format('Y-m-d H:i:s');
         $this->fraction_year();
         $this->fraction_day();
-        $year = (int)date_diff($this->time_start, $this->time)->format('%R%y');
+        $year = (int) date_diff($this->time_start, $this->time)->format('%R%y');
         $this->year_end = !($year == $this->year);
         $this->year = $year;
+        $this->day_of_year = $this->time->format('z');
+        $this->hour_of_day = $this->time->format('H');
+        $this->values = [
+            'HOUR_OF_DAY'   => (int)(Energy::HOURS_PER_DAY * $this->fraction_day),
+            'MONTH_OF_YEAR' => (int)$this->time->format('F'),
+            'DAY_OF_YEAR'   => (int)$this->time->format('z'),
+            'YEAR'          => $this->year
+        ];
     }
 
     /**
@@ -127,23 +135,23 @@ class Time {
         $this->fraction_year = ($timestamp - $timestamp_year_begin) / self::SECONDS_PER_YEAR;
     }
 
-    public function values(): array
-    {
-        return [
-            'HOUR_OF_DAY'   => (int)(\Src\Energy::HOURS_PER_DAY * $this->fraction_day),
-            'MONTH_OF_YEAR' => (int)$this->time->format('F'),
-            'DAY_OF_YEAR'   => (int)$this->time->format('z'),
-            'YEAR'          => $this->year
-        ];
-    }
-
-    public function year_end(): bool
-    {
+    public function yearEnd(): bool {
         if ($this->year_end) {
             $this->year_end = false;
             return true;
         } else {
             return false;
         }
+    }
+
+    /**
+     * @throws DateMalformedStringException
+     * @throws Exception
+     */
+    public function beginDayMiddleMonth($month): void {  // sets time to beginning of day in middle of month
+        $this->time_start = new DateTime('2025-01-15 00:00:00');
+        $this->time_start->modify('+' . $month-1 . ' month');
+        $this->time = clone $this->time_start;
+        $this->update();
     }
 }

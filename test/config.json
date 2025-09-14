@@ -1,22 +1,25 @@
 {
-  "#": "Church House (short test)",
+  "#": "Church House - Cosy, B, day 1",
   "token": "nicolasleonardsadicarnot",
   "email": "jonathan@drazin.net",
   "storage_hot_water": {
     "name": "hot water tank",
     "volume_m3": 0.19,
     "immersion_kw": 3.0,
-    "target_temperature_c": 55.0,
+    "target_temperature_c": 50.0,
     "half_life_days": 2.5
   },
   "battery": {
     "name": "13.5kWh battery",
     "#": "GivEnergy All-In-One https://www.spiritenergy.co.uk/kb-batteries-residential-solar-energy-storage-overview",
     "include": true,
-    "initial_raw_capacity_kwh": 13.5,
     "cost": {
-      "gbp": 6000.0
+      "gbp": {
+        "install" : 0
+      },
+      "gbp_per_year": 0
     },
+    "initial_raw_capacity_kwh": 13.5,
     "max_charge_kw": 6.0,
     "max_discharge_kw": 6.0,
     "round_trip_efficiency_percent": 93,
@@ -41,27 +44,31 @@
   },
   "heat_pump": {
     "name": "heatpump ASHP",
-    "include": false,
+    "include": true,
     "cost": {
       "gbp": {
-        "install" : 16287.0
+        "install" : 0
       },
-      "gbp_per_year": 250.0
+      "gbp_per_year": 0
     },
     "scop" : 3.62,
-    "cops": {
-      "0": 5.1,
-      "5": 5.0,
-      "10": 4.9,
-      "20": 4.5,
-      "30": 4.0,
-      "40": 3.0,
-      "50": 2.0,
-      "60": 1.5,
-      "70": 1.2,
-      "80": 1.1,
-      "90": 1.0,
-      "100": 0.95
+    "design" : {
+      "internal_temp_max_c" : 24.0,
+      "outside_temp_min_c" : -3.0,
+      "cops": {
+        "0": 5.1,
+        "5": 5.0,
+        "10": 4.9,
+        "20": 4.5,
+        "30": 4.0,
+        "40": 3.0,
+        "50": 2.0,
+        "60": 1.5,
+        "70": 1.2,
+        "80": 1.1,
+        "90": 1.0,
+        "100": 0.95
+      }
     },
     "#": "https://www.researchgate.net/figure/COP-of-the-air-to-water-heat-pump-with-different-load-side-inlet-temperatures-Based-on_fig1_326114264",
     "power": {
@@ -70,18 +77,18 @@
     }
   },
   "boiler": {
-    "include": true,
-    "output_kw": 12.0,
-    "efficiency_percent": 0.856,
+    "include": false,
+    "output_kw": 25.0,
+    "efficiency_percent": 0.9,
     "cost": {
       "gbp_per_year": 250.0
     }
   },
   "solar_pv": {
     "name": "solar pv",
-    "include": true,
+    "include": false,
     "cost": {
-      "gbp": 9000.0
+      "gbp": 15000
     },
     "panels": [
       {
@@ -97,8 +104,6 @@
         "lifetime_years": 25,
         "thermal_inertia_m2_second_per_w_celsius": 1000,
         "efficiency": {
-          "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
-          "source": "",
           "percent": 23.1,
           "loss_percent_per_year": 0.3,
           "loss_percent_per_celsius": 0.29,
@@ -118,8 +123,6 @@
         "lifetime_years": 25,
         "thermal_inertia_m2_second_per_w_celsius": 1000,
         "efficiency": {
-          "spec": "https://drive.google.com/file/d/1X5kG7FDqDYHZb9zaBGPMczvS3Ro9uJa0/view",
-          "source": "",
           "percent": 24.3,
           "loss_percent_per_year": 0.3,
           "loss_percent_per_celsius": 0.29,
@@ -133,7 +136,7 @@
         "include": true,
         "panel": "AIKO 455W",
         "panels_number": 16,
-        "shading_factor": 0.85,
+        "shading_factor": 0.99,
         "area": {
           "border_m": 0.2,
           "dimensions_footprint_axis": {
@@ -157,7 +160,7 @@
         "include": true,
         "panel": "AIKO 455W",
         "panels_number": 15,
-        "shading_factor": 0.85,
+        "shading_factor": 0.8,
         "area": {
           "border_m": 0.2,
           "dimensions_footprint_axis": {
@@ -181,7 +184,7 @@
         "include": true,
         "panel": "AIKO 455W",
         "panels_number": 9,
-        "shading_factor": 0.85,
+        "shading_factor": 0.9,
         "area": {
           "border_m": 0.2,
           "dimensions_footprint_axis": {
@@ -259,7 +262,7 @@
     "cost": {
       "gbp": 30000.0
     },
-    "space_heating_demand_reduction_percent": 20
+    "energy_saving_percent": 20
   },
   "demands": {
     "#": "https://find-energy-certificate.service.gov.uk/energy-certificate/0665-2803-7016-9528-7435",
@@ -297,53 +300,92 @@
   },
   "energy": {
     "boiler": {
-      "name": "Texaco Oil, domestic heating oil",
-      "import": {
-        "hours": {
-          "0": "standard"
-        },
-        "bands_gbp_per_kwh": {
-          "standard": 0.092
+      "tariffs": [
+        {
+          "name": "Texaco Oil, domestic heating oil",
+          "months": [1,2,3,4,5,6,7,8,9,10,11,12],
+          "import": {
+            "hours": {
+              "0": "standard"
+            },
+            "bands_gbp_per_kwh": {
+              "standard": 0.065
+            }
+          }
         }
-      },
+      ],
       "inflation_real_pa": 0.03
     },
     "grid": {
-      "name": "Octopus Flux",
-      "url": "https://www.youtube.com/watch?v=ualxtLLAwcc",
-      "import": {
-        "hours": {
-          "0": "standard",
-          "2": "off_peak",
-          "5": "standard",
-          "16": "peak",
-          "19": "standard"
+      "tariffs": [
+        {
+          "name": "Octopus Flux Import, Export",
+          "months": [2,3,4,5,6,7,8,9,10,11,12],
+          "import": {
+            "hours": {
+              "0": "standard",
+              "2": "off_peak",
+              "5": "standard",
+              "16": "peak",
+              "19": "standard"
+            },
+            "bands_gbp_per_kwh": {
+              "off_peak": 0.1634,
+              "standard": 0.2724,
+              "peak": 0.3814
+            },
+            "limit_kw": 24.0
+          },
+          "export": {
+            "hours": {
+              "0": "standard",
+              "2": "off_peak",
+              "5": "standard",
+              "16": "peak",
+              "19": "standard"
+            },
+            "bands_gbp_per_kwh": {
+              "off_peak": 0.0474,
+              "standard": 0.1332,
+              "peak": 0.266
+            },
+            "limit_kw": 8.5
+          },
+          "gbp_per_day": 0.4155
         },
-        "bands_gbp_per_kwh": {
-          "off_peak": 0.1499,
-          "standard": 0.2498,
-          "peak": 0.3497
-        },
-        "limit_kw": 24.0
-      },
-      "export": {
-        "hours": {
-          "0": "standard",
-          "2": "off_peak",
-          "5": "standard",
-          "16": "peak",
-          "19": "standard"
-        },
-        "bands_gbp_per_kwh": {
-          "off_peak": 0.0474,
-          "standard": 0.1332,
-          "peak": 0.266
-        },
-        "limit_kw": 8.5
-      },
-      "#": "https://agile.octopushome.net/historical-data",
+        {
+          "name": "Octopus Cosy - SEG",
+          "months": [1],
+          "import": {
+            "hours": {
+              "0": "standard",
+              "4": "off_peak",
+              "8": "standard",
+              "13": "off_peak",
+              "16": "peak",
+              "19": "standard",
+              "22": "off_peak"
+            },
+            "bands_gbp_per_kwh": {
+              "off_peak": 0.1272,
+              "standard": 0.2594,
+              "peak": 0.3891
+            },
+            "limit_kw": 24.0
+          },
+          "export": {
+            "hours": {
+              "0": "standard"
+            },
+            "bands_gbp_per_kwh": {
+              "standard": 0.041
+            },
+            "limit_kw": 8.5
+          },
+          "gbp_per_day": 0.4155
+        }
+      ],
       "inflation_real_pa": 0.0,
-      "gbp_per_day": 0.6127,
       "wear": {
         "power": {
           "cost_average_gbp_per_kwh": 0.03,
@@ -356,20 +398,26 @@
   },
   "location": {
     "coordinates": {
-      "latitude_degrees": 51.51325,
-      "longitude_degrees": -1.24213
+      "latitude_degrees": 51.51,
+      "longitude_degrees": -1.24
     },
+    "time_zone": "GB",
     "cloud_cover_months": {
       "#": "UK (Bristol) relative cloud cover fractions and sun insolation factors by month",
       "fractions": [0.0425, 0.123, 0.204, 0.288, 0.371, 0.455, 0.538, 0.623, 0.707, 0.79, 0.874, 0.958],
       "factors": [0.544, 0.554, 0.534, 0.58, 0.608, 0.585, 0.607, 0.608, 0.57, 0.533, 0.561, 0.57]
     },
-    "temp_internal_celsius": 21,
-    "time_correction_fraction": 0
+    "time_correction_fraction": 0,
+    "internal" : {
+      "temperature_target_celsius": 21.0,
+      "temperature_half_life_days": 1.5,
+      "target_hours": [8,9,10,11,12,13,14,15,16,17,18,19,20,21],
+      "intolerance_gbp_per_deg_c_per_hour": 0.1
+    }
   },
   "time": {
     "discount_rate_pa": 0.04,
-    "max_project_duration_years": 25,
+    "max_project_duration_years": 1,
     "step_seconds": 216
   },
   "combine": [

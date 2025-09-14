@@ -16,7 +16,7 @@ class Npv
         $this->discount_factor_pa = 1.0 / (1.0 + $time->discount_rate_pa);
     }
 
-    public function value_gbp($time, $value_gbp): void
+    public function valueGbp($time, $value_gbp): void
     {
         $year = ((float)$time->year) + $time->fraction_year;
         $this->value_gbp += ($value_gbp * ($this->discount_factor_pa ** $year));

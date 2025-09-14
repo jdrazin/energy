@@ -7,7 +7,7 @@ class Component
                             'include' => ['boolean' => null],
                             'cost'    => ['array'    => null]
                             ];
-    public float $step_s, $value_install_gbp, $value_per_timestep_gbp;
+    public float $step_s, $cost_value_gbp, $cost_value_per_timestep_gbp;
     public string $name;
     public bool $include;
     public array $time_units;
@@ -15,15 +15,13 @@ class Component
 
     public function __construct($check, $config, $component_name, $time) {
         $this->name = $component_name;
-        $component  = $config[$component_name];
 
         $this->time_units = $time->units;
-        $this->npv = new Npv($time);
-        $this->step_s = $time->step_s;
+        $this->npv        = new Npv($time);
+        $this->step_s     = $time->step_s;
 
-        // sum install and ongoing costs
-        $this->value_install_gbp                  = 0.0;
-        $this->value_per_timestep_gbp = 0.0;
+        $this->cost_value_gbp              = 0.0;  // cost initial value
+        $this->cost_value_per_timestep_gbp = 0.0;  // cost per timestep
     }
 
     public function value($array, $name): float { // return value as sum of array or value
@@ -35,15 +33,15 @@ class Component
         }
     }
 
-    public function value_time_step($time): void
+    public function valueTimeStep($time): void
     {
-       $this->npv->value_gbp($time, $this->value_per_timestep_gbp);
+        $this->npv->valueGbp($time, $this->cost_value_per_timestep_gbp);
     }
 
-    public function sum_costs($array, $units = 1.0): void {
+    public function sumCosts($array, $units = 1.0): void {
         if ($cost = $array ?? []) {
-            $this->value_install_gbp      -= $units * $this->value($cost, 'gbp');
-            $this->value_per_timestep_gbp -= $units * ($this->value($cost, 'gbp_per_year') + Energy::DAYS_PER_YEAR * $this->value($cost, 'gbp_per_day')) * $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
+            $this->cost_value_gbp              -= $units * $this->value($cost, 'gbp');
+            $this->cost_value_per_timestep_gbp -= $units * ($this->value($cost, 'gbp_per_year') + Energy::DAYS_PER_YEAR * $this->value($cost, 'gbp_per_day')) * $this->step_s / (Energy::DAYS_PER_YEAR * Energy::HOURS_PER_DAY * Energy::SECONDS_PER_HOUR);
         }
     }
 }

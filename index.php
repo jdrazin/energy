@@ -8,7 +8,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
 use Slim\Factory\AppFactory;
 
-const   DEBUG                           = false;
+const   DEBUG = false;
 const   SERVER_EXTERNAL_IP_ADDRESS_PORT = "88.202.150.174:8444";
 
 // see slim 4 documentation: https://www.slimframework.com/docs/v4/
@@ -49,7 +49,7 @@ $app->get('/control/tariff_combinations', function (Request $request, Response $
     if (!$energy->authenticate(null)) {
         return $response->withStatus(401);
     }
-    if (($tariff_combinations = $energy->tariff_combinations()) === false) {
+    if (($tariff_combinations = $energy->tariffCombinations()) === false) {
         return $response->withStatus(400);
     }
     $response->getBody()->write($tariff_combinations);
@@ -61,7 +61,7 @@ $app->get('/control/slot_solution', function (Request $request, Response $respon
     if (!$energy->authenticate(null)) {
         return $response->withStatus(401);
     }
-    if (($slot_solution = $energy->slot_solution()) === false) {
+    if (($slot_solution = $energy->slotSolution()) === false) {
         return $response->withStatus(400);
     }
     $response->getBody()->write($slot_solution);
@@ -69,7 +69,7 @@ $app->get('/control/slot_solution', function (Request $request, Response $respon
 });
 $app->get('/projections/error', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($error = $energy->get_text((int) $_GET['id'], 'error')) === false) {
+    if (($error = $energy->getText((int) $_GET['id'], 'error')) === false) {
         return $response->withStatus(401);
     }
     $response->getBody()->write($error);
@@ -77,7 +77,7 @@ $app->get('/projections/error', function (Request $request, Response $response) 
 });
 $app->get('/projections/comment', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($comment = $energy->get_text((int) $_GET['id'], 'comment')) === false) {
+    if (($comment = $energy->getText((int) $_GET['id'], 'comment')) === false) {
         return $response->withStatus(401);
     }
     $response->getBody()->write($comment);
@@ -85,7 +85,7 @@ $app->get('/projections/comment', function (Request $request, Response $response
 });
 $app->get('/projections/json_request', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($json_request = $energy->get_text((int) $_GET['id'], 'json_request')) === false) {
+    if (($json_request = $energy->getText((int) $_GET['id'], 'json_request')) === false) {
         return $response->withStatus(401);
     }
     $response->getBody()->write($json_request);
@@ -93,7 +93,7 @@ $app->get('/projections/json_request', function (Request $request, Response $res
 });
 $app->get('/projections/projection', function (Request $request, Response $response) {
     $energy = new Energy(null);
-    if (($projection = $energy->get_projection((int) $_GET['id'])) === false) {
+    if (($projection = $energy->getProjection((int) $_GET['id'])) === false) {
         return $response->withStatus(401);
     }
     $response->getBody()->write($projection);

@@ -161,7 +161,7 @@ class Energy extends Root
                   JOIN  `tariff_imports`      `ti` ON `ti`   .`id`                 = `tc`.`import`
                   JOIN  `tariff_exports`      `te` ON `te`   .`id`                 = `tc`.`export`
                   WHERE `tc`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
-                         te`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
+                        `te`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
                         `ti`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
                         NOT IFNULL(`tc`.`active`, FALSE)
                   LIMIT 1';

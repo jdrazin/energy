@@ -156,11 +156,14 @@ class Energy extends Root
     public function betterTariffWarning(): string {
         $sql = 'SELECT  ROW_NUMBER() OVER (ORDER BY `sndce`.`standing`+`sndce`.`optimised_import`+`sndce`.`optimised_export`) AS `row`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`) AS `tariff`
-                  FROM `slot_next_day_cost_estimates` `sndce`
-                  JOIN `tariff_combinations` `tc` ON `sndce`.`tariff_combination` = `tc`.`id`
-                  JOIN `tariff_imports`      `ti` ON `ti`   .`id`                 = `tc`.`import`
-                  JOIN `tariff_exports`      `te` ON `te`   .`id`                 = `tc`.`export`
-                  WHERE NOT IFNULL(`tc`.`active`, FALSE)
+                  FROM  `slot_next_day_cost_estimates` `sndce`
+                  JOIN  `tariff_combinations` `tc` ON `sndce`.`tariff_combination` = `tc`.`id`
+                  JOIN  `tariff_imports`      `ti` ON `ti`   .`id`                 = `tc`.`import`
+                  JOIN  `tariff_exports`      `te` ON `te`   .`id`                 = `tc`.`export`
+                  WHERE `tc`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
+                         te`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
+                        `ti`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
+                        NOT IFNULL(`tc`.`active`, FALSE)
                   LIMIT 1';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($row, $better_tariff) ||

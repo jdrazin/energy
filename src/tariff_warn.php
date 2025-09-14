@@ -16,7 +16,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const FOLDER_PID = '/var/www/html/energy/pids/',
-      DEBUG      = false,  // disable cron and semaphore single thread control
+      DEBUG      = true,  // disable cron and semaphore single thread control
       ARGS       = ['CRON' => 1];
 
 try {
@@ -32,7 +32,7 @@ try {
     }
     $cron = (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron');
     if (($cron && !DEBUG) || !$cron) {
-        if ($message = (new Energy(null))->tariffWarn()) {   // warn if better tariff
+        if ($message = (new Energy(null))->betterTariffWarning()) {   // warn if better tariff
             (new SMTPEmail())->email([  'subject'  => 'EnergyController: Error',
                                         'html'     => false,
                                         'bodyHTML' => $message,

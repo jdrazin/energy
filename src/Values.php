@@ -9,10 +9,11 @@ use Exception;
 class Values extends Root
 {
 
-    const int   SLOT_DISTANCE_MAX               = 12,
-                TEMPERATURE_DISTANCE_MAX        = 2,
-                HISTORY_DAY_LIMIT               = 14,
-                LATEST_AVERAGE_DURATION_MINUTES = 15;
+    const int   SLOT_DISTANCE_MAX                   = 12,
+                TEMPERATURE_DISTANCE_MAX            = 2,
+                HISTORY_DAY_LIMIT                   = 14,
+                LATEST_AVERAGE_DURATION_MINUTES     = 15,
+                TEMPERATURE_LOOKBACK_MAX_AGE_DAYS   = 365;
 
     const float MAX_POWER_W                     = 7500.0,
                 MIN_LIMIT_TEMPERATURE           = 2.0,
@@ -39,7 +40,7 @@ class Values extends Root
      * @throws Exception
      */
     public function makeHeatingPowerLookupDaySlotExtTemp(): void { // writes heating powers to 2D array:  power_w[day_slot][temperature]
-        $sql = "SELECT `day_slot_temp_c_heating_electric_w`.`day_slot`,
+        $sql = 'SELECT `day_slot_temp_c_heating_electric_w`.`day_slot`,
                        `day_slot_temp_c_heating_electric_w`.`temp_c`,
                        `day_slot_temp_c_heating_electric_w`.`heating_thermal_w`
                   FROM (SELECT    `th`.`temp_c`,
@@ -53,9 +54,9 @@ class Values extends Root
                                             2*HOUR(`datetime`)+FLOOR(MINUTE(`datetime`) / 30) AS `day_slot`,
                                             ROUND(AVG(`value`)) AS `value`
                                             FROM `values`
-                                            WHERE `entity`   = 'TEMPERATURE_EXTERNAL_C' AND
-                                                  `type`     = 'MEASURED' AND 
-                                                  `datetime` > NOW() - INTERVAL 90 DAY AND
+                                            WHERE `entity`   = \'TEMPERATURE_EXTERNAL_C\' AND
+                                                  `type`     = \'MEASURED\' AND 
+                                                  `datetime` > NOW() - INTERVAL ' . self::TEMPERATURE_LOOKBACK_MAX_AGE_DAYS . ' DAY AND
                                                   `not_setback`(`datetime`)
                                             GROUP BY `date`, `day_slot`
                                             ORDER BY `date`, `day_slot`) `temp_c`
@@ -63,15 +64,15 @@ class Values extends Root
                                                         2*HOUR(`datetime`)+FLOOR(MINUTE(`datetime`) / 30) AS `day_slot`,
                                                         AVG(`value`) AS `value`
                                                   FROM `values`
-                                                  WHERE `entity` = 'LOAD_HEATING_ELECTRIC_W' AND
-                                                        `type`   = 'MEASURED'
+                                                  WHERE `entity` = \'LOAD_HEATING_ELECTRIC_W\' AND
+                                                        `type`   = \'MEASURED\'
                                                   GROUP BY `date`, `day_slot`
                                                   ORDER BY `date`, `day_slot`) `heating_thermal_w` ON `heating_thermal_w`.`date`     = `temp_c`.`date`     AND 
                                                                                                       `heating_thermal_w`.`day_slot` = `temp_c`.`day_slot`) `th`
                                       GROUP BY `th`.`temp_c`, `th`.`day_slot`
                                       ORDER BY `th`.`temp_c`, `th`.`day_slot`) `day_slot_temp_c_heating_electric_w`
                   WHERE `day_slot_temp_c_heating_electric_w`.`count` > 0
-                  ORDER BY `day_slot`, `temp_c`";
+                  ORDER BY `day_slot`, `temp_c`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($day_slot, $temp_c, $power_w) ||
             !$stmt->execute()) {

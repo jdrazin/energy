@@ -175,29 +175,55 @@ class Values extends Root
         $this->updateSlotPowerskW($powers_kw, 'load_heating_kw');
     }
 
+    /**
+     * @throws Exception
+     */
     private function electricLoadHeatingW(int $day_slot, float $temperature_c): ?float {
-        $temperature_c = (int)round($temperature_c);
-        if (isset($this->power_w[$day_slot][$temperature_c])) { // return exact if exists
-            return $this->power_w[$day_slot][$temperature_c];
-        } else {
-            $interpolate_slots = $this->interpolate_slots($day_slot, $temperature_c);
-            $interpolate_temperature = $this->interpolate_temperature($day_slot, $temperature_c);
-            if (!is_null($interpolate_slots) && !is_null($interpolate_temperature)) {  // return average of both interpolations
-                return ($interpolate_slots + $interpolate_temperature) / 2.0;
-            } elseif (!is_null($interpolate_slots) && is_null($interpolate_temperature)) {
-                return $interpolate_slots;
-            } elseif (is_null($interpolate_slots) && !is_null($interpolate_temperature)) {
-                return $interpolate_temperature;
-            } else {   // cannot find past history, so use limit cases
-                if ($temperature_c <= self::MIN_LIMIT_TEMPERATURE) {
-                    return self::MAX_POWER_W;
-                } elseif ($temperature_c >= self::MAX_LIMIT_TEMPERATURE) {
-                    return self::MIN_POWER_W;
-                } else {
-                    return self::MAX_POWER_W + ((self::MIN_POWER_W - self::MAX_POWER_W) * ($temperature_c - self::MIN_LIMIT_TEMPERATURE) / (self::MAX_LIMIT_TEMPERATURE - self::MIN_LIMIT_TEMPERATURE));
+        if ($this->isHeatingSetback($day_slot)) { // return zero heating power if setback
+            return 0.0;
+        }
+        else { // otherwise attempt to interpolate from heating power look up table
+            $temperature_c = (int)round($temperature_c);
+            if (isset($this->power_w[$day_slot][$temperature_c])) { // return exact if exists
+                return $this->power_w[$day_slot][$temperature_c];
+            } else {
+                $interpolate_slots = $this->interpolate_slots($day_slot, $temperature_c);
+                $interpolate_temperature = $this->interpolate_temperature($day_slot, $temperature_c);
+                if (!is_null($interpolate_slots) && !is_null($interpolate_temperature)) {  // return average of both interpolations
+                    return ($interpolate_slots + $interpolate_temperature) / 2.0;
+                } elseif (!is_null($interpolate_slots) && is_null($interpolate_temperature)) {
+                    return $interpolate_slots;
+                } elseif (is_null($interpolate_slots) && !is_null($interpolate_temperature)) {
+                    return $interpolate_temperature;
+                } else {   // cannot find past history, so use limit cases
+                    if ($temperature_c <= self::MIN_LIMIT_TEMPERATURE) {
+                        return self::MAX_POWER_W;
+                    } elseif ($temperature_c >= self::MAX_LIMIT_TEMPERATURE) {
+                        return self::MIN_POWER_W;
+                    } else {
+                        return self::MAX_POWER_W + ((self::MIN_POWER_W - self::MAX_POWER_W) * ($temperature_c - self::MIN_LIMIT_TEMPERATURE) / (self::MAX_LIMIT_TEMPERATURE - self::MIN_LIMIT_TEMPERATURE));
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function isHeatingSetback($slot): bool { // returns whether heating is set back
+        $mid = $this->db_slots[$slot]['mid'];
+        $sql = 'SELECT COUNT(*) >= 1
+                  FROM `setbacks`
+                  WHERE ? BETWEEN `start` AND `stop`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('s', $mid) ||
+            !$stmt->bind_result($isHeatingSetback)) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
+            }
+        return $isHeatingSetback;
     }
 
     private function interpolate_slots(int $day_slot, float $temperature_c): ?float {
@@ -260,6 +286,9 @@ class Values extends Root
         return $slot % Slot::SLOTS_PER_DAY;
     }
 
+    /**
+     * @throws Exception
+     */
     private function updateSlotPowerskW($powers_kw, $column): void
     {
         $sql = 'UPDATE   `slots` 

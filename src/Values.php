@@ -167,9 +167,14 @@ class Values extends Root
         $slots_offset = (2 * $interval->h) + ($interval->i / 30);
         $powers_kw = [];
         foreach ($this->db_slots->slots as $slot => $v) {
-            $day_slot = ($slot + $slots_offset) % Slot::SLOTS_PER_DAY; // convert forecast slot number to absolute day slot
-            $temperature_forecast_c = $this->forecast_latest('TEMPERATURE_EXTERNAL_C', $v['mid']);
-            $power_kw = $this->electricLoadHeatingW($day_slot, $temperature_forecast_c) / 1000.0; // get average powers for this day slot at the forecast temperature
+            if ($this->heatingIsSetback($slot)) {
+                $power_kw = 0.0;        // zero heating power if setback
+            }
+            else {                      // estimate heating power based on history
+                $day_slot               = ($slot + $slots_offset) % Slot::SLOTS_PER_DAY; // convert forecast slot number to absolute day slot
+                $temperature_forecast_c = $this->forecast_latest('TEMPERATURE_EXTERNAL_C', $v['mid']);
+                $power_kw               = $this->electricLoadHeatingW($day_slot, $temperature_forecast_c) / 1000.0; // get average powers for this day slot at the forecast temperature
+            }
             $powers_kw[$slot] = $power_kw;
         }
         $this->updateSlotPowerskW($powers_kw, 'load_heating_kw');
@@ -178,31 +183,27 @@ class Values extends Root
     /**
      * @throws Exception
      */
-    private function electricLoadHeatingW(int $day_slot, float $temperature_c): ?float {
-        if ($this->isHeatingSetback($day_slot)) { // return zero heating power if setback
-            return 0.0;
+    private function electricLoadHeatingW(int $day_slot, float $temperature_c): ?float { // attempt to interpolate from heating power look up table
+        $temperature_c = (int)round($temperature_c);
+        if (isset($this->power_w[$day_slot][$temperature_c])) { // return exact if exists
+            return $this->power_w[$day_slot][$temperature_c];
         }
-        else { // otherwise attempt to interpolate from heating power look up table
-            $temperature_c = (int)round($temperature_c);
-            if (isset($this->power_w[$day_slot][$temperature_c])) { // return exact if exists
-                return $this->power_w[$day_slot][$temperature_c];
-            } else {
-                $interpolate_slots = $this->interpolate_slots($day_slot, $temperature_c);
-                $interpolate_temperature = $this->interpolate_temperature($day_slot, $temperature_c);
-                if (!is_null($interpolate_slots) && !is_null($interpolate_temperature)) {  // return average of both interpolations
-                    return ($interpolate_slots + $interpolate_temperature) / 2.0;
-                } elseif (!is_null($interpolate_slots) && is_null($interpolate_temperature)) {
-                    return $interpolate_slots;
-                } elseif (is_null($interpolate_slots) && !is_null($interpolate_temperature)) {
-                    return $interpolate_temperature;
-                } else {   // cannot find past history, so use limit cases
-                    if ($temperature_c <= self::MIN_LIMIT_TEMPERATURE) {
-                        return self::MAX_POWER_W;
-                    } elseif ($temperature_c >= self::MAX_LIMIT_TEMPERATURE) {
-                        return self::MIN_POWER_W;
-                    } else {
-                        return self::MAX_POWER_W + ((self::MIN_POWER_W - self::MAX_POWER_W) * ($temperature_c - self::MIN_LIMIT_TEMPERATURE) / (self::MAX_LIMIT_TEMPERATURE - self::MIN_LIMIT_TEMPERATURE));
-                    }
+        else {
+            $interpolate_slots = $this->interpolate_slots($day_slot, $temperature_c);
+            $interpolate_temperature = $this->interpolate_temperature($day_slot, $temperature_c);
+            if (!is_null($interpolate_slots) && !is_null($interpolate_temperature)) {  // return average of both interpolations
+                return ($interpolate_slots + $interpolate_temperature) / 2.0;
+            } elseif (!is_null($interpolate_slots) && is_null($interpolate_temperature)) {
+                return $interpolate_slots;
+            } elseif (is_null($interpolate_slots) && !is_null($interpolate_temperature)) {
+                return $interpolate_temperature;
+            } else {   // cannot find past history, so use (very inaccurate) limit cases
+                if ($temperature_c <= self::MIN_LIMIT_TEMPERATURE) {
+                    return self::MAX_POWER_W;
+                } elseif ($temperature_c >= self::MAX_LIMIT_TEMPERATURE) {
+                    return self::MIN_POWER_W;
+                } else {
+                    return self::MAX_POWER_W + ((self::MIN_POWER_W - self::MAX_POWER_W) * ($temperature_c - self::MIN_LIMIT_TEMPERATURE) / (self::MAX_LIMIT_TEMPERATURE - self::MIN_LIMIT_TEMPERATURE));
                 }
             }
         }
@@ -211,8 +212,8 @@ class Values extends Root
     /**
      * @throws Exception
      */
-    private function isHeatingSetback($slot): bool { // returns whether heating is set back
-        $mid = $this->db_slots[$slot]['mid'];
+    private function heatingIsSetback($slot): bool { // returns whether heating is set back
+        $mid = $this->db_slots->slots[$slot]['mid'];
         $sql = 'SELECT COUNT(*) >= 1
                   FROM `setbacks`
                   WHERE ? BETWEEN `start` AND `stop`';

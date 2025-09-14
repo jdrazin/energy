@@ -219,7 +219,9 @@ class Values extends Root
                   WHERE ? BETWEEN `start` AND `stop`';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('s', $mid) ||
-            !$stmt->bind_result($isHeatingSetback)) {
+            !$stmt->bind_result($isHeatingSetback) ||
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);

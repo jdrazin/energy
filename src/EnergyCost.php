@@ -365,19 +365,20 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
         }
-        $energyCostGuess    = $result['energyCostGuess']    ?? null; // cost, first guess
-        $energyCostSolution = $result['energyCostSolution'] ?? null; // cost, solution
-        $optimum_charge_kws = $result['optimum_charge_kws'] ?? null; // solution charge rates
-        if (!($converged = $result['converged'] ?? false)) { // write out problem and log warning if not converged
+        $energyCostGuess    = $result['energyCostGuess']    ?? null;    // cost, first guess
+        $energyCostSolution = $result['energyCostSolution'] ?? null;    // cost, solution
+        $optimum_charge_kws = $result['optimum_charge_kws'] ?? null;    // solution charge rates
+        $converged          = $result['converged']          ?? false;   // has solution converged?
+        $use_solution       = !is_null($optimum_charge_kws) && ($converged || ((!is_null($energyCostGuess) && !is_null($energyCostSolution)) && ($energyCostSolution < $energyCostGuess)));
+        if (!$converged) { // write out problem and log warning if not converged
             $this->write_problem_command($command, 'fail');
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $this->parameters['type'] . ' convergence failure: see failed problem and command');
+            $message  = $this->errMsg(__CLASS__, __FUNCTION__, null, $this->parameters['type'] . ' convergence failure (') . ($use_solution ? '' : 'not') . ' usable): see failed problem and command';
             $this->logDb('MESSAGE', $message, $text, 'WARNING');
         }
         else {
             $this->write_problem_command($command, 'last_ok');
         }
         if (!DEBUG_MINIMISER) {      // use solution if non-null and has converged or is better than first guess
-            $use_solution = !is_null($optimum_charge_kws) && ($converged || ((!is_null($energyCostGuess) && !is_null($energyCostSolution)) && ($energyCostSolution < $energyCostGuess)));
             if (!$use_solution && ($this->parameters['type'] == 'slots')) {  // halt if no slot solution
                 throw new Exception('No slot solution');
             }

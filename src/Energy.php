@@ -155,25 +155,25 @@ class Energy extends Root
      */
     public function betterTariffNotice(): string {
         $sql = 'SELECT  ROW_NUMBER() OVER (ORDER BY `sndce`.`standing`+`sndce`.`optimised_import`+`sndce`.`optimised_export`) AS `row`,
-                        CONCAT(`ti`.`code`, \', \', `te`.`code`) AS `tariff`
+                        CONCAT(`ti`.`code`, \', \', `te`.`code`) AS `tariff`,
+                        IFNULL(`tc`.`active`, FALSE) AS `active`
                   FROM  `slot_next_day_cost_estimates` `sndce`
                   JOIN  `tariff_combinations` `tc` ON `sndce`.`tariff_combination` = `tc`.`id`
                   JOIN  `tariff_imports`      `ti` ON `ti`   .`id`                 = `tc`.`import`
                   JOIN  `tariff_exports`      `te` ON `te`   .`id`                 = `tc`.`export`
                   WHERE `tc`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
                         `te`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
-                        `ti`.`status` IN(\'TO_DROP\', \'CURRENT\') AND
-                        NOT IFNULL(`tc`.`active`, FALSE)
+                        `ti`.`status` IN(\'TO_DROP\', \'CURRENT\') 
                   LIMIT 1';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($row, $better_tariff) ||
+            !$stmt->bind_result($row, $best_tariff, $active) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        return $better_tariff ? 'Better tariff: ' . $better_tariff : '';
+        return $active ? '' : ('Better tariff: ' . $best_tariff);
     }
 
     /**

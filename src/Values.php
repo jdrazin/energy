@@ -328,7 +328,7 @@ class Values extends Root
                         (60*HOUR(`datetime`) + MINUTE(`datetime`)) BETWEEN ? AND ? AND
                         `datetime` > NOW() - INTERVAL ? DAY';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ssiiii', $entity, $type, $start_minutes, $stop_minutes, $history_day_limit) ||
+            !$stmt->bind_param('ssiii', $entity, $type, $start_minutes, $stop_minutes, $history_day_limit) ||
             !$stmt->bind_result($power_kw)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');

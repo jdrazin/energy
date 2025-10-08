@@ -326,10 +326,9 @@ class Values extends Root
                   WHERE     `entity` = ? AND
                             `type`   = ? AND
                             (60*HOUR(`datetime`) + MINUTE(`datetime`)) BETWEEN ? AND ? AND
-                            `datetime` > NOW() - INTERVAL ? DAY AND
-                            `not_setback`(`datetime`)';
+                            `datetime` > NOW() - INTERVAL ? DAY';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ssiii', $entity, $type, $start_minutes, $stop_minutes, $history_day_limit) ||
+            !$stmt->bind_param('ssiiii', $entity, $type, $start_minutes, $stop_minutes, $history_day_limit) ||
             !$stmt->bind_result($power_kw)) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
@@ -368,8 +367,8 @@ class Values extends Root
         /*
          *  estimate non-heating load from average difference between total and heating load in recent past
          */
-        $powers_average_load_house_kw               = $this->powersKwSlotAverage('LOAD_HOUSE_W',            'MEASURED', self::HISTORY_DAY_LIMIT);
-        $powers_average_load_heating_electric_kw    = $this->powersKwSlotAverage('LOAD_HEATING_ELECTRIC_W', 'MEASURED', self::HISTORY_DAY_LIMIT);
+        $powers_average_load_house_kw             = $this->powersKwSlotAverage('LOAD_HOUSE_W',            'MEASURED', self::HISTORY_DAY_LIMIT);
+        $powers_average_load_heating_electric_kw  = $this->powersKwSlotAverage('LOAD_HEATING_ELECTRIC_W', 'MEASURED', self::HISTORY_DAY_LIMIT);
         $average_powers_load_non_heating_kw = [];
         foreach ($this->db_slots->slots as $slot => $v) {
             $average_load_house_kw = $powers_average_load_house_kw[$slot];

@@ -12,9 +12,9 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time',    '36000');
 ini_set('mysql.connect_timeout', '36000');
 
-const     DEBUG                     = false,
+const     DEBUG                     = true,
           FOLDER_PID                = '/var/www/html/energy/pids/',
-          TEST_PROJECTION_ID        = null,
+          TEST_PROJECTION_ID        = 2969917580,
           TEST_PROJECTION_PATH      = '/var/www/html/energy/test/config.json',
           ARGS                      = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION   = true,
@@ -22,8 +22,9 @@ const     DEBUG                     = false,
           EMAIL_ON_ERROR            = false;
 
 try {
+    $debug = DEBUG  || !is_null(TEST_PROJECTION_ID);
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
-    if (!DEBUG) {
+    if (!$debug) {
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
             exit(1);
@@ -44,7 +45,7 @@ try {
         $energy->insertProjection(0, $config_json, '', 'DEBUG');
         $energy->processNextProjection(0);
     }
-    if (!DEBUG) {
+    if (!$debug) {
         if (!unlink($pid_filename)) {
             throw new Exception('Cannot delete semaphore');
         }

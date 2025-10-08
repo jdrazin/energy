@@ -321,12 +321,12 @@ class Values extends Root
      */
     private function powersKwSlotAverage($entity, $type, $history_day_limit): array
     {
-        $sql = 'SELECT      AVG(`value`)/1000.0
-                  FROM      `values`
-                  WHERE     `entity` = ? AND
-                            `type`   = ? AND
-                            (60*HOUR(`datetime`) + MINUTE(`datetime`)) BETWEEN ? AND ? AND
-                            `datetime` > NOW() - INTERVAL ? DAY';
+        $sql = 'SELECT  AVG(`value`)/1000.0
+                  FROM  `values`
+                  WHERE `entity` = ? AND
+                        `type`   = ? AND
+                        (60*HOUR(`datetime`) + MINUTE(`datetime`)) BETWEEN ? AND ? AND
+                        `datetime` > NOW() - INTERVAL ? DAY';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ssiiii', $entity, $type, $start_minutes, $stop_minutes, $history_day_limit) ||
             !$stmt->bind_result($power_kw)) {

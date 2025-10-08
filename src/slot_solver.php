@@ -47,7 +47,6 @@ const FOLDER_PID                     = '/var/www/html/energy/pids/',
       DEBUG_MINIMISER_USE_FAIL       = false, // otherwise use last OK
       ARGS                           = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION        = false,
-      EMAIL_NOTIFICATION_ON_ERROR    = false,
       ACTIVE_TARIFF_COMBINATION_ONLY = false;
 
 try {

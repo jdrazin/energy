@@ -14,7 +14,7 @@ ini_set('mysql.connect_timeout', '36000');
 
 const     DEBUG                     = true,
           FOLDER_PID                = '/var/www/html/energy/pids/',
-          TEST_PROJECTION_ID        = 2969917580,
+          TEST_PROJECTION_ID        = 3433329010,
           TEST_PROJECTION_PATH      = '/var/www/html/energy/test/config.json',
           ARGS                      = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION   = true,
@@ -22,7 +22,7 @@ const     DEBUG                     = true,
           EMAIL_ON_ERROR            = false;
 
 try {
-    $debug = DEBUG  || !is_null(TEST_PROJECTION_ID);
+    $debug = DEBUG  || !TEST_PROJECTION_ID;
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
     if (!$debug) {
         if (file_exists($pid_filename)) {

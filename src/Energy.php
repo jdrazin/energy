@@ -40,14 +40,7 @@ class Energy extends Root
                                                                             ],
                     COMPONENTS                                          = ['battery', 'boiler', 'heat_pump', 'solar_pv', 'solar_thermal', 'insulation'],
                     DEFAULT_TEMPERATURE_TARGET_HOURS                    = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
-    const   array   COMPONENT_ACRONYMS                                  = [''              => 'none',
-                                                                           'battery'       => 'B',
-                                                                           'boiler'        => 'BO',
-                                                                           'heat_pump'     => 'HP',
-                                                                           'insulation'    => 'IN',
-                                                                           'solar_pv'      => 'PV',
-                                                                           'solar_thermal' => 'ST'],
-                    PROJECTION_EMPTY                                    = [
+    const   array   PROJECTION_EMPTY                                    = [
                                                                             [
                                                                                 "project_duration",
                                                                                 0,

@@ -1,7 +1,6 @@
 <?php
 
-namespace Energy\src;
-use Src\Energy;
+namespace Src;
 
 class ComponentCombinations
 {

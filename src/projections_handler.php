@@ -18,7 +18,7 @@ const     DEBUG                     = true,
           TEST_PROJECTION_PATH      = '/var/www/html/energy/test/config.json',
           ARGS                      = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION   = true,
-          EMAIL_ON_COMPLETION       = true,
+          EMAIL_ON_COMPLETION       = false,
           EMAIL_ON_ERROR            = false;
 
 try {

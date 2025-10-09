@@ -251,7 +251,8 @@ class Energy extends Root
         $key = 0;
         foreach ($combinations as $acronym => $combination) {
             if (!$check_only || $key == $last_key) { // if check only: pre-parse only final combination (i.e. all components included)
-                $config_combined = ['config' => $config, 'combination' => $combination , 'acronym' => $acronym];
+          //      $config_combined = ['config' => $config, 'combination' => $combination , 'acronym' => $acronym];
+                $config_combined = $this->config_combined($config, $combination, $acronym);
                 if (DEBUG) {
                     echo PHP_EOL . ($key+1) . ' of ' . ($last_key+1) . ' (' . $acronym . '): ';
                 }
@@ -267,6 +268,19 @@ class Energy extends Root
         }
         return $setback_temps_c;
    }
+
+    private function config_combined($config_base, $combination, $acronym): array {
+        $config = $config_base;
+        foreach (self::COMPONENTS as $component) {
+           if (!isset($config[$component])) {
+               throw new Exception('\'' . $component . '\' is missing');
+           }
+           $config[$component]['include'] = $combination[$component];
+        }
+        return ['config'      => $config,
+                'combination' => $combination,
+                'acronym'     => $acronym];
+    }
 
    private function combinations($config): array { // returns component combinations
        $combinations = [];
@@ -291,43 +305,6 @@ class Energy extends Root
        }
        return $combinations;
    }
-
-    /**
-     * @throws Exception
-     */
-    private function parametersCombined($config, $parameter_combinations, $key): array {
-        $combinations = $parameter_combinations->combinations;
-        $combination = $combinations[$key];
-        $variables = $parameter_combinations->variables;
-        $description = '';
-        foreach (ParameterCombinations::COMBINATION_ELEMENTS as $component_name) {
-            $value = $combination[$component_name];
-            if (!is_bool($value)) {
-              throw new Exception('component \'' . $component_name . '\' parameter \'include\' must be boolean');
-            }
-            $config[$component_name]['include'] = $value;
-            if ($value && in_array($component_name, $variables)) {
-                $description .= self::COMPONENT_ACRONYMS[$component_name] . ', ';
-            }
-        }
-        if (count($combinations) == 1) {
-            $acronym = $parameter_combinations->fixed_acronyms;
-        }
-        else {
-           if ($description = rtrim($description, ', ')) {
-               $acronym = $description;
-           }
-           else {
-              $acronym = 'none';
-              if ($parameter_combinations->fixed_acronyms) {
-                  $acronym .= ' [' . $parameter_combinations->fixed_acronyms . ']';
-              }
-           }
-        }
-        return ['config'      => $config,
-                'combination' => $combination,
-                'acronym'     => $acronym];
-    }
 
     /**
      * @throws Exception

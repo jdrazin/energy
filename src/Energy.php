@@ -23,7 +23,7 @@ class Energy extends Root
 
     const   int     HOURS_PER_DAY                                        = 24,
                     SECONDS_PER_HOUR                                     = 3600,
-                    ACRONYM_MAX_CHARS                                    = 10;
+                    ACRONYM_MAX_CHARS                                    = 30;
 
     const array     CHECKS                                               = ['location' => [
                                                                                             'coordinates'                   => ['array' => null          ],

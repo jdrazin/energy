@@ -364,7 +364,7 @@ class GivEnergy extends Root
                 $response  = $client->get($url, ['headers' => $headers, 'query' => $query]);
             }
             catch (GuzzleException $e) {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response code:' . $e->getCode() . ', returning empty data');
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response:' . $e->getCode() . ', no data');
                 $this->logDb('MESSAGE', $message, null, 'WARNING');
                 return [];
             }

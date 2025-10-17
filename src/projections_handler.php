@@ -22,8 +22,9 @@ const     DEBUG                     = false,
           EMAIL_ON_ERROR            = false;
 
 try {
+    $debug = DEBUG  || !TEST_PROJECTION_ID;
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
-    if (!DEBUG) {
+    if (!$debug) {
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
             exit(1);
@@ -44,7 +45,7 @@ try {
         $energy->insertProjection(0, $config_json, '', 'DEBUG');
         $energy->processNextProjection(0);
     }
-    if (!DEBUG) {
+    if (!$debug) {
         if (!unlink($pid_filename)) {
             throw new Exception('Cannot delete semaphore');
         }

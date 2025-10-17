@@ -22,43 +22,39 @@ class Energy extends Root
                     TEMPERATURE_SETBACK_INCREMENT_CELSIUS                = 0.5;
 
     const   int     HOURS_PER_DAY                                        = 24,
-                    SECONDS_PER_HOUR                                     = 3600;
-    const array CHECKS                              = ['location' => [
-                                                                        'coordinates'                   => ['array' => null          ],
-                                                                        'latitude_degrees'              => ['range' => [ -90.0,  90.0]],
-                                                                        'longitude_degrees'             => ['range' => [-180.0, 180.0]],
-                                                                        'cloud_cover_months'            => ['array' => null          ],
-                                                                        'fractions'                     => ['array' => 12            ],
-                                                                        'factors'                       => ['array' => 12            ],
-                                                                        'temperature_target_celsius'    => ['range' => [10.0,    30.0]],
-                                                                        'temperature_half_life_days'    => ['range' => [0.1,     30.0]],
-                                                                        'time_correction_fraction'      => ['range' => [-1.0,     1.0]],
-                                                                        'target_hours'                  => ['array' => [0,        23 ]],
-                                                                     ]
-                                                      ],
-                    DEFAULT_TEMPERATURE_TARGET_HOURS = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
-    const   array COMPONENT_ACRONYMS                = [''              => 'none',
-                                                       'battery'       => 'B',
-                                                       'boiler'        => 'BO',
-                                                       'heat_pump'     => 'HP',
-                                                       'insulation'    => 'IN',
-                                                       'solar_pv'      => 'PV',
-                                                       'solar_thermal' => 'ST'],
-                    PROJECTION_EMPTY                = [
-                                                            [
-                                                                "project_duration",
-                                                                0,
-                                                                25
-                                                            ],
-                                                            [
-                                                                "none",
-                                                                0.0,
-                                                                0.0
-                                                            ]
-                                                       ],
-                    TIME_UNITS                      = [ 'HOUR_OF_DAY'   => 24,
-                                                        'MONTH_OF_YEAR' => 12,
-                                                        'DAY_OF_YEAR'   => 366];
+                    SECONDS_PER_HOUR                                     = 3600,
+                    ACRONYM_MAX_CHARS                                    = 10;
+
+    const array     CHECKS                                               = ['location' => [
+                                                                                            'coordinates'                   => ['array' => null          ],
+                                                                                            'latitude_degrees'              => ['range' => [ -90.0,  90.0]],
+                                                                                            'longitude_degrees'             => ['range' => [-180.0, 180.0]],
+                                                                                            'cloud_cover_months'            => ['array' => null          ],
+                                                                                            'fractions'                     => ['array' => 12            ],
+                                                                                            'factors'                       => ['array' => 12            ],
+                                                                                            'temperature_target_celsius'    => ['range' => [10.0,    30.0]],
+                                                                                            'temperature_half_life_days'    => ['range' => [0.1,     30.0]],
+                                                                                            'time_correction_fraction'      => ['range' => [-1.0,     1.0]],
+                                                                                            'target_hours'                  => ['array' => [0,        23 ]],
+                                                                                         ]
+                                                                            ],
+                    COMPONENTS                                          = ['battery', 'boiler', 'heat_pump', 'solar_pv', 'solar_thermal', 'insulation'],
+                    DEFAULT_TEMPERATURE_TARGET_HOURS                    = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
+    const   array   PROJECTION_EMPTY                                    = [
+                                                                            [
+                                                                                "project_duration",
+                                                                                0,
+                                                                                25
+                                                                            ],
+                                                                            [
+                                                                                "none",
+                                                                                0.0,
+                                                                                0.0
+                                                                            ]
+                                                                       ],
+                    TIME_UNITS                                          = [ 'HOUR_OF_DAY'   => 24,
+                                                                            'MONTH_OF_YEAR' => 12,
+                                                                            'DAY_OF_YEAR'   => 366];
 
     public Check $check;
     public Time $time;
@@ -243,20 +239,22 @@ class Energy extends Root
      */
     public function projectionCombinations($check_only, $projection_id, $config): array  {
         $setback_temps_c = [];
-        $parameter_combinations = new ParameterCombinations($config);
-        $combinations = $parameter_combinations->combinations;
-        $last_key = count($parameter_combinations->combinations)-1;
-        foreach ($parameter_combinations->combinations as $key => $combination) {
+        $combinations = $this->combinations($config);
+        $last_key     = count($combinations)-1;
+        $key = 0;
+        foreach ($combinations as $acronym => $combination) {
             if (!$check_only || $key == $last_key) { // if check only: pre-parse only final combination (i.e. all components included)
-                $config_combined = $this->parametersCombined($config, $parameter_combinations, $key);
+          //      $config_combined = ['config' => $config, 'combination' => $combination , 'acronym' => $acronym];
+                $config_combined = $this->config_combined($config, $combination, $acronym);
                 if (DEBUG) {
-                    echo PHP_EOL . ($key + 1) . ' of ' . count($combinations) . ' (' . $config_combined['acronym'] . '): ';
+                    echo PHP_EOL . ($key+1) . ' of ' . ($last_key+1) . ' (' . $acronym . '): ';
                 }
                 $this->simulate($check_only, $projection_id, $config_combined);
                 if (DEBUG) {
                     echo PHP_EOL;
                 }
             }
+            $key++;
         }
         if (DEBUG) {
             echo PHP_EOL . 'Done' . PHP_EOL;
@@ -264,42 +262,42 @@ class Energy extends Root
         return $setback_temps_c;
    }
 
-    /**
-     * @throws Exception
-     */
-    private function parametersCombined($config, $parameter_combinations, $key): array {
-        $combinations = $parameter_combinations->combinations;
-        $combination = $combinations[$key];
-        $variables = $parameter_combinations->variables;
-        $description = '';
-        foreach (ParameterCombinations::COMBINATION_ELEMENTS as $component_name) {
-            $value = $combination[$component_name];
-            if (!is_bool($value)) {
-              throw new Exception('component \'' . $component_name . '\' parameter \'include\' must be boolean');
-            }
-            $config[$component_name]['include'] = $value;
-            if ($value && in_array($component_name, $variables)) {
-                $description .= self::COMPONENT_ACRONYMS[$component_name] . ', ';
-            }
-        }
-        if (count($combinations) == 1) {
-            $acronym = $parameter_combinations->fixed_acronyms;
-        }
-        else {
-           if ($description = rtrim($description, ', ')) {
-               $acronym = $description;
+    private function config_combined($config_base, $combination, $acronym): array {
+        $config = $config_base;
+        foreach (self::COMPONENTS as $component) {
+           if (!isset($config[$component])) {
+               throw new Exception('\'' . $component . '\' is missing');
            }
-           else {
-              $acronym = 'none';
-              if ($parameter_combinations->fixed_acronyms) {
-                  $acronym .= ' [' . $parameter_combinations->fixed_acronyms . ']';
-              }
-           }
+           $config[$component]['include'] = $combination[$component];
         }
         return ['config'      => $config,
                 'combination' => $combination,
                 'acronym'     => $acronym];
     }
+
+   private function combinations($config): array { // returns component combinations
+       $combinations = [];
+       if ($config_combinations = ($config['combinations'] ?? [])) {
+           foreach ($config_combinations as $acronym => $included_components) {
+               if (strlen($acronym = trim($acronym)) >> self::ACRONYM_MAX_CHARS) {
+                   throw new Exception('\'combinations\' acronym \'' . $acronym . '\' must not exceed ' . self::ACRONYM_MAX_CHARS . ' characters');
+               }
+               $combination = [];
+               foreach (self::COMPONENTS as $key => $element) {
+                   foreach ($included_components as $included_component) {
+                       if (!in_array($included_component, self::COMPONENTS)) {
+                           throw new Exception('"combinations" component \'' . $included_component . '\' does not exist');
+                       }
+                       else {
+                           $combination[$element] = in_array($element, $included_components);
+                       }
+                   }
+               }
+               $combinations[$acronym] = $combination;
+           }
+       }
+       return $combinations;
+   }
 
     /**
      * @throws Exception

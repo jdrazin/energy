@@ -150,6 +150,25 @@ class Energy extends Root
      * @throws Exception
      */
     public function betterTariffNotice(): string {
+        $sql = 'INSERT INTO `tariff_comparisons` (`combination`, `date`, `cost`)
+                    SELECT `costs`.`combination`, `costs`.`date`, `costs`.`cost`
+                    FROM (SELECT    `tc`.`id` AS `combination`,
+                                    DATE(`sndce`.`timestamp`) AS `date`,
+                                    ROUND(`sndce`.`optimised_import` + `sndce`.`optimised_export`, 2) AS `cost`
+                                    FROM `slot_next_day_cost_estimates` AS `sndce`
+                              JOIN `tariff_combinations` AS `tc` ON `sndce`.`tariff_combination` = `tc`.`id`
+                              JOIN `tariff_imports`      AS `ti` ON `ti`.`id` = `tc`.`import`
+                              JOIN `tariff_exports`      AS `te` ON `te`.`id` = `tc`.`export`
+                              WHERE `tc`.`status` IN (\'TO_DROP\',\'CURRENT\') AND 
+                                    `te`.`status` IN (\'TO_DROP\',\'CURRENT\') AND 
+                                    `ti`.`status` IN (\'TO_DROP\',\'CURRENT\')) AS `costs`
+                    ON DUPLICATE KEY UPDATE `cost` = `costs`.`cost`;';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
         $sql = 'SELECT  ROW_NUMBER() OVER (ORDER BY `sndce`.`standing`+`sndce`.`optimised_import`+`sndce`.`optimised_export`) AS `row`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`) AS `tariff`,
                         IFNULL(`tc`.`active`, FALSE) AS `active`

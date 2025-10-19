@@ -164,11 +164,13 @@ class Energy extends Root
                                     `ti`.`status` IN (\'TO_DROP\',\'CURRENT\')) AS `costs`
                     ON DUPLICATE KEY UPDATE `cost` = `costs`.`cost`;';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->execute()) {
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
+        unset($stmt);
         $sql = 'SELECT  ROW_NUMBER() OVER (ORDER BY `sndce`.`standing`+`sndce`.`optimised_import`+`sndce`.`optimised_export`) AS `row`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`) AS `tariff`,
                         IFNULL(`tc`.`active`, FALSE) AS `active`

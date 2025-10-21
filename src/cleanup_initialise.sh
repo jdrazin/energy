@@ -11,8 +11,8 @@
 # set target directory
 TARGET_DIR="/var/www/html/energy/pids"
 
-# find files older than 3 hours
-OLD_FILES=$(find "$TARGET_DIR" -maxdepth 1 -type f -mmin +30)
+# find all semaphores
+OLD_FILES=$(find "$TARGET_DIR" -maxdepth 1 -type f -mmin +0)
 
 # if any such files exist then delete them and initialise
 if [[ -n "$OLD_FILES" ]]; then

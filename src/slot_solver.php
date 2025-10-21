@@ -47,7 +47,9 @@ const FOLDER_PID                     = '/var/www/html/energy/pids/',
       DEBUG_MINIMISER_USE_FAIL       = false, // otherwise use last OK
       ARGS                           = ['CRON' => 1],
       INITIALISE_ON_EXCEPTION        = false,
-      ACTIVE_TARIFF_COMBINATION_ONLY = false;
+      ACTIVE_TARIFF_COMBINATION_ONLY = false,
+      EMAIL_ON_ERROR                 = true;
+
 
 try {
     $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';

@@ -1,5 +1,13 @@
 #!/bin/bash
 
+#
+# called 10 mins prior to slot start
+# - if semaphores exist:
+#   + kill all php processes
+#   + delete the semaphore
+#   + initialise
+#
+
 # set target directory
 TARGET_DIR="/var/www/html/energy/pids"
 

@@ -15,15 +15,13 @@ class Octopus extends Root
                                         'tariffs'       => 'tariff_imports',
                                         'rates'         => 'tariff_rates_import',
                                         'slot_pers'     => ['KWH' => 'import_gbp_per_kwh',
-                                                            'DAY' => 'import_gbp_per_day'],
-                                       'extraordinary'  => 'import_rate'
+                                                            'DAY' => 'import_gbp_per_day']
                                     ],
                                     'export' => [
                                         'tariffs'       => 'tariff_exports',
                                         'rates'         => 'tariff_rates_export',
                                         'slot_pers'     => ['KWH' => 'export_gbp_per_kwh',
-                                                            'DAY' => 'export_gbp_per_day'],
-                                        'extraordinary' => 'import_rate'
+                                                            'DAY' => 'export_gbp_per_day']
                                     ]
                                 ],
                     RATE_PERS = [
@@ -281,20 +279,18 @@ class Octopus extends Root
         }
         foreach ($slots as $slot => $v) {
             $start = $v['start'];
-            $stop = $v['stop'];
+            $stop  = $v['stop'];
             $ratesPer = ['start' => $start, 'stop' => $stop];
             foreach (self::DIRECTIONS as $direction => $x) {
                 $tariff_table = self::DIRECTIONS[$direction]['rates'];
-                if (is_null($rate_extraordinary = $this->rateExtraordinary(self::DIRECTIONS[$direction]['rates'], $start, $stop))) {                                             // check extraordinary rate override
-                    foreach (self::RATE_PERS as $unit => $y) {
-                        if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $tariff_combination[$direction], $tariff_table, 0))) {      // get rate
-                            if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $tariff_combination[$direction], $tariff_table, -1))) { // if none, try same slot in previous date
-                                throw new \Exception('no ' . $direction . ' tariff between ' . $start . ' and ' . $stop);                                                // otherwise throw exception
-                            }
+                foreach (self::RATE_PERS as $unit => $y) {
+                    if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $tariff_combination[$direction], $tariff_table, 0))) {      // get rate
+                        if (is_null($ratesPer[$unit][$direction] = $this->ratePerUnit($unit, $start, $stop, $tariff_combination[$direction], $tariff_table, -1))) { // if none, try same slot in previous date
+                            throw new \Exception('no ' . $direction . ' tariff between ' . $start . ' and ' . $stop);                                                // otherwise throw exception
                         }
                     }
                 }
-                else {
+                if (!is_null($rate_extraordinary = $this->rateExtraordinary($direction, $start, $stop))) {  // extraordinary KWH rate overrides
                     $ratesPer['KWH'][$direction] = $rate_extraordinary;
                 }
             }
@@ -308,8 +304,8 @@ class Octopus extends Root
         $this->mysqli->commit();
     }
 
-    private function rateExtraordinary($rate, $start, $stop): float|null {
-        $sql = 'SELECT `' . $rate . '`
+    private function rateExtraordinary($direction, $start, $stop): float|null {
+        $sql = 'SELECT `' . $direction . '_rate`
                     FROM    `tariff_extraordinaries_per_kwh`
                     WHERE   ? BETWEEN `start` AND `stop` AND
                             ? BETWEEN `start` AND `stop` AND
@@ -319,9 +315,9 @@ class Octopus extends Root
             !$stmt->bind_param('ss', $start, $stop) ||
             !$stmt->bind_result($rate) ||
             !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
         }
         $stmt->fetch();
         return $rate;

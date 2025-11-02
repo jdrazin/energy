@@ -1,8 +1,11 @@
 <?php
-namespace Energy\src;
+namespace Src;
 use Exception;
 use PhpMqtt\Client\ConnectionSettings;
 use PhpMqtt\Client\Exceptions\DataTransferException;
+use PhpMqtt\Client\Exceptions\InvalidMessageException;
+use PhpMqtt\Client\Exceptions\MqttClientException;
+use PhpMqtt\Client\Exceptions\ProtocolViolationException;
 use PhpMqtt\Client\Exceptions\RepositoryException;
 use PhpMqtt\Client\MqttClient;
 
@@ -11,7 +14,7 @@ require_once __DIR__ . "/Energy.php";
 
 class Mqtt
 {
-    const false     CLEAN_SESSION         = false;
+    const bool      CLEAN_SESSION         = false;
 
     const int       KEEP_ALIVE_SECONDS    = 60,
                     PORT                  = 1883,
@@ -35,8 +38,8 @@ class Mqtt
                                                             ->setLastWillTopic($this->topic_base . 'last-will')
                                                             ->setLastWillMessage('client disconnect')
                                                             ->setLastWillQualityOfService(self::QOS);
-            $clientId = rand(5, 15);
-            $this->mqtt = new MqttClient(self::SERVER, self::PORT, $clientId, self::MQTT_VERSION);
+            $this->mqtt = new MqttClient(self::SERVER, self::PORT, null, self::MQTT_VERSION);
+            $this->mqtt->connect($connectionSettings, self::CLEAN_SESSION);
         }
         catch (exception $e) {
             $message = $e->getMessage();
@@ -47,18 +50,31 @@ class Mqtt
      * @throws RepositoryException
      * @throws DataTransferException
      */
-    public function subscribe($topic): void
-    {
-        $this->mqtt->subscribe($topic, function ($topic, $message) {
+    public function subscribe(): void {
+        $this->mqtt->subscribe($this->topic_base, function ($topic, $message) {
             printf("Received message on topic [%s]: %s\n", $topic, $message);
         }, 0);
     }
 
-    public function publish() {
-
+    /**
+     * @throws RepositoryException
+     * @throws DataTransferException
+     */
+    public function publish($payload, $qos, $retain): void {
+        $this->mqtt->publish($this->topic_base, $payload, $qos, $retain);
     }
 
     private function implode(array $topic): ?string {
-        return implode(self::SEPARATOR, $topic);
+        return implode(self::SEPARATOR, $topic) . self::SEPARATOR;
+    }
+
+    /**
+     * @throws ProtocolViolationException
+     * @throws MqttClientException
+     * @throws InvalidMessageException
+     * @throws DataTransferException
+     */
+    public function loop($flag): void {
+        $this->mqtt->loop($flag);
     }
 }

@@ -22,6 +22,7 @@
     "markrogoyski/math-php": "^v2.11.0",
     "monolog/monolog": "^1.17",
     "php": "^8.3",
+    "php-mqtt/client":"*",
     "phpmailer/phpmailer": "^6.9.3",
     "slim/php-view": "^2.0",
     "slim/slim": "^4.14"

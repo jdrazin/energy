@@ -12,8 +12,15 @@ use PhpMqtt\Client\MqttClient;
 require_once __DIR__ . '/Component.php';
 require_once __DIR__ . "/Energy.php";
 
-class Mqtt
-{
+/*
+ *
+ * wrapper class for MQTT
+ *
+ * see: https://github.com/php-mqtt/client
+ *
+ */
+
+class Mqtt {
     const bool      CLEAN_SESSION         = false;
 
     const int       KEEP_ALIVE_SECONDS    = 60,
@@ -76,5 +83,12 @@ class Mqtt
      */
     public function loop($flag): void {
         $this->mqtt->loop($flag);
+    }
+
+    /**
+     * @throws DataTransferException
+     */
+    public function disconnect(): void {
+        $this->mqtt->disconnect();
     }
 }

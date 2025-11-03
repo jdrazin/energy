@@ -14,13 +14,15 @@ require_once __DIR__ . "/Energy.php";
 
 /*
  *
- * wrapper class for MQTT
+ * GivEnergy wrapper class for MQTT
  *
- * see: https://github.com/php-mqtt/client
+ * see:
+ *   - https://github.com/php-mqtt/client for GivEnergyMqtt stack
+ *   - https://github.com/britkat1980/giv_tcp/blob/main/README.md
  *
  */
 
-class Mqtt {
+class GivEnergyMqtt {
     const bool      CLEAN_SESSION         = false;
 
     const int       KEEP_ALIVE_SECONDS    = 60,

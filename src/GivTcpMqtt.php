@@ -16,9 +16,9 @@ require_once __DIR__ . "/Energy.php";
  *
  * GivEnergy wrapper class for MQTT
  *
- * see:
- *   - https://github.com/php-mqtt/client for GivTcpMqtt stack
- *   - https://github.com/britkat1980/giv_tcp/blob/main/README.md for GivTCP
+ * for GivTcpMqtt stack see: https://github.com/php-mqtt/client
+ * for GivTCP see: https://github.com/britkat1980/giv_tcp/blob/main/README.md
+ * for implementation tips see: https://www.aligrant.com/web/blog/2024-10-04_deploying_giv_tcp_for_local_control_of_givenergy_inverter_through_mqtt?utm_source=chatgpt.com
  *
  */
 
@@ -27,24 +27,24 @@ class GivTcpMqtt {
 
     const int       KEEP_ALIVE_SECONDS    = 60,
                     PORT                  = 1883,
-                    QOS                   = 1;
+                    QOS                   = 0;
 
-    const string    SERVER                = '192.168.1.11',
+    const string    SERVER                = '192.168.1.14',
                     USERNAME              = 'jdrazin',
                     PASSWORD              = 'mn1CjX7lWG018hP47qkv',
                     MQTT_VERSION          = MqttClient::MQTT_3_1_1,
                     SEPARATOR             = '/';
 
-    private         string      $topic_base;
+    private         string      $root_topic;
     protected       MqttClient  $mqtt;
 
     public function __construct($topic) {
         try {
-            $this->topic_base   = $this->implode($topic);
+            $this->root_topic   = $this->implode($topic);
             $connectionSettings = (new ConnectionSettings)  ->setUsername(self::USERNAME)
                                                             ->setPassword(self::PASSWORD)
                                                             ->setKeepAliveInterval(self::KEEP_ALIVE_SECONDS)
-                                                            ->setLastWillTopic($this->topic_base . 'last-will')
+                                              //              ->setLastWillTopic($this->topic_base . 'last-will')
                                                             ->setLastWillMessage('client disconnect')
                                                             ->setLastWillQualityOfService(self::QOS);
             $this->mqtt = new MqttClient(self::SERVER, self::PORT, null, self::MQTT_VERSION);
@@ -60,7 +60,7 @@ class GivTcpMqtt {
      * @throws DataTransferException
      */
     public function subscribe(): void {
-        $this->mqtt->subscribe($this->topic_base, function ($topic, $message) {
+        $this->mqtt->subscribe($this->root_topic, function ($topic, $message) {
             printf("Received message on topic [%s]: %s\n", $topic, $message);
         }, 0);
     }
@@ -69,12 +69,12 @@ class GivTcpMqtt {
      * @throws RepositoryException
      * @throws DataTransferException
      */
-    public function publish($payload, $qos, $retain): void {
-        $this->mqtt->publish($this->topic_base, $payload, $qos, $retain);
+    public function publish($topic, $message, $qos, $retain): void {
+        $this->mqtt->publish($this->root_topic . self::SEPARATOR . $topic, $message, $qos, $retain);
     }
 
     private function implode(array $topic): ?string {
-        return implode(self::SEPARATOR, $topic) . self::SEPARATOR;
+        return implode(self::SEPARATOR, $topic);
     }
 
     /**

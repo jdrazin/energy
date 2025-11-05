@@ -130,6 +130,9 @@ class Energy extends Root
                     JOIN `tariff_combinations` `tc` ON `sndce`.`tariff_combination` = `tc`.`id`
                     JOIN `tariff_imports`      `ti` ON `ti`   .`id`                 = `tc`.`import`
                     JOIN `tariff_exports`      `te` ON `te`   .`id`                 = `tc`.`export`
+                    WHERE `tc`.`status` IN ('TO_DROP', 'CURRENT') AND
+                          `te`.`status` IN ('TO_DROP', 'CURRENT') AND
+                          `ti`.`status` IN ('TO_DROP', 'CURRENT')
                     ORDER BY ROUND((((`sndce`.`raw_import` + `sndce`.`raw_export`) + `sndce`.`standing`) - ((`sndce`.`optimised_import` + `sndce`.`optimised_export`) + `sndce`.`standing`)), 2) DESC";
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_result($start, $tariff_combination, $raw_gbp, $optimised_gbp, $grid_saving_gbp, $total_saving_gbp, $saving_percent, $wear_percent) ||
@@ -150,6 +153,28 @@ class Energy extends Root
      * @throws Exception
      */
     public function betterTariffNotice(): string {
+        $sql = 'INSERT INTO `tariff_comparisons` (`combination`, `date`, `cost_raw`, `cost_optimised`)
+                    SELECT `costs`.`combination`, `costs`.`date`, `costs`.`cost_raw`, `costs`.`cost_optimised`
+                    FROM (SELECT    `tc`.`id` AS `combination`,
+                                    DATE(`sndce`.`timestamp`) AS `date`,
+                                    ROUND(`sndce`.`raw_import`       + `sndce`.`raw_export`,       2) AS `cost_raw`,
+                                    ROUND(`sndce`.`optimised_import` + `sndce`.`optimised_export`, 2) AS `cost_optimised`
+                                    FROM `slot_next_day_cost_estimates` AS `sndce`
+                              JOIN `tariff_combinations` AS `tc` ON `sndce`.`tariff_combination` = `tc`.`id`
+                              JOIN `tariff_imports`      AS `ti` ON `ti`.`id` = `tc`.`import`
+                              JOIN `tariff_exports`      AS `te` ON `te`.`id` = `tc`.`export`
+                              WHERE `tc`.`status` IN (\'TO_DROP\',\'CURRENT\') AND 
+                                    `te`.`status` IN (\'TO_DROP\',\'CURRENT\') AND 
+                                    `ti`.`status` IN (\'TO_DROP\',\'CURRENT\')) AS `costs`
+                    ON DUPLICATE KEY UPDATE `cost_raw` = `costs`.`cost_raw`, `cost_optimised` = `costs`.`cost_optimised`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        unset($stmt);
         $sql = 'SELECT  ROW_NUMBER() OVER (ORDER BY `sndce`.`standing`+`sndce`.`optimised_import`+`sndce`.`optimised_export`) AS `row`,
                         CONCAT(`ti`.`code`, \', \', `te`.`code`) AS `tariff`,
                         IFNULL(`tc`.`active`, FALSE) AS `active`

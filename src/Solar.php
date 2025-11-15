@@ -14,11 +14,11 @@ namespace Src;
 class Solar
 {
     const   SOLAR_EQUINOX_FRACTION_YEAR = 81.0 / 365.25,
-        EARTH_TILT_DEGREES = 23.45,
-        SURFACE_REFLECTANCE = 0.2;
+            EARTH_TILT_DEGREES = 23.45,
+            SURFACE_REFLECTANCE = 0.2;
 
-    public float $total_insolation_time_w_per_m2, $total_insolation_cloud_time_w_per_m2, $time_correction_fraction,
-        $latitude_degrees, $longitude_degrees, $azimuth_degrees, $tilt_degrees, $total_insolation_noon_w_per_m2;
+    public float    $total_insolation_time_w_per_m2, $total_insolation_cloud_time_w_per_m2, $time_correction_fraction,
+                    $latitude_degrees, $longitude_degrees, $azimuth_degrees, $tilt_degrees, $total_insolation_noon_w_per_m2;
 
     public string $orientation_type;
 

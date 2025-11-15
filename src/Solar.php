@@ -11,11 +11,11 @@
 // see https://agile.octopushome.net/dashboard
 //
 namespace Src;
-class Solar
+class Solar extends Root
 {
-    const   SOLAR_EQUINOX_FRACTION_YEAR = 81.0 / 365.25,
-            EARTH_TILT_DEGREES = 23.45,
-            SURFACE_REFLECTANCE = 0.2;
+    const   float   SURFACE_REFLECTANCE = 0.2,
+                    EARTH_TILT_DEGREES = 23.45,
+                    SOLAR_EQUINOX_FRACTION_YEAR = 81.0 / 365.25;
 
     public float    $total_insolation_time_w_per_m2, $total_insolation_cloud_time_w_per_m2, $time_correction_fraction,
                     $latitude_degrees, $longitude_degrees, $azimuth_degrees, $tilt_degrees, $total_insolation_noon_w_per_m2;
@@ -24,25 +24,32 @@ class Solar
 
     public array $cloud_cover_months_year_fractions, $cloud_cover_months_factors;
 
-    public function __construct($location, $orientation)
-    {
-        $this->time_correction_fraction = $location['time_correction_fraction'];
+    private array $api;
 
-        $coordinates = $location['coordinates'];
-        $this->latitude_degrees  = $coordinates['latitude_degrees'];
-        $this->longitude_degrees = $coordinates['longitude_degrees'];
+    public function __construct($location, $orientation) {
+        parent::__construct();
+        $this->use_local_config();
+        $this->class    = $this->strip_namespace(__NAMESPACE__, __CLASS__);
+        $this->api      = $this->apis[$this->class];
 
-        $cloud_cover_months = $location['cloud_cover_months'];
-        $this->cloud_cover_months_year_fractions = $cloud_cover_months['fractions'];
-        $this->cloud_cover_months_factors = $cloud_cover_months['factors'];
+        if ($location && $orientation) {
+            $this->time_correction_fraction = $location['time_correction_fraction'];
 
-        $this->orientation_type = $orientation['type'];
-        $this->azimuth_degrees  = $orientation['azimuth_degrees'];
-        $this->tilt_degrees     = $orientation['tilt_degrees'];
+            $coordinates = $location['coordinates'];
+            $this->latitude_degrees  = $coordinates['latitude_degrees'];
+            $this->longitude_degrees = $coordinates['longitude_degrees'];
+
+            $cloud_cover_months = $location['cloud_cover_months'];
+            $this->cloud_cover_months_year_fractions = $cloud_cover_months['fractions'];
+            $this->cloud_cover_months_factors = $cloud_cover_months['factors'];
+
+            $this->orientation_type = $orientation['type'];
+            $this->azimuth_degrees  = $orientation['azimuth_degrees'];
+            $this->tilt_degrees     = $orientation['tilt_degrees'];
+        }
     }
 
-    public function time_update($time): void
-    {
+    public function time_update($time): void {
         $fraction_year = $time->fraction_year;
         $fraction_day  = $time->fraction_day;
 
@@ -117,8 +124,7 @@ class Solar
         $this->total_insolation_cloud_time_w_per_m2 = $this->cloud_factor($fraction_year) * $this->total_insolation_time_w_per_m2;
     }
 
-    public function cloud_factor($fraction_year): float|int
-    {
+    public function cloud_factor($fraction_year): float|int {
         //
         // see
         //
@@ -144,5 +150,15 @@ class Solar
             $fraction_hi = $this->cloud_cover_months_year_fractions[$month];
         }
         return $factor_lo + ($fraction_year - $fraction_lo) * ($factor_hi - $factor_lo) / ($fraction_hi - $fraction_lo);
+    }
+
+    public function db_historic_average_power_w($datetime_centre, $slot_width_min, $period_day, $max_ago_day): float {
+        // returns average measured solar:
+        // - for slot centred about $datetime_centre
+        // - with $slot_width_min within a period centred about $datetime_centre
+        // - width $period_day
+        // - looking back to $max_ago_day
+        $db_historic_average_power_w = 0.0;
+        return $db_historic_average_power_w;
     }
 }

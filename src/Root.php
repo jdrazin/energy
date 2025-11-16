@@ -382,8 +382,7 @@ class Root {
         $this->mysqli->commit();
         if (!$made_successful_request && $this->requestIsStale()) { // give up if too long since last successful request
            $message = $this->class . ': requests are stale';
-           (new Root())->logDb('MESSAGE', $message,  null,'FATAL');
-           throw new Exception($message);
+           (new Root())->logDb('MESSAGE', $message,  null,'WARNING');
         }
     }
 
@@ -444,7 +443,7 @@ class Root {
         $sql = 'SELECT    AVG(`value`) AS `value`
                    FROM   `values`
                    WHERE  `entity` = ? AND
-                          `type`   = \'FORECAST\' AND
+                          `type` IN(\'FORECAST\', \'ESTIMATE\') AND
                           `datetime` BETWEEN ? AND ?';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sss', $entity, $start, $stop) ||

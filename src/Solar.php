@@ -18,6 +18,8 @@ class Solar extends Root
     const   float   SURFACE_REFLECTANCE = 0.2,
                     EARTH_TILT_DEGREES = 23.45,
                     SOLAR_EQUINOX_FRACTION_YEAR = 81.0 / 365.25;
+    const   int     HISTORIC_PERIOD_DAY = 14,
+                    MAX_AGO_DAY = 366;
 
     public float    $total_insolation_time_w_per_m2, $total_insolation_cloud_time_w_per_m2, $time_correction_fraction,
                     $latitude_degrees, $longitude_degrees, $azimuth_degrees, $tilt_degrees, $total_insolation_noon_w_per_m2;
@@ -149,18 +151,27 @@ class Solar extends Root
     }
 
     /**
+     * @throws Exception
+     */
+    public function db_forecast_fallback($slots): void {
+        foreach ($slots as $slot) {
+            $db_historic_average_power_w = $this->db_historic_average_power_w($slot['mid'], Slot::DURATION_MINUTES/2, self::HISTORIC_PERIOD_DAY, self::MAX_AGO_DAY);
+        }
+    }
+
+    /**
      * @throws \Exception
      */
-    public function db_historic_average_power_w($datetime_centre, $slot_width_min, $period_day, $max_ago_day): float {
+    public function db_historic_average_power_w($datetime_centre): ?float {
         // returns average measured solar:
         // - for slot centred about $datetime_centre
         // - with $slot_width_min within a period centred about $datetime_centre
         // - width $period_day
         // - looking back to $max_ago_day
-        $db_historic_average_power_w = 0.0;
-        $period_half_day   =      (int) round($period_day     /2.0);
-        $slot_width_half_s = 60 * (int) round($slot_width_min /2.0);
-        $sql = 'SELECT  AVG(`value`)
+        $slot_width_half_s = 60 * (int) round(Slot::DURATION_MINUTES    / 2.0);
+        $period_half_day   =      (int) round(self::HISTORIC_PERIOD_DAY / 2.0);
+        $max_ago_day       = self::MAX_AGO_DAY;
+        $sql = 'SELECT  ROUND(AVG(`value`))
                   FROM  `values`
                   WHERE `entity` = \'SOLAR_W\' AND
                         `type`   = \'MEASURED\' AND
@@ -170,12 +181,12 @@ class Solar extends Root
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('sisisisii', $datetime_centre, $period_half_day, $datetime_centre, $period_half_day, $datetime_centre, $slot_width_half_s, $datetime_centre, $slot_width_half_s, $max_ago_day) ||
             !$stmt->bind_result($db_historic_average_power_w) ||
-            !$stmt->execute()) {
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-
         return $db_historic_average_power_w;
     }
 }

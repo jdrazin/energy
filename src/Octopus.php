@@ -64,7 +64,7 @@ class Octopus extends Root
             $givenergy->getData();                                                // grid, load_house, solar (yesterday, today) > `values`
             (new EmonCms())->getData();                                           // home heating and temperature > `values`
             $values->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature
-            (new Solcast())->getSolarActualForecast();                            // solar actuals & forecasts > 'powers'
+            (new Solcast())->getSolarActualForecast($db_slots->slots);            // solar actuals & forecasts > 'powers'
             (new MetOffice())->forecast();                                        // get temperature forecast
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot

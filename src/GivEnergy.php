@@ -378,7 +378,7 @@ class GivEnergy extends Root
                    return [];
                 }
                 else {
-                    $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response:' . $e->getCode() . ', no data');
+                    $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response:' . $e->getCode());
                     $this->logDb('MESSAGE', $message, null, 'WARNING');
                     throw new Exception($message);
                 }

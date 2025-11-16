@@ -70,27 +70,23 @@ class Octopus extends Root
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
             $tariff_combinations = $this->tariffCombinations();                   // get tariff combinations of interest, starting with active combination
             foreach ($tariff_combinations as $tariff_combination) {
-                if (($tariff_combination['active']) || !ACTIVE_TARIFF_COMBINATION_ONLY) {
-                    if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
-                        $db_slots->makeDbSlotsNext24hrs($tariff_combination);                           // make slots for this tariff combination
-                        $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);
-                        $this->makeSlotRates($db_slots->slots, $tariff_combination, false);        // make tariffs
-                        $values->estimatePowers($db_slots, $tariff_combination);                        // forecast slot solar, heating, non-heating and load powers
+                if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
+                    $db_slots->makeDbSlotsNext24hrs($tariff_combination);                           // make slots for this tariff combination
+                    $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);
+                    $this->makeSlotRates($db_slots->slots, $tariff_combination, false);        // make tariffs
+                    $values->estimatePowers($db_slots, $tariff_combination);                        // forecast slot solar, heating, non-heating and load powers
 
-                        // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
-                        $timestamp_start = (new DateTime($next_day_slots[0]['start']))->getTimestamp(); // beginning of slot 0
-                        $batteryLevelInitialKwh = $batteryLevelInitialKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($timestamp_start); // initial level at beginning of slot 0
-                        $parameters = [
-                                        'type'                   => 'slots',
-                                        'batteryLevelInitialKwh' => $batteryLevelInitialKwh,
-                                        'tariff_combination'     => $tariff_combination
-                                      ];
-                        $slot_solution = (new EnergyCost($parameters))->minimise(); // minimise energy cost
-                        $this->makeActiveTariffCombinationDbSlotsLast24hrs($tariff_combination);    // make historic slots for last 24 hours
-                        if ($tariff_combination['active']) {                                        // make battery command
-                            $this->log($slot_solution);                                             // log slot command
-                            $this->slots_make_cubic_splines();                                      // generate cubic splines
-                        }
+                    // fetch battery state of charge immediately prior to optimisation for active tariff, extrapolating to beginning of next slot
+                    $timestamp_start = (new DateTime($next_day_slots[0]['start']))->getTimestamp(); // beginning of slot 0
+                    $batteryLevelInitialKwh = $batteryLevelInitialKwh ?? $givenergy->batteryLevelSlotBeginExtrapolateKwh($timestamp_start); // initial level at beginning of slot 0
+                    $parameters = ['type'                   => 'slots',
+                                   'batteryLevelInitialKwh' => $batteryLevelInitialKwh,
+                                   'tariff_combination'     => $tariff_combination];
+                    $slot_solution = (new EnergyCost($parameters))->minimise();     // minimise energy cost
+                    $this->makeActiveTariffCombinationDbSlotsLast24hrs($tariff_combination);    // make historic slots for last 24 hours
+                    if ($tariff_combination['active']) {                            // make battery command
+                        $this->log($slot_solution);                                 // log slot command
+                        $this->slots_make_cubic_splines();                          // generate cubic splines
                     }
                 }
             }
@@ -630,19 +626,20 @@ class Octopus extends Root
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
         }
-        // sleep until beginning of next slot start, then commit
-        $wait_to_next_slot_start_seconds = (new DateTime($next_slot_start))->getTimestamp() - (new DateTime())->getTimestamp();
-        if ($wait_to_next_slot_start_seconds < 0) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'sleep to next slot is negative: ' . $wait_to_next_slot_start_seconds . 's');
-            $this->logDb('MESSAGE', $message, null, 'WARNING');
-            $wait_to_next_slot_start_seconds = 0;
-        }
-        elseif($wait_to_next_slot_start_seconds > self::MAX_WAIT_TO_NEXT_SLOT_SECONDS) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'sleep to next slot too high: ' . $wait_to_next_slot_start_seconds . 's');
-            $this->logDb('MESSAGE', $message, null, 'WARNING');
-        }
-        if (!DEBUG) {
-           sleep($wait_to_next_slot_start_seconds);
+        // if active tariff, sleep until beginning of next slot start, then commit
+        if ($tariff_combination['active']) {                            // make battery command
+            $wait_to_next_slot_start_seconds = (new DateTime($next_slot_start))->getTimestamp() - (new DateTime())->getTimestamp();
+            if ($wait_to_next_slot_start_seconds < 0) {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'sleep to next slot is negative: ' . $wait_to_next_slot_start_seconds . 's');
+                $this->logDb('MESSAGE', $message, null, 'WARNING');
+                $wait_to_next_slot_start_seconds = 0;
+            } elseif ($wait_to_next_slot_start_seconds > self::MAX_WAIT_TO_NEXT_SLOT_SECONDS) {
+                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'sleep to next slot too high: ' . $wait_to_next_slot_start_seconds . 's');
+                $this->logDb('MESSAGE', $message, null, 'WARNING');
+            }
+            if (!DEBUG) {
+                sleep($wait_to_next_slot_start_seconds);
+            }
         }
         $this->mysqli->commit();
     }

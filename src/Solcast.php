@@ -52,6 +52,7 @@ class Solcast extends Solar
                 ];
             }
             $this->insertPowers($powers);
+            (new Root())->logDb('MESSAGE', $this->class . ': estimating in absence of forecast',  null,'WARNING');
         }
         $this->requestResult($made_successful_request); // update whether request succeeded
     }

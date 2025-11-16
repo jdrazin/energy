@@ -28,8 +28,7 @@ class Solcast extends Solar
      * @throws GuzzleException
      * @throws \Exception
      */
-    public function getSolarActualForecast($slots): void
-    {
+    public function getSolarActualForecast($slots): void {
         $made_successful_request = false;
         $this->deleteForecastsEstimates();
         if ($this->skipRequest()) { // skip request if called recently
@@ -43,16 +42,18 @@ class Solcast extends Solar
         catch (exception $e) {
             $this->logDb('MESSAGE', $e->getMessage(),  null, 'WARNING');
             $powers = [];
-            foreach ($slots as $slot) { // fallback to average actual for time of day and year
+            foreach ($slots as $slot) { // fallback to estimate from average historic actuals for same time of day and year
+                $mid      = $slot['mid'];
+                $power_w  = (new Solar(null, null))->db_historic_average_power_w($mid);
                 $powers[] = [
-                    'datetime'  => ($mid = $slot['mid']),
-                    'type'      => Types::FORECAST->value,
-                    'power_w'   => (new Solar(null, null))->db_historic_average_power_w($mid, SLOT_WIDTH_MIN, PERIOD_DAY, MAX_AGO_DAY)
+                    'datetime' => $mid,
+                    'type'     => Types::FORECAST->value,
+                    'power_w'  => $power_w
                 ];
             }
             $this->insertPowers($powers);
         }
-        $this->requestResult($made_successful_request); // update timestamp for successful request
+        $this->requestResult($made_successful_request); // update whether request succeeded
     }
 
     /**

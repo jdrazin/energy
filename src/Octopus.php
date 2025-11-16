@@ -82,12 +82,8 @@ class Octopus extends Root
                     $parameters = ['type'                   => 'slots',
                                    'batteryLevelInitialKwh' => $batteryLevelInitialKwh,
                                    'tariff_combination'     => $tariff_combination];
-                    $slot_solution = (new EnergyCost($parameters))->minimise();     // minimise energy cost
-                    $this->makeActiveTariffCombinationDbSlotsLast24hrs($tariff_combination);    // make historic slots for last 24 hours
-                    if ($tariff_combination['active']) {                            // make battery command
-                        $this->log($slot_solution);                                 // log slot command
-                        $this->slots_make_cubic_splines();                          // generate cubic splines
-                    }
+                    $slot_solution = (new EnergyCost($parameters))->minimise();        // minimise energy cost
+                    $this->processTariffSolution($tariff_combination, $slot_solution); // make historic slots for last 24 hours
                 }
             }
         } else {
@@ -530,7 +526,7 @@ class Octopus extends Root
     /**
      * @throws Exception
      */
-    public function makeActiveTariffCombinationDbSlotsLast24hrs($tariff_combination): void {
+    public function processTariffSolution($tariff_combination, $slot_solution): void {
         // make previous day times slots from next day slots
         $sql = 'SELECT `slot`  - 48,
                        `start` - INTERVAL 24 HOUR,
@@ -642,6 +638,10 @@ class Octopus extends Root
             }
         }
         $this->mysqli->commit();
+        if ($tariff_combination['active']) {                            // make battery command
+            $this->log($slot_solution);                                 // log slot command
+            $this->slots_make_cubic_splines();                          // generate cubic splines
+        }
     }
 
     /**

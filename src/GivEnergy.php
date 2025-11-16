@@ -308,11 +308,22 @@ class GivEnergy extends Root
      */
     private function getEVChargerLast24hrs(): void        // get ev charger
     {
-        $now   = (new DateTime())->format(Root::MYSQL_FORMAT_DATETIME);
-        $from  = (new DateTime())->modify('-1 day');
-        $slots = new Slots($from->format(Root::MYSQL_FORMAT_DATETIME), $now);
+        $now     = (new DateTime())->format(Root::MYSQL_FORMAT_DATETIME);
+        $from    = (new DateTime())->modify('-1 day');
+        $slots   = new Slots($from->format(Root::MYSQL_FORMAT_DATETIME), $now);
+        $no_data = false;
         while ($slot = $slots->next_slot()) { // get data points for every slot until now
-            $this->insertPointsEVCharger($this->getEVChargerData($slot['start'], $slot['stop']));
+            $points = $this->getEVChargerData($slot['start'], $slot['stop']);
+            if ($points) {
+               $this->insertPointsEVCharger($points);
+            }
+            else {
+                $no_data = true;
+            }
+
+        }
+        if ($no_data) {
+            $this->logDb('MESSAGE', 'Missing EV data', null, 'WARNING');
         }
     }
 
@@ -364,9 +375,15 @@ class GivEnergy extends Root
                 $response  = $client->get($url, ['headers' => $headers, 'query' => $query]);
             }
             catch (GuzzleException $e) {
-                $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response:' . $e->getCode() . ', no data');
-                $this->logDb('MESSAGE', $message, null, 'WARNING');
-                return [];
+                $errno = (int) $e->getCode();
+                if ($errno == 404) {
+                   return [];
+                }
+                else {
+                    $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Bad response:' . $e->getCode() . ', no data');
+                    $this->logDb('MESSAGE', $message, null, 'WARNING');
+                    throw new Exception($message);
+                }
             }
             $response_data = json_decode((string) $response->getBody(), true);
             $data_points   = array_merge($data_points, $response_data['data']);

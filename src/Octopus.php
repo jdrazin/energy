@@ -35,7 +35,7 @@ class Octopus extends Root
                                     'load_house_kw'           => [['LOAD_HOUSE_W',      +1000.0]],
                                     'battery_level_start_kwh' => [['BATTERY_LEVEL_KWH', +1.0]]
                                 ];
-    const int MAX_WAIT_TO_NEXT_SLOT_SECONDS = 180;
+    const int MAX_WAIT_TO_NEXT_SLOT_SECONDS = 300;
     const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api;
 

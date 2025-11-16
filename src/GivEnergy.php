@@ -313,14 +313,12 @@ class GivEnergy extends Root
         $slots   = new Slots($from->format(Root::MYSQL_FORMAT_DATETIME), $now);
         $no_data = false;
         while ($slot = $slots->next_slot()) { // get data points for every slot until now
-            $points = $this->getEVChargerData($slot['start'], $slot['stop']);
-            if ($points) {
+            if ($points = $this->getEVChargerData($slot['start'], $slot['stop'])) {
                $this->insertPointsEVCharger($points);
             }
             else {
                 $no_data = true;
             }
-
         }
         if ($no_data) {
             $this->logDb('MESSAGE', 'Missing EV data', null, 'WARNING');

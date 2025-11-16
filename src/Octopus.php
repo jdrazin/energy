@@ -638,9 +638,9 @@ class Octopus extends Root
             }
         }
         $this->mysqli->commit();
-        if ($tariff_combination['active']) {                            // make battery command
-            $this->log($slot_solution);                                 // log slot command
-            $this->slots_make_cubic_splines();                          // generate cubic splines
+        if ($tariff_combination['active']) {    // make battery command
+            $this->log($slot_solution);         // log slot command
+            $this->slots_make_cubic_splines();  // generate cubic splines
         }
     }
 

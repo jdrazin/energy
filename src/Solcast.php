@@ -28,7 +28,7 @@ class Solcast extends Solar
      * @throws GuzzleException
      * @throws \Exception
      */
-    public function getSolarActualForecast(): void
+    public function getSolarActualForecast($slots): void
     {
         $made_successful_request = false;
         if ($this->skipRequest()) { // skip request if called recently
@@ -42,7 +42,15 @@ class Solcast extends Solar
         }
         catch (exception $e) {
             $this->logDb('MESSAGE', $e->getMessage(),  null, 'WARNING');
-            ; // fallback to average actual for time of day and year
+            $powers = [];
+            foreach ($slots as $slot) { // fallback to average actual for time of day and year
+                $powers[] = [
+                    'datetime'  => ($mid = $slot['mid']),
+                    'type'      => Types::FORECAST->value,
+                    'power_w'   => (new Solar(null, null))->db_historic_average_power_w($mid, SLOT_WIDTH_MIN, PERIOD_DAY, MAX_AGO_DAY)
+                ];
+            }
+            $this->insertPowers($powers);
         }
         $this->requestResult($made_successful_request); // update timestamp for successful request
     }
@@ -69,7 +77,7 @@ class Solcast extends Solar
         }
         $response_json = $this->request($data_type);
         $responses = json_decode($response_json, true)[$data_type];
-        $data = [];
+        $powers = [];
         $time_earliest = $time_latest = null;
         foreach ($responses as $response) {
             if ($response['period'] == 'PT30M') {
@@ -77,7 +85,7 @@ class Solcast extends Solar
                 $period_end = $response['period_end'];
                 $datetime = new DateTime($period_end);
                 $datetime->modify('-' . $period_duration_mins / 2 . ' minute');
-                $data[] = [
+                $powers[] = [
                     'datetime'  => $datetime->format(Root::MYSQL_FORMAT_DATETIME),
                     'type'      => Types::FORECAST->value,
                     'power_w'   => 1000.0 * (float)$response['pv_estimate']  // convert to mks
@@ -100,10 +108,7 @@ class Solcast extends Solar
                 throw new Exception('bad Solcast value(s)');
             }
         }
-        $this->insertPowers(['data'          => $data,
-                             'time_earliest' => $time_earliest->format(Root::MYSQL_FORMAT_DATETIME),
-                             'time_latest'   => $time_latest->format(Root::MYSQL_FORMAT_DATETIME)],
-                            null);
+        $this->insertPowers($powers);
     }
 
     /*
@@ -112,9 +117,7 @@ class Solcast extends Solar
     /**
      * @throws Exception
      */
-    private function insertPowers($data, $forecast): void
-    {
-        $powers = $data['data'];
+    private function insertPowers($powers): void    {
         $sql = 'INSERT INTO `values`     (`entity`,     `type`, `value`,    `status`, `datetime`, `forecast`)
                                  VALUES  (\'SOLAR_W\',       ?,       ?, \'CURRENT\',         ?,           ?)
                    ON DUPLICATE KEY UPDATE  `value`     = ?,

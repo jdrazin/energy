@@ -287,6 +287,9 @@ class Energy extends Root
         return $setback_temps_c;
    }
 
+    /**
+     * @throws Exception
+     */
     private function config_combined($config_base, $combination, $acronym): array {
         $config = $config_base;
         foreach (self::COMPONENTS as $component) {

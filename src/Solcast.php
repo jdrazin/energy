@@ -31,13 +31,13 @@ class Solcast extends Solar
     public function getSolarActualForecast($slots): void
     {
         $made_successful_request = false;
+        $this->deleteForecastsEstimates();
         if ($this->skipRequest()) { // skip request if called recently
             $this->requestResult(false); // update timestamp for failed request
             return;
         }
         try {
-            $this->insertEnergy();
-            $this->deleteOldForecasts();
+            $this->insertResults();
             $made_successful_request = true;
         }
         catch (exception $e) {
@@ -59,7 +59,7 @@ class Solcast extends Solar
      * @throws DateMalformedStringException
      * @throws Exception|GuzzleException
      */
-    private function insertEnergy(): void
+    private function insertResults(): void
     {
         switch (Types::FORECAST->value) {
             case 'ACTUAL':
@@ -145,33 +145,16 @@ class Solcast extends Solar
     /**
      * @throws Exception
      */
-    private function deleteOldForecasts(): void
+    private function deleteForecastsEstimates(): void
     {
-        $sql = 'SELECT MAX(`datetime`) 
-                  FROM `values`
-                  WHERE `entity` = \'SOLAR_W\' AND
-                        `type`   = \'ACTUAL\'';
+        $sql = 'DELETE FROM `values` 
+                    WHERE `entity` = \'SOLAR_W\'  AND
+                          `type`   IN(\'FORECAST\', \'ESTIMATE\')';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_result($latest_actual_datime) ||
             !$stmt->execute()) {
             $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
             $this->logDb('MESSAGE', $message, null, 'ERROR');
             throw new Exception($message);
-        }
-        $latest_date_exists = $stmt->fetch();
-        unset($stmt);
-        if ($latest_date_exists) {
-            $sql = 'DELETE FROM `values` 
-                        WHERE `entity` = \'SOLAR_W\'  AND
-                              `type`   = \'FORECAST\' AND
-                              `datetime` <= ?';
-            if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('s', $latest_actual_datime) ||
-                !$stmt->execute()) {
-                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
-            }
         }
         $this->mysqli->commit();
     }

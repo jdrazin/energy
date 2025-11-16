@@ -47,7 +47,7 @@ class Solcast extends Solar
                 $power_w  = (new Solar(null, null))->db_historic_average_power_w($mid);
                 $powers[] = [
                     'datetime' => $mid,
-                    'type'     => Types::FORECAST->value,
+                    'type'     => 'ESTIMATE',
                     'power_w'  => $power_w
                 ];
             }

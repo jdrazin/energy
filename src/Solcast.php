@@ -8,11 +8,8 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
-class Solcast extends Root
+class Solcast extends Solar
 {
-    const int REQUEST_BEFORE_UTC_HOURS = 8,
-              REQUEST_AFTER_UTC_HOURS  = 18;
-
     private array $api;
 
     /**
@@ -20,7 +17,7 @@ class Solcast extends Root
      */
     public function __construct()
     {
-        parent::__construct();
+        parent::__construct(null, null);
         $this->use_local_config();
         $this->class = $this->strip_namespace(__NAMESPACE__, __CLASS__);
         $this->api = $this->apis[$this->class];
@@ -33,26 +30,21 @@ class Solcast extends Root
      */
     public function getSolarActualForecast(): void
     {
-        // forecasting most needed to determine overnight battery depletion
-        if (($hour = (int) (new DateTime())->format('H')) < self::REQUEST_BEFORE_UTC_HOURS || $hour >= self::REQUEST_AFTER_UTC_HOURS) {
-            return;                     // don't request between dawn and dusk
+        $made_successful_request = false;
+        if ($this->skipRequest()) { // skip request if called recently
+            $this->requestResult(false); // update timestamp for failed request
+            return;
         }
-        else {
-            $made_successful_request = false;
-            if ($this->skipRequest()) { // skip request if called recently
-                $this->requestResult(false); // update timestamp for failed request
-                return;
-            }
-            try {
-                $this->insertEnergy();
-                $this->deleteOldForecasts();
-                $made_successful_request = true;
-            }
-            catch (exception $e) {
-                $this->logDb('MESSAGE', $e->getMessage(),  null, 'WARNING');
-            }
-            $this->requestResult($made_successful_request); // update timestamp for successful request
+        try {
+            $this->insertEnergy();
+            $this->deleteOldForecasts();
+            $made_successful_request = true;
         }
+        catch (exception $e) {
+            $this->logDb('MESSAGE', $e->getMessage(),  null, 'WARNING');
+            ; // fallback to average actual for time of day and year
+        }
+        $this->requestResult($made_successful_request); // update timestamp for successful request
     }
 
     /**

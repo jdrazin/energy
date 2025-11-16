@@ -24,14 +24,8 @@ class Solar extends Root
 
     public array $cloud_cover_months_year_fractions, $cloud_cover_months_factors;
 
-    private array $api;
-
     public function __construct($location, $orientation) {
         parent::__construct();
-        $this->use_local_config();
-        $this->class    = $this->strip_namespace(__NAMESPACE__, __CLASS__);
-        $this->api      = $this->apis[$this->class];
-
         if ($location && $orientation) {
             $this->time_correction_fraction = $location['time_correction_fraction'];
 
@@ -159,6 +153,14 @@ class Solar extends Root
         // - width $period_day
         // - looking back to $max_ago_day
         $db_historic_average_power_w = 0.0;
+        $sql = 'SELECT  AVG(`value`)
+                  FROM  `values`
+                  WHERE `entity` = \'SOLAR_W\' AND
+                        `type`   = \'MEASURED\' AND
+                        DATE(`datetime`) BETWEEN DATE(?) - INTERVAL ? DAY    AND DATE(?) + INTERVAL ? DAY    AND
+                        TIME(`datetime`) BETWEEN TIME(?) - INTERVAL ? SECOND AND TIME(?) + INTERVAL ? SECOND AND
+                        `datetime` > NOW() - INTERVAL ? DAY';
+
         return $db_historic_average_power_w;
     }
 }

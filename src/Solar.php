@@ -11,6 +11,8 @@
 // see https://agile.octopushome.net/dashboard
 //
 namespace Src;
+use Exception;
+
 class Solar extends Root
 {
     const   float   SURFACE_REFLECTANCE = 0.2,
@@ -146,6 +148,9 @@ class Solar extends Root
         return $factor_lo + ($fraction_year - $fraction_lo) * ($factor_hi - $factor_lo) / ($fraction_hi - $fraction_lo);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function db_historic_average_power_w($datetime_centre, $slot_width_min, $period_day, $max_ago_day): float {
         // returns average measured solar:
         // - for slot centred about $datetime_centre
@@ -153,6 +158,8 @@ class Solar extends Root
         // - width $period_day
         // - looking back to $max_ago_day
         $db_historic_average_power_w = 0.0;
+        $period_half_day   =      (int) round($period_day     /2.0);
+        $slot_width_half_s = 60 * (int) round($slot_width_min /2.0);
         $sql = 'SELECT  AVG(`value`)
                   FROM  `values`
                   WHERE `entity` = \'SOLAR_W\' AND
@@ -160,6 +167,14 @@ class Solar extends Root
                         DATE(`datetime`) BETWEEN DATE(?) - INTERVAL ? DAY    AND DATE(?) + INTERVAL ? DAY    AND
                         TIME(`datetime`) BETWEEN TIME(?) - INTERVAL ? SECOND AND TIME(?) + INTERVAL ? SECOND AND
                         `datetime` > NOW() - INTERVAL ? DAY';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('sisisisii', $datetime_centre, $period_half_day, $datetime_centre, $period_half_day, $datetime_centre, $slot_width_half_s, $datetime_centre, $slot_width_half_s, $max_ago_day) ||
+            !$stmt->bind_result($db_historic_average_power_w) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
 
         return $db_historic_average_power_w;
     }

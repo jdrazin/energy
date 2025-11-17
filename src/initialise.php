@@ -21,7 +21,7 @@ const DEBUG = false;  // disable cron and semaphore single thread control
 
 try {
     if (!DEBUG) {
-        $pid_filename = Root::PATH_HOME . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
+        $pid_filename = Root::PATH_PROJECT . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
             exit(1);
@@ -37,7 +37,7 @@ try {
 
     if (!DEBUG) {
         if (!unlink($pid_filename)) {
-            throw new Exception('Cannot delete semaphore');
+            throw new Exception('Cannot delete semaphore: ' . $pid_filename);
         }
     }
     if (DEBUG) {

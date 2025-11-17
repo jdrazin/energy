@@ -22,7 +22,7 @@ const     DEBUG                     = false,
 
 try {
     $debug = DEBUG  || !TEST_PROJECTION_ID;
-    $pid_filename = Root::PATH_HOME . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
+    $pid_filename = Root::PATH_PROJECT . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
     if (!$debug) {
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
@@ -46,7 +46,7 @@ try {
     }
     if (!$debug) {
         if (!unlink($pid_filename)) {
-            throw new Exception('Cannot delete semaphore');
+            throw new Exception('Cannot delete semaphore: ' . $pid_filename);
         }
     }
     exit(0);

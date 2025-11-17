@@ -42,7 +42,7 @@ ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
 const ENABLED                        = true,
-      DEBUG                          = true,  // disable cron and semaphore single thread control
+      DEBUG                          = false,  // disable cron and semaphore single thread control
       DEBUG_MINIMISER                = false,
       DEBUG_MINIMISER_USE_FAIL       = false, // otherwise use last OK
       ARGS                           = ['CRON' => 1],
@@ -52,7 +52,7 @@ const ENABLED                        = true,
 
 if (ENABLED) {
     try {
-        $pid_filename = Root::PATH_HOME . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
+        $pid_filename = Root::PATH_PROJECT . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
         if (!DEBUG) {
             if (file_exists($pid_filename)) {
                 echo 'Cannot start: semaphore exists';
@@ -68,7 +68,7 @@ if (ENABLED) {
         }
         if (!DEBUG) {
             if (!unlink($pid_filename)) {
-                throw new Exception('Cannot delete semaphore');
+                throw new Exception('Cannot delete semaphore: ' . $pid_filename);
             }
         }
         if (DEBUG) {

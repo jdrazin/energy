@@ -26,7 +26,7 @@ const   ENABLED                     = true,
 if (ENABLED) {
     try {
         if (!DEBUG) {
-            $pid_filename = Root::PATH_HOME . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
+            $pid_filename = Root::PATH_PROJECT . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
             if (file_exists($pid_filename)) {
                 echo 'Cannot start: semaphore exists';
                 exit(1);
@@ -41,7 +41,7 @@ if (ENABLED) {
         }
         if (!DEBUG) {
             if (!unlink($pid_filename)) {
-                throw new Exception('Cannot delete semaphore');
+                throw new Exception('Cannot delete semaphore: ' . $pid_filename);
             }
         }
     }

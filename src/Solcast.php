@@ -30,7 +30,6 @@ class Solcast extends Solar
      */
     public function getSolarActualForecast($slots): void {
         $made_successful_request = false;
-        $this->deleteForecastsEstimates();
         if ($this->skipRequest()) { // skip request if called recently
             $this->requestResult(false); // update timestamp for failed request
             return;
@@ -120,6 +119,17 @@ class Solcast extends Solar
      * @throws Exception
      */
     private function insertPowers($powers): void    {
+        // delete all previous forecasts or estimates
+        $sql = 'DELETE FROM `values` 
+                    WHERE `entity` = \'SOLAR_W\'  AND
+                          `type`   IN(\'FORECAST\', \'ESTIMATE\')';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        unset($stmt);
         $sql = 'INSERT INTO `values`     (`entity`,     `type`, `value`,    `status`, `datetime`, `forecast`)
                                  VALUES  (\'SOLAR_W\',       ?,       ?, \'CURRENT\',         ?,           ?)
                    ON DUPLICATE KEY UPDATE  `value`     = ?,
@@ -141,26 +151,6 @@ class Solcast extends Solar
         $this->mysqli->commit();
     }
 
-    /*
-     * delete old forecasts
-     */
-    /**
-     * @throws Exception
-     */
-    private function deleteForecastsEstimates(): void
-    {
-        $sql = 'DELETE FROM `values` 
-                    WHERE `entity` = \'SOLAR_W\'  AND
-                          `type`   IN(\'FORECAST\', \'ESTIMATE\')';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        $this->mysqli->commit();
-    }
-
     /**
      * @throws GuzzleException
      */
@@ -169,7 +159,7 @@ class Solcast extends Solar
         $url_pre = $this->api['base'] . $this->api['site_id'] . '/';
         $url_post = '?format=json';
         $url = $url_pre . $data_type . $url_post;
-        $path = Root::PATH_PROJECT . Root::FOLDER_TEST . $data_type . '.txt';
+        $path = Root::PATH_PROJECT . Root::FOLDER_TEST . strtolower($this->class) . '.' . $data_type . '.txt';
         if (DEBUG_MINIMISER || file_exists($path)) {
             $response = file_get_contents($path);
         } else {

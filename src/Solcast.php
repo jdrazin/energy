@@ -169,9 +169,9 @@ class Solcast extends Solar
         $url_pre = $this->api['base'] . $this->api['site_id'] . '/';
         $url_post = '?format=json';
         $url = $url_pre . $data_type . $url_post;
-        if (DEBUG_MINIMISER) {
-            $pathname = '/var/www/html/energy/test/' . $data_type . '.txt';
-            $response = file_get_contents($pathname);
+        $path = Root::PATH_PROJECT . Root::FOLDER_TEST . $data_type . '.txt';
+        if (DEBUG_MINIMISER || file_exists($path)) {
+            $response = file_get_contents($path);
         } else {
             $client = new Client();
             $headers = ['Authorization' => 'Bearer ' . $this->api['bearer_token']];

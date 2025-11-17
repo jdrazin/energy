@@ -11,7 +11,7 @@ class EnergyCost extends Root
                     OPTIMIZE_CONSTRAINED = 1;
     const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5;
 
-    const string    OPTIMISATION_LOG_PATHNAME_BASE = '/var/www/html/energy/test/optimisation_',
+    const string    FOLDER_OPTIMISATION_LOG        = 'optimisation_',
                     PYTHON_OPTIMIZER_SCRIPT_BASE   = 'python3 /var/www/html/energy/src/',
                     PYTHON_OPTIMIZER               = 'optimize.py';
 
@@ -346,12 +346,12 @@ class EnergyCost extends Root
         }
         else { // use debug JSON and make slot arrays as necessary
            $suffix                 = DEBUG_MINIMISER_USE_FAIL ? 'fail' : 'last_ok';
-           $pathname_problem       = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_' . $suffix . '.json';
+           $pathname_problem       = self::PATH_PROJECT . self::FOLDER_DEBUG  . 'problem_' . $this->parameters['type'] . '_' . $suffix . '.json';
            $this->problem          = json_decode(file_get_contents($pathname_problem, true), true);
            $this->load_house_kws   = $this->problem['load_house_kws'];                    // get total house load from problem
            $this->solar_gross_kws  = $this->problem['solar_gross_kws'];                   // get solar forecast (excludes grid clipping) from problem
            $first_guess_charge_kws = $this->problem['first_guess_charge_kws'];            // first guess
-           $pathname_command       = self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt';
+           $pathname_command       = self::PATH_PROJECT . self::FOLDER_DEBUG . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt';
            $command                = file_get_contents($pathname_command, true);
         }
         $this->costs = [];
@@ -360,7 +360,7 @@ class EnergyCost extends Root
         $result = json_decode($output, true);                                     // decode JSON output from Python
         $text   = $command . PHP_EOL . $output . PHP_EOL;
         if (!$command ||
-            !file_put_contents(self::OPTIMISATION_LOG_PATHNAME_BASE . $this->parameters['type'] . '.log', $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
+            !file_put_contents(Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '.log', $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
@@ -430,13 +430,13 @@ class EnergyCost extends Root
      */
     private function write_problem_command($command, $suffix): void // writes problem and python optimiser command to files
     {
-        $pathname_problem = self::DEBUG_PATH . 'problem_' . $this->parameters['type'] . '_' . $suffix . '.json';
+        $pathname_problem = self::PATH_PROJECT . self::FOLDER_DEBUG  . 'problem_' . $this->parameters['type'] . '_' . $suffix . '.json';
         if (!($json_problem = json_encode($this->problem, JSON_PRETTY_PRINT)) || !file_put_contents($pathname_problem, $json_problem)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write json problem parameters');
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);
         }
-        if (!file_put_contents(self::DEBUG_PATH . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt', $command)) {
+        if (!file_put_contents(self::PATH_PROJECT . self::FOLDER_DEBUG  . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt', $command)) {
             $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write command');
             $this->logDb('MESSAGE', $message, null, 'FATAL');
             throw new Exception($message);

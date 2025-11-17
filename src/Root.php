@@ -9,9 +9,12 @@ class Root {
     public const string     EARLIEST_DATE = '2024-08-01 00:00:00',
                             COMMENT_STRING = '#';
 
-    const string            APIS_PATH                       = '/home/jdrazin/.energy/apis.json',
-                            CONFIG_PATH                     = '/home/jdrazin/.energy/config.json',
-                            DEBUG_PATH                      = '/var/www/html/energy/debug/',
+    const string            PATH_HOME                       = '/home/jdrazin/.energy/',
+                            PATH_PROJECT                    = '/var/www/html/energy/',
+                            FOLDER_DEBUG                    = 'debug/',
+                            FOLDER_TEST                     = 'test/',
+                            FILENAME_APIS                   = 'apis.json',
+                            FILENAME_CONFIG                 = 'config.json',
                             MYSQL_FORMAT_DATETIME           = 'Y-m-d H:i:s',
                             MYSQL_FORMAT_DATE               = 'Y-m-d';
     protected const int     SECONDS_PER_HOUR                = 3600,
@@ -41,7 +44,7 @@ class Root {
          *  add group x permission to all parent folders leading to <pathname>
          *      chmod +x /<parent folder>
          */
-        if (!(($api_text = file_get_contents($path = self::APIS_PATH)) &&
+        if (!(($api_text = file_get_contents($path = self::PATH_HOME . self::FILENAME_APIS)) &&
             ($this->apis = json_decode($api_text, true, self::JSON_MAX_DEPTH)))) {
             throw new Exception('bad or missing config json: ' . $path);
         }
@@ -50,7 +53,7 @@ class Root {
 
     public function use_local_config(): void
     {
-        if (!($this->config ?? false) && (!(($config_text = file_get_contents($path = self::CONFIG_PATH)) &&    // load config if not override
+        if (!($this->config ?? false) && (!(($config_text = file_get_contents($path = self::PATH_HOME . self::FILENAME_CONFIG)) &&    // load config if not override
                 ($this->config = json_decode($config_text, true, self::JSON_MAX_DEPTH))))) {
             throw new Exception('bad or missing config json: ' . $path);
         }

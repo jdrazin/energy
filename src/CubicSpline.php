@@ -12,7 +12,7 @@ use Exception;
 
 class CubicSpline extends Root
 {
-    const string  PYTHON_SCRIPT_COMMAND   = 'python3 /var/www/html/energy/src/cubicSpline.py';
+    const string  PYTHON_SCRIPT_COMMAND   = 'python3 ' . Root::PATH_PROJECT . 'src/cubicSpline.py';
 
     public int $multiple;
 

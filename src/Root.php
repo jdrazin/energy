@@ -11,6 +11,7 @@ class Root {
 
     const string            PATH_HOME                       = '/home/jdrazin/.energy/',
                             PATH_PROJECT                    = '/var/www/html/energy/',
+                            FOLDER_PIDS                     = 'pids/',
                             FOLDER_DEBUG                    = 'debug/',
                             FOLDER_TEST                     = 'test/',
                             FILENAME_APIS                   = 'apis.json',

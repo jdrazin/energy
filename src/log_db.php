@@ -15,15 +15,14 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const FOLDER_PID = '/var/www/html/energy/pids/',
-      ARGS       = [
+const ARGS       = [
                     'MESSAGE' => 1,
                     'URGENCY' => 2
                     ],
       DEBUG      = false;  // disable cron and semaphore single thread control
 
 if (!DEBUG) {
-    $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
+    $pid_filename = Root::PATH_HOME . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
     if (file_exists($pid_filename)) {
         echo 'Cannot start: semaphore exists';
         exit(1);

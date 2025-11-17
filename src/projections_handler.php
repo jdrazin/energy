@@ -13,9 +13,8 @@ ini_set('max_execution_time',    '36000');
 ini_set('mysql.connect_timeout', '36000');
 
 const     DEBUG                     = false,
-          FOLDER_PID                = '/var/www/html/energy/pids/',
           TEST_PROJECTION_ID        = null,
-          TEST_PROJECTION_PATH      = '/var/www/html/energy/test/config.json',
+          FILENAME_TEST_PROJECTION  = 'config.json',
           ARGS                      = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION   = true,
           EMAIL_ON_COMPLETION       = true,
@@ -23,7 +22,7 @@ const     DEBUG                     = false,
 
 try {
     $debug = DEBUG  || !TEST_PROJECTION_ID;
-    $pid_filename = FOLDER_PID . basename(__FILE__, '.php') . '.pid';
+    $pid_filename = Root::PATH_HOME . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
     if (!$debug) {
         if (file_exists($pid_filename)) {
             echo 'Cannot start: semaphore exists';
@@ -40,7 +39,7 @@ try {
         (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
     }
     else {
-        $config = json_decode($config_json = file_get_contents(TEST_PROJECTION_PATH), true);
+        $config = json_decode($config_json = file_get_contents(Root::PATH_PROJECT . Root::FOLDER_TEST . FILENAME_TEST_PROJECTION), true);
         $energy = new Energy($config);
         $energy->insertProjection(0, $config_json, '', 'DEBUG');
         $energy->processNextProjection(0);

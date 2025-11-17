@@ -372,7 +372,7 @@ class EnergyCost extends Root
         $use_solution       = !is_null($optimum_charge_kws) && ($converged || ((!is_null($energyCostGuess) && !is_null($energyCostSolution)) && ($energyCostSolution < $energyCostGuess)));
         if (!$converged) { // write out problem and log warning if not converged
             $this->write_problem_command($command, 'fail');
-            $message  = $this->errMsg(__CLASS__, __FUNCTION__, null, $this->parameters['type'] . ' convergence failure (') . ($use_solution ? '' : 'not') . ' usable): see failed problem and command';
+            $message  = $this->errMsg(__CLASS__, __FUNCTION__, null, $this->parameters['type'] . ' convergence failure (') . ($use_solution ? '' : 'not ') . 'usable): see failed problem and command';
             $this->logDb('MESSAGE', $message, $text, 'WARNING');
         }
         else {

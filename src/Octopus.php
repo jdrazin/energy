@@ -36,7 +36,6 @@ class Octopus extends Root
                                     'battery_level_start_kwh' => [['BATTERY_LEVEL_KWH', +1.0]]
                                 ];
     const int MAX_WAIT_TO_NEXT_SLOT_SECONDS = 300;
-    const ?int SINGLE_TARIFF_COMBINATION_ID = null;
     private array $api;
 
     /**
@@ -70,7 +69,7 @@ class Octopus extends Root
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
             $tariff_combinations = $this->tariffCombinations();                   // get tariff combinations of interest, starting with active combination
             foreach ($tariff_combinations as $tariff_combination) {
-                if (is_null(self::SINGLE_TARIFF_COMBINATION_ID) || ($tariff_combination['id'] == self::SINGLE_TARIFF_COMBINATION_ID)) {
+                if (!ACTIVE_TARIFF_COMBINATION_ONLY || $tariff_combination['active']) {
                     $db_slots->makeDbSlotsNext24hrs($tariff_combination);                           // make slots for this tariff combination
                     $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);
                     $this->makeSlotRates($db_slots->slots, $tariff_combination, false);        // make tariffs

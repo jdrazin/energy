@@ -571,7 +571,7 @@ class GivEnergy extends Root
                     if (!$start || !$stop || is_null($target_level_percent) || is_null($abs_charge_power_w)) {
                         throw new Exception($this->errMsg(__CLASS__, __FUNCTION__, __LINE__, $mode . ': time/power arguments must not be empty'));
                     }
-                    $eco_mode = ($mode == 'DISCHARGE') ? 1 : 0; // enable ECO mode if discharging to allow battery to contimue to supply load if target met.
+                    $eco_mode = ($mode == 'DISCHARGE') ? 1 : 0; // enable ECO mode if discharging to allow battery to continue to supply load if target met (otherwise peak rate incurred)
                     $target_level_percent = min(max(self::LOWER_SOC_LIMIT_PERCENT, $target_level_percent), self::UPPER_SOC_LIMIT_PERCENT);
                     $this->command('write', 'Enable Eco Mode', null, $eco_mode, $message);
                     $this->set_charge_discharge_block(self::CONTROL_CHARGE_DISCHARGE_SLOT,

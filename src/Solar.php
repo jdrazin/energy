@@ -151,15 +151,6 @@ class Solar extends Root
     }
 
     /**
-     * @throws Exception
-     */
-    public function db_forecast_fallback($slots): void {
-        foreach ($slots as $slot) {
-            $db_historic_average_power_w = $this->db_historic_average_power_w($slot['mid'], Slot::DURATION_MINUTES/2, self::HISTORIC_PERIOD_DAY, self::MAX_AGO_DAY);
-        }
-    }
-
-    /**
      * @throws \Exception
      */
     public function db_historic_average_power_w($datetime_centre): ?float {

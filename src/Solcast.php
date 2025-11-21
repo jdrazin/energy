@@ -38,10 +38,21 @@ class Solcast extends Solar
             $this->insertResults();
             $made_successful_request = true;
         }
-        catch (exception $e) {
-            $this->logDb('MESSAGE', $e->getMessage(),  null, 'WARNING');
+        catch (exception $e) { // fallback to estimate from average historic actuals for same time of day and year
+            $this->logDb('MESSAGE', $e->getMessage() . ': estimating from historic seasonal',  null, 'WARNING');
+            // delete all previous estimates
+            $sql = 'DELETE FROM `values` 
+                    WHERE `entity` = \'SOLAR_W\'  AND
+                          `type`   = \'ESTIMATE\'';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->execute()) {
+                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                $this->logDb('MESSAGE', $message, null, 'ERROR');
+                throw new Exception($message);
+            }
+            unset($stmt);
             $powers = [];
-            foreach ($slots as $slot) { // fallback to estimate from average historic actuals for same time of day and year
+            foreach ($slots as $slot) {
                 $mid      = $slot['mid'];
                 $power_w  = (new Solar(null, null))->db_historic_average_power_w($mid);
                 $powers[] = [
@@ -60,8 +71,7 @@ class Solcast extends Solar
      * @throws DateMalformedStringException
      * @throws Exception|GuzzleException
      */
-    private function insertResults(): void
-    {
+    private function insertResults(): void {
         switch (Types::FORECAST->value) {
             case 'ACTUAL':
             {
@@ -119,17 +129,6 @@ class Solcast extends Solar
      * @throws Exception
      */
     private function insertPowers($powers): void    {
-        // delete all previous forecasts or estimates
-        $sql = 'DELETE FROM `values` 
-                    WHERE `entity` = \'SOLAR_W\'  AND
-                          `type`   IN(\'FORECAST\', \'ESTIMATE\')';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        unset($stmt);
         $sql = 'INSERT INTO `values`     (`entity`,     `type`, `value`,    `status`, `datetime`, `forecast`)
                                  VALUES  (\'SOLAR_W\',       ?,       ?, \'CURRENT\',         ?,           ?)
                    ON DUPLICATE KEY UPDATE  `value`     = ?,

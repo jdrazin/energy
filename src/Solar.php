@@ -28,6 +28,8 @@ class Solar extends Root
 
     public array $cloud_cover_months_year_fractions, $cloud_cover_months_factors;
 
+    private int $slot_width_half_s, $period_half_day, $max_ago_day;
+
     public function __construct($location, $orientation) {
         parent::__construct();
         if ($location && $orientation) {
@@ -44,6 +46,11 @@ class Solar extends Root
             $this->orientation_type = $orientation['type'];
             $this->azimuth_degrees  = $orientation['azimuth_degrees'];
             $this->tilt_degrees     = $orientation['tilt_degrees'];
+        }
+        else {
+            $this->slot_width_half_s = 60 * (int) round(Slot::DURATION_MINUTES    / 2.0);
+            $this->period_half_day   =      (int) round(self::HISTORIC_PERIOD_DAY / 2.0);
+            $this->max_ago_day       = self::MAX_AGO_DAY;
         }
     }
 
@@ -153,24 +160,21 @@ class Solar extends Root
     /**
      * @throws \Exception
      */
-    public function db_historic_average_power_w($datetime_centre): ?float {
+    public function db_historic_average_power_w($datetime_centre, $type): ?float {
         // returns average measured solar:
         // - for slot centred about $datetime_centre
         // - with $slot_width_min within a period centred about $datetime_centre
         // - width $period_day
         // - looking back to $max_ago_day
-        $slot_width_half_s = 60 * (int) round(Slot::DURATION_MINUTES    / 2.0);
-        $period_half_day   =      (int) round(self::HISTORIC_PERIOD_DAY / 2.0);
-        $max_ago_day       = self::MAX_AGO_DAY;
         $sql = 'SELECT  ROUND(AVG(`value`))
                   FROM  `values`
                   WHERE `entity` = \'SOLAR_W\' AND
-                        `type`   = \'MEASURED\' AND
+                        `type`   = ? AND
                         DATE(`datetime`) BETWEEN DATE(?) - INTERVAL ? DAY    AND DATE(?) + INTERVAL ? DAY    AND
                         TIME(`datetime`) BETWEEN TIME(?) - INTERVAL ? SECOND AND TIME(?) + INTERVAL ? SECOND AND
                         `datetime` > NOW() - INTERVAL ? DAY';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('sisisisii', $datetime_centre, $period_half_day, $datetime_centre, $period_half_day, $datetime_centre, $slot_width_half_s, $datetime_centre, $slot_width_half_s, $max_ago_day) ||
+            !$stmt->bind_param('ssisisisii', $type, $datetime_centre, $this->period_half_day, $datetime_centre, $this->period_half_day, $datetime_centre, $this->slot_width_half_s, $datetime_centre, $this->slot_width_half_s, $this->max_ago_day) ||
             !$stmt->bind_result($db_historic_average_power_w) ||
             !$stmt->execute() ||
             !$stmt->fetch()) {
@@ -179,5 +183,34 @@ class Solar extends Root
             throw new Exception($message);
         }
         return $db_historic_average_power_w;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function db_solar_corrections($db_slots): Slot {
+        $sql = 'UPDATE  `slots`
+                   SET  `solar_correction`  = ?
+                   WHERE `slot`             = ? AND
+                         NOT `final`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('di', $solar_correction_factor, $slot) ||
+            !$stmt->execute()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        foreach ($db_slots->slots as $slot => $db_slot) {
+            $mid = $db_slot['mid'];
+            $measured_w = $this->db_historic_average_power_w($mid, 'MEASURED');
+            $forecast_w = $this->db_historic_average_power_w($mid, 'FORECAST');
+            if (is_null($measured_w) || $measured_w < 1.0) {
+                $solar_correction_factor = 1.0;
+            }
+            else {
+                $solar_correction_factor = $measured_w / $forecast_w;
+            }
+        }
+        $this->mysqli->commit();
     }
 }

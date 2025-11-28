@@ -15,7 +15,7 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const   ENABLED                     = true,
+const   ENABLED                     = false,
         DEBUG                       = false,         // disable cron and semaphore single thread control
         DEBUG_MINIMISER             = false,
         DEBUG_MINIMISER_USE_FAIL    = false,        // otherwise use last OK

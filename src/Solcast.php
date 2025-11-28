@@ -54,7 +54,7 @@ class Solcast extends Solar
             $powers = [];
             foreach ($slots as $slot) {
                 $mid      = $slot['mid'];
-                $power_w  = (new Solar(null, null))->db_historic_average_power_w($mid);
+                $power_w  = (new Solar(null, null))->db_historic_average($mid, 'NEASURED');
                 $powers[] = [
                     'datetime' => $mid,
                     'type'     => 'ESTIMATE',

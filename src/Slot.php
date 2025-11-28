@@ -11,7 +11,7 @@ class Slot extends Root
 
     public array $previous_slot = [], $slots = [];
 
-    private Solar $solar;
+    private Values $values;
 
 
     /**
@@ -19,7 +19,7 @@ class Slot extends Root
      */
     public function __construct() {
         parent::__construct();
-        $this->solar = new Solar(null, null);
+        $this->values = new Values();
         $sql = 'DELETE `slots` FROM `slots`
                   INNER JOIN `tariff_combinations` `tc` ON `tc`.`id` = `slots`.`tariff_combination`
                   WHERE NOT `slots`.`final` OR
@@ -48,8 +48,8 @@ class Slot extends Root
             $mid = $slot_time->format(Root::MYSQL_FORMAT_DATETIME);
             $slot_time->modify($half_slot_duration_min . ' minute');  //  add half slot duration
             $stop = $slot_time->format(Root::MYSQL_FORMAT_DATETIME);
-            $measured_w = $this->solar->db_historic_average_power_w($mid, 'MEASURED');
-            $forecast_w = $this->solar->db_historic_average_power_w($mid, 'FORECAST');
+            $measured_w = $this->values->historic_average($mid, 'MEASURED');
+            $forecast_w = $this->values->historic_average($mid, 'FORECAST');
             if (is_null($measured_w) || $measured_w < 1.0) {
                 $solar_correction = 1.0;
             }

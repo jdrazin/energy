@@ -13,12 +13,16 @@ class Values extends Root
                 TEMPERATURE_DISTANCE_MAX            = 2,
                 HISTORY_DAY_LIMIT                   = 14,
                 LATEST_AVERAGE_DURATION_MINUTES     = 15,
-                TEMPERATURE_LOOKBACK_MAX_AGE_DAYS   = 365;
+                TEMPERATURE_LOOKBACK_MAX_AGE_DAYS   = 365,
+                HISTORIC_PERIOD_DAY                 = 14,
+                MAX_AGO_DAY                         = 366;
 
-    const float MAX_POWER_W                     = 7500.0,
-                MIN_LIMIT_TEMPERATURE           = 2.0,
-                MIN_POWER_W                     = 100.0,
-                MAX_LIMIT_TEMPERATURE           = 21.0;
+    const float MAX_POWER_W                         = 7500.0,
+                MIN_LIMIT_TEMPERATURE               = 2.0,
+                MIN_POWER_W                         = 100.0,
+                MAX_LIMIT_TEMPERATURE               = 21.0;
+
+    private int $slot_width_half_s, $period_half_day, $max_ago_day;
 
     private array $power_w, $tariff_combination;
 
@@ -34,6 +38,9 @@ class Values extends Root
         parent::__construct();
         $this->use_local_config();
         $this->solar_pv_generation_limit_kw = $this->config['solar_pv']['generation_limit_kw'];
+        $this->slot_width_half_s = 60 * (int) round(Slot::DURATION_MINUTES    / 2.0);
+        $this->period_half_day   =      (int) round(self::HISTORIC_PERIOD_DAY / 2.0);
+        $this->max_ago_day       = self::MAX_AGO_DAY;
     }
 
     /**
@@ -153,6 +160,34 @@ class Values extends Root
             throw new Exception($message);
         }
         return $average;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function historic_average($datetime_centre, $type): ?float {
+        // returns average value of entity $type:
+        // - for slot centred about $datetime_centre
+        // - with $slot_width_min within a period centred about $datetime_centre
+        // - width $period_day
+        // - looking back to $max_ago_day
+        $sql = 'SELECT  ROUND(AVG(`value`))
+                  FROM  `values`
+                  WHERE `entity` = \'SOLAR_W\' AND
+                        `type`   = ? AND
+                        DATE(`datetime`) BETWEEN DATE(?) - INTERVAL ? DAY    AND DATE(?) + INTERVAL ? DAY    AND
+                        TIME(`datetime`) BETWEEN TIME(?) - INTERVAL ? SECOND AND TIME(?) + INTERVAL ? SECOND AND
+                        `datetime` > NOW() - INTERVAL ? DAY';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->bind_param('ssisisisii', $type, $datetime_centre, $this->period_half_day, $datetime_centre, $this->period_half_day, $datetime_centre, $this->slot_width_half_s, $datetime_centre, $this->slot_width_half_s, $this->max_ago_day) ||
+            !$stmt->bind_result($historic_average) ||
+            !$stmt->execute() ||
+            !$stmt->fetch()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+        return $historic_average;
     }
 
     /**

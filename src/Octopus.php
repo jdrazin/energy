@@ -57,8 +57,8 @@ class Octopus extends Root
     public function traverseTariffs($cron): void {
         (new Root())->logDb(($cron ? 'CRON_' : '') . 'START', '', null, 'NOTICE');
         if (!DEBUG_MINIMISER) {                                                   // bypass empirical data if in DEBUG mode
-            $db_slots  = new Slot();                                              // make day slots
-            $values    = new Values();
+            $db_slots = new Slot();                                               // make day slots
+            $values   = new Values();
             $givenergy = new GivEnergy();
             $givenergy->getData();                                                // grid, load_house, solar (yesterday, today) > `values`
             (new EmonCms())->getData();                                           // home heating and temperature > `values`

@@ -18,8 +18,6 @@ class Solar extends Root
     const   float   SURFACE_REFLECTANCE = 0.2,
                     EARTH_TILT_DEGREES = 23.45,
                     SOLAR_EQUINOX_FRACTION_YEAR = 81.0 / 365.25;
-    const   int     HISTORIC_PERIOD_DAY = 14,
-                    MAX_AGO_DAY = 366;
 
     public float    $total_insolation_time_w_per_m2, $total_insolation_cloud_time_w_per_m2, $time_correction_fraction,
                     $latitude_degrees, $longitude_degrees, $azimuth_degrees, $tilt_degrees, $total_insolation_noon_w_per_m2;
@@ -27,8 +25,6 @@ class Solar extends Root
     public string $orientation_type;
 
     public array $cloud_cover_months_year_fractions, $cloud_cover_months_factors;
-
-    private int $slot_width_half_s, $period_half_day, $max_ago_day;
 
     public function __construct($location, $orientation) {
         parent::__construct();
@@ -46,11 +42,6 @@ class Solar extends Root
             $this->orientation_type = $orientation['type'];
             $this->azimuth_degrees  = $orientation['azimuth_degrees'];
             $this->tilt_degrees     = $orientation['tilt_degrees'];
-        }
-        else {
-            $this->slot_width_half_s = 60 * (int) round(Slot::DURATION_MINUTES    / 2.0);
-            $this->period_half_day   =      (int) round(self::HISTORIC_PERIOD_DAY / 2.0);
-            $this->max_ago_day       = self::MAX_AGO_DAY;
         }
     }
 

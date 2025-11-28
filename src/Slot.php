@@ -11,12 +11,15 @@ class Slot extends Root
 
     public array $previous_slot = [], $slots = [];
 
+    private Solar $solar;
+
+
     /**
      * @throws Exception
      */
-    public function __construct()
-    {
+    public function __construct() {
         parent::__construct();
+        $this->solar = new Solar(null, null);
         $sql = 'DELETE `slots` FROM `slots`
                   INNER JOIN `tariff_combinations` `tc` ON `tc`.`id` = `slots`.`tariff_combination`
                   WHERE NOT `slots`.`final` OR
@@ -45,19 +48,27 @@ class Slot extends Root
             $mid = $slot_time->format(Root::MYSQL_FORMAT_DATETIME);
             $slot_time->modify($half_slot_duration_min . ' minute');  //  add half slot duration
             $stop = $slot_time->format(Root::MYSQL_FORMAT_DATETIME);
-            $this->slots[$slot] = ['start' => $start, 'mid' => $mid, 'stop' => $stop];
+            $measured_w = $this->solar->db_historic_average_power_w($mid, 'MEASURED');
+            $forecast_w = $this->solar->db_historic_average_power_w($mid, 'FORECAST');
+            if (is_null($measured_w) || $measured_w < 1.0) {
+                $solar_correction = 1.0;
+            }
+            else {
+                $solar_correction = round($measured_w / $forecast_w, 3);
+            }
+            $this->slots[$slot] = ['start' => $start, 'mid' => $mid, 'stop' => $stop, 'solar_correction' => $solar_correction];
         }
     }
 
     /**
      * @throws DateMalformedStringException|Exception
      */
-    public function makeDbSlotsNext24hrs($tariff_combination): void
-    {
+    public function makeDbSlotsNext24hrs($tariff_combination): void {
         $tariff_combination_id = $tariff_combination['id'];
-        $sql = 'INSERT INTO `slots` (`tariff_combination`, `slot`, `start`, `stop`, `final`)
-                             VALUES (?,                    ?,      ?,       ?     , FALSE)
+        $sql = 'INSERT INTO `slots` (`tariff_combination`, `slot`, `start`, `stop`, `solar_correction`, `final`)
+                             VALUES (?,                    ?,      ?,       ?     , ?,                  FALSE  )
                     ON DUPLICATE KEY UPDATE `slot`                    = ?,
+                                            `solar_correction`        = ?,
                                             `load_house_kw`           = NULL,
                                             `grid_kw`                 = NULL,
                                             `battery_level_start_kwh` = NULL,
@@ -71,14 +82,15 @@ class Slot extends Root
                                             `load_heating_kw`         = NULL,
                                             `final`                   = FALSE';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iisss', $tariff_combination_id, $slot, $start, $stop, $slot)) {
+            !$stmt->bind_param('iissdsd', $tariff_combination_id, $slot, $start, $stop, $solar_correction, $slot, $solar_correction)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
         }
         foreach ($this->slots as $slot => $v) {
-            $start = $v['start'];
-            $stop = $v['stop'];
+            $start              = $v['start'];
+            $stop               = $v['stop'];
+            $solar_correction   = $v['solar_correction'];
             $stmt->execute();
         }
         $this->mysqli->commit();

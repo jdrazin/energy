@@ -65,10 +65,9 @@ class Slot extends Root
      */
     public function makeDbSlotsNext24hrs($tariff_combination): void {
         $tariff_combination_id = $tariff_combination['id'];
-        $sql = 'INSERT INTO `slots` (`tariff_combination`, `slot`, `start`, `stop`, `solar_correction`, `final`)
-                             VALUES (?,                    ?,      ?,       ?     , ?,                  FALSE  )
+        $sql = 'INSERT INTO `slots` (`tariff_combination`, `slot`, `start`, `stop`, `final`)
+                             VALUES (?,                    ?,      ?,       ?     ,  FALSE )
                     ON DUPLICATE KEY UPDATE `slot`                    = ?,
-                                            `solar_correction`        = ?,
                                             `load_house_kw`           = NULL,
                                             `grid_kw`                 = NULL,
                                             `battery_level_start_kwh` = NULL,
@@ -82,7 +81,7 @@ class Slot extends Root
                                             `load_heating_kw`         = NULL,
                                             `final`                   = FALSE';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('iissdsd', $tariff_combination_id, $slot, $start, $stop, $solar_correction, $slot, $solar_correction)) {
+            !$stmt->bind_param('iisss', $tariff_combination_id, $slot, $start, $stop, $slot)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
@@ -90,7 +89,6 @@ class Slot extends Root
         foreach ($this->slots as $slot => $v) {
             $start              = $v['start'];
             $stop               = $v['stop'];
-            $solar_correction   = $v['solar_correction'];
             $stmt->execute();
         }
         $this->mysqli->commit();

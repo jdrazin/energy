@@ -160,8 +160,8 @@ class Solar extends Root
     /**
      * @throws \Exception
      */
-    public function db_historic_average_power_w($datetime_centre, $type): ?float {
-        // returns average measured solar:
+    public function db_historic_average($datetime_centre, $type): ?float {
+        // returns average value of entity $type:
         // - for slot centred about $datetime_centre
         // - with $slot_width_min within a period centred about $datetime_centre
         // - width $period_day
@@ -183,34 +183,5 @@ class Solar extends Root
             throw new Exception($message);
         }
         return $db_historic_average_power_w;
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function db_solar_corrections($db_slots): Slot {
-        $sql = 'UPDATE  `slots`
-                   SET  `solar_correction`  = ?
-                   WHERE `slot`             = ? AND
-                         NOT `final`';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('di', $solar_correction_factor, $slot) ||
-            !$stmt->execute()) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        foreach ($db_slots->slots as $slot => $db_slot) {
-            $mid = $db_slot['mid'];
-            $measured_w = $this->db_historic_average_power_w($mid, 'MEASURED');
-            $forecast_w = $this->db_historic_average_power_w($mid, 'FORECAST');
-            if (is_null($measured_w) || $measured_w < 1.0) {
-                $solar_correction_factor = 1.0;
-            }
-            else {
-                $solar_correction_factor = $measured_w / $forecast_w;
-            }
-        }
-        $this->mysqli->commit();
     }
 }

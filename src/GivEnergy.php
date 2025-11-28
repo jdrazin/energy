@@ -246,8 +246,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function getData(): void {
-        // load latest GivEnergy ecosystem data into db
+    public function getData(): void {        // load latest GivEnergy ecosystem data into db
         $this->getBattery();
         $this->getEVChargerLast24hrs();
         $this->swapPercentToKwh();

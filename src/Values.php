@@ -111,15 +111,16 @@ class Values extends Root
     private function solarForecast(): void {                  // get average solar forecast for slots
         $powers_kw = [];
         foreach ($this->db_slots->slots as $slot => $v) {
-            $start = $v['start'];
-            $stop  = $v['stop'];
+            $start            = $v['start'];
+            $stop             = $v['stop'];
+            $solar_correction = $v['solar_correction'];
             if ($slot == 0) {
                 $power_w = $this->average_latest('SOLAR_W', 'MEASURED', self::LATEST_AVERAGE_DURATION_MINUTES); // use average over past 15 mins for first slot
             }
             else {
                 $power_w = $this->forecast_average_latest('SOLAR_W', $start, $stop);
             }
-            $powers_kw[$slot] = round(min($power_w/1000.0, $this->solar_pv_generation_limit_kw), 3);       // clip solar generation to maximum power
+            $powers_kw[$slot] = round($solar_correction * min($power_w/1000.0, $this->solar_pv_generation_limit_kw), 3);       // clip solar generation to maximum power
         }
         $this->updateSlotPowerskW($powers_kw, 'solar_gross_kw');
     }
@@ -416,8 +417,7 @@ class Values extends Root
     /**
      * @throws Exception
      */
-    private function totalLoad(): void
-    {
+    private function totalLoad(): void {
         $sql = 'UPDATE      `slots`
                   SET       `load_house_kw` = `load_non_heating_kw` + `load_heating_kw`
                   WHERE     `tariff_combination` = ? AND

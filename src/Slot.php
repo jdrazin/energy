@@ -49,7 +49,7 @@ class Slot extends Root
             $slot_time->modify($half_slot_duration_min . ' minute');  //  add half slot duration
             $stop = $slot_time->format(Root::MYSQL_FORMAT_DATETIME);
             $forecast_w = $this->values->historic_average($mid, 'FORECAST');
-            if ($forecast_w && !is_null($measured_w = $this->values->historic_average($mid, 'MEASURED'))) { // calculate solar correction factor if forecast exists and is non-zero
+            if ((($forecast_w ?? 0.0) >= 1.0) && !is_null($measured_w = $this->values->historic_average($mid, 'MEASURED'))) { // calculate solar correction factor if measured and forecast exist and are non-zero
                 $solar_correction = round($measured_w / $forecast_w, 3);
             }
             else {

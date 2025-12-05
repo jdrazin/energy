@@ -81,10 +81,12 @@ if (ENABLED) {
         $root = new Root();
         $root->logDb('MESSAGE', $message, null, 'FATAL');
         if (EMAIL_ON_ERROR) {
-            (new SMTPEmail())->email(['subject'  => 'EnergyController: Error',
-                'html'     => false,
-                'bodyHTML' => $message,
-                'bodyAlt'  => strip_tags($message)]);
+            (new SMTPEmail())->email([
+                                        'subject'  => 'EnergyController: Error',
+                                        'html'     => false,
+                                        'bodyHTML' => $message,
+                                        'bodyAlt'  => strip_tags($message)
+                                    ]);
         }
         $root->logDb('MESSAGE', $message,  null, 'FATAL');
         if (DEBUG) {

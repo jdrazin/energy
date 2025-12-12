@@ -34,7 +34,7 @@ class GivEnergy extends Root
                         EV_POWER_ACTIVE_IMPORT        = 13,  // Instantaneous active power imported by EV. (W or kW)
                         EV_POWER_ACTIVE_IMPORT_UNIT   = 5,   // kW
                         EV_METER_ID                   = 0,
-                        UPPER_SOC_LIMIT_PERCENT       = 95,
+                        UPPER_SOC_LIMIT_PERCENT       = 100,
                         LOWER_SOC_LIMIT_PERCENT       = 5;
 
     private const array ENTITIES_BATTERY_AIO = [
@@ -547,7 +547,7 @@ class GivEnergy extends Root
      * @throws GuzzleException
      * @throws Exception
      */
-    public function control($command): void {
+    public function controlBattery($command): void {
         /*
          * all slots except 1 must be manually disabled in app or web portal
          *

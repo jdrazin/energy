@@ -32,7 +32,7 @@ class Slice extends Root
         ];
         $command = (new EnergyCost($parameters))->minimise(); // minimise energy cost
         if (GIVENERGY_ENABLE) {
-            $givenergy->control($command);
+            $givenergy->controlBattery($command);
         }
         $this->trimSliceSolutions();
     }

@@ -9,7 +9,7 @@ use Psr\Log\LoggerInterface;
 use Slim\Factory\AppFactory;
 
 const   DEBUG = false;
-const   SERVER_EXTERNAL_URL_PORT = 'renewable-visions.com:8444';
+const   SERVER_EXTERNAL_URL_PORT = 'renewable-visions.tech:8444';
 
 // see slim 4 documentation: https://www.slimframework.com/docs/v4/
 $app = AppFactory::create();

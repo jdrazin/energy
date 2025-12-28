@@ -7,9 +7,12 @@ use Exception;
 
 class EnergyCost extends Root
 {
+    const bool      RE_OPTIMISE_FIRST_SLOT_SLICE = true;
+
     const int       OPTIMIZE_UNCONSTRAINED = 0,
                     OPTIMIZE_CONSTRAINED = 1;
-    const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5;
+    const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5,
+                    RE_OPTIMISE_CHARGE_DELTA_KW = 0.1;
 
     const string    FOLDER_OPTIMISATION_LOG        = 'optimisation_',
                     PYTHON_OPTIMIZER_SCRIPT_BASE   = 'python3 /var/www/html/energy/src/',
@@ -384,8 +387,27 @@ class EnergyCost extends Root
             }
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
-            $this->costs['optimised']                = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
-            $this->costs['gbp_per_day']     = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
+            $first = true;
+            if (self::RE_OPTIMISE_FIRST_SLOT_SLICE) {  // fine adjust first slot to further minimise cost
+                $charge_first_slot_slice_non_optimum_kw = $optimum_charge_kws[0];
+                for ($charge_first_slot_slice_kw = -$this->config['battery']['max_discharge_kw']; $charge_first_slot_slice_kw <= $this->config['battery']['max_charge_kw']; $charge_first_slot_slice_kw += self::RE_OPTIMISE_CHARGE_DELTA_KW) {
+                     $optimum_charge_kws[0] = $charge_first_slot_slice_kw;
+                     $optimised             = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
+                     $total_gbp             = $optimised['total_gbp'];
+                     if ($first) {
+                        $charge_first_slot_slice_optimum_kw = $charge_first_slot_slice_kw;
+                        $total_best_gbp                     = $total_gbp;
+                        $first                              = false;
+                     }
+                     elseif ($total_gbp < $total_best_gbp) {
+                        $charge_first_slot_slice_optimum_kw = $charge_first_slot_slice_kw;
+                        $total_best_gbp                     = $total_gbp;
+                     }
+                }
+                $optimum_charge_kws[0] = $charge_first_slot_slice_optimum_kw;
+            }
+            $this->costs['optimised']   = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
+            $this->costs['gbp_per_day'] = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
             if (DEBUG) {
                 echo ucfirst(ltrim(($converged ? '' : 'NOT ') . 'converged, ' . ($use_solution ? '' : 'NOT ') . 'usable'                                        . PHP_EOL));
                 $indent = '   ';
@@ -396,6 +418,9 @@ class EnergyCost extends Root
                 echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo                                                                                                                                                  PHP_EOL;
                 echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']         + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
+                if (self::RE_OPTIMISE_FIRST_SLOT_SLICE) {
+                    echo 'Next slot charge fine adjusted from ' . round($charge_first_slot_slice_non_optimum_kw, 3) . ' to ' . round($charge_first_slot_slice_optimum_kw, 3) . ' kW' . PHP_EOL;
+                }
                 echo                                                                                                                                                  PHP_EOL;
             }
             switch ($this->parameters['type']) {

@@ -403,32 +403,36 @@ class EnergyCost extends Root
                      elseif ($total_gbp < $total_best_gbp) {
                         $charge_first_slot_optimum_kw = $charge_first_slot_kw;
                         $total_best_gbp               = $total_gbp;
+                        $message_slot_fine_adjust     = 'Next slot charge fine adjusted from ' . round($charge_first_slot_non_optimum_kw, 3) . ' to ' . round($charge_first_slot_optimum_kw, 3) . ' kW';
                      }
                 }
-                $optimum_charge_kws[0]    = $charge_first_slot_optimum_kw;
-                $message_slot_fine_adjust = ($charge_first_slot_non_optimum_kw !== $charge_first_slot_optimum_kw) ? 'Next slot charge fine adjusted from ' . round($charge_first_slot_non_optimum_kw, 3) . ' to ' . round($charge_first_slot_optimum_kw, 3) . ' kW' : '';
+                $optimum_charge_kws[0] = $charge_first_slot_optimum_kw;
             }
             $this->costs['optimised']   = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
             $this->costs['gbp_per_day'] = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
             if (DEBUG) {
-                echo ucfirst(ltrim(($converged ? '' : 'NOT ') . 'converged, ' . ($use_solution ? '' : 'NOT ') . 'usable'                                        . PHP_EOL));
+                echo ucfirst(ltrim(($converged ? '' : 'NOT ') . 'converged, ' . ($use_solution ? '' : 'NOT ') . 'usable'                              . PHP_EOL));
                 $indent = '   ';
-                echo 'Total costs: '                                                                                                                                . PHP_EOL;
+                echo 'Total costs: '                                                                                                                       . PHP_EOL;
                 echo $indent . 'Python, guess:     ' . round($energyCostGuess                       + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo $indent . 'Php,    guess:     ' . round($this->costs['raw']['total_gbp']       + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo $indent . 'Python, optimised: ' . round($energyCostSolution                    + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
-                echo                                                                                                                                                  PHP_EOL;
+                echo                                                                                                                                         PHP_EOL;
                 echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']         + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
-                echo $message_slot_fine_adjust . PHP_EOL;
-                echo                                                                                                                                                  PHP_EOL;
+                if ($message_slot_fine_adjust) {
+                    echo $message_slot_fine_adjust . PHP_EOL;
+                }
+                echo                                                                                                                                         PHP_EOL;
             }
             switch ($this->parameters['type']) {
                 case 'slots': { // insert for each slot: grid and battery discharge energies (kWh)
                     $this->insertOptimumChargeGridKw($optimum_charge_kws);
                     $slot_solution = $this->slotSolution();
                     $this->insertSlotNextDayCostEstimates();
-                    $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'INFO');
+                    if ($message_slot_fine_adjust) {
+                        $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'INFO');
+                    }
                     return $slot_solution;
                 }
                 case 'slices': { // use slice_solution if available, otherwise use slot solution

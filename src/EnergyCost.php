@@ -431,7 +431,7 @@ class EnergyCost extends Root
                     $slot_solution = $this->slotSolution();
                     $this->insertSlotNextDayCostEstimates();
                     if ($message_slot_fine_adjust) {
-                        $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'INFO');
+                        $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'NOTICE');
                     }
                     return $slot_solution;
                 }

@@ -9,10 +9,10 @@ class EnergyCost extends Root
 {
     const bool      RE_OPTIMISE_FIRST_SLOT_SLICE = true;
 
-    const int       OPTIMIZE_UNCONSTRAINED = 0,
-                    OPTIMIZE_CONSTRAINED = 1;
-    const float     ABS_ECO_GRID_THRESHOLD_KW = 0.5,
-                    RE_OPTIMISE_CHARGE_DELTA_KW = 0.1;
+    const int       OPTIMIZE_UNCONSTRAINED          = 0,
+                    OPTIMIZE_CONSTRAINED            = 1;
+    const float     ABS_ECO_GRID_THRESHOLD_KW       = 0.5,
+                    RE_OPTIMISE_CHARGE_DELTA_KW     = 0.1;
 
     const string    FOLDER_OPTIMISATION_LOG        = 'optimisation_',
                     PYTHON_OPTIMIZER_SCRIPT_BASE   = 'python3 /var/www/html/energy/src/',

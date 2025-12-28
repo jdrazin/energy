@@ -388,23 +388,23 @@ class EnergyCost extends Root
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
             $first = true;
-            if (self::RE_OPTIMISE_FIRST_SLOT_SLICE) {  // fine adjust first slot to further minimise cost
-                $charge_first_slot_slice_non_optimum_kw = $optimum_charge_kws[0];
-                for ($charge_first_slot_slice_kw = -$this->config['battery']['max_discharge_kw']; $charge_first_slot_slice_kw <= $this->config['battery']['max_charge_kw']; $charge_first_slot_slice_kw += self::RE_OPTIMISE_CHARGE_DELTA_KW) {
-                     $optimum_charge_kws[0] = $charge_first_slot_slice_kw;
+            if (($this->parameters['type'] == 'slots') && self::RE_OPTIMISE_FIRST_SLOT_SLICE) {  // fine adjust first slot to further minimise cost
+                $charge_first_slot_non_optimum_kw = $optimum_charge_kws[0];
+                for ($charge_first_slot_kw = -$this->config['battery']['max_discharge_kw']; $charge_first_slot_kw <= $this->config['battery']['max_charge_kw']; $charge_first_slot_kw += self::RE_OPTIMISE_CHARGE_DELTA_KW) {
+                     $optimum_charge_kws[0] = $charge_first_slot_kw;
                      $optimised             = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
                      $total_gbp             = $optimised['total_gbp'];
                      if ($first) {
-                        $charge_first_slot_slice_optimum_kw = $charge_first_slot_slice_kw;
-                        $total_best_gbp                     = $total_gbp;
-                        $first                              = false;
+                        $charge_first_slot_optimum_kw = $charge_first_slot_kw;
+                        $total_best_gbp               = $total_gbp;
+                        $first                        = false;
                      }
                      elseif ($total_gbp < $total_best_gbp) {
-                        $charge_first_slot_slice_optimum_kw = $charge_first_slot_slice_kw;
-                        $total_best_gbp                     = $total_gbp;
+                        $charge_first_slot_optimum_kw = $charge_first_slot_kw;
+                        $total_best_gbp               = $total_gbp;
                      }
                 }
-                $optimum_charge_kws[0] = $charge_first_slot_slice_optimum_kw;
+                $optimum_charge_kws[0] = $charge_first_slot_optimum_kw;
             }
             $this->costs['optimised']   = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
             $this->costs['gbp_per_day'] = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
@@ -418,8 +418,8 @@ class EnergyCost extends Root
                 echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo                                                                                                                                                  PHP_EOL;
                 echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']         + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
-                if (self::RE_OPTIMISE_FIRST_SLOT_SLICE) {
-                    echo 'Next slot charge fine adjusted from ' . round($charge_first_slot_slice_non_optimum_kw, 3) . ' to ' . round($charge_first_slot_slice_optimum_kw, 3) . ' kW' . PHP_EOL;
+                if (($this->parameters['type'] == 'slots') && self::RE_OPTIMISE_FIRST_SLOT_SLICE) {
+                    echo 'Next slot charge fine adjusted from ' . round($charge_first_slot_non_optimum_kw, 3) . ' to ' . round($charge_first_slot_optimum_kw, 3) . ' kW' . PHP_EOL;
                 }
                 echo                                                                                                                                                  PHP_EOL;
             }

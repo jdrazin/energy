@@ -387,10 +387,10 @@ class EnergyCost extends Root
             }
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
-            $first                                   = true;
             $message_slot_fine_adjust                = '';
             if (($this->parameters['type'] == 'slots') && self::RE_OPTIMISE_FIRST_SLOT_SLICE) {  // fine adjust first slot to further minimise cost
                 $charge_first_slot_non_optimum_kw = $optimum_charge_kws[0];
+                $first                            = true;
                 for ($charge_first_slot_kw = -$this->config['battery']['max_discharge_kw']; $charge_first_slot_kw <= $this->config['battery']['max_charge_kw']; $charge_first_slot_kw += self::RE_OPTIMISE_CHARGE_DELTA_KW) {
                      $optimum_charge_kws[0] = $charge_first_slot_kw;
                      $optimised             = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
@@ -405,7 +405,7 @@ class EnergyCost extends Root
                         $total_best_gbp               = $total_gbp;
                      }
                 }
-                $optimum_charge_kws[0] = $charge_first_slot_optimum_kw;
+                $optimum_charge_kws[0]    = $charge_first_slot_optimum_kw;
                 $message_slot_fine_adjust = ($charge_first_slot_non_optimum_kw !== $charge_first_slot_optimum_kw) ? 'Next slot charge fine adjusted from ' . round($charge_first_slot_non_optimum_kw, 3) . ' to ' . round($charge_first_slot_optimum_kw, 3) . ' kW' : '';
             }
             $this->costs['optimised']   = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command

@@ -364,9 +364,9 @@ class EnergyCost extends Root
         $text   = $command . PHP_EOL . $output . PHP_EOL;
         if (!$command ||
             !file_put_contents(Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '.log', $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
-            $message = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
-            $this->logDb('MESSAGE', $message, null, 'FATAL');
-            throw new Exception($message);
+            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
+            throw new Exception($message_slot_fine_adjust);
         }
         $energyCostGuess    = $result['energyCostGuess']    ?? null;    // cost, first guess
         $energyCostSolution = $result['energyCostSolution'] ?? null;    // cost, solution
@@ -375,8 +375,8 @@ class EnergyCost extends Root
         $use_solution       = !is_null($optimum_charge_kws) && ($converged || ((!is_null($energyCostGuess) && !is_null($energyCostSolution)) && ($energyCostSolution < $energyCostGuess)));
         if (!$converged) { // write out problem and log warning if not converged
             $this->write_problem_command($command, 'fail');
-            $message  = $this->errMsg(__CLASS__, __FUNCTION__, null, $this->parameters['type'] . ' convergence failure (') . ($use_solution ? '' : 'not ') . 'usable): see failed problem and command';
-            $this->logDb('MESSAGE', $message, $text, 'WARNING');
+            $message_slot_fine_adjust  = $this->errMsg(__CLASS__, __FUNCTION__, null, $this->parameters['type'] . ' convergence failure (') . ($use_solution ? '' : 'not ') . 'usable): see failed problem and command';
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, $text, 'WARNING');
         }
         else {
             $this->write_problem_command($command, 'last_ok');
@@ -387,7 +387,8 @@ class EnergyCost extends Root
             }
             $this->problem['first_guess_charge_kws'] = $first_guess_charge_kws;
             $this->problem['optimum_charge_kws']     = $optimum_charge_kws;
-            $first = true;
+            $first                                   = true;
+            $message_slot_fine_adjust                = '';
             if (($this->parameters['type'] == 'slots') && self::RE_OPTIMISE_FIRST_SLOT_SLICE) {  // fine adjust first slot to further minimise cost
                 $charge_first_slot_non_optimum_kw = $optimum_charge_kws[0];
                 for ($charge_first_slot_kw = -$this->config['battery']['max_discharge_kw']; $charge_first_slot_kw <= $this->config['battery']['max_charge_kw']; $charge_first_slot_kw += self::RE_OPTIMISE_CHARGE_DELTA_KW) {
@@ -405,6 +406,7 @@ class EnergyCost extends Root
                      }
                 }
                 $optimum_charge_kws[0] = $charge_first_slot_optimum_kw;
+                $message_slot_fine_adjust = ($charge_first_slot_non_optimum_kw !== $charge_first_slot_optimum_kw) ? 'Next slot charge fine adjusted from ' . round($charge_first_slot_non_optimum_kw, 3) . ' to ' . round($charge_first_slot_optimum_kw, 3) . ' kW' : '';
             }
             $this->costs['optimised']   = $this->costCLI($command, $optimum_charge_kws);       // calculate php optimised cost elements using CLI command
             $this->costs['gbp_per_day'] = $this->problem['import_gbp_per_days'] + $this->problem['export_gbp_per_days'];
@@ -418,9 +420,7 @@ class EnergyCost extends Root
                 echo $indent . 'Php,    optimised: ' . round($this->costs['optimised']['total_gbp'] + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
                 echo                                                                                                                                                  PHP_EOL;
                 echo 'Grid cost, optimised: ' . round($this->costs['optimised']['grid_gbp']         + $this->costs['gbp_per_day'],4) . ' GBP' . PHP_EOL;
-                if (($this->parameters['type'] == 'slots') && self::RE_OPTIMISE_FIRST_SLOT_SLICE) {
-                    echo 'Next slot charge fine adjusted from ' . round($charge_first_slot_non_optimum_kw, 3) . ' to ' . round($charge_first_slot_optimum_kw, 3) . ' kW' . PHP_EOL;
-                }
+                echo $message_slot_fine_adjust . PHP_EOL;
                 echo                                                                                                                                                  PHP_EOL;
             }
             switch ($this->parameters['type']) {
@@ -428,6 +428,7 @@ class EnergyCost extends Root
                     $this->insertOptimumChargeGridKw($optimum_charge_kws);
                     $slot_solution = $this->slotSolution();
                     $this->insertSlotNextDayCostEstimates();
+                    $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'INFO');
                     return $slot_solution;
                 }
                 case 'slices': { // use slice_solution if available, otherwise use slot solution

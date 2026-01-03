@@ -2,6 +2,7 @@
 namespace Src;
 use DateMalformedStringException;
 use DateTime;
+use DateTimeImmutable;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -302,7 +303,6 @@ class GivEnergy extends Root
 
     /**
      * @throws DateMalformedStringException
-     * @throws GuzzleException
      * @throws Exception
      */
     private function getEVChargerLast24hrs(): void        // get ev charger
@@ -436,7 +436,7 @@ class GivEnergy extends Root
         }
         foreach ($points as $point) {
             if ($point['meter_id'] == self::EV_METER_ID) {
-                $datetime = $point['timestamp'];
+                $datetime = (new DateTimeImmutable($point['timestamp']))->format('Y-m-d H:i:s');
                 $measurements = $point['measurements'];
                 if (is_null($power_w = $this->power_w($measurements))) {
                     $this->logDb('MESSAGE', 'null EV charger power treated as zero', var_export($measurements, true), 'WARNING');

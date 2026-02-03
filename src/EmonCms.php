@@ -10,15 +10,16 @@ use GuzzleHttp\Exception\GuzzleException;
 class EmonCms extends Root
 {
     private array $api;
-    private const        array FEED_IDS = ['temperature_external_c' => 505525,
-        'electric_power_w' => 505527,
-        'electric_energy_kwh' => 505528,
-        'thermal_power_w' => 505529,
-        'thermal_energy_kwh' => 505530,
-        'temperature_flow_c' => 505531,
-        'temperature_return_c' => 505532,
-        'flow_rate_l_per_min' => 505533,
-        'temperature_internal_c' => 505534,
+    private const        array FEED_IDS = [
+        'temperature_external_c'    => 505525,
+        'electric_power_w'          => 505527,
+        'electric_energy_kwh'       => 505528,
+        'thermal_power_w'           => 505529,
+        'thermal_energy_kwh'        => 505530,
+        'temperature_flow_c'        => 505531,
+        'temperature_return_c'      => 505532,
+        'flow_rate_l_per_min'       => 505533,
+        'temperature_internal_c'    => 505534,
         'diverter_valve' => 505535,
         'dhw_flag' => 505536];
 
@@ -153,11 +154,11 @@ class EmonCms extends Root
     private function powerW($slot, $entity_id): ?float
     {
         $query = [
-            'apikey' => $this->api['apikey'],
-            'id' => self::FEED_IDS[$entity_id],
-            'start' => ($start = $slot['start_unix_timestamp']),
-            'end' => ($stop = $slot['stop_unix_timestamp']),
-            'interval' => Slot::DURATION_MINUTES * self::SECONDS_PER_MINUTE
+            'apikey'    => $this->api['apikey'],
+            'id'        => self::FEED_IDS[$entity_id],
+            'start'     => ($start = $slot['start_unix_timestamp']),
+            'end'       => ($stop = $slot['stop_unix_timestamp']),
+            'interval'  => Slot::DURATION_MINUTES * self::SECONDS_PER_MINUTE
         ];
         $client = new Client();
         $get_response = $client->get($this->api['base_url'], ['query' => $query]);

@@ -165,7 +165,7 @@ class EmonCms extends Root
         $response = json_decode($get_response->getBody(), true);
         if (!is_null($energy_start_j = $response[1][1] ?? null) &&
             !is_null($energy_stop_j = $response[0][1] ?? null)) {
-            return round(1000.0 * ((float)($energy_start_j - $energy_stop_j) * ((float)self::SECONDS_PER_HOUR) / ((float)($stop - $start))), 1);
+            return 1000.0 * ((float) ($energy_start_j - $energy_stop_j) * ((float) self::SECONDS_PER_HOUR) / ((float) ($stop - $start)));
         } else {
             return null;
         }

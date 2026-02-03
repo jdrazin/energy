@@ -163,8 +163,7 @@ class EmonCms extends Root
         $client = new Client();
         $get_response = $client->get($this->api['base_url'], ['query' => $query]);
         $response = json_decode($get_response->getBody(), true);
-        if (!is_null($energy_start_j = $response[1][1] ?? null) &&
-            !is_null($energy_stop_j = $response[0][1] ?? null)) {
+        if (!is_null($energy_start_j = $response[1][1] ?? null) && !is_null($energy_stop_j = $response[0][1] ?? null)) {
             return 1000.0 * ((float) ($energy_start_j - $energy_stop_j) * ((float) self::SECONDS_PER_HOUR) / ((float) ($stop - $start)));
         } else {
             return null;

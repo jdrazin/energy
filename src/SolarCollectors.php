@@ -34,6 +34,8 @@ class SolarCollectors extends Component
     public array    $orientation_type, $azimuth_degrees, $panels_number, $power_max_w,
                     $tilt_degrees, $shading_factor, $efficiency, $efficiency_temperature_reference_c, $efficiency_per_c, $efficiency_per_year, $solar, $thermal,
                     $inverter, $output_kwh, $lifetime_years, $power_w, $collectors, $collectors_value_install_gbp, $collectors_value_maintenance_per_timestep_gbp;
+    private float $generation_limit_kw;
+
     private array $panels, $panels_area_m2;
 
     /**
@@ -44,6 +46,7 @@ class SolarCollectors extends Component
         $component = $config[$component_name];
         if ($this->include = $check->checkValue($config, $component_name, [], 'include', self::CHECKS, true)) {
             parent::__construct($check, $config, $component_name, $time);
+            $this->generation_limit_kw = $check->checkValue($config, $component_name, [], 'generation_limit_kw', self::CHECKS, 1E6);
             $this->sumCosts($check->checkValue($config, $component_name, [], 'cost', self::CHECKS)); // sun cost components
             $panels = $check->checkValue($config, $component_name, [], 'panels', self::CHECKS);
             foreach ($panels as $key => $panel) {
@@ -72,16 +75,11 @@ class SolarCollectors extends Component
             $collectors = $component['collectors'] ?? [];
             foreach ($collectors as $key => $collector) {
                 if ($check->checkValue($config, $component_name, ['collectors', $key], 'include', self::CHECKS, true)) {
-                    if ($component_name == 'solar_pv') {
-                        $check->checkValue($config, $component_name, ['collectors', $key], 'inverter', self::CHECKS, null)
-                            ? [
-                                'power_threshold_kw' => $check->checkValue($config, $component_name, ['collectors', $key, 'inverter'], 'power_threshold_kw', self::CHECKS),
-                                'power_efficiency'   => $check->checkValue($config, $component_name, ['collectors', $key, 'inverter'], 'efficiency_percent', self::CHECKS, 100.0) / 100.0,
-                              ]
-                            : [
-                                'power_threshold_kw' => 1E6,
-                                'power_efficiency'   => 1.0,
-                              ];
+                    if ($component_name == 'solar_pv') { // not required if solar thermal
+                        [
+                        'power_threshold_kw' => $check->checkValue($config, $component_name, ['collectors', $key, 'inverter'], 'power_threshold_kw', self::CHECKS),
+                        'power_efficiency'   => $check->checkValue($config, $component_name, ['collectors', $key, 'inverter'], 'efficiency_percent', self::CHECKS, 100.0) / 100.0,
+                        ];
                         $this->inverter[$key] = new Inverter($check, $component['collectors'], (string) $key, $time);
                     }
                     $orientation = [
@@ -207,7 +205,7 @@ class SolarCollectors extends Component
                 $inverter_j[$key] = $this->inverter[$key]->transfer_consume_j($collector_j[$key], false);
                 $transfer_j += $inverter_j[$key]['transfer'];
             }
-            $transfer_consume_j = ['transfer' => $transfer_j,
+            $transfer_consume_j = ['transfer' => min($transfer_j, 1000.0 * $this->generation_limit_kw),
                                    'consume'  => 0.0];
         }
         return $transfer_consume_j;

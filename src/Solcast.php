@@ -144,7 +144,7 @@ class Solcast extends Solar
         foreach ($powers as $power) {
             $datetime = $power['datetime'];
             $type     = $power['type'];
-            $power    = min($power['power_w'], 1000.0 * $this->config['solar_pv']['generation_limit_kw'] ?? 1E6);
+            $power    = min($power['power_w'], 1000.0 * $this->config['solar_pv']['generation_limit_kw'] ?? 1E6); // clip tp solar generation limit
             $stmt->execute();
         }
         $this->mysqli->commit();

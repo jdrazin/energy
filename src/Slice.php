@@ -31,9 +31,7 @@ class Slice extends Root
             'tariff_combination'        => $octopus->tariffCombinations()[0]
         ];
         $command = (new EnergyCost($parameters))->minimise(); // minimise energy cost
-        if (GIVENERGY_ENABLE) {
-            $givenergy->controlBattery($command);
-        }
+        $givenergy->controlBattery($command);
         $this->trimSliceSolutions();
     }
 

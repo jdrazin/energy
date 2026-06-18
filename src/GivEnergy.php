@@ -28,15 +28,16 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class GivEnergy extends Root
 {
-    private const int   RESPONSE_OK                   = 2,
-                        CHARGE_DISCHARGE_SLOT_START   = 1,
-                        CHARGE_DISCHARGE_SLOT_STOP    = 10,
-                        CONTROL_CHARGE_DISCHARGE_SLOT = 1,   // slot number used for control
-                        EV_POWER_ACTIVE_IMPORT        = 13,  // Instantaneous active power imported by EV. (W or kW)
-                        EV_POWER_ACTIVE_IMPORT_UNIT   = 5,   // kW
-                        EV_METER_ID                   = 0,
-                        UPPER_SOC_LIMIT_PERCENT       = 100,
-                        LOWER_SOC_LIMIT_PERCENT       = 5;
+    private const int   RESPONSE_OK                     = 2,
+                        CHARGE_DISCHARGE_SLOT_START     = 1,
+                        CHARGE_DISCHARGE_SLOT_STOP      = 10,
+                        CONTROL_CHARGE_DISCHARGE_SLOT   = 1,   // slot number used for control
+                        EV_POWER_ACTIVE_IMPORT          = 13,  // Instantaneous active power imported by EV. (W or kW)
+                        EV_POWER_ACTIVE_IMPORT_UNIT     = 5,   // kW
+                        EV_METER_ID                     = 0,
+                        UPPER_SOC_LIMIT_PERCENT         = 100,
+                        LOWER_SOC_LIMIT_PERCENT         = 5,
+                        PROXY_SETTINGS_MAX_AGE_SECONDS  = 1800;
 
     private const array ENTITIES_BATTERY_AIO = [
                                                 'SOLAR_W'                => ['solar',       'power'],
@@ -189,6 +190,23 @@ class GivEnergy extends Root
     private function delete_proxy_settings(): void
     {
         $sql = 'DELETE FROM `proxy_settings`';
+        if (!($stmt = $this->mysqli->prepare($sql)) ||
+            !$stmt->execute() ||
+            !$this->mysqli->commit()) {
+            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+            $this->logDb('MESSAGE', $message, null, 'ERROR');
+            throw new Exception($message);
+        }
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    private function expire_proxy_settings(): void
+    {
+        $sql = 'DELETE FROM `proxy_settings`
+                   WHERE `timestamp` + INTERVAL ' . self::PROXY_SETTINGS_MAX_AGE_SECONDS . ' SECOND < NOW()';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->execute() ||
             !$this->mysqli->commit()) {
@@ -563,6 +581,7 @@ class GivEnergy extends Root
         $target_level_percent   = $command['target_level_percent']    ?? null;
         $message                = $command['message']                 ?? 'no context';
         if (GIVENERGY_ENABLE) {
+            $this->expire_proxy_settings(); // purge stale settings
             switch ($mode) {
                 case 'CHARGE':
                 case 'DISCHARGE':

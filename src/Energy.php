@@ -296,7 +296,9 @@ class Energy extends Root
            if (!isset($config[$component])) {
                throw new Exception('\'' . $component . '\' is missing');
            }
-           $config[$component]['include'] = $combination[$component];
+           if (isset($combination[$component])) {
+               $config[$component]['include'] = $combination[$component];
+           }
         }
         return ['config'      => $config,
                 'combination' => $combination,

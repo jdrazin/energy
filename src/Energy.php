@@ -455,7 +455,7 @@ class Energy extends Root
                 if (filter_var($email = ($email ?? false), FILTER_VALIDATE_EMAIL) &&
                     (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
                                                 'html'      => false,
-                                                'bodyHTML'  => $error = 'Your results are ready at: https://www.drazin.net:8443/projection?id=' . $projection_id . '.' . PHP_EOL . '<br>' .
+                                                'bodyHTML'  => $error = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>' .
                                                                         $message_setback,
                                                 'bodyAlt'   => strip_tags($error)])) {
                     $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, null, 'NOTICE');

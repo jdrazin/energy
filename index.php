@@ -9,7 +9,7 @@ use Psr\Log\LoggerInterface;
 use Slim\Factory\AppFactory;
 
 const   DEBUG = false;
-const   SERVER_EXTERNAL_URL_PORT = 'renewable-visions.tech:8444';
+
 
 // see slim 4 documentation: https://www.slimframework.com/docs/v4/
 $app = AppFactory::create();
@@ -108,7 +108,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
             $energy = new Energy($config);
             if ($energy->submitProjection(true, $crc32, $config, $config_json) === false) { // attempt to pre_parse request and submit
                 $code    = 401;
-                $message = 'You\'re not authorised, see https://renewable-visions.com/submitting-a-request-to-my-server/';
+                $message = 'You\'re not authorised, see ' . Energy::SERVER_EXTERNAL_URL_PORT . '/submitting-a-request-to-my-server/';
             }
             elseif ($energy->error) {
                 $code    = 400;
@@ -117,7 +117,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
             else {
                 $code    = 201;
                 $email   = $config['email'] ?? false;
-                $message = 'Get your result at https://' . SERVER_EXTERNAL_URL_PORT . '/projection.html?id=' . $crc32 . '. ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
+                $message = 'Get your result at ' . Energy::SERVER_EXTERNAL_URL_PORT . '/projection.html?id=' . $crc32 . '. ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
                 $config_applied = $energy->check->config_applied;
             }
         }

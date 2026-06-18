@@ -203,7 +203,7 @@ class GivEnergy extends Root
     /**
      * @throws Exception
      */
-    private function expire_proxy_settings(): void
+    private function flush_proxy_settings(): void
     {
         $sql = 'DELETE FROM `proxy_settings`
                    WHERE `timestamp` + INTERVAL ' . self::PROXY_SETTINGS_MAX_AGE_SECONDS . ' SECOND < NOW()';
@@ -581,7 +581,7 @@ class GivEnergy extends Root
         $target_level_percent   = $command['target_level_percent']    ?? null;
         $message                = $command['message']                 ?? 'no context';
         if (GIVENERGY_ENABLE) {
-            $this->expire_proxy_settings(); // purge stale settings
+            $this->flush_proxy_settings(); // purge stale settings
             switch ($mode) {
                 case 'CHARGE':
                 case 'DISCHARGE':

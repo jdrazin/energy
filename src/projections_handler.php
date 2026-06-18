@@ -21,7 +21,7 @@ const     DEBUG                     = false,
           EMAIL_ON_ERROR            = false;
 
 try {
-    $debug = DEBUG  || !TEST_PROJECTION_ID;
+    $debug = DEBUG && is_int(TEST_PROJECTION_ID);
     $pid_filename = Root::PATH_PROJECT . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
     if (!$debug) {
         if (file_exists($pid_filename)) {
@@ -35,7 +35,7 @@ try {
     if (strtolower(trim($argv[ARGS['CRON']] ?? '')) == 'cron') { // handle as cron
         (new Energy(null))->processNextProjection(null);
     }
-    elseif(TEST_PROJECTION_ID) {
+    elseif(is_int(TEST_PROJECTION_ID)) {
         (new Energy(null))->processNextProjection(TEST_PROJECTION_ID);
     }
     else {

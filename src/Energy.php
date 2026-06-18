@@ -1087,12 +1087,12 @@ class Energy extends Root
     private function combinationId($projection_id, $config_combined): int { // returns combination id
         $acronym       = $config_combined['acronym'];
         $combination   = $config_combined['combination'];
-        $battery       = $combination['battery'];
-        $heat_pump     = $combination['heat_pump'];
-        $insulation    = $combination['insulation'];
-        $boiler        = $combination['boiler'];
-        $solar_pv      = $combination['solar_pv'];
-        $solar_thermal = $combination['solar_thermal'];
+        $battery       = $combination['battery']        ?? ($config_combined['config']['battery'   ]   ['include'] ?? null);
+        $heat_pump     = $combination['heat_pump']      ?? ($config_combined['config']['heat_pump' ]   ['include'] ?? null);
+        $insulation    = $combination['insulation']     ?? ($config_combined['config']['insulation']   ['include'] ?? null);
+        $boiler        = $combination['boiler']         ?? ($config_combined['config']['boiler']       ['include'] ?? null);
+        $solar_pv      = $combination['solar_pv']       ?? ($config_combined['config']['solar_pv']     ['include'] ?? null);
+        $solar_thermal = $combination['solar_thermal']  ?? ($config_combined['config']['solar_thermal']['include'] ?? null);
         $sql = 'INSERT IGNORE INTO `combinations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
 			                               VALUES (?,            ?,              ?,         ?,       ?,            ?,        ?,          ?,               NOW(),   NULL  )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||

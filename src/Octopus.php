@@ -205,9 +205,9 @@ class Octopus extends Root
             throw new Exception($message);
         }
         foreach ($tariffs as $tariff) {
-            $rate = $tariff['value_inc_vat'] / 100.0;   // convert from pence to GBP
-            $start = $this->timeToDatetime($tariff['valid_from']);
-            $stop = $this->timeToDatetime($tariff['valid_to']);
+            $rate  = $tariff['value_inc_vat'] / 100.0;   // convert from pence to GBP
+            $start = $this->timeToDatetime($tariff['valid_from'], '1970-01-01 00:00:00');
+            $stop  = $this->timeToDatetime($tariff['valid_to'], '2040-01-01 00:00:00');
             $stmt->execute();
         }
         $this->mysqli->commit();
@@ -216,9 +216,9 @@ class Octopus extends Root
     /**
      * @throws DateMalformedStringException
      */
-    private function timeToDatetime($time): ?string
+    private function timeToDatetime($time, $time_if_null): ?string
     {
-        return $time ? $this->dateTime($time) : '1970-01-01 00:00:00';
+        return $time ? $this->dateTime($time) : $time_if_null;
     }
 
     /**

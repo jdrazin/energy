@@ -107,10 +107,11 @@ class AxleEnergy extends Root
                                                 `type`        = ?,
                                                 `status`      = \'CURRENT\'';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('ssddsdds', $start, $stop, $import_rate, $export_rate, $type, $import_rate, $export_rate, $type)) {
-                $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-                $this->logDb('MESSAGE', $message, null, 'ERROR');
-                throw new Exception($message);
+                !$stmt->bind_param('ssddsdds', $start, $stop, $import_rate, $export_rate, $type, $import_rate, $export_rate, $type) ||
+                !$stmt->execute()) {
+                    $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
+                    throw new Exception($message);
             }
             $this->mysqli->commit();
         }

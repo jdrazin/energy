@@ -2,6 +2,8 @@
 
 namespace Src;
 
+use DateTime;
+use DateTimeZone;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -69,6 +71,13 @@ class AxleEnergy extends Root
      */
     private function insertEvent($event): void
     {
+        $event =    [
+                        'start_time'    => '2026-10-10T12:46:27.928268+00:00',
+                        'stop_time'     => '2026-10-10T12:46:27.928268+00:00',
+                        'import_export' => 'export',
+                        'opted_out'     => false,
+                        'updated_at'    => '2026-10-10T12:46:27.928268+00:00'
+                    ];
         if (                  $event                   &&
             ($start         = $event['start_time'])    &&
             ($stop          = $event['end_time'])      &&
@@ -104,5 +113,15 @@ class AxleEnergy extends Root
             }
             $this->mysqli->commit();
         }
+    }
+
+    /**
+     * @throws \DateMalformedStringException
+     */
+    private function datetime_mysql($datetime): string|null
+    {
+        $date = new DateTime($datetime);
+        $date->setTimezone(new DateTimeZone('UTC'));    // force conversion to UTC to prevent server drift issues
+        return $date->format('Y-m-d H:i:s');
     }
 }

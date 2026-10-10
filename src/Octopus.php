@@ -65,13 +65,14 @@ class Octopus extends Root
             $values->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature
             (new Solcast())->getSolarActualForecast($db_slots->slots);            // solar actuals & forecasts > 'powers'
             (new MetOffice())->forecast();                                        // get temperature forecast
+            (new AxleEnergy())->getNextGridEvent();                               // get next grid event if any
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
             $tariff_combinations = $this->tariffCombinations();                   // get tariff combinations of interest, starting with active combination
             foreach ($tariff_combinations as $tariff_combination) {
                 if (!ACTIVE_TARIFF_COMBINATION_ONLY || $tariff_combination['active']) {
                     $db_slots->makeDbSlotsNext24hrs($tariff_combination);                           // make slots for this tariff combination
-                    $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);            // todo
+                    $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);            //
                     $this->makeSlotRates($db_slots->slots, $tariff_combination, false);        // make tariffs
                     $values->estimatePowers($db_slots, $tariff_combination);                        // forecast slot solar, heating, non-heating and load powers
 

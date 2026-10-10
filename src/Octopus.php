@@ -318,11 +318,11 @@ class Octopus extends Root
         if ($type) {
             switch ($type) {
                 case 'OVERRIDE': {
-                    $rate = $rate_extraordinary;
+                    $rate = ($rate_extraordinary * $overlap);
                     break;
                 }
                 case 'ADD': {
-                    $rate += $rate_extraordinary;
+                    $rate += ($rate_extraordinary * $overlap);
                     break;
                 }
                 default:

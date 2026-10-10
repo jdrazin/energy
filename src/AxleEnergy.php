@@ -56,7 +56,7 @@ class AxleEnergy extends Root
     {
         $url = $this->api['endpoint'];
         $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
-                    'Accept'        => 'application/json',
+                    'Accept'        => 'application/json'
         ];
         $client = new Client();
         $response = $client->get($url, ['headers' => $headers]);

@@ -71,13 +71,6 @@ class AxleEnergy extends Root
      */
     private function insertEvent($event): void
     {
-        $event =    [
-                        'start_time'    => '2026-10-10T12:46:27.928268+00:00',
-                        'end_time'      => '2026-10-10T12:46:27.928268+00:00',
-                        'import_export' => 'export',
-                        'opted_out'     => false,
-                        'updated_at'    => '2026-10-10T12:46:27.928268+00:00'
-                    ];
         if (                  $event                                        &&
             ($start         = $this->datetime_mysql($event['start_time']))  &&
             ($stop          = $this->datetime_mysql($event['end_time']))    &&

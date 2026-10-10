@@ -19,7 +19,6 @@ class AxleEnergy extends Root
         $this->use_local_config();
         $this->class = $this->strip_namespace(__NAMESPACE__, __CLASS__);
         $this->api = $this->apis[$this->class];
-        $this->location = $this->config['location'];
     }
 
     /**
@@ -27,7 +26,7 @@ class AxleEnergy extends Root
      * @throws Exception
      */
 
-    public function forecast(): void
+    public function get_event(): void
     {
         $made_successful_request = false;
         if ($this->skipRequest()) { // skip request if called recently
@@ -35,7 +34,7 @@ class AxleEnergy extends Root
             return;
         }
         try {
-            $forecast = $this->getForecast();
+            $forecast = $this->getEvent();
             $this->insertPoints($forecast['features'][0]['properties']['timeSeries']);
             $made_successful_request = true;
         }
@@ -48,18 +47,14 @@ class AxleEnergy extends Root
     /**
      * @throws GuzzleException
      */
-    private function getForecast(): array
+    private function getEvent(): array
     {
-        $url = $this->api['endpoint'] .
-            '?latitude='  . $this->location['coordinates']['latitude_degrees'] .
-            '&longitude=' . $this->location['coordinates']['longitude_degrees'] .
-            '&excludeParameterMetadata=true&includeLocationName=false';
-        $headers = ['apikey' => $this->api['apikey'],
-            'Accept' => 'application/json',
+        $url = $this->api['endpoint'];
+        $headers = ['Authorization: Bearer ' => $this->api['api_token'],
+                    'Accept'                 => 'application/json',
         ];
         $client = new Client();
         $response = $client->get($url, ['headers' => $headers]);
-//        return json_decode(file_get_contents('/var/www/html/energy/test/metoffice.json'), true);  // todo
         return json_decode((string)$response->getBody(), true);
     }
 

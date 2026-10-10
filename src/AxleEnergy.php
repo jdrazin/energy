@@ -8,7 +8,12 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class AxleEnergy extends Root
 {
-    private array $api, $location;
+    private array $api;
+
+    const array RATE = [
+                            'import' => null,
+                            'export' => 1.00
+                        ];
 
     /**
      * @throws Exception
@@ -34,8 +39,7 @@ class AxleEnergy extends Root
             return;
         }
         try {
-            $forecast = $this->getEvent();
-            $this->insertPoints($forecast['features'][0]['properties']['timeSeries']);
+            $this->insertEvent($this->getEvent());
             $made_successful_request = true;
         }
         catch (exception $e) { // log warning if request fails
@@ -61,27 +65,28 @@ class AxleEnergy extends Root
     /**
      * @throws Exception
      */
-    private function insertPoints($points): void
+    private function insertEvent($event): void
     {
-        $sql = 'INSERT INTO `values` (`entity`, `type`, `datetime`, `value`) VALUES (?, ?, ?, ?)
-                        ON DUPLICATE KEY UPDATE `value` = ?, `timestamp` = NOW()';
-        if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('sssdd', $entity, $type, $datetime, $value, $value)) {
-            $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
-            $this->logDb('MESSAGE', $message, null, 'ERROR');
-            throw new Exception($message);
-        }
-        $entity = 'TEMPERATURE_EXTERNAL_C';
-        $type = 'FORECAST';
-        foreach ($points as $point) {
-            $datetime = rtrim($point['time'], 'Z');
-            $value = (float)$point['screenTemperature'];
-            if (!$stmt->execute()) {
+        if (                $event                    &&
+            ($start         = $event['start_time'])   &&
+            ($stop          = $event['end_time'])     &&
+            $import_export  = $event['import_export'] &&
+                            !$event['opted_out']
+            ) {
+            $sql = 'INSERT INTO `tariff_extraordinaries_per_kwh` (`start`, `stop`, `import_rate`, `export_rate`, `type`)
+                                                      VALUES (?,        ?,      ?,             ?,             ?    )
+                        ON DUPLICATE KEY UPDATE `import_rate` = ?,
+                                                `export_rate` = ?,
+                                                `type`        = ?,
+                                                `status`      = \'CURRENT\'';
+            if (!($stmt = $this->mysqli->prepare($sql)) ||
+                !$stmt->bind_param('ssddss', $start, $stop, $import_rate, $export_rate, $type, $import_rate, $export_rate, $status)) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
+
+            $this->mysqli->commit();
         }
-        $this->mysqli->commit();
     }
 }

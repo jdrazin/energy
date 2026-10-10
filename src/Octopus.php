@@ -313,16 +313,18 @@ class Octopus extends Root
         }
         $stmt->fetch();
         $rate = $rate_tariff;
-        switch ($type) {
-            case 'OVERRIDE': {
-                $rate = $rate_extraordinary;
-                break;
+        if ($type) {
+            switch ($type) {
+                case 'OVERRIDE': {
+                    $rate = $rate_extraordinary;
+                    break;
+                }
+                case 'ADD': {
+                    $rate += $rate_extraordinary;
+                    break;
+                }
+                default:
             }
-            case 'ADD': {
-                $rate += $rate_extraordinary;
-                break;
-            }
-            default:
         }
         return $rate;
     }

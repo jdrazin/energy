@@ -14,6 +14,7 @@ class AxleEnergy extends Root
                             'import' => null,
                             'export' => 1.00
                         ];
+    const string RATE_TYPE = 'ADD';
 
     /**
      * @throws Exception
@@ -67,12 +68,27 @@ class AxleEnergy extends Root
      */
     private function insertEvent($event): void
     {
-        if (                $event                    &&
-            ($start         = $event['start_time'])   &&
-            ($stop          = $event['end_time'])     &&
-            $import_export  = $event['import_export'] &&
-                            !$event['opted_out']
-            ) {
+        if (                  $event                   &&
+            ($start         = $event['start_time'])    &&
+            ($stop          = $event['end_time'])      &&
+            ($import_export = $event['import_export']) &&
+                             !$event['opted_out']      &&
+            ($updated_at    = $event['updated_at'])) {
+            $import_rate = $export_rate = null;
+            switch (strtolower($import_export)) {
+                case 'import': {
+                    $import_rate = self::RATE['import'];
+                    break;
+                }
+                case 'export': {
+                    $export_rate = self::RATE['export'];
+                    break;
+                }
+                default:
+                    $message = 'import_export must be import or export';
+                    $this->logDb('MESSAGE', $message, null, 'ERROR');
+                    throw new Exception($message);
+            }
             $sql = 'INSERT INTO `tariff_extraordinaries_per_kwh` (`start`, `stop`, `import_rate`, `export_rate`, `type`)
                                                       VALUES (?,        ?,      ?,             ?,             ?    )
                         ON DUPLICATE KEY UPDATE `import_rate` = ?,
@@ -85,7 +101,6 @@ class AxleEnergy extends Root
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
             }
-
             $this->mysqli->commit();
         }
     }

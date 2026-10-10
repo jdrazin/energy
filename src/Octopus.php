@@ -296,6 +296,7 @@ class Octopus extends Root
         $this->mysqli->commit();
     }
 
+    // extraordinary tariff overrides or added to normal tariff pro rate with extent time slot overlaps extraordinary tariff event period
     private function rateExtraordinary($rate_tariff, $direction, $start, $stop): float {
         $sql = 'SELECT `' . $direction . '_rate`,
                             (UNIX_TIMESTAMP(IF(`stop` < ?, `stop`, ?)) - UNIX_TIMESTAMP( IF(`start` > ?, `start`, ?))) / (UNIX_TIMESTAMP(?) - UNIX_TIMESTAMP(?)),

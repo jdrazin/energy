@@ -32,7 +32,7 @@ class AxleEnergy extends Root
      * @throws Exception
      */
 
-    public function get_event(): void
+    public function getNextGridEvent(): void
     {
         $made_successful_request = false;
         if ($this->skipRequest()) { // skip request if called recently

@@ -283,9 +283,7 @@ class Octopus extends Root
                         }
                     }
                 }
-                if (!is_null($rate_extraordinary = $this->rateExtraordinary($direction, $start, $stop))) {  // extraordinary KWH rate overrides
-                    $ratesPer['KWH'][$direction] = $rate_extraordinary;
-                }
+                $ratesPer['KWH'][$direction] = $this->rateExtraordinary($ratesPer['KWH'][$direction], $direction, $start, $stop); // modify by extraordinary KWH rate, if any
             }
             // insert rate into slot
             $import_gbp_per_kwh = $ratesPer['KWH']['import'];
@@ -297,8 +295,9 @@ class Octopus extends Root
         $this->mysqli->commit();
     }
 
-    private function rateExtraordinary($direction, $start, $stop): float|null {
-        $sql = 'SELECT `' . $direction . '_rate`
+    private function rateExtraordinary($rate_tariff, $direction, $start, $stop): float {
+        $sql = 'SELECT `' . $direction . '_rate`,
+                            `type`
                     FROM    `tariff_extraordinaries_per_kwh`
                     WHERE   ? BETWEEN `start` AND `stop` AND
                             ? BETWEEN `start` AND `stop` AND
@@ -306,13 +305,25 @@ class Octopus extends Root
                     ORDER BY `timestamp` DESC';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
             !$stmt->bind_param('ss', $start, $stop) ||
-            !$stmt->bind_result($rate) ||
+            !$stmt->bind_result($rate_extraordinary, $type) ||
             !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
         }
         $stmt->fetch();
+        $rate = $rate_tariff;
+        switch ($type) {
+            case 'OVERRIDE': {
+                $rate = $rate_extraordinary;
+                break;
+            }
+            case 'ADD': {
+                $rate += $rate_extraordinary;
+                break;
+            }
+            default:
+        }
         return $rate;
     }
 

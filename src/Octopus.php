@@ -298,15 +298,16 @@ class Octopus extends Root
 
     private function rateExtraordinary($rate_tariff, $direction, $start, $stop): float {
         $sql = 'SELECT `' . $direction . '_rate`,
+                            (UNIX_TIMESTAMP(IF(`stop` < ?, `stop`, ?)) - UNIX_TIMESTAMP( IF(`start` > ?, `start`, ?))) / (UNIX_TIMESTAMP(?) - UNIX_TIMESTAMP(?)),
                             `type`
                     FROM    `tariff_extraordinaries_per_kwh`
-                    WHERE   ? BETWEEN `start` AND `stop` AND
-                            ? BETWEEN `start` AND `stop` AND
+                    WHERE   `start` <= ? AND
+                            `stop`  >= ? AND
                             `status` IN(\'CURRENT\', \'TO_DROP\')
                     ORDER BY `timestamp` DESC';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ss', $start, $stop) ||
-            !$stmt->bind_result($rate_extraordinary, $type) ||
+            !$stmt->bind_param('ssssssss', $stop, $stop, $start, $start, $stop, $start, $stop, $start ) ||
+            !$stmt->bind_result($rate_extraordinary, $overlap, $type) ||
             !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');

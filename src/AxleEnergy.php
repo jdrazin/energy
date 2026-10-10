@@ -55,9 +55,10 @@ class AxleEnergy extends Root
     private function getEvent(): array
     {
         $url = $this->api['endpoint'];
-        $headers = ['Authorization' => 'Bearer ' . $this->api['api_token'],
-                    'Accept'        => 'application/json'
-        ];
+        $headers = [
+                    'Accept'        => 'application/json',
+                    'Authorization' => 'Bearer ' . $this->api['api_token']
+                   ];
         $client = new Client();
         $response = $client->get($url, ['headers' => $headers]);
         return json_decode((string)$response->getBody(), true);

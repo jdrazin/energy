@@ -120,7 +120,7 @@ function value_absolute($mysqli, $mysql_datetime, $entity):int {
     $b   = $min_max_datetime['UPPER']['difference_seconds'];
     $va  = $min_max_datetime['LOWER']['value'];
     $vb  = $min_max_datetime['UPPER']['value'];
-    $value_interpolated = $va + (($vb-$va)/($b-$a));
+    $value_interpolated = $va + $a * (($vb-$va)/($a - $b));
     return (int) round($value_interpolated);
 }
 

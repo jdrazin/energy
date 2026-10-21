@@ -129,14 +129,15 @@ function value_rate($mysqli, $mysql_datetime, $entity):int {
     $signs = ['-', '+'];
     $interval_half = INTERVAL_SECONDS/2;
     foreach ($signs as $sign) {
-        $sql = "SELECT   `datetime`
+        $sql = "SELECT   `datetime`,
+                   ABS(TIMESTAMPDIFF(SECOND, '$mysql_datetime' $sign INTERVAL $interval_half SECOND, `datetime`)) AS `difference_seconds`
                    FROM  `values`
                    WHERE `entity` = '$entity' AND 
                          `type` = 'MEASURED'
                    ORDER BY ABS(TIMESTAMPDIFF(SECOND, '$mysql_datetime' $sign INTERVAL $interval_half SECOND, `datetime`))
                    LIMIT 1";
         $result = $mysqli->query($sql);
-        $fetch_assoc = $result->fetch_assoc();
+        $fetch_assoc        = $result->fetch_assoc();
         $datetime           = $fetch_assoc['datetime'];
         $difference_seconds = $fetch_assoc['difference_seconds'];
         $value              = value($mysqli, $datetime, $entity);

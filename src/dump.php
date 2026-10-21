@@ -29,7 +29,8 @@ const   DATETIME_START              = '2025-10-20 00:00:00',
                                ],
             'battery_w'     => [
                                     'entity'    => 'GRID_W',
-                                    'type'      => 'ABSOLUTE'
+                                    'type'      => 'RATE',
+                                    'factor'    =>  1.0
                                 ],
             'ev_charge_w'   => [
                                     'entity'    => 'GRID_W',

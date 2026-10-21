@@ -81,10 +81,10 @@ function make_row($mysqli, $mysql_datetime): void
                 break;
             }
             default: {
-
             }
         }
     }
+    insert_row($mysqli, $mysql_datetime, $values);
 }
 
 function value_absolute($mysqli, $mysql_datetime, $entity):float {
@@ -168,6 +168,21 @@ function value($mysqli, $mysql_datetime, $entity): float {
                      `datetime` = '$mysql_datetime'";
     $result = $mysqli->query($sql);
     return floatval($result->fetch_assoc()['value']);
+}
+
+function insert_row($mysqli, $mysql_datetime, $values): void
+{
+    $sql = 'INSERT INTO `dump` (`datetime`,';
+    foreach ($values as $field => $value) {
+        $sql .= '`' . $field . '`,';
+    }
+    $sql = rtrim($sql, ',') . ') VALUES (\'' . $mysql_datetime . '\',';
+    foreach ($values as $field => $value) {
+        $sql .= intval(round($value)) . ',';
+    }
+    $sql = rtrim($sql, ',') . ')';
+    $result = $mysqli->query($sql);
+    $mysqli->commit();
 }
 
 

@@ -49,7 +49,7 @@ const   DATETIME_START              = '2025-10-20 00:00:00',
 truncate( $mysqli = (new Root())->mysqli());
 $datetime       = new DateTime(DATETIME_START);
 $datetime_stop  = new DateTime(DATETIME_STOP);
-$increment       = new DateInterval('PT' . INTERVAL_SECONDS . 'S');
+$increment      = new DateInterval('PT' . INTERVAL_SECONDS . 'S');
 while ($datetime < $datetime_stop) {
     $datetime->add($increment);
     make_row($mysqli, $datetime->format('Y-m-d H:i:s'));
@@ -60,11 +60,23 @@ function truncate($mysqli): void {
     $mysqli->query('TRUNCATE `dump`');
 }
 
-function make_row($mysqli, $mysql_datetime) {
+function make_row($mysqli, $mysql_datetime): void
+{
     foreach (DESCRIPTORS as $field => $properties) {
         $entity = $properties['entity'];
-        $min_max_datetime = min_max_datetime($mysqli, $mysql_datetime, $entity);
-        $type   = $properties['type'];
+        switch($type = $properties['type']) {
+            case 'ABSOLUTE': {
+                $min_max_datetime = min_max_datetime($mysqli, $mysql_datetime, $entity);
+                break;
+            }
+            case 'RATE': {
+
+                break;
+            }
+            default: {
+
+            }
+        }
     }
 }
 

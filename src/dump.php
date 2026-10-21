@@ -80,7 +80,9 @@ function min_max_datetime($mysqli, $mysql_datetime, $entity) {
                             ]
                ];
     $min_max_datetime = [];
-    foreach ($bounds as $function => $inequality) {
+    foreach ($bounds as $bound => $properties) {
+        $function   = $properties['function'];
+        $inequality = $properties['inequality'];
         $sql = "SELECT   $function(`datetime`) AS `datetime`,
                         TIMESTAMPDIFF(SECOND, MAX(`datetime`), '$mysql_datetime') AS `difference_seconds`
                    FROM  `values`
@@ -88,10 +90,12 @@ function min_max_datetime($mysqli, $mysql_datetime, $entity) {
                          `datetime` $inequality '$mysql_datetime'";
         $result = $mysqli->query($sql);
         $fetch_assoc = $result->fetch_assoc();
-        $min_max_datetime[$function] = $fetch_assoc['datetime'];
+        $min_max_datetime[$bound] = [
+                                        'datetime'           => $fetch_assoc['datetime'],
+                                        'difference_seconds' => $fetch_assoc['difference_seconds']
+                                    ];
     }
-
-    return $result->fetch_assoc();
+    return $min_max_datetime;
 }
 
 

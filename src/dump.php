@@ -32,7 +32,7 @@ const   DATETIME_START              = '2025-10-20 00:00:00',
                             'field'     => 'battery_charge_w',
                             'entity'    => 'BATTERY_LEVEL_KWH',
                             'type'      => 'RATE',
-                            'factor'    =>  1.0
+                            'factor'    =>  3.6E6
                         ],
                         [
                             'field'     => 'ev_charge_w',
@@ -69,14 +69,15 @@ function make_row($mysqli, $mysql_datetime): void
 {
     $values = [];
     foreach (DESCRIPTORS as $descriptor) {
-        $entity = $properties['entity'];
-        switch($type = $properties['type']) {
+        $field  = $descriptor['field'];
+        $entity = $descriptor['entity'];
+        switch($descriptor['type']) {
             case 'ABSOLUTE': {
                 $values[$field] = value_absolute($mysqli, $mysql_datetime, $entity);
                 break;
             }
             case 'RATE': {
-                $values[$field] = $properties['factor'] * value_rate($mysqli, $mysql_datetime, $entity);
+                $values[$field] = $descriptor['factor'] * value_rate($mysqli, $mysql_datetime, $entity);
                 break;
             }
             default: {
@@ -86,7 +87,7 @@ function make_row($mysqli, $mysql_datetime): void
     }
 }
 
-function value_absolute($mysqli, $mysql_datetime, $entity):int {
+function value_absolute($mysqli, $mysql_datetime, $entity):float {
     $bounds = [
                 'LOWER' =>  [
                                 'function'      => 'MAX',
@@ -97,7 +98,7 @@ function value_absolute($mysqli, $mysql_datetime, $entity):int {
                                 'inequality'    => '>='
                             ]
                ];
-    $min_max_datetime = [];
+    $upper_lower_datetime = [];
     foreach ($bounds as $bound => $properties) {
         $function   = $properties['function'];
         $inequality = $properties['inequality'];
@@ -115,24 +116,25 @@ function value_absolute($mysqli, $mysql_datetime, $entity):int {
         if ($difference_seconds == 0) {     // no need to interpolate if reading found for exact time
             return (int) round($value);
         }
-        $min_max_datetime[$bound] = [
+        $upper_lower_datetime[$bound] = [
                                         'datetime'           => $datetime,
                                         'value'              => $value,
                                         'difference_seconds' => $difference_seconds
                                     ];
     }
     // interpolate
-    $a   = $min_max_datetime['LOWER']['difference_seconds'];
-    $b   = $min_max_datetime['UPPER']['difference_seconds'];
-    $va  = $min_max_datetime['LOWER']['value'];
-    $vb  = $min_max_datetime['UPPER']['value'];
+    $a   = $upper_lower_datetime['LOWER']['difference_seconds'];
+    $b   = $upper_lower_datetime['UPPER']['difference_seconds'];
+    $va  = $upper_lower_datetime['LOWER']['value'];
+    $vb  = $upper_lower_datetime['UPPER']['value'];
     $value_interpolated = $va + $a * (($vb-$va)/($a - $b));
-    return (int) round($value_interpolated);
+    return round($value_interpolated);
 }
 
-function value_rate($mysqli, $mysql_datetime, $entity):int {
+function value_rate($mysqli, $mysql_datetime, $entity):float {
     $signs = ['-', '+'];
     $interval_half = INTERVAL_SECONDS/2;
+    $upper_lower_datetime = [];
     foreach ($signs as $sign) {
         $sql = "SELECT   `datetime`
                    FROM  `values`
@@ -144,16 +146,19 @@ function value_rate($mysqli, $mysql_datetime, $entity):int {
         $fetch_assoc        = $result->fetch_assoc();
         $datetime           = $fetch_assoc['datetime'];
         $value              = value($mysqli, $datetime, $entity);
-        $min_max_datetime[$sign] = [
+        $upper_lower_datetime[$sign] = [
             'datetime'           => $datetime,
             'value'              => $value
         ];
     }
     // calculate rate
-    $va  = $min_max_datetime['LOWER']['value'];
-    $vb  = $min_max_datetime['UPPER']['value'];
-    $value_interpolated = $va + $a * (($vb-$va)/($a - $b));
-    return (int) round($value_interpolated);
+    $diff_seconds = strtotime($upper_lower_datetime['+']['datetime']) - strtotime($upper_lower_datetime['-']['datetime']);
+    $va   = $upper_lower_datetime['-']['value'];
+    $vb   = $upper_lower_datetime['+']['value'];
+    if (($rate = $vb - $va) && $diff_seconds) {
+        $rate /= $diff_seconds;
+    }
+    return $rate;
 }
 
 function value($mysqli, $mysql_datetime, $entity): float {

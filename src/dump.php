@@ -73,13 +73,14 @@ function make_row($mysqli, $mysql_datetime): void
     foreach (DESCRIPTORS as $descriptor) {
         $field  = $descriptor['field'];
         $entity = $descriptor['entity'];
+        $factor = $descriptor['factor'];
         switch($descriptor['type']) {
             case 'ABSOLUTE': {
-                $values[$field] = value_absolute($mysqli, $mysql_datetime, $entity);
+                $values[$field] = value_average($mysqli, $mysql_datetime, $entity);
                 break;
             }
             case 'RATE': {
-                $values[$field] = $descriptor['factor'] * value_rate($mysqli, $mysql_datetime, $entity);
+                $values[$field] = value_rate($mysqli, $mysql_datetime, $entity, $factor);
                 break;
             }
             default: {
@@ -89,51 +90,20 @@ function make_row($mysqli, $mysql_datetime): void
     insert_row($mysqli, $mysql_datetime, $values);
 }
 
-function value_absolute($mysqli, $mysql_datetime, $entity):float {
-    $bounds = [
-                'LOWER' =>  [
-                                'function'      => 'MAX',
-                                'inequality'    => '<='
-                            ],
-                'UPPER' =>  [
-                                'function'      => 'MIN',
-                                'inequality'    => '>='
-                            ]
-               ];
-    $upper_lower_datetime = [];
-    foreach ($bounds as $bound => $properties) {
-        $function   = $properties['function'];
-        $inequality = $properties['inequality'];
-        $sql = "SELECT   $function(`datetime`) AS `datetime`,
-                        TIMESTAMPDIFF(SECOND, '$mysql_datetime', $function(`datetime`)) AS `difference_seconds`
+function value_average($mysqli, $mysql_datetime, $entity):int {
+    $interval_seconds = INTERVAL_SECONDS/2;
+    $sql = "SELECT AVG(`value`) AS `average`
                    FROM  `values`
                    WHERE `entity` = '$entity' AND 
-                         `datetime` $inequality '$mysql_datetime' AND
+                         `datetime` BETWEEN '$mysql_datetime' - INTERVAL $interval_seconds SECOND AND '$mysql_datetime' + INTERVAL $interval_seconds SECOND AND
                          `type` = 'MEASURED'";
-        $result = $mysqli->query($sql);
-        $fetch_assoc = $result->fetch_assoc();
-        $datetime           = $fetch_assoc['datetime'];
-        $difference_seconds = intval($fetch_assoc['difference_seconds']);
-        $value              = value($mysqli, $datetime, $entity);
-        if ($difference_seconds == 0) {     // no need to interpolate if reading found for exact time
-            return (int) round($value);
-        }
-        $upper_lower_datetime[$bound] = [
-                                        'datetime'           => $datetime,
-                                        'value'              => $value,
-                                        'difference_seconds' => $difference_seconds
-                                    ];
-    }
-    // interpolate
-    $a   = $upper_lower_datetime['LOWER']['difference_seconds'];
-    $b   = $upper_lower_datetime['UPPER']['difference_seconds'];
-    $va  = $upper_lower_datetime['LOWER']['value'];
-    $vb  = $upper_lower_datetime['UPPER']['value'];
-    $value_interpolated = $va + $a * (($vb-$va)/($a - $b));
-    return round($value_interpolated);
+    $result = $mysqli->query($sql);
+    $fetch_assoc = $result->fetch_assoc();
+    $value_average = $fetch_assoc['average'];
+    return intval(round(floatval($value_average)));
 }
 
-function value_rate($mysqli, $mysql_datetime, $entity):float {
+function value_rate($mysqli, $mysql_datetime, $entity, $factor):int {
     $signs = ['-', '+'];
     $interval_half = INTERVAL_SECONDS/2;
     $upper_lower_datetime = [];
@@ -160,7 +130,7 @@ function value_rate($mysqli, $mysql_datetime, $entity):float {
     if (($rate = $vb - $va) && $diff_seconds) {
         $rate /= $diff_seconds;
     }
-    return $rate;
+    return intval(round($factor * $rate));
 }
 
 function value($mysqli, $mysql_datetime, $entity): float {

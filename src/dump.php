@@ -75,10 +75,10 @@ function min_max_datetime($mysqli, $mysql_datetime, $entity) {
               ];
     $min_max_datetime = [];
     foreach ($bounds as $function => $inequality) {
-        $sql = "SELECT $function(`datetime`) 
-                    FROM `values`
-                    WHERE `entity` = '$entity' AND 
-                          `datetime` $inequality '$mysql_datetime'";
+        $sql = "SELECT   $function(`datetime`) 
+                   FROM  `values`
+                   WHERE `entity` = '$entity' AND 
+                         `datetime` $inequality '$mysql_datetime'";
         $result = $mysqli->query($sql);
         $min_max_datetime[$function] = $result->fetch_assoc();
     }

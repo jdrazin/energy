@@ -62,15 +62,16 @@ function truncate($mysqli): void {
 
 function make_row($mysqli, $mysql_datetime): void
 {
+    $values = [];
     foreach (DESCRIPTORS as $field => $properties) {
         $entity = $properties['entity'];
         switch($type = $properties['type']) {
             case 'ABSOLUTE': {
-                $min_max_datetime = min_max_datetime($mysqli, $mysql_datetime, $entity);
+                $values[$field] = value_absolute($mysqli, $mysql_datetime, $entity);
                 break;
             }
             case 'RATE': {
-
+                $values[$field] = value_rate($mysqli, $mysql_datetime, $entity);
                 break;
             }
             default: {
@@ -80,7 +81,7 @@ function make_row($mysqli, $mysql_datetime): void
     }
 }
 
-function min_max_datetime($mysqli, $mysql_datetime, $entity) {
+function value_absolute($mysqli, $mysql_datetime, $entity):int {
     $bounds = [
                 'LOWER' =>  [
                                 'function'      => 'MAX',
@@ -96,18 +97,40 @@ function min_max_datetime($mysqli, $mysql_datetime, $entity) {
         $function   = $properties['function'];
         $inequality = $properties['inequality'];
         $sql = "SELECT   $function(`datetime`) AS `datetime`,
-                        TIMESTAMPDIFF(SECOND, $function(`datetime`), '$mysql_datetime') AS `difference_seconds`
+                        TIMESTAMPDIFF(SECOND, '$mysql_datetime', $function(`datetime`)) AS `difference_seconds`
                    FROM  `values`
                    WHERE `entity` = '$entity' AND 
                          `datetime` $inequality '$mysql_datetime'";
         $result = $mysqli->query($sql);
         $fetch_assoc = $result->fetch_assoc();
+        $datetime           = $fetch_assoc['datetime'];
+        $difference_seconds = $fetch_assoc['difference_seconds'];
+        $value              = value($mysqli, $datetime, $entity);
+        if ($difference_seconds == 0) {     // no need to interpolate if reading found for exact time
+            return (int) round($value);
+        }
         $min_max_datetime[$bound] = [
-                                        'datetime'           => $fetch_assoc['datetime'],
-                                        'difference_seconds' => $fetch_assoc['difference_seconds']
+                                        'datetime'           => $datetime,
+                                        'value'              => $value,
+                                        'difference_seconds' => $difference_seconds
                                     ];
     }
-    return $min_max_datetime;
+    // interpolate
+    $a   = $min_max_datetime['LOWER']['difference_seconds'];
+    $b   = $min_max_datetime['UPPER']['difference_seconds'];
+    $va  = $min_max_datetime['LOWER']['value'];
+    $vb  = $min_max_datetime['UPPER']['value'];
+    $value_interpolated = $va + (($vb-$va)/($b-$a));
+    return (int) round($value_interpolated);
+}
+
+function value($mysqli, $mysql_datetime, $entity): float {
+    $sql = "SELECT   `value`
+               FROM  `values`
+               WHERE `entity` = '$entity' AND 
+                     `datetime` = '$mysql_datetime'";
+    $result = $mysqli->query($sql);
+    return floatval($result->fetch_assoc()['value']);
 }
 
 

@@ -52,7 +52,7 @@ $datetime_stop  = new DateTime(DATETIME_STOP);
 $increment       = new DateInterval('PT' . INTERVAL_SECONDS . 'S');
 while ($datetime < $datetime_stop) {
     $datetime->add($increment);
-    make_row($datetime->format('Y-m-d H:i:s'));
+    make_row($mysqli, $datetime->format('Y-m-d H:i:s'));
 }
 exit;
 
@@ -60,8 +60,24 @@ function truncate($mysqli): void {
     $mysqli->query('TRUNCATE `dump`');
 }
 
-function make_row($mysql_datetime) {
+function make_row($mysqli, $mysql_datetime) {
+    foreach (DESCRIPTORS as $field => $properties) {
+        $entity = $properties['entity'];
+        $min_max_datetime = min_max_datetime($mysqli, $mysql_datetime, $entity);
+        $type   = $properties['type'];
+    }
+}
 
+function min_max_datetime($mysqli, $mysql_datetime, $entity) {
+    $bounds = [
+                'MAX' => '<=',
+                'MIN' => '>='
+              ];
+    $result = $mysqli->query("SELECT MAX(`datetime`) 
+                                FROM `values`
+                                WHERE `entity` = '$entity' AND 
+                                      `datetime` <= '$mysql_datetime'");
+    return $result->fetch_assoc();
 }
 
 

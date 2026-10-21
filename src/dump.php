@@ -6,11 +6,6 @@ use DateInterval;
 
 /*
    dumps house data to table "dump"
-    - grid_w
-    - battery_w
-    - ev_charge_w
-    - solar_w
-    - load_w
 */
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -26,7 +21,29 @@ ini_set('mysql.connect_timeout','36000');
 
 const   DATETIME_START              = '2025-10-20 00:00:00',
         DATETIME_STOP               = '2026-10-20 00:00:00',
-        INTERVAL_SECONDS            = 1800;
+        INTERVAL_SECONDS            = 1800,
+        DESCRIPTORS = [
+            'grid_w'        => [
+                                    'entity'    => 'GRID_W',
+                                    'type'      => 'ABSOLUTE'
+                               ],
+            'battery_w'     => [
+                                    'entity'    => 'GRID_W',
+                                    'type'      => 'ABSOLUTE'
+                                ],
+            'ev_charge_w'   => [
+                                    'entity'    => 'GRID_W',
+                                    'type'      => 'ABSOLUTE'
+                               ],
+            'solar_w'       => [
+                                    'entity'    => 'GRID_W',
+                                    'type'      => 'ABSOLUTE'
+                               ],
+            'load_w'        => [
+                                    'entity'    => 'GRID_W',
+                                    'type'      => 'ABSOLUTE'
+                                ]
+            ];
 
 truncate( $mysqli = (new Root())->mysqli());
 $datetime       = new DateTime(DATETIME_START);

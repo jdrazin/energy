@@ -73,7 +73,7 @@ function make_row($mysqli, $mysql_datetime): void
     foreach (DESCRIPTORS as $descriptor) {
         $field  = $descriptor['field'];
         $entity = $descriptor['entity'];
-        $factor = $descriptor['factor'];
+        $factor = $descriptor['factor'] ?? 1.0;
         switch($descriptor['type']) {
             case 'ABSOLUTE': {
                 $values[$field] = value_average($mysqli, $mysql_datetime, $entity);

@@ -27,18 +27,19 @@ truncate( $mysqli = (new Root())->mysqli());
 $datetime       = new DateTime(DATETIME_START);
 $datetime_stop  = new DateTime(DATETIME_STOP);
 $increment       = new DateInterval('PT' . INTERVAL_SECONDS . 'S');
-$count = 0;
 while ($datetime < $datetime_stop) {
     $datetime->add($increment);
+    make_row($datetime->format('Y-m-d H:i:s'));
 }
 exit;
 
-function truncate($mysqli): void
-{
+function truncate($mysqli): void {
     $mysqli->query('TRUNCATE `dump`');
 }
 
+function make_row($mysql_datetime) {
 
+}
 
 
 

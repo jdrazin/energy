@@ -23,28 +23,33 @@ const   DATETIME_START              = '2025-10-20 00:00:00',
         DATETIME_STOP               = '2026-10-20 00:00:00',
         INTERVAL_SECONDS            = 1800,
         DESCRIPTORS = [
-            'grid_w'        => [
-                                    'entity'    => 'GRID_W',
-                                    'type'      => 'ABSOLUTE'
-                               ],
-            'battery_w'     => [
-                                    'entity'    => 'GRID_W',
-                                    'type'      => 'RATE',
-                                    'factor'    =>  1.0
-                                ],
-            'ev_charge_w'   => [
-                                    'entity'    => 'GRID_W',
-                                    'type'      => 'ABSOLUTE'
-                               ],
-            'solar_w'       => [
-                                    'entity'    => 'GRID_W',
-                                    'type'      => 'ABSOLUTE'
-                               ],
-            'load_w'        => [
-                                    'entity'    => 'GRID_W',
-                                    'type'      => 'ABSOLUTE'
-                                ]
-            ];
+                        [
+                            'field'     => 'grid_w',
+                            'entity'    => 'GRID_W',
+                            'type'      => 'ABSOLUTE'
+                        ],
+                        [
+                            'field'     => 'battery_charge_w',
+                            'entity'    => 'BATTERY_LEVEL_KWH',
+                            'type'      => 'RATE',
+                            'factor'    =>  1.0
+                        ],
+                        [
+                            'field'     => 'ev_charge_w',
+                            'entity'    => 'LOAD_EV_W',
+                            'type'      => 'ABSOLUTE'
+                        ],
+                        [
+                            'field'     => 'load_w',
+                            'entity'    => 'LOAD_HOUSE_W',
+                            'type'      => 'ABSOLUTE'
+                        ],
+                        [
+                            'field'     => 'solar_w',
+                            'entity'    => 'SOLAR_W',
+                            'type'      => 'ABSOLUTE'
+                        ],
+                    ];
 
 truncate( $mysqli = (new Root())->mysqli());
 $datetime       = new DateTime(DATETIME_START);
@@ -63,7 +68,7 @@ function truncate($mysqli): void {
 function make_row($mysqli, $mysql_datetime): void
 {
     $values = [];
-    foreach (DESCRIPTORS as $field => $properties) {
+    foreach (DESCRIPTORS as $descriptor) {
         $entity = $properties['entity'];
         switch($type = $properties['type']) {
             case 'ABSOLUTE': {
@@ -105,7 +110,7 @@ function value_absolute($mysqli, $mysql_datetime, $entity):int {
         $result = $mysqli->query($sql);
         $fetch_assoc = $result->fetch_assoc();
         $datetime           = $fetch_assoc['datetime'];
-        $difference_seconds = $fetch_assoc['difference_seconds'];
+        $difference_seconds = intval($fetch_assoc['difference_seconds']);
         $value              = value($mysqli, $datetime, $entity);
         if ($difference_seconds == 0) {     // no need to interpolate if reading found for exact time
             return (int) round($value);
@@ -129,8 +134,7 @@ function value_rate($mysqli, $mysql_datetime, $entity):int {
     $signs = ['-', '+'];
     $interval_half = INTERVAL_SECONDS/2;
     foreach ($signs as $sign) {
-        $sql = "SELECT   `datetime`,
-                   ABS(TIMESTAMPDIFF(SECOND, '$mysql_datetime' $sign INTERVAL $interval_half SECOND, `datetime`)) AS `difference_seconds`
+        $sql = "SELECT   `datetime`
                    FROM  `values`
                    WHERE `entity` = '$entity' AND 
                          `type` = 'MEASURED'
@@ -139,20 +143,13 @@ function value_rate($mysqli, $mysql_datetime, $entity):int {
         $result = $mysqli->query($sql);
         $fetch_assoc        = $result->fetch_assoc();
         $datetime           = $fetch_assoc['datetime'];
-        $difference_seconds = $fetch_assoc['difference_seconds'];
         $value              = value($mysqli, $datetime, $entity);
-        if ($difference_seconds == 0) {     // no need to interpolate if reading found for exact time
-            return (int) round($value);
-        }
-        $min_max_datetime[$bound] = [
+        $min_max_datetime[$sign] = [
             'datetime'           => $datetime,
-            'value'              => $value,
-            'difference_seconds' => $difference_seconds
+            'value'              => $value
         ];
     }
-    // interpolate
-    $a   = $min_max_datetime['LOWER']['difference_seconds'];
-    $b   = $min_max_datetime['UPPER']['difference_seconds'];
+    // calculate rate
     $va  = $min_max_datetime['LOWER']['value'];
     $vb  = $min_max_datetime['UPPER']['value'];
     $value_interpolated = $va + $a * (($vb-$va)/($a - $b));

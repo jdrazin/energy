@@ -5,7 +5,12 @@ use DateTime;
 use DateInterval;
 
 /*
-   dumps house data to tan;e to "dump"
+   dumps house data to table "dump"
+    - grid_w
+    - battery_w
+    - ev_charge_w
+    - solar_w
+    - load_w
 */
 
 require_once __DIR__ . '/../vendor/autoload.php';

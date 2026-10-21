@@ -100,7 +100,8 @@ function value_absolute($mysqli, $mysql_datetime, $entity):int {
                         TIMESTAMPDIFF(SECOND, '$mysql_datetime', $function(`datetime`)) AS `difference_seconds`
                    FROM  `values`
                    WHERE `entity` = '$entity' AND 
-                         `datetime` $inequality '$mysql_datetime'";
+                         `datetime` $inequality '$mysql_datetime' AND
+                         `type` = 'MEASURED'";
         $result = $mysqli->query($sql);
         $fetch_assoc = $result->fetch_assoc();
         $datetime           = $fetch_assoc['datetime'];
@@ -125,25 +126,15 @@ function value_absolute($mysqli, $mysql_datetime, $entity):int {
 }
 
 function value_rate($mysqli, $mysql_datetime, $entity):int {
-    $bounds = [
-        'LOWER' =>  [
-            'function'      => 'MAX',
-            'inequality'    => '<='
-        ],
-        'UPPER' =>  [
-            'function'      => 'MIN',
-            'inequality'    => '>='
-        ]
-    ];
-    $min_max_datetime = [];
-    foreach ($bounds as $bound => $properties) {
-        $function   = $properties['function'];
-        $inequality = $properties['inequality'];
-        $sql = "SELECT   $function(`datetime`) AS `datetime`,
-                        TIMESTAMPDIFF(SECOND, '$mysql_datetime', $function(`datetime`)) AS `difference_seconds`
+    $signs = ['-', '+'];
+    $interval_half = INTERVAL_SECONDS/2;
+    foreach ($signs as $sign) {
+        $sql = "SELECT   `datetime`
                    FROM  `values`
                    WHERE `entity` = '$entity' AND 
-                         `datetime` $inequality '$mysql_datetime'";
+                         `type` = 'MEASURED'
+                   ORDER BY ABS(TIMESTAMPDIFF(SECOND, '$mysql_datetime' $sign INTERVAL $interval_half SECOND, `datetime`))
+                   LIMIT 1";
         $result = $mysqli->query($sql);
         $fetch_assoc = $result->fetch_assoc();
         $datetime           = $fetch_assoc['datetime'];

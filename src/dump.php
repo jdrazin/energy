@@ -56,8 +56,10 @@ $datetime       = new DateTime(DATETIME_START);
 $datetime_stop  = new DateTime(DATETIME_STOP);
 $increment      = new DateInterval('PT' . INTERVAL_SECONDS . 'S');
 while ($datetime < $datetime_stop) {
+    $dt = $datetime->format('Y-m-d H:i:s');
+    echo $dt . PHP_EOL;
     $datetime->add($increment);
-    make_row($mysqli, $datetime->format('Y-m-d H:i:s'));
+    make_row($mysqli, $dt);
 }
 exit;
 

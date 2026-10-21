@@ -70,17 +70,25 @@ function make_row($mysqli, $mysql_datetime) {
 
 function min_max_datetime($mysqli, $mysql_datetime, $entity) {
     $bounds = [
-                'MAX' => '<=',
-                'MIN' => '>='
-              ];
+                'LOWER' =>  [
+                                'function'      => 'MAX',
+                                'inequality'    => '<='
+                            ],
+                'UPPER' =>  [
+                                'function'      => 'MIN',
+                                'inequality'    => '>='
+                            ]
+               ];
     $min_max_datetime = [];
     foreach ($bounds as $function => $inequality) {
-        $sql = "SELECT   $function(`datetime`) 
+        $sql = "SELECT   $function(`datetime`) AS `datetime`,
+                        TIMESTAMPDIFF(SECOND, MAX(`datetime`), '$mysql_datetime') AS `difference_seconds`
                    FROM  `values`
                    WHERE `entity` = '$entity' AND 
                          `datetime` $inequality '$mysql_datetime'";
         $result = $mysqli->query($sql);
-        $min_max_datetime[$function] = $result->fetch_assoc();
+        $fetch_assoc = $result->fetch_assoc();
+        $min_max_datetime[$function] = $fetch_assoc['datetime'];
     }
 
     return $result->fetch_assoc();

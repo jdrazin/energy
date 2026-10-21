@@ -71,7 +71,7 @@ function make_row($mysqli, $mysql_datetime): void
                 break;
             }
             case 'RATE': {
-                $values[$field] = value_rate($mysqli, $mysql_datetime, $entity);
+                $values[$field] = $properties['factor'] * value_rate($mysqli, $mysql_datetime, $entity);
                 break;
             }
             default: {
@@ -124,6 +124,49 @@ function value_absolute($mysqli, $mysql_datetime, $entity):int {
     return (int) round($value_interpolated);
 }
 
+function value_rate($mysqli, $mysql_datetime, $entity):int {
+    $bounds = [
+        'LOWER' =>  [
+            'function'      => 'MAX',
+            'inequality'    => '<='
+        ],
+        'UPPER' =>  [
+            'function'      => 'MIN',
+            'inequality'    => '>='
+        ]
+    ];
+    $min_max_datetime = [];
+    foreach ($bounds as $bound => $properties) {
+        $function   = $properties['function'];
+        $inequality = $properties['inequality'];
+        $sql = "SELECT   $function(`datetime`) AS `datetime`,
+                        TIMESTAMPDIFF(SECOND, '$mysql_datetime', $function(`datetime`)) AS `difference_seconds`
+                   FROM  `values`
+                   WHERE `entity` = '$entity' AND 
+                         `datetime` $inequality '$mysql_datetime'";
+        $result = $mysqli->query($sql);
+        $fetch_assoc = $result->fetch_assoc();
+        $datetime           = $fetch_assoc['datetime'];
+        $difference_seconds = $fetch_assoc['difference_seconds'];
+        $value              = value($mysqli, $datetime, $entity);
+        if ($difference_seconds == 0) {     // no need to interpolate if reading found for exact time
+            return (int) round($value);
+        }
+        $min_max_datetime[$bound] = [
+            'datetime'           => $datetime,
+            'value'              => $value,
+            'difference_seconds' => $difference_seconds
+        ];
+    }
+    // interpolate
+    $a   = $min_max_datetime['LOWER']['difference_seconds'];
+    $b   = $min_max_datetime['UPPER']['difference_seconds'];
+    $va  = $min_max_datetime['LOWER']['value'];
+    $vb  = $min_max_datetime['UPPER']['value'];
+    $value_interpolated = $va + $a * (($vb-$va)/($a - $b));
+    return (int) round($value_interpolated);
+}
+
 function value($mysqli, $mysql_datetime, $entity): float {
     $sql = "SELECT   `value`
                FROM  `values`
@@ -132,7 +175,6 @@ function value($mysqli, $mysql_datetime, $entity): float {
     $result = $mysqli->query($sql);
     return floatval($result->fetch_assoc()['value']);
 }
-
 
 
 

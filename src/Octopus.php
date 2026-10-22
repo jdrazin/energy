@@ -65,13 +65,14 @@ class Octopus extends Root
             $values->makeHeatingPowerLookupDaySlotExtTemp();                      // make heating power look up table vs dayslot and external temperature
             (new Solcast())->getSolarActualForecast($db_slots->slots);            // solar actuals & forecasts > 'powers'
             (new MetOffice())->forecast();                                        // get temperature forecast
+            (new AxleEnergy())->getNextGridEvent();                               // get next grid event if any
 
             // traverse each tariff combination starting with active combination, which controls battery on completion of countdown to next slot
             $tariff_combinations = $this->tariffCombinations();                   // get tariff combinations of interest, starting with active combination
             foreach ($tariff_combinations as $tariff_combination) {
                 if (!ACTIVE_TARIFF_COMBINATION_ONLY || $tariff_combination['active']) {
                     $db_slots->makeDbSlotsNext24hrs($tariff_combination);                           // make slots for this tariff combination
-                    $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);
+                    $next_day_slots = $db_slots->getDbNextDaySlots($tariff_combination);            //
                     $this->makeSlotRates($db_slots->slots, $tariff_combination, false);        // make tariffs
                     $values->estimatePowers($db_slots, $tariff_combination);                        // forecast slot solar, heating, non-heating and load powers
 
@@ -283,9 +284,7 @@ class Octopus extends Root
                         }
                     }
                 }
-                if (!is_null($rate_extraordinary = $this->rateExtraordinary($direction, $start, $stop))) {  // extraordinary KWH rate overrides
-                    $ratesPer['KWH'][$direction] = $rate_extraordinary;
-                }
+                $ratesPer['KWH'][$direction] = $this->rateExtraordinary($ratesPer['KWH'][$direction], $direction, $start, $stop); // modify by extraordinary KWH rate, if any
             }
             // insert rate into slot
             $import_gbp_per_kwh = $ratesPer['KWH']['import'];
@@ -297,22 +296,39 @@ class Octopus extends Root
         $this->mysqli->commit();
     }
 
-    private function rateExtraordinary($direction, $start, $stop): float|null {
-        $sql = 'SELECT `' . $direction . '_rate`
+    // extraordinary tariff overrides or added to normal tariff pro rate with extent time slot overlaps extraordinary tariff event period
+    private function rateExtraordinary($rate_tariff, $direction, $start, $stop): float {
+        $sql = 'SELECT `' . $direction . '_rate`,
+                            (UNIX_TIMESTAMP(IF(`stop` < ?, `stop`, ?)) - UNIX_TIMESTAMP( IF(`start` > ?, `start`, ?))) / (UNIX_TIMESTAMP(?) - UNIX_TIMESTAMP(?)),
+                            `type`
                     FROM    `tariff_extraordinaries_per_kwh`
-                    WHERE   ? BETWEEN `start` AND `stop` AND
-                            ? BETWEEN `start` AND `stop` AND
+                    WHERE   `start` <= ? AND
+                            `stop`  >= ? AND
                             `status` IN(\'CURRENT\', \'TO_DROP\')
                     ORDER BY `timestamp` DESC';
         if (!($stmt = $this->mysqli->prepare($sql)) ||
-            !$stmt->bind_param('ss', $start, $stop) ||
-            !$stmt->bind_result($rate) ||
+            !$stmt->bind_param('ssssssss', $stop, $stop, $start, $start, $stop, $start, $stop, $start ) ||
+            !$stmt->bind_result($rate_extraordinary, $overlap, $type) ||
             !$stmt->execute()) {
                 $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                 $this->logDb('MESSAGE', $message, null, 'ERROR');
                 throw new Exception($message);
         }
         $stmt->fetch();
+        $rate = $rate_tariff;
+        if ($type) {
+            switch ($type) {
+                case 'OVERRIDE': {
+                    $rate = ($rate_extraordinary * $overlap);
+                    break;
+                }
+                case 'ADD': {
+                    $rate += ($rate_extraordinary * $overlap);
+                    break;
+                }
+                default:
+            }
+        }
         return $rate;
     }
 

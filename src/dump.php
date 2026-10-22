@@ -19,8 +19,8 @@ ini_set('mysql.connect_timeout', '36000');
 ini_set('max_execution_time', '36000');
 ini_set('mysql.connect_timeout','36000');
 
-const   DATETIME_START              = '2025-10-20 00:00:00',
-        DATETIME_STOP               = '2026-10-20 00:00:00',
+const   DATETIME_START              = '2025-10-21 00:00:00',
+        DATETIME_STOP               = '2026-10-21 00:00:00',
         INTERVAL_SECONDS            = 1800,
         DESCRIPTORS = [
                         [

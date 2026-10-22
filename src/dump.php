@@ -114,7 +114,6 @@ function value_average($mysqli, $mysql_datetime, $entity):int {
 }
 
 function tariff_average($mysqli, $mysql_datetime, $direction):float {
-    $interval_seconds = INTERVAL_SECONDS/2;
     $sql = "SELECT  AVG(`tr`.`rate`) AS `tariff`
               FROM `tariff_rates_$direction` `tr`
               INNER JOIN `tariff_combinations` `tc` ON `tc`.`$direction` = `tr`.`tariff`

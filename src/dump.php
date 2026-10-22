@@ -101,7 +101,7 @@ function make_row($mysqli, $mysql_datetime): void
             }
         }
     }
-    insert_row($mysqli, $mysql_datetime, $values);
+    insert_row($mysqli, $mysql_datetime, $values, $tariffs);
 }
 
 function value_average($mysqli, $mysql_datetime, $entity):int {
@@ -170,8 +170,7 @@ function value($mysqli, $mysql_datetime, $entity): float {
     return floatval($result->fetch_assoc()['value']);
 }
 
-function insert_row($mysqli, $mysql_datetime, $values): void
-{
+function insert_row($mysqli, $mysql_datetime, $values, $tariffs): void {
     $sql = 'INSERT INTO `dump` (`datetime`,';
     foreach ($values as $field => $value) {
         $sql .= '`' . $field . '`,';

@@ -54,7 +54,8 @@ const   DATETIME_START              = '2025-10-21 00:15:00',
                             'field'     => 'gbp_per_kwh',
                             'entity'    => 'SOLAR_W',
                         ]
-                    ];
+                    ],
+        DIRECTIONS = ['import', 'export'];
 
 truncate( $mysqli = (new Root())->mysqli());
 $datetime       = new DateTime(DATETIME_START);
@@ -89,8 +90,11 @@ function make_row($mysqli, $mysql_datetime): void
                 break;
             }
             case 'TARIFF': {
-                $direction = $values['grid_w'] < 0.0 ? 'import' : 'export';
-                $values[$field] = tariff_average($mysqli, $mysql_datetime, $direction);
+                $tariffs = [];
+                foreach (DIRECTIONS as $direction) {
+                    $tariffs[$direction] = tariff_average($mysqli, $mysql_datetime, $direction);
+                }
+                $tariffs[$field] = $values['grid_w'] < 0.0 ? $tariffs['import'] : $tariffs['export'];
                 break;
             }
             default: {

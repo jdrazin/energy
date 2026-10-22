@@ -24,31 +24,36 @@ const   DATETIME_START              = '2025-10-20 00:00:00',
         INTERVAL_SECONDS            = 1800,
         DESCRIPTORS = [
                         [
+                            'type'      => 'ABSOLUTE',
                             'field'     => 'grid_w',
-                            'entity'    => 'GRID_W',
-                            'type'      => 'ABSOLUTE'
+                            'entity'    => 'GRID_W'
                         ],
                         [
+                            'type'      => 'RATE',
                             'field'     => 'battery_charge_w',
                             'entity'    => 'BATTERY_LEVEL_KWH',
-                            'type'      => 'RATE',
                             'factor'    =>  3.6E6
                         ],
                         [
+                            'type'      => 'ABSOLUTE',
                             'field'     => 'ev_charge_w',
-                            'entity'    => 'LOAD_EV_W',
-                            'type'      => 'ABSOLUTE'
+                            'entity'    => 'LOAD_EV_W'
                         ],
                         [
+                            'type'      => 'ABSOLUTE',
                             'field'     => 'load_w',
-                            'entity'    => 'LOAD_HOUSE_W',
-                            'type'      => 'ABSOLUTE'
+                            'entity'    => 'LOAD_HOUSE_W'
                         ],
                         [
+                            'type'      => 'ABSOLUTE',
                             'field'     => 'solar_w',
                             'entity'    => 'SOLAR_W',
-                            'type'      => 'ABSOLUTE'
                         ],
+                        [
+                            'type'      => 'TARIFF',
+                            'field'     => 'gbp_per_kwh',
+                            'entity'    => 'SOLAR_W',
+                        ]
                     ];
 
 truncate( $mysqli = (new Root())->mysqli());
@@ -83,6 +88,11 @@ function make_row($mysqli, $mysql_datetime): void
                 $values[$field] = value_rate($mysqli, $mysql_datetime, $entity, $factor);
                 break;
             }
+            case 'TARIFF': {
+                $direction = $values['grid_w'] < 0.0 ? 'import' : 'export';
+                $values[$field] = tariff_average($mysqli, $mysql_datetime, $direction);
+                break;
+            }
             default: {
             }
         }
@@ -101,6 +111,19 @@ function value_average($mysqli, $mysql_datetime, $entity):int {
     $fetch_assoc = $result->fetch_assoc();
     $value_average = $fetch_assoc['average'];
     return intval(round(floatval($value_average)));
+}
+
+function tariff_average($mysqli, $mysql_datetime, $direction):float {
+    $interval_seconds = INTERVAL_SECONDS/2;
+    $sql = "SELECT  AVG(`tr`.`rate`)
+              FROM `tariff_rates_$direction` `tr`
+              INNER JOIN `tariff_combinations` `tc` ON `tc`.`$direction` = `tr`.`tariff`
+              WHERE '$mysql_datetime' BETWEEN `start` AND `stop` AND
+                    `tc`.`active`";
+    $result = $mysqli->query($sql);
+    $fetch_assoc = $result->fetch_assoc();
+    $value_average = $fetch_assoc['average'];
+    return floatval($value_average);
 }
 
 function value_rate($mysqli, $mysql_datetime, $entity, $factor):int {

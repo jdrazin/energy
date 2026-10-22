@@ -118,6 +118,8 @@ function tariff_average($mysqli, $mysql_datetime, $direction):float {
               FROM `tariff_rates_$direction` `tr`
               INNER JOIN `tariff_combinations` `tc` ON `tc`.`$direction` = `tr`.`tariff`
               WHERE '$mysql_datetime' BETWEEN `start` AND `stop` AND
+                    `tr`.`per` = 'KWH' AND
+                    `tr`.`status` IN('CURRENT', 'TO_DROP') AND 
                     `tc`.`active`";
     $result = $mysqli->query($sql);
     $fetch_assoc = $result->fetch_assoc();
@@ -174,7 +176,7 @@ function insert_row($mysqli, $mysql_datetime, $values): void
     foreach ($values as $field => $value) {
         switch ($field) {
             case 'gbp_per_kwh': {
-                $sql .= round($value, 5) . ',';
+                $sql .= round($value, 6) . ',';
                 break;
             }
             default: {

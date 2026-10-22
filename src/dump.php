@@ -115,14 +115,14 @@ function value_average($mysqli, $mysql_datetime, $entity):int {
 
 function tariff_average($mysqli, $mysql_datetime, $direction):float {
     $interval_seconds = INTERVAL_SECONDS/2;
-    $sql = "SELECT  AVG(`tr`.`rate`)
+    $sql = "SELECT  AVG(`tr`.`rate`) AS `tariff`
               FROM `tariff_rates_$direction` `tr`
               INNER JOIN `tariff_combinations` `tc` ON `tc`.`$direction` = `tr`.`tariff`
               WHERE '$mysql_datetime' BETWEEN `start` AND `stop` AND
                     `tc`.`active`";
     $result = $mysqli->query($sql);
     $fetch_assoc = $result->fetch_assoc();
-    $value_average = $fetch_assoc['average'];
+    $value_average = $fetch_assoc['tariff'];
     return floatval($value_average);
 }
 
@@ -173,7 +173,15 @@ function insert_row($mysqli, $mysql_datetime, $values): void
     }
     $sql = rtrim($sql, ',') . ') VALUES (\'' . $mysql_datetime . '\',';
     foreach ($values as $field => $value) {
-        $sql .= intval(round($value)) . ',';
+        switch ($field) {
+            case 'gbp_per_kwh': {
+                $sql .= round($value, 5) . ',';
+                break;
+            }
+            default: {
+                $sql .= intval(round($value)) . ',';
+            }
+        }
     }
     $sql = rtrim($sql, ',') . ')';
     $result = $mysqli->query($sql);

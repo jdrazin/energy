@@ -175,6 +175,9 @@ function insert_row($mysqli, $mysql_datetime, $values, $tariffs): void {
     foreach ($values as $field => $value) {
         $sql .= '`' . $field . '`,';
     }
+    foreach ($tariffs as $field => $value) {
+        $sql .= '`' . $field . '`,';
+    }
     $sql = rtrim($sql, ',') . ') VALUES (\'' . $mysql_datetime . '\',';
     foreach ($values as $field => $value) {
         switch ($field) {

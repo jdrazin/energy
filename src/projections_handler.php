@@ -13,7 +13,7 @@ ini_set('max_execution_time',    '36000');
 ini_set('mysql.connect_timeout', '36000');
 
 const     DEBUG                     = false,
-          TEST_PROJECTION_ID        = null,
+          TEST_PROJECTION_ID        = null, //957436649,
           FILENAME_TEST_PROJECTION  = 'config.json',
           ARGS                      = ['CRON' => 1],
           INITIALISE_ON_EXCEPTION   = true,

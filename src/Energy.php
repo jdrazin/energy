@@ -10,6 +10,8 @@ use Exception;
 
 class Energy extends Root
 {
+    const string    SERVER_EXTERNAL_URL_PORT                             = 'http://88.202.150.174:8444';
+
     const   float   JOULES_PER_KWH                                       = 1000.0 * 3600.0,
                     DAYS_PER_YEAR                                        = 365.25,
                     DEFAULT_TEMPERATURE_TARGET_CELSIUS                   = 21.0,

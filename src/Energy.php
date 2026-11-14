@@ -1086,12 +1086,12 @@ class Energy extends Root
     private function combinationId($projection_id, $config_combined): int { // returns combination id
         $acronym       = $config_combined['acronym'];
         $combination   = $config_combined['combination'];
-        $battery       = $combination['battery'];
-        $heat_pump     = $combination['heat_pump'];
-        $insulation    = $combination['insulation'];
-        $boiler        = $combination['boiler'];
-        $solar_pv      = $combination['solar_pv'];
-        $solar_thermal = $combination['solar_thermal'];
+        $battery       = $combination['battery']        ?? ['include' => false];
+        $heat_pump     = $combination['heat_pump']      ?? ['include' => false];
+        $insulation    = $combination['insulation']     ?? ['include' => false];
+        $boiler        = $combination['boiler']         ?? ['include' => false] ;
+        $solar_pv      = $combination['solar_pv']       ?? ['include' => false];
+        $solar_thermal = $combination['solar_thermal']  ?? ['include' => false];
         $sql = 'INSERT IGNORE INTO `combinations` (`projection`, `acronym`, `battery`, `heat_pump`, `insulation`, `boiler`, `solar_pv`, `solar_thermal`, `start`, `stop`)
 			                               VALUES (?,            ?,              ?,         ?,       ?,            ?,        ?,          ?,               NOW(),   NULL  )';
         if (!($stmt = $this->mysqli->prepare($sql)) ||

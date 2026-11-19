@@ -371,7 +371,7 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
             throw new Exception($message_slot_fine_adjust);
         }
-        $filename = Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '.log';
+        $filename = Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '_' . $this->tariff_combination['id'] . '.log';
         if (!file_put_contents($filename, $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
             $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not log command to: ' . $filename);
             $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');

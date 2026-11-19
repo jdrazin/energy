@@ -360,7 +360,6 @@ class EnergyCost extends Root
         $this->costs['raw'] = $this->costCLI($command, $first_guess_charge_kws);
         $output = shell_exec($command);                                                     // execute Python command and capture output
         $result = json_decode($output, true);                                     // decode JSON output from Python
-        $text   = $command . PHP_EOL . $output . PHP_EOL;
         if (!$command ||
             !file_put_contents(Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '.log', $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
             $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
@@ -375,7 +374,7 @@ class EnergyCost extends Root
         if (!$converged) { // write out problem and log warning if not converged
             $this->write_problem_command($command, 'fail');
             $message_slot_fine_adjust  = $this->errMsg(__CLASS__, __FUNCTION__, null, $this->parameters['type'] . ' convergence failure (') . ($use_solution ? '' : 'not ') . 'usable): see failed problem and command';
-            $this->logDb('MESSAGE', $message_slot_fine_adjust, $text, 'WARNING');
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, $command . PHP_EOL . $output . PHP_EOL, 'WARNING');
         }
         else {
             $this->write_problem_command($command, 'last_ok');

@@ -361,8 +361,16 @@ class EnergyCost extends Root
             $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
             throw new Exception($message_slot_fine_adjust);
         }
-        $output = shell_exec($command);                                                     // execute Python command and capture output
-        $result = json_decode($output, true);                                     // decode JSON output from Python
+        if (!($output = shell_exec($command))) {                                            // execute Python command and capture output
+            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not execute command: ' . $command);
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
+            throw new Exception($message_slot_fine_adjust);
+        }
+        if (!($result = json_decode($output, true))) {                             // decode JSON output from Python
+            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Cannot decode result: ' . $result);
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
+            throw new Exception($message_slot_fine_adjust);
+        }
         $filename = Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '.log';
         if (!file_put_contents($command, $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
             $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not log command to: ' . $filename);

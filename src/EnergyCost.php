@@ -91,14 +91,13 @@ class EnergyCost extends Root
             }
             switch ($this->parameters['type']) {
                 case 'slots': {
-                    $optimizer = self::OPTIMIZE_UNCONSTRAINED;
+                    $optimizer = self::OPTIMIZE_UNCONSTRAINED;      // no constraint on charge levels
                     break;
                 }
-                case 'slices': {
+                case 'slices':
+                default:        {                                   // total charge level must equal slot solution
                     $optimizer = self::OPTIMIZE_CONSTRAINED;
-                    break;
                 }
-                default: {}
             }
             $this->problem              = [
                                             'solarGenerationLimitKw'                  => $this->config['solar_pv']['generation_limit_kw'],
@@ -311,7 +310,7 @@ class EnergyCost extends Root
     public function first_guess_charge_kws(): array { // todo
         $first_guess_charge_kws = [];
         foreach ($this->load_house_kws as $slot => $load_house_kw) {        // first guess zero charge
-            $first_guess_charge_kws[$slot] = 0.0;
+            $first_guess_charge_kws[$slot] = $this->slots_db['import_gbp_per_kwhs'][$slot] - $this->slots_db['export_gbp_per_kwhs'][$slot];
         }
         return $first_guess_charge_kws;
     }

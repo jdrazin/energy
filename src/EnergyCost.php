@@ -356,16 +356,21 @@ class EnergyCost extends Root
            $pathname_command       = self::PATH_PROJECT . self::FOLDER_DEBUG . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt';
            $command                = file_get_contents($pathname_command, true);
         }
-        $this->costs = [];
-        $this->costs['raw'] = $this->costCLI($command, $first_guess_charge_kws);
-        $output = shell_exec($command);                                                     // execute Python command and capture output
-        $result = json_decode($output, true);                                     // decode JSON output from Python
-        if (!$command ||
-            !file_put_contents(Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '.log', $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
-            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
+        if (!$command) {
+            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No command!');
             $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
             throw new Exception($message_slot_fine_adjust);
         }
+        $output = shell_exec($command);                                                     // execute Python command and capture output
+        $result = json_decode($output, true);                                     // decode JSON output from Python
+        $filename = Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '.log';
+        if (!file_put_contents($command, $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
+            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not log command to: ' . $filename);
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
+            throw new Exception($message_slot_fine_adjust);
+        }
+        $this->costs = [];
+        $this->costs['raw'] = $this->costCLI($command, $first_guess_charge_kws);
         $energyCostGuess    = $result['energyCostGuess']    ?? null;    // cost, first guess
         $energyCostSolution = $result['energyCostSolution'] ?? null;    // cost, solution
         $optimum_charge_kws = $result['optimum_charge_kws'] ?? null;    // solution charge rates

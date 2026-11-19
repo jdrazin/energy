@@ -95,7 +95,7 @@ class EnergyCost extends Root
                     break;
                 }
                 case 'slices':
-                default:        {                                   // total charge level must equal slot solution
+                default:        {                                   // constrain slice solution sum to slot solution
                     $optimizer = self::OPTIMIZE_CONSTRAINED;
                 }
             }

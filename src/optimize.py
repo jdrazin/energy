@@ -211,12 +211,12 @@ while i < number_slots:
 # load initial charge_kws guesses
 index += 1
 X = []
-sumCharge = 0.0
+sumX = 0.0
 i = 0
 while i < number_slots:
     index += 1
     x_element = float(sys.argv[index])
-    sumCharge += x_element
+    sumX += x_element
     X.append(x_element)
     i+= 1
 
@@ -243,13 +243,13 @@ if optimiser == 0: # unconstrained optimisation
     bounds.append(bound)
   result = minimize(dayCostGbp, X, method='powell', bounds=bounds, options={'disp': 0, 'ftol': 1E-14, 'maxiter': 1000000})  # Powell
   elapsed_s = time.time() - start_time
-else: # constrained optimisation: sum of charges is FIXED
+else: # constrained optimisation
   # replace first guesses with average
-  Charge = []
-  avgCharge = sumCharge / number_slots
+  X = []
   i = 0
+  x = sumX / number_slots
   while i < number_slots:
-    Charge.append(avgCharge)
+    X.append(x)
     i+= 1
   # define the bounds
   index += 1
@@ -263,21 +263,21 @@ else: # constrained optimisation: sum of charges is FIXED
   boundData = Bounds(lowerBounds, upperBounds)
 
   # define the linear constraints
-  lowerBoundLinearConstraints = np.full(1, sumCharge - SUM_CHARGE_TOLERANCE_KWH)
-  upperBoundLinearConstraints = np.full(1, sumCharge + SUM_CHARGE_TOLERANCE_KWH)
+  lowerBoundLinearConstraints = np.full(1, sumX - SUM_CHARGE_TOLERANCE_KWH)
+  upperBoundLinearConstraints = np.full(1, sumX + SUM_CHARGE_TOLERANCE_KWH)
   matrixLinearConstraints = np.ones((1, number_slots))
   linearConstraints = LinearConstraint(matrixLinearConstraints, lowerBoundLinearConstraints, upperBoundLinearConstraints)
   # hessZero                    = lambda x: np.zeros((number_slots, number_slots))
   # optimise
-  Charge = np.array(Charge, dtype=np.float64)  # force 64 bit on Raspberry Pi scipy implementation
-  result = minimize(dayCostGbp, Charge, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hess_numeric(dayCostGbp), options={'verbose': 0, 'disp': 0, 'maxiter': 1000})
+  X = np.array(X, dtype=np.float64)  # force 64 bit on Raspberry Pi scipy implementation
+  result = minimize(dayCostGbp, X, method='trust-constr', constraints=[linearConstraints], bounds=boundData, hess=hess_numeric(dayCostGbp), options={'verbose': 0, 'disp': 0, 'maxiter': 1000})
 output = { # output result as json
     "converged": result.success,
     "elapsed_s": time.time() - start_time,
     "evaluations": result.nfev,
     "status": result.status,
     "message": result.message,
-    "optimum_charge_kws": result.avgCharge.tolist(),
+    "optimum_charge_kws": result.x.tolist(),
     "energyCostGuess": energyCostGuess,
     "energyCostSolution": result.fun
   }

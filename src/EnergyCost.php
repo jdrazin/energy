@@ -321,7 +321,7 @@ class EnergyCost extends Root
         $batteryEnergyMinKwh    = $batteryEnergyGuardKwh;
         $batteryEnergyMaxKwh    = $this->problem['batteryCapacityKwh'] - $batteryEnergyGuardKwh;
         $first_guess_charge_kws = [];
-        foreach ($this->load_house_kws as $slot => $load_house_kw) {  // first guess zero charge
+        foreach ($this->load_house_kws as $slot => $load_house_kw) {
             $charge_first_guess_kw = self::FIRST_GUESS_TARIFF_DIFFERENTIAL_MULTIPLIER * ($this->slots_db['export_gbp_per_kwhs'][$slot] - $this->slots_db['import_gbp_per_kwhs'][$slot]);
             $batteryEnergyNextKwh = $batteryEnergyKwh + $slotSliceDurationHour * $charge_first_guess_kw;
             if ($batteryEnergyNextKwh > $batteryEnergyMinKwh && $batteryEnergyNextKwh < $batteryEnergyMaxKwh) {

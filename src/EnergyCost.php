@@ -9,10 +9,12 @@ class EnergyCost extends Root
 {
     const bool      RE_OPTIMISE_FIRST_SLOT_SLICE = true;
 
-    const int       OPTIMIZE_UNCONSTRAINED          = 0,
-                    OPTIMIZE_CONSTRAINED            = 1;
-    const float     ABS_ECO_GRID_THRESHOLD_KW       = 0.5,
-                    RE_OPTIMISE_CHARGE_DELTA_KW     = 0.02;
+    const int       OPTIMIZE_UNCONSTRAINED                          = 0,
+                    OPTIMIZE_CONSTRAINED                            = 1;
+    const float     ABS_ECO_GRID_THRESHOLD_KW                       = 0.5,
+                    RE_OPTIMISE_CHARGE_DELTA_KW                     = 0.02,
+                    FIRST_GUESS_BATTERY_WEAR_ACTIVATION_MULTIPLIER  = 1.5,
+                    FIRST_GUESS_TARIFF_DIFFERENTIAL_MULTIPLIER      = 1.0;
 
     const string    FOLDER_OPTIMISATION_LOG        = 'optimisation_',
                     PYTHON_OPTIMIZER_SCRIPT_BASE   = 'python3 /var/www/html/energy/src/',
@@ -307,10 +309,28 @@ class EnergyCost extends Root
         return $slices;
     }
 
-    public function first_guess_charge_kws(): array { // todo
+    /*
+     * choose first guess for charge slots array that reduces probability solver will encounter saddle points and false minima
+     * - sets non-zero slot charges in proportion with import - export tariff differential
+     * - avoids over/under charging by setting charge to zero
+     */
+    public function first_guess_charge_kws(): array {
+        $slotSliceDurationHour  = $this->problem['slotSliceDurationHour'];
+        $batteryEnergyGuardKwh  = self::FIRST_GUESS_BATTERY_WEAR_ACTIVATION_MULTIPLIER * $this->problem['batteryWearEnergyActivationKwh'];
+        $batteryEnergyKwh       = $this->problem['batteryEnergyInitialKwh'];
+        $batteryEnergyMinKwh    = $batteryEnergyGuardKwh;
+        $batteryEnergyMaxKwh    = $this->problem['batteryCapacityKwh'] - $batteryEnergyGuardKwh;
         $first_guess_charge_kws = [];
-        foreach ($this->load_house_kws as $slot => $load_house_kw) {        // first guess zero charge
-            $first_guess_charge_kws[$slot] = $this->slots_db['import_gbp_per_kwhs'][$slot] - $this->slots_db['export_gbp_per_kwhs'][$slot];
+        foreach ($this->load_house_kws as $slot => $load_house_kw) {  // first guess zero charge
+            $charge_first_guess_kw = self::FIRST_GUESS_TARIFF_DIFFERENTIAL_MULTIPLIER * ($this->slots_db['export_gbp_per_kwhs'][$slot] - $this->slots_db['import_gbp_per_kwhs'][$slot]);
+            $batteryEnergyNextKwh = $batteryEnergyKwh + $slotSliceDurationHour * $charge_first_guess_kw;
+            if ($batteryEnergyNextKwh > $batteryEnergyMinKwh && $batteryEnergyNextKwh < $batteryEnergyMaxKwh) {
+                $first_guess_charge_kws[$slot] = $charge_first_guess_kw;
+                $batteryEnergyKwh = $batteryEnergyNextKwh;
+            }
+            else {   // non-zero guess would exceed guard limits, so use zero charge
+                $first_guess_charge_kws[$slot] = 0.0;
+            }
         }
         return $first_guess_charge_kws;
     }

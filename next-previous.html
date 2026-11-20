@@ -5,6 +5,7 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">                                       // see https://www.digitalocean.com/community/tutorials/how-to-use-the-javascript-fetch-api-to-get-data
     const SERVER_CONTROL    = 'https://www.drazin.net:8443/control/';
+    // const SERVER_CONTROL    = 'https://192.168.1.15:443/control/';
     const token             = '?token=' + encodeURIComponent(getParameterByName('token'));
     const page_heading_text = getText(SERVER_CONTROL + 'slot_solution' + token);
     google.charts.load('current', {'packages':['corechart', 'table']});     // load the Visualization API and corechart package

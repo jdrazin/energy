@@ -118,7 +118,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
                 $code    = 201;
                 $email   = $config['email'] ?? false;
                 $message = 'Get your result at ' . Energy::SERVER_EXTERNAL_URL_PORT . '/projection.html?id=' . $crc32 . '. ' . ($email ? ' Will e-mail you when ready at ' . $email . '.' : '');
-                $config_applied = $energy->check->config_applied;
+                $config_applied = $energy->config;
             }
         }
         else {
@@ -132,7 +132,7 @@ $app->post('/projections', function (Request $request, Response $response) {  //
     }
     $body['message'] = $message;
     if ($config_applied) {
-        $body['request'] = $energy->check->config_applied;
+        $body['request'] = $energy->config;
     }
     $json_body          = json_encode($body, JSON_PRETTY_PRINT);
     $response->getBody()->write($json_body);

@@ -10,6 +10,8 @@ use Exception;
 
 class Energy extends Root
 {
+    const string    SERVER_EXTERNAL_URL_PORT                             = 'http://88.202.150.174:8444';
+
     const   float   JOULES_PER_KWH                                       = 1000.0 * 3600.0,
                     DAYS_PER_YEAR                                        = 365.25,
                     DEFAULT_TEMPERATURE_TARGET_CELSIUS                   = 21.0,
@@ -455,7 +457,7 @@ class Energy extends Root
                 if (filter_var($email = ($email ?? false), FILTER_VALIDATE_EMAIL) &&
                     (new SMTPEmail())->email([  'subject'   => 'Renewable Visions: your results are ready',
                                                 'html'      => false,
-                                                'bodyHTML'  => $error = 'Your results are ready at: https://www.drazin.net:8443/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>' .
+                                                'bodyHTML'  => $error = 'Your results are ready at: ' . self::SERVER_EXTERNAL_URL_PORT . '/projections?id=' . $projection_id . '.' . PHP_EOL . '<br>' .
                                                                         $message_setback,
                                                 'bodyAlt'   => strip_tags($error)])) {
                     $this->logDb('MESSAGE', 'Notified ' . $email . 'of completed projection ' . $projection_id, null, 'NOTICE');

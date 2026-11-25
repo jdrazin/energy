@@ -9,10 +9,12 @@ class EnergyCost extends Root
 {
     const bool      RE_OPTIMISE_FIRST_SLOT_SLICE = true;
 
-    const int       OPTIMIZE_UNCONSTRAINED          = 0,
-                    OPTIMIZE_CONSTRAINED            = 1;
-    const float     ABS_ECO_GRID_THRESHOLD_KW       = 0.5,
-                    RE_OPTIMISE_CHARGE_DELTA_KW     = 0.02;
+    const int       OPTIMIZE_UNCONSTRAINED                          = 0,
+                    OPTIMIZE_CONSTRAINED                            = 1;
+    const float     ABS_ECO_GRID_THRESHOLD_KW                       = 0.5,
+                    RE_OPTIMISE_CHARGE_DELTA_KW                     = 0.02,
+                    FIRST_GUESS_BATTERY_WEAR_ACTIVATION_MULTIPLIER  = 1.5,
+                    FIRST_GUESS_TARIFF_DIFFERENTIAL_MULTIPLIER      = 1.0;
 
     const string    FOLDER_OPTIMISATION_LOG        = 'optimisation_',
                     PYTHON_OPTIMIZER_SCRIPT_BASE   = 'python3 /var/www/html/energy/src/',
@@ -91,14 +93,13 @@ class EnergyCost extends Root
             }
             switch ($this->parameters['type']) {
                 case 'slots': {
-                    $optimizer = self::OPTIMIZE_UNCONSTRAINED;
+                    $optimizer = self::OPTIMIZE_UNCONSTRAINED;      // no constraint on charge levels
                     break;
                 }
-                case 'slices': {
+                case 'slices':
+                default:        {                                   // constrain slice solution sum to slot solution
                     $optimizer = self::OPTIMIZE_CONSTRAINED;
-                    break;
                 }
-                default: {}
             }
             $this->problem              = [
                                             'solarGenerationLimitKw'                  => $this->config['solar_pv']['generation_limit_kw'],
@@ -308,6 +309,32 @@ class EnergyCost extends Root
         return $slices;
     }
 
+    /*
+     * choose first guess for charge slots array that reduces probability solver will encounter saddle points and false minima
+     * - sets non-zero slot charges in proportion with import - export tariff differential
+     * - avoids over/under charging by setting charge to zero
+     */
+    public function first_guess_charge_kws(): array {
+        $slotSliceDurationHour  = $this->problem['slotSliceDurationHour'];
+        $batteryEnergyGuardKwh  = self::FIRST_GUESS_BATTERY_WEAR_ACTIVATION_MULTIPLIER * $this->problem['batteryWearEnergyActivationKwh'];
+        $batteryEnergyKwh       = $this->problem['batteryEnergyInitialKwh'];
+        $batteryEnergyMinKwh    = $batteryEnergyGuardKwh;
+        $batteryEnergyMaxKwh    = $this->problem['batteryCapacityKwh'] - $batteryEnergyGuardKwh;
+        $first_guess_charge_kws = [];
+        foreach ($this->load_house_kws as $slot => $load_house_kw) {
+            $charge_first_guess_kw = self::FIRST_GUESS_TARIFF_DIFFERENTIAL_MULTIPLIER * ($this->slots_db['export_gbp_per_kwhs'][$slot] - $this->slots_db['import_gbp_per_kwhs'][$slot]);
+            $batteryEnergyNextKwh = $batteryEnergyKwh + $slotSliceDurationHour * $charge_first_guess_kw;
+            if ($batteryEnergyNextKwh > $batteryEnergyMinKwh && $batteryEnergyNextKwh < $batteryEnergyMaxKwh) {
+                $first_guess_charge_kws[$slot] = $charge_first_guess_kw;
+                $batteryEnergyKwh = $batteryEnergyNextKwh;
+            }
+            else {   // non-zero guess would exceed guard limits, so use zero charge
+                $first_guess_charge_kws[$slot] = 0.0;
+            }
+        }
+        return $first_guess_charge_kws;
+    }
+
     /**
      * @throws Exception
      */
@@ -320,15 +347,12 @@ class EnergyCost extends Root
         // convex, non-smooth, exact cost
         //
         if (!DEBUG_MINIMISER) {
-            $first_guess_charge_kws = [];
             switch ($this->parameters['type']) {
                 case 'slots': {
                     (new Root())->LogDb('OPTIMISING', $this->tariff_combination['name'],  null, 'NOTICE');
                     $this->load_house_kws  = $this->slots_db['load_house_kws'];         // house load (excludes EV)
                     $this->solar_gross_kws = $this->slots_db['solar_kws'];              // gross solar forecast (excludes grid clipping)
-                    foreach ($this->load_house_kws as $slot => $load_house_kw) {        // first guess zero charge
-                        $first_guess_charge_kws[$slot] = 0.0;
-                    }
+                    $first_guess_charge_kws = $this->first_guess_charge_kws();          // make first guess based on charge level and import/export tariff
                     break;
                 }
                 case 'slices': {
@@ -337,8 +361,7 @@ class EnergyCost extends Root
                     }
                     $this->load_house_kws   = $this->slices_db['load_house_kws'];       // house load (excludes EV)
                     $this->solar_gross_kws  = $this->slices_db['solar_gross_kws'];      // gross solar forecast (excludes grid clipping)
-                    $first_guess_charge_kws = $this->slices_db['battery_charge_kws'];   // first guess slice solution to slot solution
-
+                    $first_guess_charge_kws = $this->slices_db['battery_charge_kws'];   // use first guess slot solution as first guess slice solution
                     $this->load_house_kws[0]  = $this->load_house_kws[1]  = $this->parameters['load_house_kw'];   // set first 2 slices to current load and solar powers
                     $this->solar_gross_kws[0] = $this->solar_gross_kws[1] = $this->parameters['solar_gross_kw'];
                     break;
@@ -356,17 +379,29 @@ class EnergyCost extends Root
            $pathname_command       = self::PATH_PROJECT . self::FOLDER_DEBUG . 'command_' . $this->parameters['type'] . '_' . $suffix . '.txt';
            $command                = file_get_contents($pathname_command, true);
         }
-        $this->costs = [];
-        $this->costs['raw'] = $this->costCLI($command, $first_guess_charge_kws);
-        $output = shell_exec($command);                                                     // execute Python command and capture output
-        $result = json_decode($output, true);                                     // decode JSON output from Python
-        $text   = $command . PHP_EOL . $output . PHP_EOL;
-        if (!$command ||
-            !file_put_contents(Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '.log', $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
-            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not write log');
+        if (!$command) {
+            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'No command!');
             $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
             throw new Exception($message_slot_fine_adjust);
         }
+        if (!($output = shell_exec($command))) {                                            // execute Python command and capture output
+            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not execute command: ' . $command);
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
+            throw new Exception($message_slot_fine_adjust);
+        }
+        if (!($result = json_decode($output, true))) {                             // decode JSON output from Python
+            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Cannot decode result: ' . $result);
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
+            throw new Exception($message_slot_fine_adjust);
+        }
+        $filename = Root::PATH_PROJECT . Root::FOLDER_TEST . self::FOLDER_OPTIMISATION_LOG . $this->parameters['type'] . '_' . $this->tariff_combination['id'] . '.log';
+        if (!file_put_contents($filename, $command . PHP_EOL . 'Solution >>>' . PHP_EOL . $output)) {
+            $message_slot_fine_adjust = $this->errMsg(__CLASS__, __FUNCTION__, __LINE__, 'Could not log command to: ' . $filename);
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, null, 'FATAL');
+            throw new Exception($message_slot_fine_adjust);
+        }
+        $this->costs = [];
+        $this->costs['raw'] = $this->costCLI($command, $first_guess_charge_kws);
         $energyCostGuess    = $result['energyCostGuess']    ?? null;    // cost, first guess
         $energyCostSolution = $result['energyCostSolution'] ?? null;    // cost, solution
         $optimum_charge_kws = $result['optimum_charge_kws'] ?? null;    // solution charge rates
@@ -375,7 +410,7 @@ class EnergyCost extends Root
         if (!$converged) { // write out problem and log warning if not converged
             $this->write_problem_command($command, 'fail');
             $message_slot_fine_adjust  = $this->errMsg(__CLASS__, __FUNCTION__, null, $this->parameters['type'] . ' convergence failure (') . ($use_solution ? '' : 'not ') . 'usable): see failed problem and command';
-            $this->logDb('MESSAGE', $message_slot_fine_adjust, $text, 'WARNING');
+            $this->logDb('MESSAGE', $message_slot_fine_adjust, $command . PHP_EOL . $output . PHP_EOL, 'WARNING');
         }
         else {
             $this->write_problem_command($command, 'last_ok');

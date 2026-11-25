@@ -127,7 +127,6 @@ def normalisationCoefficient(constant_coefficient, exponential_coefficient, acti
     normalisation_coefficient = 12.0/(1.0+(11.0*constant_coefficient)+(24.0*exponential_coefficient*activation/(x_max - x_min)))
     return normalisation_coefficient
 
-
 def hess_numeric(fun):
     def hess(x):
         return approx_derivative(lambda y: approx_derivative(fun, y, method='2-point'), x, method='2-point')

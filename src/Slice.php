@@ -19,8 +19,8 @@ class Slice extends Root
      */
     public function command(): void
     {
-        $givenergy = new GivEnergy();
         $octopus = new Octopus();
+        $givenergy = new GivEnergy();
         $givenergy_latest = $givenergy->latest();
         $parameters = [
             'type'                      => 'slices',

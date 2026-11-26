@@ -72,12 +72,14 @@ class AxleEnergy extends Root
     private function insertEvent($event): void
     {
         if (                  $event                                        &&
-            ($start         = $this->datetime_mysql($event['start_time']))  &&
-            ($stop          = $this->datetime_mysql($event['end_time']))    &&
+            ($start_time    = $event['start_time'] ?? null)                 &&
+            ($start         = $this->datetime_mysql($start_time))           &&
+            ($end_time      = $event['end_time'] ?? null)                   &&
+            ($stop          = $this->datetime_mysql($end_time))             &&
             ($import_export = $event['import_export'])                      &&
-                             !$event['opted_out']                           &&
-            ($updated_at    = $event['updated_at'])) {
+                             !$event['opted_out']) {
             $type        = self::RATE_TYPE;
+            $update_time = ($updated_at = $event['updated_at'] ?? null) ? $this->datetime_mysql($updated_at) : null;
             $import_rate = $export_rate = null;
             switch (strtolower($import_export)) {
                 case 'import': {
@@ -93,14 +95,15 @@ class AxleEnergy extends Root
                     $this->logDb('MESSAGE', $message, null, 'ERROR');
                     throw new Exception($message);
             }
-            $sql = 'INSERT INTO `tariff_extraordinaries_per_kwh` (`start`, `stop`, `import_rate`, `export_rate`, `type`)
-                                                          VALUES (?,        ?,      ?,             ?,             ?    )
+            $sql = 'INSERT INTO `tariff_extraordinaries_per_kwh` (`start`, `stop`, `import_rate`, `export_rate`, `type`, `updated`)
+                                                          VALUES (?,        ?,      ?,             ?,             ?,     ?        )
                         ON DUPLICATE KEY UPDATE `import_rate` = ?,
                                                 `export_rate` = ?,
                                                 `type`        = ?,
+                                                `updated`     = ?,
                                                 `status`      = \'CURRENT\'';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('ssddsdds', $start, $stop, $import_rate, $export_rate, $type, $import_rate, $export_rate, $type) ||
+                !$stmt->bind_param('ssddsddss', $start, $stop, $import_rate, $export_rate, $type, $import_rate, $export_rate, $type, $update_time) ||
                 !$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                     $this->logDb('MESSAGE', $message, null, 'ERROR');

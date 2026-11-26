@@ -52,9 +52,8 @@ const ENABLED                        = true,
 
 if (ENABLED) {
     try {
-        $pid_filename = Root::PATH_PROJECT . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid';
         if (!DEBUG) {
-            if (file_exists($pid_filename)) {
+            if (file_exists($pid_filename = Root::PATH_PROJECT . Root::FOLDER_PIDS . basename(__FILE__, '.php') . '.pid')) {
                 echo 'Cannot start: semaphore exists';
                 exit(1);
             }

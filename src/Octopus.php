@@ -47,7 +47,9 @@ class Octopus extends Root
         $this->use_local_config();
         $this->class = $this->strip_namespace(__NAMESPACE__, __CLASS__);
         $this->api = $this->apis[$this->class];
-        $this->requestTariffs();                                                // get latest tariff data
+        if (!DEBUG_MINIMISER) {
+           $this->requestTariffs();                                                // get latest tariff data
+        }
     }
 
     /**

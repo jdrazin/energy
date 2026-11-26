@@ -11,7 +11,7 @@ class EnergyCost extends Root
 
     const int       OPTIMIZE_UNCONSTRAINED                          = 0,
                     OPTIMIZE_CONSTRAINED                            = 1,
-                    FIRST_GUESS_HOURS_AHEAD                         = 6,
+                    FIRST_GUESS_HOURS_AHEAD                         = 5,
                     FIRST_GUESS_CHARGE_MAX_QUANTISATION             = 2;  // i.e. 0, 1, 2
 
     const float     INFINITE_COST_GBP                               = 1E9,

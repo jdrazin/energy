@@ -103,7 +103,7 @@ class AxleEnergy extends Root
                                                 `updated`     = ?,
                                                 `status`      = \'CURRENT\'';
             if (!($stmt = $this->mysqli->prepare($sql)) ||
-                !$stmt->bind_param('ssddsddss', $start, $stop, $import_rate, $export_rate, $type, $import_rate, $export_rate, $type, $update_time) ||
+                !$stmt->bind_param('ssddssddss', $start, $stop, $import_rate, $export_rate, $type, $update_time, $import_rate, $export_rate, $type, $update_time) ||
                 !$stmt->execute()) {
                     $message = $this->sqlErrMsg(__CLASS__, __FUNCTION__, __LINE__, $this->mysqli, $sql);
                     $this->logDb('MESSAGE', $message, null, 'ERROR');
